@@ -22,6 +22,12 @@ def _fips_safe_md5(*args, **kwargs):  # type: ignore[no-untyped-def]
 
 _fips_safe_hashlib.md5 = _fips_safe_md5
 
+# omnigent-slim: no omnigent process may reach past this machine. Installed
+# before any other import so nothing can open a connection first.
+from omnigent._offline_guard import install as _install_offline_guard  # noqa: E402
+
+_install_offline_guard()
+
 # Mirror legacy ``OMNIAGENTS_*`` env vars onto their new ``OMNIGENT_*`` names
 # before any submodule below reads the environment, so the dual-read
 # backward-compat fallback is in effect for the entire package.

@@ -63,6 +63,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ClockIcon,
+  LibraryBigIcon,
   ClockPlusIcon,
   CircleAlertIcon,
   CircleStopIcon,
@@ -606,6 +607,7 @@ function useActiveNavItem(): {
   isInboxPage: boolean;
   isCanvasPage: boolean;
   isTasksPage: boolean;
+  isLibraryPage: boolean;
   isWorkflowsPage: boolean;
   isUsagePage: boolean;
   activeExtensionPageId: string | null;
@@ -633,6 +635,7 @@ function useActiveNavItem(): {
   const isWorkflowsPage =
     !isExtensionRoute && (leaf === "workflows" || segments.at(-2) === "workflows");
   const isUsagePage = !isExtensionRoute && leaf === "usage";
+  const isLibraryPage = !isExtensionRoute && leaf === "library";
   const activeExtensionPageId =
     resolveExtensionPageFromPath(extensions, location.pathname)?.page.id ?? null;
   const projectKanban = useProjectKanbanEnabled();
@@ -647,6 +650,7 @@ function useActiveNavItem(): {
     !isTasksPage &&
     !isWorkflowsPage &&
     !isUsagePage &&
+    !isLibraryPage &&
     !isExtensionRoute;
   const searchParams = new URLSearchParams(location.search);
   const requestedProject = isNewSessionRoute ? searchParams.get("project") : null;
@@ -662,6 +666,7 @@ function useActiveNavItem(): {
     isInboxPage,
     isCanvasPage,
     isTasksPage,
+    isLibraryPage,
     isWorkflowsPage,
     isUsagePage,
     activeExtensionPageId,
@@ -968,6 +973,7 @@ function SidebarImpl({
     isInboxPage,
     isCanvasPage,
     isTasksPage,
+    isLibraryPage,
     isWorkflowsPage,
     isUsagePage,
     activeExtensionPageId,
@@ -1475,6 +1481,30 @@ function SidebarImpl({
                   />
                   New session
                   <NewSessionShortcutHint />
+                </Link>
+              </Button>
+              {/* omnigent-slim: canned sessions and artifact templates. */}
+              <Button
+                asChild
+                className={cn(
+                  SIDEBAR_ROW,
+                  "w-full justify-start border-0 font-normal mobile-touch-target",
+                  SIDEBAR_HOVER_HIGHLIGHT,
+                  isLibraryPage && SIDEBAR_ACTIVE_HIGHLIGHT,
+                )}
+                variant="ghost"
+                data-testid="library-nav"
+              >
+                <Link to="/library" onClick={onNavClick} componentId="sidebar.library">
+                  <LibraryBigIcon
+                    className={cn(
+                      "ui-icon",
+                      isLibraryPage
+                        ? "text-[var(--sidebar-active-foreground)]"
+                        : "text-muted-foreground",
+                    )}
+                  />
+                  Library
                 </Link>
               </Button>
               {/* Keep Scheduled in the primary nav group with the same row treatment as New session. */}

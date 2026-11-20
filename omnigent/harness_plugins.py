@@ -775,6 +775,11 @@ for _acp_cli_name in ACP_CLI_HARNESSES:
     _BUILTIN_CAPABILITIES[_acp_cli_name] = _BUILTIN_CAPABILITIES["acp"]
 
 
+#: omnigent-slim offers only the built-in Claude Code terminal (``claude-native``,
+#: which the web UI lists on its own). Picker rows for other harnesses are hidden;
+#: add an id here to offer it again.
+SLIM_PICKER_HARNESSES: frozenset[str] = frozenset()
+
 _BUILTIN_CONTRIBUTION = HarnessContribution(
     name="omnigent",
     valid_harnesses=frozenset(
@@ -1287,6 +1292,8 @@ def harness_catalog() -> list[dict[str, object]]:
     rows: list[dict[str, object]] = []
     for harness in sorted(labels, key=lambda key: labels[key].lower()):
         if harness not in valid_harnesses():
+            continue
+        if harness not in SLIM_PICKER_HARNESSES:
             continue
         row: dict[str, object] = {"id": harness, "label": labels[harness]}
         capability = capabilities.get(harness)

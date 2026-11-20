@@ -1,0 +1,1 @@
+var e=`omnigent:open-subagents-in-panel`;function t(){if(typeof window>`u`)return!1;try{return window.localStorage.getItem(e)===`on`}catch{return!1}}function n(t){if(typeof window>`u`)return!1;try{return t?window.localStorage.setItem(e,`on`):window.localStorage.removeItem(e),!0}catch{return!1}}export{n,t};

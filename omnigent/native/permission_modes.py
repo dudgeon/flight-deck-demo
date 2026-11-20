@@ -3,13 +3,12 @@
 # Keep these mappings aligned with the web permission constants in
 # claudePermissionMode.ts and nativeHarnessModes.ts.
 PERMISSION_LAUNCH_ARGS: dict[str, dict[str, list[str]]] = {
+    # omnigent-slim: only modes that keep the user's approval step
+    # (see omnigent/slim_policy.py).
     "claude-native": {
         "default": ["--permission-mode", "default"],
-        "auto": ["--permission-mode", "auto"],
         "acceptEdits": ["--permission-mode", "acceptEdits"],
         "plan": ["--permission-mode", "plan"],
-        "dontAsk": ["--permission-mode", "dontAsk"],
-        "bypassPermissions": ["--permission-mode", "bypassPermissions"],
     },
     "codex-native": {
         "default": [],

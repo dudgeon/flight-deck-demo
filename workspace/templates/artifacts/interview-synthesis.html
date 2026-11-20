@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Interview synthesis</title>
+<meta name="description" content="Themes from customer interviews with supporting quotes, how many participants raised each, and a filter by segment.">
+<style>
+  :root { --bg:#fff; --fg:#1d1d1f; --muted:#6e6e73; --line:#e5e5ea; --card:#f7f7f8; --accent:#2f6feb; --bar:#cfdcf7; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#141414; --fg:#f2f2f2; --muted:#a1a1a6; --line:#2c2c2e; --card:#1d1d1f; --accent:#6ea0ff; --bar:#24365a; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.5 -apple-system, system-ui, "Segoe UI", sans-serif; }
+  main { max-width:880px; margin:0 auto; padding:28px 22px 56px; }
+  h1 { font-size:24px; margin:0 0 4px; } .meta { color:var(--muted); font-size:13px; }
+  .filters { display:flex; gap:6px; flex-wrap:wrap; margin:18px 0; }
+  .filters button { font:inherit; font-size:13px; border:1px solid var(--line); background:var(--bg); color:var(--fg); border-radius:99px; padding:3px 12px; cursor:pointer; }
+  .filters button.on { border-color:var(--accent); color:var(--accent); }
+  .theme { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:12px; }
+  .head { display:flex; justify-content:space-between; gap:12px; align-items:baseline; }
+  .name { font-weight:700; } .count { color:var(--muted); font-size:13px; white-space:nowrap; }
+  .bar { height:6px; background:var(--bar); border-radius:99px; margin:8px 0 10px; }
+  .bar span { display:block; height:100%; background:var(--accent); border-radius:99px; }
+  blockquote { margin:8px 0 0; padding-left:12px; border-left:3px solid var(--line); color:var(--fg); }
+  cite { display:block; color:var(--muted); font-size:12px; font-style:normal; margin-top:2px; }
+  .ask { margin-top:10px; font:inherit; font-size:13px; border:1px solid var(--line); background:var(--bg); color:var(--fg); border-radius:7px; padding:4px 10px; cursor:pointer; }
+  .ask:hover { border-color:var(--accent); color:var(--accent); }
+</style>
+</head>
+<body>
+<!--
+  Template: Interview synthesis.
+  Claude: copy into artifacts/ and change ONLY the JSON in #artifact-data.
+  Quote only what participants actually said; "who" is a pseudonym or role, never a real name.
+-->
+<script type="application/json" id="artifact-data">
+{
+  "title": "Interview synthesis",
+  "source": "N interviews, dates, recruiting criteria",
+  "participants": 8,
+  "segments": ["Admin", "End user"],
+  "themes": [
+    {
+      "name": "Theme in a few words",
+      "insight": "What it means for the product.",
+      "mentions": 5,
+      "segments": ["Admin"],
+      "quotes": [ { "text": "Verbatim quote.", "who": "P3, admin" } ]
+    }
+  ]
+}
+</script>
+<main id="app"></main>
+<script>
+  const data = JSON.parse(document.getElementById("artifact-data").textContent);
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+  let segment = "All";
+  function render() {
+    const themes = data.themes
+      .filter((t) => segment === "All" || (t.segments || []).includes(segment))
+      .sort((a, b) => b.mentions - a.mentions);
+    document.getElementById("app").innerHTML = `
+      <h1>${esc(data.title)}</h1><div class="meta">${esc(data.source)}</div>
+      <div class="filters">${["All", ...data.segments].map((s) => `<button class="${s === segment ? "on" : ""}" data-s="${esc(s)}">${esc(s)}</button>`).join("")}</div>
+      ${themes.map((t) => `<div class="theme">
+        <div class="head"><span class="name">${esc(t.name)}</span><span class="count">${t.mentions} of ${data.participants}</span></div>
+        <div class="bar"><span style="width:${Math.min(100, (t.mentions / data.participants) * 100)}%"></span></div>
+        <div>${esc(t.insight)}</div>
+        ${t.quotes.map((q) => `<blockquote>“${esc(q.text)}”<cite>${esc(q.who)}</cite></blockquote>`).join("")}
+        <button class="ask" data-t="${esc(t.name)}">Turn into opportunities</button>
+      </div>`).join("")}`;
+    document.querySelectorAll(".filters button").forEach((b) => b.addEventListener("click", () => { segment = b.dataset.s; render(); }));
+    document.querySelectorAll(".ask").forEach((b) => b.addEventListener("click", () =>
+      window.omnigent?.prompt(`From the interview theme "${b.dataset.t}", draft three opportunity statements ("How might we…") with the evidence for each.`)));
+  }
+  render();
+</script>
+</body>
+</html>

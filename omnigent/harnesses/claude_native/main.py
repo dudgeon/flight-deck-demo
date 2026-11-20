@@ -1847,7 +1847,11 @@ def run_claude_native(
     startup_profiler.mark("checking local tools")
     _preflight_local_tools(resolved_command)
     startup_profiler.mark("local tools ready")
-    sanitized_args = _strip_resume_from_claude_args(claude_args)
+    from omnigent.slim_policy import enforce_claude_permission_args
+
+    sanitized_args = tuple(
+        enforce_claude_permission_args(_strip_resume_from_claude_args(claude_args))
+    )
     prompt = prompt if prompt and prompt.strip() else None
     startup_profiler.mark("claude args normalized")
     # Resolve the launch config across all offerings: a configured provider

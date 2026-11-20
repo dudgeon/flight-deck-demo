@@ -61,6 +61,10 @@ const FloatingComposerPage = withPageView(
     })),
   ),
 );
+const LibraryPage = withPageView(
+  "library",
+  lazy(() => import("@/pages/LibraryPage").then((m) => ({ default: m.LibraryPage }))),
+);
 const InboxPage = withPageView(
   "inbox",
   lazy(() => import("@/pages/InboxPage").then((m) => ({ default: m.InboxPage }))),
@@ -233,6 +237,7 @@ function AppRoutes({ basename }: AppProps) {
             }
           />
           <Route path={`${prefix}/inbox`} element={<InboxPage />} />
+          <Route path={`${prefix}/library`} element={<LibraryPage />} />
           <Route
             path={`${prefix}/projects/:projectName`}
             element={

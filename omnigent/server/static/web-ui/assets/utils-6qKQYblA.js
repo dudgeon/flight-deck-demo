@@ -1,0 +1,1 @@
+import{G as e,W as t}from"./streamdown-CKK1KfV6.js";var n=t({extend:{classGroups:{"font-size":[`text-ui`,`text-message`]}}});function r(...t){return n(e(t))}export{r as t};

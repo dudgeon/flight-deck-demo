@@ -9,6 +9,7 @@
 // over a private MessageChannel. See htmlCommentBridge.ts for the protocol and
 // trust model.
 
+import { handleArtifactMessage, injectArtifactBridge } from "@/lib/artifactBridge";
 import { createPortal } from "react-dom";
 import { ADD_COMMENT_BUTTON_CLASS_NAME } from "./addCommentButtonStyles";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -115,16 +116,28 @@ export function HtmlCommentViewer({
     const n = genNonce();
     return {
       nonce: n,
-      srcDoc: injectCommentBridge(
-        content,
-        n,
-        loadBridgeExternally ? HTML_COMMENT_BRIDGE_RUNTIME_URL : undefined,
-        scrollKey ? (getSavedScrollTop(scrollKey) ?? 0) : 0,
+      srcDoc: injectArtifactBridge(
+        injectCommentBridge(
+          content,
+          n,
+          loadBridgeExternally ? HTML_COMMENT_BRIDGE_RUNTIME_URL : undefined,
+          scrollKey ? (getSavedScrollTop(scrollKey) ?? 0) : 0,
+        ),
       ),
     };
   }, [content, loadBridgeExternally, scrollKey]);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  // omnigent-slim: `omnigent.prompt(text)` calls from this artifact's frame.
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      const frame = iframeRef.current?.contentWindow;
+      if (!frame || event.source !== frame) return;
+      handleArtifactMessage(event.data);
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, []);
   const portRef = useRef<MessagePort | null>(null);
   const channelRef = useRef<MessageChannel | null>(null);
   const readyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

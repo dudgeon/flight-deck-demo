@@ -1,0 +1,81 @@
+"""Make sure the running local server has the omnigent-slim project.
+
+``start.sh`` runs ``python -m omnigent.slim_bootstrap`` after the server is up.
+It creates (once) a project named ``OMNIGENT_SLIM_PROJECT`` whose sessions run
+in ``OMNIGENT_SLIM_WORKSPACE`` on this machine with the Claude Code agent, so
+canned sessions and the "New session" button land in the workspace folder.
+An existing project of that name is left as the user configured it.
+"""
+
+from __future__ import annotations
+
+import os
+import sys
+import time
+from pathlib import Path
+
+import httpx
+
+DEFAULT_URL = "http://127.0.0.1:6767"
+DEFAULT_PROJECT = "Workspace"
+CLAUDE_AGENT_NAME = "claude-native-ui"
+
+
+def _wait_for_local_host(client: httpx.Client, timeout_s: float = 30.0) -> str:
+    deadline = time.monotonic() + timeout_s
+    while True:
+        hosts = client.get("/v1/hosts").json().get("hosts", [])
+        online = [host for host in hosts if host.get("owner") == "local" and host.get("status") == "online"]
+        if online:
+            return str(online[0]["host_id"])
+        if time.monotonic() > deadline:
+            raise RuntimeError("no local host registered with the server")
+        time.sleep(1)
+
+
+def _claude_agent_id(client: httpx.Client) -> str | None:
+    for agent in client.get("/v1/agents").json().get("data", []):
+        if agent.get("name") == CLAUDE_AGENT_NAME:
+            return str(agent["id"])
+    return None
+
+
+def ensure_project(base_url: str, name: str, workspace: Path) -> str:
+    """Create the project if missing; return a one-line status."""
+    with httpx.Client(base_url=base_url, timeout=15.0) as client:
+        projects = client.get("/v1/projects", params={"limit": 200}).json().get("data", [])
+        if any(project.get("name") == name for project in projects):
+            return f"project '{name}' already exists"
+        config: dict[str, object] = {
+            "host_id": _wait_for_local_host(client),
+            "workspace": str(workspace),
+            "use_worktree": False,
+            "icon": "🗂️",
+        }
+        agent_id = _claude_agent_id(client)
+        if agent_id:
+            config["agent_id"] = agent_id
+        response = client.post("/v1/projects", json={"name": name, "config": config})
+        response.raise_for_status()
+        return f"created project '{name}' in {workspace}"
+
+
+def main() -> int:
+    workspace = Path(os.environ.get("OMNIGENT_SLIM_WORKSPACE", "workspace")).expanduser().resolve()
+    workspace.mkdir(parents=True, exist_ok=True)
+    try:
+        print(
+            ensure_project(
+                os.environ.get("OMNIGENT_SLIM_URL", DEFAULT_URL).rstrip("/"),
+                os.environ.get("OMNIGENT_SLIM_PROJECT", DEFAULT_PROJECT),
+                workspace,
+            )
+        )
+    except Exception as error:  # report and carry on: the UI still works without it
+        print(f"could not set up the project: {error}", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

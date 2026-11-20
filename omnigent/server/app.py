@@ -140,6 +140,7 @@ from omnigent.server.routes.dictation import create_dictation_router
 from omnigent.server.routes.extension_assets import create_extension_assets_router
 from omnigent.server.routes.extensions import create_extensions_router
 from omnigent.server.routes.harnesses import create_harnesses_router
+from omnigent.server.routes.slim_library import create_slim_library_router
 from omnigent.server.routes.imports import create_imports_router
 from omnigent.server.routes.inbox_items import create_inbox_items_router
 from omnigent.server.routes.memory import create_memory_router
@@ -4411,6 +4412,11 @@ def create_app(
         tags=["harnesses"],
     )
     app.include_router(
+        create_slim_library_router(auth_provider=auth_provider),
+        prefix="/v1",
+        tags=["slim"],
+    )
+    app.include_router(
         create_extensions_router(
             resolved_extension_state,
             bundles=extension_bundles,
@@ -6226,6 +6232,25 @@ class _RangeAwareGZipMiddleware(GZipMiddleware):
         await super().__call__(scope, receive, send)
 
 
+#: Same-origin only: scripts, styles, fonts, images, frames and fetches all
+#: come from this server (or inline / data: / blob:), never another host.
+SLIM_WEB_UI_CSP = "; ".join(
+    (
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: blob:",
+        "font-src 'self' data:",
+        "media-src 'self' data: blob:",
+        "connect-src 'self'",
+        "frame-src 'self' data: blob:",
+        "worker-src 'self' blob:",
+        "form-action 'self'",
+        "base-uri 'self'",
+    )
+)
+
+
 def _apply_web_ui_cache_headers(response: Response, path: str) -> Response:
     """
     Apply browser cache policy for the bundled web UI static mount.
@@ -6244,6 +6269,10 @@ def _apply_web_ui_cache_headers(response: Response, path: str) -> Response:
     """
     content_type = response.headers.get("content-type")
     media_type = content_type.partition(";")[0].lower() if content_type is not None else None
+    if media_type == "text/html" or path in {"", ".", "index.html"}:
+        # omnigent-slim: the browser may load nothing from off this server. The
+        # policy also covers HTML artifacts, whose srcdoc frames inherit it.
+        response.headers["Content-Security-Policy"] = SLIM_WEB_UI_CSP
     if path.startswith("assets/"):
         response.headers["Cache-Control"] = _WEB_UI_ASSET_CACHE_CONTROL
     elif path == "sw.js":

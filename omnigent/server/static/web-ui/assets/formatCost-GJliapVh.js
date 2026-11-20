@@ -1,0 +1,1 @@
+function e(e){return e>0&&e<.01?`<$0.01`:`$${e.toFixed(2)}`}function t(e){return new Intl.NumberFormat(void 0,{notation:`compact`,maximumFractionDigits:1}).format(e)}export{t as n,e as t};

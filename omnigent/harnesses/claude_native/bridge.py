@@ -3003,7 +3003,8 @@ def build_hook_settings(
     # Project ``.mcp.json`` servers raise a blocking "New MCP server found"
     # approval dialog in every new directory (each worktree included). It
     # fires no hook either, so pre-approve them like the other consent gates.
-    settings["enableAllProjectMcpServers"] = True
+    # omnigent-slim: project ``.mcp.json`` servers are NOT pre-approved. Claude
+    # asks in the session's terminal tab, where the user approves or declines.
     # Auto mode offers "Teach auto mode about your environment?" after a turn;
     # only the terminal can answer it, so web-UI messages stall behind it. This
     # Claude Code switch turns off that offer and its /auto-mode-setup wizard.

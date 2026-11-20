@@ -1,0 +1,1 @@
+var e=[{id:`fable`,label:`Fable`},{id:`opus`,label:`Opus`},{id:`sonnet`,label:`Sonnet`},{id:`sonnet_5`,label:`Sonnet 5`},{id:`haiku`,label:`Haiku`}];export{e as t};

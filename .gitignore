@@ -67,7 +67,7 @@ run-omnigents.sh
 *.db-wal
 *.db-shm
 # Persisted artifacts from ad-hoc runs.
-artifacts/
+/artifacts/
 .tmp-codex-parity-target/
 
 # omnidev (dev pod supervisor) Rust build output. Pod state lives outside the
@@ -84,7 +84,7 @@ output/playwright/
 tests/e2e_ui/visual/snapshot_failures/
 
 # Web build outputs. Regenerated on demand; never committed.
-omnigent/server/static/web-ui/
+# omnigent-slim commits the built web UI so it runs with no build step.
 web/storybook-static/
 
 # macOS Finder metadata — never useful to commit.
@@ -104,3 +104,10 @@ deploy/databricks/.databricks/
 web/package-lock.json
 # Generated demo recordings belong in PR evidence or artifacts, not Git.
 recordings/
+
+# omnigent-slim
+!workspace/.claude/
+!workspace/.claude/**
+.runtime/
+workspace/artifacts/*
+!workspace/artifacts/.gitkeep

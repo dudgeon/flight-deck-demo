@@ -1,0 +1,1 @@
+function e(e,t=!1){return t||e.nativeEvent.isComposing===!0||e.nativeEvent.keyCode===229}export{e as t};

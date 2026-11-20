@@ -8440,7 +8440,9 @@ def _build_claude_native_base_args(
     # or the joined ``--model=X`` form).
     if model_override and not any(arg == "--model" or arg.startswith("--model=") for arg in args):
         args.extend(("--model", model_override))
-    return tuple(args)
+    from omnigent.slim_policy import enforce_claude_permission_args
+
+    return tuple(enforce_claude_permission_args(args))
 
 
 def _claude_terminal_env_unset(

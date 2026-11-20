@@ -47,7 +47,10 @@ const getRecognitionCtor = (): SpeechRecognitionCtor | null => {
     SpeechRecognition?: SpeechRecognitionCtor;
     webkitSpeechRecognition?: SpeechRecognitionCtor;
   };
-  return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
+  // omnigent-slim: browser speech recognition streams audio to the browser
+  // vendor's cloud service, so it is never used. Only an on-server engine is.
+  void w;
+  return null;
 };
 
 const getDefaultDictationLang = (): string => {

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Roadmap: now, next, later</title>
+<meta name="description" content="Initiatives in Now / Next / Later columns. Drag cards between columns, then send the new order back to Claude.">
+<style>
+  :root { --bg:#fff; --fg:#1d1d1f; --muted:#6e6e73; --line:#e5e5ea; --col:#f4f4f6; --card:#fff; --accent:#2f6feb; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#141414; --fg:#f2f2f2; --muted:#a1a1a6; --line:#2c2c2e; --col:#1b1b1d; --card:#232325; --accent:#6ea0ff; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.45 -apple-system, system-ui, "Segoe UI", sans-serif; }
+  main { padding:28px 20px 48px; }
+  h1 { font-size:22px; margin:0 0 4px; } .meta { color:var(--muted); font-size:13px; margin-bottom:18px; }
+  .board { display:grid; grid-template-columns:repeat(3, minmax(220px, 1fr)); gap:12px; overflow-x:auto; }
+  .col { background:var(--col); border:1px solid var(--line); border-radius:10px; padding:10px; min-height:200px; }
+  .col h2 { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:2px 4px 10px; }
+  .col.over { outline:2px dashed var(--accent); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:9px 10px; margin-bottom:8px; cursor:grab; }
+  .card .t { font-weight:600; } .card .d { color:var(--muted); font-size:13px; margin-top:2px; }
+  .tag { display:inline-block; font-size:11px; color:var(--accent); border:1px solid var(--accent); border-radius:99px; padding:0 7px; margin-top:6px; }
+  .actions { margin-top:16px; }
+  button { font:inherit; font-size:13px; border:1px solid var(--line); background:var(--bg); color:var(--fg); border-radius:7px; padding:6px 12px; cursor:pointer; }
+  button:hover { border-color:var(--accent); color:var(--accent); }
+</style>
+</head>
+<body>
+<!--
+  Template: Now / Next / Later roadmap.
+  Claude: copy into artifacts/ and change ONLY the JSON in #artifact-data.
+-->
+<script type="application/json" id="artifact-data">
+{
+  "title": "Product roadmap",
+  "subtitle": "Quarter, team, or theme",
+  "columns": {
+    "Now": [ { "title": "Initiative", "detail": "Why it matters / outcome", "tag": "Theme" } ],
+    "Next": [ { "title": "Initiative", "detail": "", "tag": "" } ],
+    "Later": [ { "title": "Initiative", "detail": "", "tag": "" } ]
+  }
+}
+</script>
+<main id="app"></main>
+<script>
+  const data = JSON.parse(document.getElementById("artifact-data").textContent);
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+  let dragging = null;
+  function render() {
+    document.getElementById("app").innerHTML = `
+      <h1>${esc(data.title)}</h1><div class="meta">${esc(data.subtitle)}</div>
+      <div class="board">${Object.entries(data.columns).map(([name, cards]) => `
+        <div class="col" data-col="${esc(name)}"><h2>${esc(name)} · ${cards.length}</h2>
+          ${cards.map((c, i) => `<div class="card" draggable="true" data-col="${esc(name)}" data-i="${i}">
+            <div class="t">${esc(c.title)}</div>${c.detail ? `<div class="d">${esc(c.detail)}</div>` : ""}${c.tag ? `<span class="tag">${esc(c.tag)}</span>` : ""}
+          </div>`).join("")}
+        </div>`).join("")}
+      </div>
+      <div class="actions"><button id="send">Send this order to Claude</button></div>`;
+    document.querySelectorAll(".card").forEach((el) => el.addEventListener("dragstart", () => { dragging = { col: el.dataset.col, i: Number(el.dataset.i) }; }));
+    document.querySelectorAll(".col").forEach((col) => {
+      col.addEventListener("dragover", (e) => { e.preventDefault(); col.classList.add("over"); });
+      col.addEventListener("dragleave", () => col.classList.remove("over"));
+      col.addEventListener("drop", (e) => {
+        e.preventDefault();
+        if (!dragging) return;
+        const [card] = data.columns[dragging.col].splice(dragging.i, 1);
+        data.columns[col.dataset.col].push(card);
+        dragging = null;
+        render();
+      });
+    });
+    document.getElementById("send").addEventListener("click", () => {
+      const summary = Object.entries(data.columns).map(([name, cards]) => `${name}: ${cards.map((c) => c.title).join("; ") || "(empty)"}`).join("\n");
+      window.omnigent?.prompt(`I rearranged the "${data.title}" roadmap:\n${summary}\nUpdate the artifact to match and flag any dependency problems this creates.`);
+    });
+  }
+  render();
+</script>
+</body>
+</html>

@@ -1,3 +1,4 @@
+import { ARTIFACT_PROMPT_EVENT, type ArtifactPromptDetail } from "@/lib/artifactBridge";
 import { clearLocalReviewContexts, usePendingLocalReviewContexts } from "@/lib/localReviewContext";
 import { buildOutgoingMessage, carriesMessageContext } from "@/lib/outgoingComposerMessage";
 import { SelectionPopup } from "@/components/chat/SelectionPopup";
@@ -1648,6 +1649,15 @@ const MainAgentSurface = memo(function MainAgentSurfaceImpl({
   // out of streaming-frame re-renders.
 
   const composerRef = useRef<ComposerHandle>(null);
+  // omnigent-slim: text an HTML artifact hands over with `omnigent.prompt()`.
+  useEffect(() => {
+    const onArtifactPrompt = (event: Event) => {
+      const detail = (event as CustomEvent<ArtifactPromptDetail>).detail;
+      if (detail?.text) composerRef.current?.appendDraftText(detail.text);
+    };
+    window.addEventListener(ARTIFACT_PROMPT_EVENT, onArtifactPrompt);
+    return () => window.removeEventListener(ARTIFACT_PROMPT_EVENT, onArtifactPrompt);
+  }, []);
   // Stable, so the memoized transcript doesn't re-render when the composer does.
   const editSentMessage = useCallback(
     (message: SentMessage) => composerRef.current?.editSentMessage(message),
@@ -2035,6 +2045,8 @@ export function ConversationLoadError({
 
 interface ComposerHandle {
   appendReplyQuote: (text: string) => void;
+  /** omnigent-slim: add plain text (e.g. from an artifact) to the end of the draft. */
+  appendDraftText: (text: string) => void;
   /** Load a sent message into the composer, confirming before replacing a draft. */
   editSentMessage: (message: SentMessage) => void;
   startSideChat: (selectedText: string) => void;
@@ -3921,6 +3933,14 @@ function ComposerImpl(
       dismissMention();
       resetCursor();
       recallingRef.current = false;
+    },
+    appendDraftText(text) {
+      const blocked = disabled || isReadOnly || (unreachable && !sendReconnectsArca);
+      if (blocked || composerLockedByBtw || !text.trim()) return;
+      editText(null, (current) => (current.trim() ? `${current.trimEnd()}\n\n${text}` : text));
+      dirtyRef.current = true;
+      setCommandError(null);
+      if (!isMobileRef.current) textareaRef.current?.focus({ preventScroll: true });
     },
     editSentMessage(message) {
       editSentMessage(message);
