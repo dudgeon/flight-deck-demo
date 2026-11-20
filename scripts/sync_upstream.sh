@@ -22,13 +22,16 @@ git diff --quiet && git diff --cached --quiet || { echo "commit or stash your ch
 git remote get-url upstream >/dev/null 2>&1 || git remote add upstream "$UPSTREAM_URL"
 
 old=$(cat UPSTREAM)
-git fetch --quiet --no-tags --depth=1 upstream "$old"
-git fetch --quiet --no-tags --depth=1 upstream "$target"
-new=$(git rev-parse FETCH_HEAD)
+case $target in
+    *[!0-9a-f]*|"") new=$(git ls-remote upstream "$target" "refs/tags/$target" | head -1 | cut -f1) ;;
+    *) new=$target ;;
+esac
+[ -n "$new" ] || { echo "upstream has no ref '$target'" >&2; exit 1; }
 if [ "$old" = "$new" ]; then
     echo "Already at upstream $new."
     exit 0
 fi
+git fetch --quiet --no-tags --depth=1 upstream "$old" "$new"
 
 # Paths omnigent-slim removed; upstream changes to them are not brought over.
 set -- \
