@@ -159,3 +159,17 @@ Copyright (c) 2011-2012 by Selectel. Copyright (c) 2012-2017 by pyte authors and
 
 psycopg - https://pypi.org/project/psycopg/
 Copyright (C) 2003-2019 Federico Di Gregorio. Copyright (C) 2020-2021 The Psycopg Team.
+
+________________
+
+omnigent-slim
+
+This repository is a modified copy of Omnigent (https://github.com/omnigent-ai/omnigent),
+taken at commit 068c6a9a053b87d4dcafe3576d62b8c63602d82d. The changes are recorded in
+its git history: parts of the project were removed, an offline network guard and
+permission rules were added, and a library of canned sessions and artifact templates
+was added. It is not affiliated with or endorsed by Databricks.
+
+vendor/ contains unmodified third-party distributions (Python packages from PyPI,
+a CPython build from python-build-standalone, and tmux built from source), each
+under its own license. The claude-agent-sdk wheel has its bundled CLI binary removed.
