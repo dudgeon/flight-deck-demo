@@ -11,7 +11,9 @@ runs offline. Read README.md first. These rules keep it usable on the work Mac:
 - **Never bypass Claude Code permissions.** All launches go through
   `omnigent/slim_policy.py`. Don't add `--dangerously-skip-permissions`,
   `bypassPermissions`, `dontAsk` or `auto`, and don't pre-approve tools beyond
-  `ui_open_file`.
+  `ui_open_file` (allowed in `omnigent/harnesses/claude_native/bridge.py`; a
+  project `.claude/settings.json` allow list makes Claude Code re-ask for
+  folder trust, which a web-driven session cannot answer).
 - **The built web UI is committed** in `omnigent/server/static/web-ui/`. After
   changing `web/src/`, run `pnpm --filter web run build`, delete `*.map`, and
   commit the output.

@@ -2987,6 +2987,8 @@ def build_hook_settings(
         (
             "mcp__omnigent__sys_scheduled_task_create",
             "mcp__omnigent__sys_scheduled_task_update",
+            # omnigent-slim: only shows a workspace file in the viewer.
+            "mcp__omnigent__ui_open_file",
         )
     )
     permissions["allow"] = allow_rules
