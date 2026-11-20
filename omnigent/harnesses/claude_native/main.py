@@ -1758,6 +1758,11 @@ def build_native_claude_terminal_env(
                 f"carries a raw {name}; the credential must reach "
                 "Claude Code via the helper, not the environment."
             )
+    # omnigent-slim: Claude Code skips telemetry, error reporting and
+    # auto-update traffic. Set the variable to 0 in your shell to opt out.
+    terminal_env["CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"] = os.environ.get(
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "1"
+    )
     return terminal_env
 
 
