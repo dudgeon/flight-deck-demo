@@ -1,1 +1,0 @@
-"""Pi-native adapter tests."""

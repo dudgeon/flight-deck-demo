@@ -1,1 +1,0 @@
-"""Antigravity-native adapter tests."""
