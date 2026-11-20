@@ -131,6 +131,31 @@ vendor/scripts/build_tmux.sh     # tmux
 
 Then commit the results. `build_vendor.sh` needs `uv`, `node` and `pnpm`.
 
+## Staying close to upstream Omnigent
+
+omnigent-slim is meant to stay forward compatible with Omnigent, so work done
+here carries over to apps built on it:
+
+- Sessions, projects, agents, the Claude Code terminal harness, its MCP bridge
+  and hooks, and the REST API are upstream's, unchanged.
+- Artifacts are ordinary workspace files opened with Omnigent's own
+  `ui_open_file` tool. Canned sessions open the composer through Omnigent's own
+  `/?project=…&prompt=…` link.
+- Edits to upstream files are small and marked with `omnigent-slim:` comments.
+  `git grep -n "omnigent-slim:"` lists them. New behavior lives in new files:
+  `omnigent/_offline_guard.py`, `omnigent/slim_policy.py`,
+  `omnigent/slim_bootstrap.py`, `omnigent/server/routes/slim_library.py`,
+  `web/src/lib/artifactBridge.ts` and `web/src/pages/LibraryPage.tsx`.
+- `UPSTREAM` records the upstream commit this tree matches.
+  `scripts/sync_upstream.sh` brings newer upstream changes in on a branch (run
+  it on a machine with internet, then rebuild the web UI and test).
+
+The Library page is part of the web UI, not an Omnigent extension: version 1 of
+Omnigent's extension API (`sdks/web-extension`) can't read server data or open
+the composer with a prompt, so an extension would need more core changes, not
+fewer. If the extension API grows those two abilities, the Library can move
+into one.
+
 ## What was removed from upstream
 
 The iOS, Android and Electron apps, the test suites, docs, CI workflows,
