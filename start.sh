@@ -41,7 +41,7 @@ if [ ! -x "$VENV/bin/python" ] || [ "$(cat "$RUNTIME/stamp" 2>/dev/null)" != "$s
         PIP_NO_INDEX=1 PIP_DISABLE_PIP_VERSION_CHECK=1 OMNIGENT_SKIP_WEB_UI=true \
             "$VENV/bin/python" -m pip install --quiet --no-index --find-links "$ROOT/vendor/wheels" "$@"
     }
-    pip_install setuptools wheel
+    pip_install setuptools wheel "hatchling>=1.27,<1.32.0"
     pip_install --no-build-isolation -e "$ROOT/sdks/python-client" -e "$ROOT/sdks/ui" -e "$ROOT"
     echo "$stamp" > "$RUNTIME/stamp"
 fi
