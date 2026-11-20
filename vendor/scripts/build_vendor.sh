@@ -44,6 +44,7 @@ uv export --frozen --no-dev --no-emit-project --no-emit-local --no-hashes \
     --format requirements-txt > "$WORK/requirements.txt"
 echo "setuptools>=68" >> "$WORK/requirements.txt"
 echo "wheel" >> "$WORK/requirements.txt"
+echo "editables" >> "$WORK/requirements.txt"
 echo "hatchling>=1.27,<1.32.0" >> "$WORK/requirements.txt"  # build backend of the sdks/ packages
 rm -f vendor/wheels/*.whl
 for platform in "macosx_${MACOS_TARGET}_arm64"; do
