@@ -1,0 +1,231 @@
+"""Tests for conversation entity helpers."""
+
+from __future__ import annotations
+
+import pytest
+
+from omnigent.entities.conversation import (
+    ConversationItem,
+    MessageData,
+    humanize_mention_markers,
+    synthesize_conversation_title,
+)
+
+
+def _message_item(created_by: str | None) -> ConversationItem:
+    """Build a persisted user-message item with the given author."""
+    return ConversationItem(
+        id="msg_1",
+        type="message",
+        status="completed",
+        response_id="resp_1",
+        created_at=0,
+        data=MessageData(
+            role="user",
+            content=[{"type": "input_text", "text": "hi"}],
+        ),
+        created_by=created_by,
+    )
+
+
+def test_to_api_dict_exposes_created_by_when_set() -> None:
+    """A human-authored item surfaces ``created_by`` in the API shape."""
+    api = _message_item("alice@example.com").to_api_dict()
+    assert api["created_by"] == "alice@example.com"
+
+
+def test_to_api_dict_omits_created_by_when_none() -> None:
+    """Agent/system items omit ``created_by`` so they stay distinguishable."""
+    api = _message_item(None).to_api_dict()
+    assert "created_by" not in api
+
+
+def test_to_api_dict_exposes_interrupted_assistant_marker() -> None:
+    """Interrupted assistant items surface the reload marker in API shape."""
+    item = ConversationItem(
+        id="msg_interrupted",
+        type="message",
+        status="completed",
+        response_id="codex_turn_123",
+        created_at=0,
+        data=MessageData(
+            role="assistant",
+            agent="codex-native-ui",
+            interrupted=True,
+            content=[{"type": "output_text", "text": "partial answer"}],
+        ),
+    )
+
+    api = item.to_api_dict()
+
+    assert api["interrupted"] is True
+    assert api["model"] == "codex-native-ui"
+
+
+@pytest.mark.parametrize(
+    "content,expected",
+    [
+        ([{"type": "input_text", "text": "Hello"}], "Hello"),
+        ([{"type": "input_text", "text": "  hi   there  "}], "hi there"),
+        ([{"type": "input_text", "text": "line one\nline two"}], "line one line two"),
+        (
+            [
+                {"type": "input_text", "text": "first"},
+                {"type": "input_text", "text": "second"},
+            ],
+            "first second",
+        ),
+        (
+            [
+                {"type": "input_file", "file_id": "file_123"},
+                {"type": "input_text", "text": "real prompt"},
+            ],
+            "real prompt",
+        ),
+        ([], None),
+        ([{"type": "input_file", "file_id": "file_123"}], None),
+        ([{"type": "input_text", "text": "   \n  "}], None),
+        ([{"type": "input_text", "text": "a" * 100}], "a" * 59 + "…"),
+        # claude-native attachment marker (claude_native_executor
+        # prepends "[Attached: <path>]\n\n<text>") — the marker line is
+        # dropped so the title is the user's text, not a temp-file path.
+        (
+            [
+                {
+                    "type": "input_text",
+                    "text": (
+                        "[Attached: /tmp/omnigent/claude-native/0a1b/uploads/shot.png]"
+                        "\n\nfix this layout bug"
+                    ),
+                }
+            ],
+            "fix this layout bug",
+        ),
+        # codex-native binary-file marker ("[Attached file: <path>]")
+        # arrives as its own text block alongside the user's text.
+        (
+            [
+                {"type": "input_text", "text": "[Attached file: /tmp/omnigent/u/report.bin]"},
+                {"type": "input_text", "text": "summarize this"},
+            ],
+            "summarize this",
+        ),
+        # Image-only message: every line is a marker, so no title —
+        # the next user message seeds it instead of a temp-file path.
+        (
+            [{"type": "input_text", "text": "[Attached: /tmp/omnigent/u/img.png]"}],
+            None,
+        ),
+        # A workspace file mention is part of the prompt, even alone on a
+        # line or several to a line; only absolute upload paths drop out.
+        (
+            [{"type": "input_text", "text": "[Attached: README.md]"}],
+            "@README.md",
+        ),
+        (
+            [{"type": "input_text", "text": "[Attached: a.ts] vs [Attached: b.ts]"}],
+            "@a.ts vs @b.ts",
+        ),
+        (
+            [{"type": "input_text", "text": "review this\n[Attached: src/app.ts]"}],
+            "review this @src/app.ts",
+        ),
+        # Composer "@" mentions sit inline: they read as "@name" in the
+        # title and the session tool hint is dropped.
+        (
+            [
+                {
+                    "type": "input_text",
+                    "text": 'compare [Session: "Fix CI" id=s_1 subagent=no] with '
+                    "[Attached: x.png]\n\n[Tagged sessions: read with sys_session_get_history]",
+                }
+            ],
+            "compare @Fix CI with @x.png",
+        ),
+        # Failed-attachment marker (native_attachments'
+        # unresolved_attachment_marker) is likewise dropped from titles.
+        (
+            [
+                {
+                    "type": "input_text",
+                    "text": ("[Attachment photo.png could not be loaded]\n\nfix this layout bug"),
+                }
+            ],
+            "fix this layout bug",
+        ),
+        # Failed-attachment-only message: nothing usable remains → no
+        # title, same as the image-only case above.
+        (
+            [{"type": "input_text", "text": "[Attachment file_img could not be loaded]"}],
+            None,
+        ),
+        # Bracketed filenames are sanitized by unresolved_attachment_marker
+        # ("shot [final].png" → "shot _final_.png"), so the marker still
+        # matches and is dropped from the title.
+        (
+            [
+                {
+                    "type": "input_text",
+                    "text": "[Attachment shot _final_.png could not be loaded]\n\nfix this",
+                }
+            ],
+            "fix this",
+        ),
+    ],
+)
+def test_synthesize_conversation_title(
+    content: list[dict[str, object]],
+    expected: str | None,
+) -> None:
+    """Title synthesis collapses, joins, truncates, and drops attachment markers."""
+    assert synthesize_conversation_title(content) == expected
+
+
+def test_synthesize_conversation_title_respects_custom_limit() -> None:
+    """Custom ``limit`` is honored."""
+    content = [{"type": "input_text", "text": "a" * 50}]
+    assert synthesize_conversation_title(content, limit=10) == "a" * 9 + "…"
+
+
+def test_humanize_mention_markers_reads_markers_as_names() -> None:
+    text = (
+        'Ask [Session: "Fix CI" id=s_1 subagent=yes] about [Attached file: src/a.py:3-9] '
+        "and [Attached: /tmp/upload.png]\n\n[Tagged sessions: read with sys_session_get_history]"
+    )
+    # Absolute paths are uploads shown as file blocks, so they drop out.
+    assert humanize_mention_markers(text) == "Ask @Fix CI about @src/a.py:3-9 and "
+
+
+def test_humanize_mention_markers_keeps_a_typed_session_marker_without_hint() -> None:
+    # Only composer-tagged messages end with the hint; this is the user's text.
+    text = 'why is [Session: "x" id=y subagent=no] inline?'
+    assert humanize_mention_markers(text) == text
+
+
+@pytest.mark.timeout(30)
+@pytest.mark.parametrize(
+    "text",
+    [
+        " " * 200_000 + "x",
+        "[Attached:" * 50_000,
+        "[Attached:" + " " * 200_000,
+        "[Tagged sessions:" * 20_000 + "x",
+        '[Session: "' + "a" * 200_000,
+    ],
+    ids=[
+        "spaces",
+        "unclosed-attached",
+        "attached-then-spaces",
+        "unclosed-hint",
+        "unclosed-session",
+    ],
+)
+def test_humanize_mention_markers_stays_linear_on_malformed_markers(text: str) -> None:
+    # Patterns that rescan after an unclosed "[" took seconds on these; the
+    # generous timeout is the guard rather than a tight timing assertion.
+    assert humanize_mention_markers(text) == text
+
+
+def test_humanize_mention_markers_keeps_a_hint_typed_mid_message() -> None:
+    text = "why does [Tagged sessions: read] show up here?"
+    assert humanize_mention_markers(text) == text

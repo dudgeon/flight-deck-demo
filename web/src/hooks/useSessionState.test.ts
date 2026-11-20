@@ -1,0 +1,153 @@
+import { describe, expect, it } from "vitest";
+import { getSessionState, isSessionWorking } from "./useSessionState";
+import type { Conversation } from "@/hooks/useConversations";
+
+type SessionFields = Pick<
+  Conversation,
+  "status" | "pending_elicitations_count" | "background_work_running" | "blocked_on"
+>;
+
+function conv(partial: Partial<SessionFields>): SessionFields {
+  return partial;
+}
+
+describe("getSessionState — priority composition", () => {
+  it("returns awaiting with count when pending_elicitations_count > 0", () => {
+    // Awaiting beats Running — the elicitation is the actionable signal.
+    expect(getSessionState(conv({ status: "running", pending_elicitations_count: 3 }))).toEqual({
+      kind: "awaiting",
+      count: 3,
+    });
+  });
+
+  it("surfaces count=1 distinctly so callers can choose label/tooltip wording", () => {
+    expect(getSessionState(conv({ pending_elicitations_count: 1 }))).toEqual({
+      kind: "awaiting",
+      count: 1,
+    });
+  });
+
+  it("returns running for conversation.status = running", () => {
+    expect(getSessionState(conv({ status: "running" }))).toEqual({
+      kind: "running",
+    });
+  });
+
+  it("returns null when nothing is happening", () => {
+    expect(getSessionState(conv({ status: "idle" }))).toBeNull();
+  });
+
+  it("shows a turn parked on a terminal prompt as awaiting, after web prompts", () => {
+    expect(getSessionState(conv({ status: "running", blocked_on: "dialog open" }))).toEqual({
+      kind: "awaiting",
+      count: 0,
+      terminalReason: "dialog open",
+    });
+    expect(
+      getSessionState(
+        conv({ status: "running", blocked_on: "permission prompt", pending_elicitations_count: 1 }),
+      ),
+    ).toEqual({ kind: "awaiting", count: 1 });
+    // A reason left on a session that is no longer running is not a prompt.
+    expect(getSessionState(conv({ status: "idle", blocked_on: "dialog open" }))).toBeNull();
+  });
+
+  it("shows an ended turn with a running background shell as working", () => {
+    expect(getSessionState(conv({ status: "idle", background_work_running: true }))).toEqual({
+      kind: "running",
+      background: true,
+    });
+    // A recovered runner that reports its shells shows them.
+    expect(
+      getSessionState(
+        conv({ status: "failed", background_work_running: true }),
+        "recovered_disconnect",
+      ),
+    ).toEqual({ kind: "running", background: true });
+  });
+
+  it("ranks prompts, turns, disconnects and errors ahead of background shells", () => {
+    const shells = { background_work_running: true };
+    expect(getSessionState(conv({ ...shells, pending_elicitations_count: 1 }))).toEqual({
+      kind: "awaiting",
+      count: 1,
+    });
+    expect(getSessionState(conv({ ...shells, status: "running" }))).toEqual({ kind: "running" });
+    expect(getSessionState(conv({ ...shells, status: "idle" }), "disconnected")).toEqual({
+      kind: "disconnected",
+    });
+    expect(getSessionState(conv({ ...shells, status: "idle" }), "error")).toEqual({
+      kind: "error",
+    });
+  });
+
+  it("flags a latest-message error even when the session has settled to idle", () => {
+    expect(getSessionState(conv({ status: "idle" }), "error")).toEqual({ kind: "error" });
+  });
+
+  it("keeps running and approval states ahead of a previous message error", () => {
+    expect(getSessionState(conv({ status: "running" }), "error")).toEqual({ kind: "running" });
+    expect(
+      getSessionState(conv({ status: "idle", pending_elicitations_count: 1 }), "error"),
+    ).toEqual({ kind: "awaiting", count: 1 });
+  });
+
+  it("flags status-only failures without a latest-activity label", () => {
+    expect(getSessionState(conv({ status: "failed" }))).toEqual({ kind: "error" });
+  });
+
+  it("renders a runner disconnect neutrally and clears stale failed status after recovery", () => {
+    expect(getSessionState(conv({ status: "failed" }), "disconnected")).toEqual({
+      kind: "disconnected",
+    });
+    expect(getSessionState(conv({ status: "failed" }), "recovered_disconnect")).toBeNull();
+  });
+
+  it("follows status updates while the labelled error is kept", () => {
+    const conversation = conv({ status: "idle" });
+    expect(getSessionState(conversation, "error")).toEqual({ kind: "error" });
+    conversation.status = "running";
+    expect(getSessionState(conversation, "error")).toEqual({ kind: "running" });
+    conversation.status = "idle";
+    expect(getSessionState(conversation, null)).toBeNull();
+  });
+
+  it("treats failed + pending elicitation as awaiting (the actionable signal)", () => {
+    expect(getSessionState(conv({ status: "failed", pending_elicitations_count: 2 }))).toEqual({
+      kind: "awaiting",
+      count: 2,
+    });
+  });
+
+  it("no longer reads runner liveness — a running session is running regardless", () => {
+    // Liveness moved to the open-session view (useSessionLiveness); the
+    // sidebar badge state is purely activity-based now, so there is no
+    // disconnected state to return.
+    expect(getSessionState(conv({ status: "running" }))).toEqual({
+      kind: "running",
+    });
+  });
+
+  it("returns null when conversation is null (missing record)", () => {
+    expect(getSessionState(null)).toBeNull();
+  });
+
+  it("returns null when conversation status is undefined", () => {
+    // Older sessions whose server payload predates the `status` field.
+    expect(getSessionState(conv({}))).toBeNull();
+  });
+});
+
+describe("isSessionWorking", () => {
+  it.each([
+    [{ status: "running" }, true],
+    [{ status: "idle", pending_elicitations_count: 1 }, true],
+    [{ status: "idle", background_work_running: true }, true],
+    [{ status: "failed", background_work_running: true }, true],
+    [{ status: "idle", pending_elicitations_count: 0, background_work_running: false }, false],
+    [{ status: "failed" }, false],
+    [{}, false],
+  ] satisfies [SessionFields, boolean][])("%o -> %s", (fields, expected) => {
+    expect(isSessionWorking(conv(fields))).toBe(expected);
+  });
+});

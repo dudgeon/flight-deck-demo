@@ -1,0 +1,255 @@
+import {
+  isLocalReviewComment,
+  sameLocalReviewAnchor,
+  type LocalReviewAnchor,
+} from "@/lib/localReviewComments";
+import { removeLocalReviewContext, updateLocalReviewContext } from "@/lib/localReviewContext";
+import { useServerInfo } from "@/lib/CapabilitiesContext";
+import { isFeatureEnabled } from "@/lib/capabilities";
+// TanStack Query hooks for the comments API:
+// POST/GET/PATCH/DELETE /v1/sessions/{id}/comments
+// POST /v1/sessions/{id}/comments/send
+//
+// `useSendCommentsToAgent` calls `useChatStore.send()` directly on success
+// so the message is submitted immediately without requiring a manual send.
+// It requires a non-null `agentId`; for the FileViewer case where an
+// agent may not be registered, see `CommentSenderProvider` /
+// `useOptionalCommentSender` in `CommentSenderContext.tsx`.
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { authenticatedFetch } from "@/lib/identity";
+import { useChatStore } from "@/store/chatStore";
+
+export interface Comment {
+  id: string;
+  conversation_id: string;
+  path: string;
+  /** 0-based absolute character offset (inclusive) within the file. */
+  start_index: number;
+  /** 0-based absolute character offset (exclusive) within the file. */
+  end_index: number;
+  body: string;
+  status: "draft" | "addressed";
+  created_at: number;
+  /**
+   * Unix **microseconds** of the last body/status mutation (set at creation
+   * when never edited). Used for change detection, not display; divide by
+   * 1000 before passing to `new Date()` if it's ever rendered.
+   */
+  updated_at: number;
+  anchor_content: string | null;
+  created_by: string | null;
+  anchor_metadata?: LocalReviewAnchor | null;
+}
+
+// ── Query helpers ────────────────────────────────────────────────────────────
+
+// Exported for `useCommentInbox`, which mounts the same queries for
+// every session with comments — sharing this key keeps its cache and
+// the SessionUpdatesProvider fingerprint invalidation in sync.
+export function commentsQueryKey(sessionId: string, path?: string) {
+  return path ? ["comments", sessionId, path] : ["comments", sessionId];
+}
+
+export async function fetchComments(
+  sessionId: string,
+  path?: string,
+  signal?: AbortSignal,
+): Promise<Comment[]> {
+  const url = path
+    ? `/v1/sessions/${encodeURIComponent(sessionId)}/comments?path=${encodeURIComponent(path)}`
+    : `/v1/sessions/${encodeURIComponent(sessionId)}/comments`;
+  const pageUrl = `${url}${path ? "&" : "?"}include_pr_comments=true&limit=100`;
+  const comments: Comment[] = [];
+  let cursor: string | null = null;
+  do {
+    // eslint-disable-next-line no-await-in-loop -- Each page needs the previous cursor.
+    const res = await authenticatedFetch(
+      `${pageUrl}${cursor ? `&after=${encodeURIComponent(cursor)}` : ""}`,
+      { signal },
+    );
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    // eslint-disable-next-line no-await-in-loop -- Decode this page before following its cursor.
+    const page: Comment[] | { comments: Comment[]; next_cursor: string | null } = await res.json();
+    // Older servers ignore the opt-in and return their Files-only array.
+    if (Array.isArray(page)) return page;
+    comments.push(...page.comments);
+    cursor = page.next_cursor;
+  } while (cursor);
+  return comments.sort(
+    (left, right) => left.created_at - right.created_at || left.id.localeCompare(right.id),
+  );
+}
+
+// ── Hooks ────────────────────────────────────────────────────────────────────
+
+/**
+ * Fetch comments for a session, optionally filtered to a single file.
+ *
+ * Disabled when `sessionId` is falsy.
+ */
+export function useComments(sessionId: string | undefined, path?: string) {
+  return useQuery({
+    queryKey: commentsQueryKey(sessionId ?? "", path),
+    queryFn: ({ signal }) => fetchComments(sessionId!, path, signal),
+    enabled: !!sessionId,
+    staleTime: 2_000,
+  });
+}
+
+export interface AddCommentPayload {
+  path: string;
+  start_index: number;
+  end_index: number;
+  body: string;
+  anchor_content?: string | null;
+  anchor_metadata?: LocalReviewAnchor;
+}
+
+export async function createComment(
+  sessionId: string,
+  payload: AddCommentPayload,
+): Promise<Comment> {
+  const response = await authenticatedFetch(
+    `/v1/sessions/${encodeURIComponent(sessionId)}/comments`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    },
+  );
+  if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+  const comment: Comment = await response.json();
+  if (
+    payload.anchor_metadata &&
+    (!isLocalReviewComment(comment) ||
+      comment.conversation_id !== sessionId ||
+      comment.path !== payload.path ||
+      !sameLocalReviewAnchor(payload.anchor_metadata, comment.anchor_metadata!))
+  ) {
+    const message = "This server did not preserve the review location. Your draft is saved.";
+    // A mixed-version deployment may accept the request as an ordinary Files comment.
+    try {
+      if (!comment?.id) throw new Error("Missing comment ID");
+      await deleteComment(sessionId, comment.id);
+    } catch {
+      throw new Error(`${message} A comment may remain in Files; remove it before retrying.`);
+    }
+    throw new Error(`${message} Update the server before retrying.`);
+  }
+  return comment;
+}
+
+async function deleteComment(sessionId: string, commentId: string): Promise<void> {
+  const res = await authenticatedFetch(
+    `/v1/sessions/${encodeURIComponent(sessionId)}/comments/${encodeURIComponent(commentId)}`,
+    { method: "DELETE" },
+  );
+  if (!res.ok && res.status !== 404) throw new Error(`${res.status} ${res.statusText}`);
+}
+
+/** POST /v1/sessions/{id}/comments */
+export function useAddComment(sessionId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: AddCommentPayload) => createComment(sessionId, payload),
+    onSuccess: (comment) => {
+      // Invalidate both the full-session list and the per-file list
+      // so the sidebar and any per-file views refresh.
+      void queryClient.invalidateQueries({
+        queryKey: ["comments", sessionId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["comments", sessionId, comment.path],
+      });
+    },
+  });
+}
+
+/** DELETE /v1/sessions/{id}/comments/{commentId} */
+export function useDeleteComment(sessionId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (commentId: string) => deleteComment(sessionId, commentId),
+    onSuccess: (_, commentId) => {
+      removeLocalReviewContext(sessionId, commentId);
+      void queryClient.invalidateQueries({
+        queryKey: ["comments", sessionId],
+      });
+    },
+  });
+}
+
+/** PATCH /v1/sessions/{id}/comments/{commentId} */
+export function useUpdateComment(sessionId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { commentId: string; status?: string; body?: string }) => {
+      const { commentId, ...fields } = payload;
+      const res = await authenticatedFetch(
+        `/v1/sessions/${encodeURIComponent(sessionId)}/comments/${encodeURIComponent(commentId)}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(fields),
+        },
+      );
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      const comment: Comment = await res.json();
+      if (comment.id !== commentId || comment.conversation_id !== sessionId) {
+        throw new Error(
+          "This server returned a different comment. Your attached context is unchanged.",
+        );
+      }
+      return comment;
+    },
+    onSuccess: (comment) => {
+      updateLocalReviewContext(comment);
+      void queryClient.invalidateQueries({
+        queryKey: ["comments", sessionId],
+      });
+    },
+  });
+}
+
+/**
+ * POST /v1/sessions/{id}/comments/send
+ *
+ * Requires a non-null `agentId` — without an agent there is nowhere to
+ * dispatch the formatted message. Callers that may not have an agent
+ * should mount this hook only inside `CommentSenderProvider`, which
+ * skips the mutation entirely when no agent is registered. Consumers
+ * then read the sender via `useOptionalCommentSender()` and treat
+ * `null` as "no agent, hide the button".
+ */
+export function useSendCommentsToAgent(sessionId: string, agentId: string) {
+  const gridEnabled = isFeatureEnabled(useServerInfo(), "grid_sessions_display_ui");
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { comment_ids: string[]; instruction?: string }) => {
+      const res = await authenticatedFetch(
+        `/v1/sessions/${encodeURIComponent(sessionId)}/comments/send`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        },
+      );
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      return (await res.json()) as {
+        formatted_message: string;
+        sent_comment_ids: string[];
+      };
+    },
+    onSuccess: (data) => {
+      if (gridEnabled)
+        void useChatStore
+          .getState()
+          .send(data.formatted_message, agentId, undefined, { pinnedConversationId: sessionId });
+      else void useChatStore.getState().send(data.formatted_message, agentId);
+      void queryClient.invalidateQueries({
+        queryKey: ["comments", sessionId],
+      });
+    },
+  });
+}

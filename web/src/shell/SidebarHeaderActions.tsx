@@ -1,0 +1,308 @@
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  HomeIcon,
+  PanelLeftOpenIcon,
+  PanelRightOpenIcon,
+  SearchIcon,
+  SettingsIcon,
+} from "lucide-react";
+
+import {
+  ARIA_MOD_KEY,
+  BACK_KEYS,
+  COMMAND_PALETTE_KEYS,
+  FORWARD_KEYS,
+  settingsAriaShortcut,
+  settingsShortcutKeys,
+  sidebarToggleAriaShortcut,
+  sidebarToggleShortcutKeys,
+} from "@/components/KeyboardShortcut";
+import { Button } from "@/components/ui/button";
+import { OmniGlassSurface } from "@/components/OmniGlassSurface";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  requestHistoryNavigation,
+  useHistoryNavigationAvailability,
+} from "@/hooks/useHistoryNavigation";
+import { useIsMobileViewport } from "@/hooks/useIsMobileViewport";
+import { Link } from "@/lib/routing";
+import { cn } from "@/lib/utils";
+import { MobileHeaderButton, MobileHeaderButtonGroup } from "./MobileHeaderButton";
+
+/**
+ * Navigation, Search, Settings, and sidebar-toggle controls from the header row.
+ *
+ * Extracted so it can render in TWO places without duplicating the markup:
+ * inside the sidebar (every browser and non-mac platform, and the macOS shell
+ * below md, where the phone drawer owns it) and, on the macOS desktop shell at
+ * md+, in the persistent title-bar strip. There it must survive the
+ * sidebar collapsing — the sidebar goes `md:w-0 md:overflow-hidden` and turns
+ * `inert`, so a cluster living inside it would be clipped and unclickable, and
+ * while peeking the card floats at `inset-2` and drags the cluster off the
+ * traffic lights' centre line. Hoisting it out of the sidebar is what keeps the
+ * available header actions in one fixed place across open, collapsed, and
+ * peeking. Current native shells move Settings to the profile footer.
+ *
+ * Only the toggle's meaning changes with state: it collapses an open sidebar and
+ * opens a closed or peeking one, so the caller passes `expanded` and the icon
+ * and label follow from it.
+ */
+export function SidebarHeaderActions({
+  expanded,
+  onToggle,
+  onOpenSearch,
+  showSearch = true,
+  onSettingsClick,
+  showSettings = true,
+  onTogglePointerEnter,
+  onTogglePointerDown,
+  onTogglePointerLeave,
+  showMobileToggle = false,
+}: {
+  /**
+   * Whether the sidebar currently reads as open — `open || peek`. Drives the
+   * toggle only: expanded collapses, collapsed (or peeking) opens.
+   */
+  expanded: boolean;
+  /** Collapse an expanded sidebar, or open a collapsed/peeking one. */
+  onToggle: () => void;
+  /** Open the command palette (search). Optional so the cluster can render standalone. */
+  onOpenSearch?: () => void;
+  /** Keep Search out when another surface owns it, such as the Electron brand row. */
+  showSearch?: boolean;
+  /**
+   * Extra handler for the Settings link. The in-sidebar copy passes nothing (on
+   * mobile, entering Settings keeps the drawer open and swaps it to the section
+   * list); navigation itself is the Link's job.
+   */
+  onSettingsClick?: () => void;
+  /** Whether Settings lives in this cluster instead of the native-shell footer. */
+  showSettings?: boolean;
+  /**
+   * Dwell-to-peek hooks for the toggle. On the macOS shell this cluster replaces
+   * ChatHeader's collapsed-state button, which is where peek used to be armed,
+   * so the behaviour has to ride along with it or dwell-to-peek disappears.
+   */
+  onTogglePointerEnter?: () => void;
+  onTogglePointerDown?: () => void;
+  onTogglePointerLeave?: () => void;
+  /** Keep the toggle below md, where the layout has no tap-to-dismiss strip. */
+  showMobileToggle?: boolean;
+}) {
+  const { canGoBack, canGoForward } = useHistoryNavigationAvailability();
+  const hasNavigationHistory = canGoBack || canGoForward;
+
+  const toggleAndSearch = (
+    <>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <MobileHeaderButton
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            aria-label={expanded ? "Close sidebar" : "Open sidebar"}
+            aria-keyshortcuts={sidebarToggleAriaShortcut()}
+            onClick={onToggle}
+            onPointerEnter={onTogglePointerEnter}
+            onPointerDown={onTogglePointerDown}
+            onPointerLeave={onTogglePointerLeave}
+            // Mobile drops the toggle entirely: there the sidebar is a drawer
+            // that leaves a strip of the chat visible, and tapping that strip
+            // is how you get back — a collapse icon would be a second, worse
+            // way to do the same thing.
+            className={cn(
+              "size-6 text-muted-foreground hover:text-foreground",
+              !showMobileToggle && "max-md:hidden",
+            )}
+          >
+            {/* panel-right-open reads as "push the panel away" while the sidebar
+            is open; panel-left-open as "bring it back" once it is collapsed or
+            merely peeking. */}
+            {expanded ? (
+              <PanelRightOpenIcon className="size-4 max-md:size-5" />
+            ) : (
+              <PanelLeftOpenIcon className="size-4 max-md:size-5" />
+            )}
+          </MobileHeaderButton>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" shortcut={sidebarToggleShortcutKeys()}>
+          <span>{expanded ? "Collapse sidebar" : "Open sidebar"}</span>
+        </TooltipContent>
+      </Tooltip>
+      {showSettings && (
+        <SidebarSettingsButton onSettingsClick={onSettingsClick} className="max-md:hidden" />
+      )}
+      {showSearch && <SidebarSearchButton onOpenSearch={onOpenSearch} />}
+    </>
+  );
+
+  return (
+    <div className="flex items-center gap-1" data-testid="sidebar-header-actions">
+      {/* With the toggle shown on mobile, it and Search share one glass pill like the page header's. */}
+      {showMobileToggle ? (
+        <MobileHeaderButtonGroup
+          className={cn("flex items-center gap-1 max-md:gap-0", SIDEBAR_GLASS_CONTROL)}
+        >
+          {toggleAndSearch}
+        </MobileHeaderButtonGroup>
+      ) : (
+        toggleAndSearch
+      )}
+      <div
+        className={cn("flex items-center gap-1 max-md:hidden", !hasNavigationHistory && "hidden")}
+        data-testid="history-navigation-buttons"
+      >
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              aria-label="Back"
+              aria-keyshortcuts={`${ARIA_MOD_KEY}+[`}
+              disabled={!canGoBack}
+              className="size-6 text-muted-foreground hover:text-foreground"
+              onClick={() => requestHistoryNavigation(-1)}
+            >
+              <ArrowLeftIcon className="size-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" shortcut={BACK_KEYS}>
+            <span>Back</span>
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              aria-label="Forward"
+              aria-keyshortcuts={`${ARIA_MOD_KEY}+]`}
+              disabled={!canGoForward}
+              className="size-6 text-muted-foreground hover:text-foreground"
+              onClick={() => requestHistoryNavigation(1)}
+            >
+              <ArrowRightIcon className="size-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" shortcut={FORWARD_KEYS}>
+            <span>Forward</span>
+          </TooltipContent>
+        </Tooltip>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Sidebar glass controls take the page header's 20px icons over the sidebar's 16px glyphs,
+ * and keep their outline but drop the shadow over the drawer's own glass.
+ */
+const SIDEBAR_GLASS_CONTROL =
+  "[--omni-glass-drop-shadow:0_0_#0000] [--sidebar-icon-size-mobile:20px]";
+
+/** Shared sizing for the mobile icon-only Search and Settings actions. */
+const SIDEBAR_FLOAT_BUTTON = cn(
+  "size-6 text-muted-foreground hover:text-foreground max-md:size-11 max-md:rounded-full max-md:border-none max-md:p-0 max-md:shadow-none max-md:[--icon-container-default:20px]",
+  SIDEBAR_GLASS_CONTROL,
+);
+
+const SIDEBAR_FLOAT_ICON = "size-4 max-md:size-5";
+
+/**
+ * Search (command palette) icon button.
+ *
+ * Split out of the cluster because the mobile sidebar places it on its own —
+ * floating at the top of the drawer, away from Settings, which floats at the
+ * bottom.
+ *
+ * @param onOpenSearch - Opens the command palette. Optional so the button can
+ *   render standalone (e.g. in tests).
+ * @param className - Extra classes, e.g. the mobile float's positioning.
+ */
+export function SidebarSearchButton({
+  onOpenSearch,
+  className,
+  testId = "sidebar-search-button",
+}: {
+  onOpenSearch?: () => void;
+  className?: string;
+  testId?: string;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <MobileHeaderButton
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          aria-label="Search"
+          aria-keyshortcuts={`${ARIA_MOD_KEY}+K`}
+          onClick={() => onOpenSearch?.()}
+          className={cn(SIDEBAR_FLOAT_BUTTON, className)}
+          data-testid={testId}
+        >
+          <SearchIcon className={SIDEBAR_FLOAT_ICON} />
+        </MobileHeaderButton>
+      </TooltipTrigger>
+      {/* Bottom placement keeps the tooltip clear of the macOS Electron
+      shell's traffic lights at the window's top edge. */}
+      <TooltipContent side="bottom" shortcut={COMMAND_PALETTE_KEYS}>
+        <span>Search</span>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+/**
+ * Settings icon button — a `Link` to `/settings`.
+ *
+ * @param onSettingsClick - Extra click handler; navigation itself is the
+ *   Link's job.
+ * @param className - Extra classes, e.g. the mobile float's positioning.
+ * @param testId - `data-testid` on the link.
+ */
+export function SidebarSettingsButton({
+  onSettingsClick,
+  className,
+  testId = "settings-button",
+  to = "/settings",
+  label = "Settings",
+}: {
+  onSettingsClick?: () => void;
+  className?: string;
+  /** Distinguishes the header-row copy from the mobile floating copy. */
+  testId?: string;
+  /** Destination and accessible action name; the profile-footer copy toggles back home. */
+  to?: string;
+  label?: string;
+}) {
+  const isMobile = useIsMobileViewport();
+  // The Settings hotkey always opens Settings, so only that destination shows it.
+  const opensSettings = to === "/settings";
+  const Icon = opensSettings ? SettingsIcon : HomeIcon;
+  return (
+    <Tooltip delayDuration={750}>
+      <TooltipTrigger asChild>
+        <Button
+          asChild
+          variant="ghost"
+          size="icon-xs"
+          aria-label={label}
+          aria-keyshortcuts={opensSettings ? settingsAriaShortcut() : undefined}
+          className={cn(SIDEBAR_FLOAT_BUTTON, "rounded-[8px] bg-transparent", className)}
+        >
+          <Link to={to} onClick={onSettingsClick} data-testid={testId}>
+            <Icon className={cn(SIDEBAR_FLOAT_ICON, isMobile && "relative z-10")} />
+            {isMobile && <OmniGlassSurface width={44} height={44} borderRadius={22} />}
+          </Link>
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" shortcut={opensSettings ? settingsShortcutKeys() : undefined}>
+        <span>{label}</span>
+      </TooltipContent>
+    </Tooltip>
+  );
+}

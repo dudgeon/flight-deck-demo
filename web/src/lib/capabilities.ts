@@ -1,0 +1,886 @@
+/**
+ * Runtime capabilities probe.
+ *
+ * Hits ``GET /v1/info`` once at app boot to learn what the server
+ * supports — currently just whether the accounts auth provider is
+ * active. The SPA uses the result to decide whether to register
+ * ``/login`` / ``/register`` / ``/members`` routes and whether to
+ * render the ``AccountMenu``.
+ *
+ * This is the single gate for accounts UI in the SPA. Deployments that use
+ * header or OIDC auth get ``accounts_enabled: false`` from ``/v1/info``, so
+ * none of the accounts routes are reachable.
+ *
+ * Mirrors the ``identity.ts`` resolve-once-then-cache pattern.
+ * Unauthed by design — must work before any cookie is present.
+ */
+
+import { hostFetch } from "./host";
+
+/**
+ * Server session-sharing policy (mirrors the backend ``SharingMode``):
+ * ``"on"`` allows grants at any level, ``"read_only"`` caps grants at
+ * view, ``"restricted_read_only"`` also caps at view but the server
+ * additionally blocks sharing sessions whose cwd is a home/root
+ * directory (enforced server-side), and ``"off"`` disables all new
+ * grants (the SPA hides the Share control). Fails open to ``"on"`` for
+ * an unknown/missing value.
+ */
+export type SharingMode = "on" | "read_only" | "restricted_read_only" | "off";
+const SHARING_MODES: readonly SharingMode[] = ["on", "read_only", "restricted_read_only", "off"];
+
+/**
+ * Which router can back a Smart Routing pick on this server.
+ *
+ * ``external`` is the Databricks AI-Gateway ``task_v1`` router (only usable for
+ * a harness family the host runs through the gateway); ``oss`` is the built-in
+ * judge, which needs no gateway backing. A server that predates the field
+ * reports neither, so the parser degrades from ``smart_routing_enabled``.
+ */
+export interface SmartRoutingSources {
+  external: boolean;
+  oss: boolean;
+}
+
+export interface Branding {
+  app_name: string | null;
+  heading: string | null;
+  logos: {
+    main: string | null;
+    loading: string | null;
+    favicon: string | null;
+  };
+  powered_by: boolean;
+}
+
+/** Release features understood by this frontend build. */
+export type FeatureKey =
+  | "codex_plan_at_launch"
+  | "sandbox_profiles"
+  | "usage_page"
+  | "harness_install"
+  | "canvas"
+  | "import_review"
+  | "sidebar_grouping_ui"
+  | "workspace_content_search"
+  | "grid_sessions_display_ui"
+  | "automations_v2"
+  | "splittable_terminal_view_ui"
+  | "sidebar_windowed_rows"
+  | "chat_composer_codemirror"
+  | "session_orchestration"
+  | "workflows"
+  | "session_overview"
+  | "project_kanban"
+  | "project_repository_creation"
+  | "workspace_direct_access"
+  | "workspace_api_server_access"
+  | "quick_pick_palette"
+  | "floating_composer"
+  | "workspace_sidebar_v2";
+
+/** Deployment-wide release-feature values advertised by the server. */
+export type FeatureValues = Record<string, boolean>;
+
+export type SiblingSessionDestinations =
+  "current_host" | "current_host_or_new_sandbox" | "any_host";
+
+export function parseSiblingSessionDestinations(value: unknown): SiblingSessionDestinations {
+  if (value === undefined || value === "any_host") return "any_host";
+  return value === "current_host_or_new_sandbox" ? value : "current_host";
+}
+
+/** Shape of the response from ``GET /v1/info``. */
+export interface ServerInfo {
+  /** The server enforces the browser's Admin view cookie; absent on older servers. */
+  admin_view?: boolean;
+  sibling_sessions?: boolean;
+  session_nest_moves?: boolean;
+  session_bundle_workspaces?: boolean;
+  sibling_session_destinations?: SiblingSessionDestinations;
+  accounts_enabled: boolean;
+  /**
+   * True only on an explicit single-user local runtime
+   * (``OMNIGENT_LOCAL_SINGLE_USER=1``). This is the sole signal that
+   * separates a genuine one-user server from a multi-user header-auth
+   * deploy (e.g. an SSO proxy injecting ``X-Forwarded-Email``) — both
+   * report ``accounts_enabled: false`` / ``login_url: null``. Gates
+   * account/sharing chrome that's meaningless without other users.
+   * Fails to ``false`` (multi-user) so a failed probe never hides it.
+   */
+  single_user: boolean;
+  login_url: string | null;
+  /**
+   * True when accounts mode is on but no admin has been claimed yet —
+   * the SPA shows the first-run "Create admin" form instead of login.
+   * Flips to false the moment /auth/setup (or any login) creates the
+   * first admin.
+   */
+  needs_setup: boolean;
+  /**
+   * True when the server has the lakebox CLI. Gates the Lakebox-specific UI
+   * hints, such as the connect tab in the CLI command snippets. False in
+   * builds that exclude those modules, which show provider-agnostic hints.
+   */
+  databricks_features: boolean;
+  /**
+   * True when the server can provision cloud-sandbox hosts for
+   * ``host_type: "managed"`` session creates (a ``sandbox:`` config with a
+   * launch-capable provider is wired). Gates the sandbox option in
+   * the new-session host picker.
+   */
+  managed_sandboxes_enabled: boolean;
+  /** The create request durably accepts managed sessions' first input. */
+  durable_initial_input?: boolean;
+  /**
+   * Short name of the backing sandbox provider (e.g. ``"modal"``,
+   * ``"lakebox"``) used to label the new-session sandbox option per
+   * provider ("Modal Sandbox" / "Databricks Sandbox"). ``null`` when
+   * the server names no provider (e.g. an embedding deployment that
+   * left it unset), in which case the UI shows the generic
+   * "New Sandbox" label. Only meaningful when
+   * ``managed_sandboxes_enabled`` is true.
+   */
+  sandbox_provider: string | null;
+  /**
+   * Every launch-capable sandbox provider, in configured order — one
+   * new-session picker row each. Empty or absent falls back to the single
+   * ``sandbox_provider`` row. Read via :func:`sandboxProviderOptions`.
+   */
+  sandbox_providers?: string[];
+  /**
+   * UI-relevant capability flags per launch-capable provider, e.g.
+   * ``{ agent_sandbox: { multi_repo: true } }``. The new-session repo picker
+   * branches on these (multi-repo list vs single). A provider absent from the
+   * map, or the map absent entirely, defaults every flag off.
+   */
+  sandbox_provider_capabilities?: Record<
+    string,
+    {
+      multi_repo?: boolean;
+      /** Whether a session can move onto a new sandbox of this provider (Switch host). */
+      accepts_session_move?: boolean;
+      inference_models?: boolean;
+      default_models?: boolean;
+      repo_catalog?: { name: string; url: string }[];
+    }
+  >;
+  /**
+   * What each launchable provider's unattended runs need from their owner, e.g.
+   * ``{ agent_sandbox: "Keep your laptop signed in." }``. The automation form
+   * shows the run target's notice; a provider absent from the map has none.
+   */
+  sandbox_provider_automation_notices?: Record<string, string>;
+  /**
+   * Connection providers this deploy has wired (config + store present),
+   * e.g. ``["github"]`` or ``["github", "databricks"]``. Non-empty shows the
+   * Sandbox Integrations nav; the SPA renders one panel per provider via
+   * CONNECTION_PANELS. Adding a provider adds a string here, not a new flag.
+   */
+  enabled_connections: string[];
+  /**
+   * Server session-sharing policy. Drives whether the SPA shows the
+   * Share control (``"on"``), restricts it to read-only invites
+   * (``"read_only"``), or hides it entirely (``"off"``), in lockstep
+   * with the server-side grant gate. Fails open to ``"on"``.
+   */
+  sharing_mode: SharingMode;
+  /**
+   * Whether public (anyone-with-the-link) read access may be granted.
+   * Independent of ``sharing_mode`` — drives whether the Share modal shows
+   * the "Public access" toggle. Fails open to ``true``.
+   */
+  public_sharing_enabled: boolean;
+  /** Public permission ceiling; older servers support Read only. */
+  public_sharing_max_level?: "read" | "edit";
+  /**
+   * Installed omnigent server version (same value as ``/api/version``),
+   * e.g. ``"0.3.0.dev0"``. Shown in the session info popover's version
+   * footer. ``null`` only when the probe failed (the OFF sentinel) — a
+   * live server always reports it.
+   */
+  server_version: string | null;
+  /**
+   * True when the server has a routing client configured — a server ``llm:``
+   * block, or a ``routing.provider=external`` block.
+   */
+  smart_routing_enabled: boolean;
+  /**
+   * Which router backs Smart Routing on this server — the external Databricks
+   * AI-Gateway ``task_v1`` router, the built-in judge, or both. Only the
+   * external router needs the host's harness family on the gateway, so this is
+   * what decides whether an off-gateway family can still be routed. A server
+   * that predates the field reports neither, and the parser degrades from
+   * ``smart_routing_enabled``.
+   */
+  smart_routing_sources: SmartRoutingSources;
+  /**
+   * Deployment-wide release features. Missing keys are disabled. The map is
+   * the canonical gate for new frontend surfaces.
+   */
+  features: FeatureValues;
+  /**
+   * Compatibility field for servers/frontends predating ``features``.
+   * New consumers should use :func:`isFeatureEnabled`.
+   *
+   * True when the server accepts UI-driven harness installs
+   * (``harness_install`` in ``OMNIGENT_FEATURES``). Gates the New Chat dialog's
+   * one-click "Install" action for a missing harness. Fails to ``false`` so a
+   * failed probe never offers an install the server would reject.
+   */
+  harness_install_enabled: boolean;
+  /**
+   * Harness ids the install route accepts (bare ids + native spellings that
+   * resolve to an npm-installable family, e.g. ``"codex"``, ``"codex-native"``).
+   * The dialog offers the one-click install only for a harness in this set, so
+   * it never shows an Install button the server would reject. Empty when
+   * ``harness_install_enabled`` is false (or on a failed probe).
+   */
+  installable_harnesses: string[];
+  /**
+   * True when the server can transcribe dictation audio
+   * (``WS /v1/dictation/stream``; the ``dictation`` extra plus models
+   * are installed). Gates the composer mic button's server
+   * speech-to-text fallback where the browser Web Speech API has no
+   * backend (Electron, Firefox/Chromium).
+   */
+  dictation_available: boolean;
+  /**
+   * True when the archive PATCH accepts ``delete_worktree``. Older servers
+   * reject the unknown field, so the archive worktree prompt and setting are
+   * hidden there. Fails to ``false``.
+   */
+  archive_worktree_cleanup?: boolean;
+  /**
+   * True when the automations feature (recurring scheduled tasks) is enabled
+   * for the caller. When false the SPA hides the sidebar Automations tab and
+   * every automation entry point (the ``/v1/scheduled-tasks`` API 404s, so
+   * linking to it would be a dead page). Absent ⇒ true: servers from before
+   * the gate always offered automations.
+   */
+  automations_enabled?: boolean;
+  /** True when scheduled tasks accept the optional random-worktree base ref. */
+  scheduled_task_worktrees?: boolean;
+  /**
+   * True when ``GET /v1/sessions`` accepts ``search_scope``. Older servers
+   * ignore it, so the palette lists one mixed search group there. Fails to
+   * ``false``.
+   */
+  session_search_scope?: boolean;
+  /**
+   * True when the server keeps the ``omnigent.muted`` label per viewer. Older
+   * servers would store it as a label every collaborator sees, so the client
+   * offers Mute only when this is set. Fails to ``false``.
+   */
+  session_mute?: boolean;
+  /**
+   * True when scheduled tasks accept ``session_mode`` and ``session_id``.
+   * Older servers reject the fields, so the automation dialog hides its
+   * Session control there. Fails to ``false``.
+   */
+  scheduled_task_session_modes?: boolean;
+  /** Scheduled tasks accept `mcp_services`; older servers reject it. */
+  scheduled_task_mcp_services?: boolean;
+  /**
+   * True when a session create (and so ``sys_session_create``) accepts
+   * ``permission_mode``. Older servers ignore the field, so trigger templates
+   * write a worker mode only here. Fails to ``false``.
+   */
+  session_create_permission_modes?: boolean;
+  /**
+   * True when a session create (and so ``sys_session_create``) accepts
+   * ``workflow_id``. Runners refuse the field on older servers, so trigger
+   * templates start workers as workflow runs only here. Fails to ``false``.
+   */
+  session_create_workflow_id?: boolean;
+  /**
+   * True when a scheduled task can start every run from a copy of an existing
+   * session (``source_session_id``). Gates the session menu's "Create
+   * automation…" item. Fails to ``false``.
+   */
+  scheduled_task_source_sessions?: boolean;
+  /** Connected hosts and continued sandboxes accept ten-minute schedules. */
+  scheduled_task_subhour?: boolean;
+  /** Runs drop a trigger prompt's header line before dispatch, so the form can save one. */
+  scheduled_task_trigger_headers?: boolean;
+  /** Server default for new trigger templates, from 10 to 240 minutes. */
+  automation_trigger_poll_minutes?: number;
+  /**
+   * Longest session message the server delivers, e.g. 32000. Older servers
+   * omit it and deliver at most 8,000 characters.
+   */
+  session_message_max_chars?: number;
+  /** Sandbox automations accept a repository URL as their workspace. */
+  scheduled_task_sandbox_workspaces?: boolean;
+  /**
+   * True when a managed create, fork or move accepts ``host_id`` naming its
+   * new sandbox host. Web JSON sends a minted id only when this is true.
+   * Fails to ``false``.
+   */
+  request_managed_sandbox_host_id?: boolean;
+  /** True when sandbox forks accept an explicit `workspaces` list; absent on older servers. */
+  session_fork_workspaces?: boolean;
+  /**
+   * True when ``POST /v1/sessions/{id}/managed-host`` can move a session onto
+   * a new sandbox. Gates Switch host's sandbox rows: an older server lacks the
+   * route, and the switch releases the runner before calling it. Fails to
+   * ``false``.
+   */
+  move_to_managed_sandbox?: boolean;
+  /**
+   * True when the server stores user agents (``omnigent agent add``,
+   * ``GET /v1/agents?scope=user``). Gates the picker's "my agents" source
+   * and the Import bundle button. Absent on older servers (off).
+   */
+  agent_install?: boolean;
+  /** True when GET /v1/agents/{id} is available; absent on older servers (off). */
+  agent_detail?: boolean;
+  /** Owner-only configuration reads and conditional PATCH updates. */
+  agent_config_edit?: boolean;
+  /** Types the session events route accepts; empty on older servers. */
+  session_event_types?: readonly string[];
+  /**
+   * True when a claude-sdk `clear` continues in a new session. Older servers
+   * list `clear` for native sessions only; absent there (off).
+   */
+  session_claude_sdk_clear?: boolean;
+  /** True when `POST /v1/sessions/{id}/rewind` exists; absent on older servers (off). */
+  session_rewind?: boolean;
+  /**
+   * True when the server stores session PRs (``/v1/sessions/{id}/pull-requests``
+   * and ``Conversation.pull_request``); absent on older servers (off).
+   */
+  session_pull_requests?: boolean;
+  /** Session comments preserve PR revision and line anchors; absent on older servers. */
+  comment_anchor_metadata?: boolean;
+  /**
+   * True when the server keeps session journals (``/v1/sessions/{id}/journal`` and
+   * ``session.journal.appended``), which the Tasks tab shows; absent on older servers (off).
+   */
+  session_journal?: boolean;
+  /**
+   * True when the server keeps each user's saved workflows (``/v1/workflows``), which
+   * Run a workflow offers; absent on older servers (off).
+   */
+  workflows?: boolean;
+  /**
+   * Owners can share saved workflows (``/v1/workflows/{id}/permissions``), and
+   * ``/v1/workflows/shared`` lists those shared with the viewer; absent on older
+   * servers (off).
+   */
+  workflow_sharing?: boolean;
+  /**
+   * True when the server stores each user's session title instructions
+   * (``/v1/settings/session-title-instructions``); absent on older servers (off).
+   */
+  session_title_instructions?: boolean;
+  /**
+   * Which uploads Claude Code and Codex sessions receive as files. Null on
+   * older servers, whose policy is the default extension list.
+   */
+  filesystem_attachments?: FilesystemAttachmentsInfo | null;
+  /** Scheduled tasks accept a project; absent on older servers (off). */
+  scheduled_task_projects?: boolean;
+  /** Latest sessionless automation failures can be listed for Inbox. */
+  scheduled_task_inbox?: boolean;
+  /**
+   * Owners can share automations (``/v1/scheduled-tasks/{id}/permissions``);
+   * absent on older servers (off).
+   */
+  scheduled_task_sharing?: boolean;
+  /** Agents can post items to this caller's Inbox (``/v1/inbox/items``). */
+  inbox_items_available?: boolean;
+  /**
+   * Automations shared with the viewer can be listed (``/v1/scheduled-tasks/shared``);
+   * absent on older servers (off), including some that advertise sharing.
+   */
+  scheduled_task_shared_with_me?: boolean;
+  /**
+   * True when `GET /v1/scheduled-tasks/{id}/run-pull-requests` lists each run's PRs;
+   * absent on older servers (off), including ones that store session PRs.
+   */
+  scheduled_task_run_pull_requests?: boolean;
+  /**
+   * True when `POST /v1/scheduled-tasks/{id}/clone` copies an automation under a new ID;
+   * absent on older servers (off).
+   */
+  scheduled_task_clone?: boolean;
+  /**
+   * The deployment offers the proactive agent (Omni Advisor) to this caller;
+   * whether it is on for them is at ``GET /v1/proactive-agent/settings``.
+   */
+  proactive_agent_available?: boolean;
+  /** Scheduled permissions support native harnesses beyond Claude Code. */
+  scheduled_task_harness_settings?: boolean;
+  /** Automations accept modes that skip approval; older servers may reject them. */
+  scheduled_task_approval_skipping_modes?: boolean;
+  /** Operator branding, or null when the built-in identity should be used. */
+  branding?: Branding | null;
+  /**
+   * How the deployment curates the New Chat picker. Display only: it narrows
+   * what the picker offers, never what exists, so a session already bound to
+   * an unlisted agent keeps working and the API still reaches it. Absent on
+   * an older server, which means no restriction.
+   */
+  picker?: PickerCuration;
+}
+
+/** The deployment's New Chat picker curation, as reported by ``/v1/info``. */
+export interface PickerCuration {
+  /** Agent names the picker may offer, in config order. Empty means all. */
+  restrictToAgentNames: ReadonlySet<string>;
+  /** Agent a fresh New Chat starts on; a remembered pick still wins. */
+  defaultAgentName: string | null;
+}
+
+/** The unrestricted picker: what an older server, or a failed probe, means. */
+export const UNRESTRICTED_PICKER: PickerCuration = {
+  restrictToAgentNames: new Set<string>(),
+  defaultAgentName: null,
+};
+
+/**
+ * The picker curation a probe reported, or the unrestricted default.
+ *
+ * @param info Probe result, or "loading" before it resolves.
+ * @returns The curation to render with; unrestricted while loading, on an
+ *   older server, and on a failed probe.
+ */
+export function pickerCuration(info: ServerInfo | "loading"): PickerCuration {
+  return info === "loading" ? UNRESTRICTED_PICKER : (info.picker ?? UNRESTRICTED_PICKER);
+}
+
+function parsePicker(raw: unknown): PickerCuration {
+  if (raw === null || typeof raw !== "object") return UNRESTRICTED_PICKER;
+  const value = raw as Record<string, unknown>;
+  // Blank names read as unset, the same way the server strips them; a list with
+  // a non-string member is ignored whole, as the server ignores it.
+  const rawNames = value.restrict_to_agent_names;
+  const names =
+    Array.isArray(rawNames) && rawNames.every((name) => typeof name === "string")
+      ? rawNames.map((name) => name.trim()).filter((name) => name !== "")
+      : [];
+  const fallbackDefault =
+    typeof value.default_agent_name === "string" && value.default_agent_name.trim() !== ""
+      ? value.default_agent_name.trim()
+      : null;
+  // A default outside the restriction could never be selected; the server drops
+  // it too, so agreeing here keeps a stale payload from pinning an absent pick.
+  const defaultAgentName =
+    fallbackDefault !== null && names.length > 0 && !names.includes(fallbackDefault)
+      ? null
+      : fallbackDefault;
+  return { restrictToAgentNames: new Set(names), defaultAgentName };
+}
+
+/** The server's filesystem attachment policy, as reported by ``/v1/info``. */
+export interface FilesystemAttachmentsInfo {
+  /** Lowercase extensions always delivered as files, e.g. ``".zip"``. */
+  extensions: string[];
+  /** Whether every other file that can't be inlined is delivered as a file. */
+  all_types: boolean;
+}
+
+function parseFilesystemAttachments(raw: unknown): FilesystemAttachmentsInfo | null {
+  if (raw === null || typeof raw !== "object") return null;
+  const value = raw as Record<string, unknown>;
+  if (!Array.isArray(value.extensions)) return null;
+  return {
+    extensions: value.extensions.filter((ext): ext is string => typeof ext === "string"),
+    all_types: value.all_types === true,
+  };
+}
+
+function parseBranding(raw: unknown): Branding | null {
+  if (raw === null || typeof raw !== "object") return null;
+  const value = raw as Record<string, unknown>;
+  const nonEmpty = (candidate: unknown): string | null =>
+    typeof candidate === "string" && candidate.trim() !== "" ? candidate : null;
+  const rawLogos =
+    value.logos !== null && typeof value.logos === "object"
+      ? (value.logos as Record<string, unknown>)
+      : {};
+  const logos = {
+    main: nonEmpty(rawLogos.main),
+    loading: nonEmpty(rawLogos.loading),
+    favicon: nonEmpty(rawLogos.favicon),
+  };
+  const branding = {
+    app_name: nonEmpty(value.app_name),
+    heading: typeof value.heading === "string" ? value.heading : null,
+    logos,
+    powered_by: value.powered_by !== false,
+  };
+  const isEmpty =
+    branding.app_name === null &&
+    branding.heading === null &&
+    logos.main === null &&
+    logos.loading === null &&
+    logos.favicon === null &&
+    branding.powered_by;
+  return isEmpty ? null : branding;
+}
+
+/** Sentinel used when the probe fails — accounts and release features are off. */
+export const FALLBACK_SERVER_INFO: ServerInfo = {
+  sibling_session_destinations: "any_host",
+  session_bundle_workspaces: false,
+  accounts_enabled: false,
+  // Fail to multi-user: a failed probe must not hide account/sharing chrome.
+  single_user: false,
+  login_url: null,
+  needs_setup: false,
+  databricks_features: false,
+  managed_sandboxes_enabled: false,
+  sandbox_provider: null,
+  sandbox_providers: [],
+  sandbox_provider_capabilities: {},
+  sandbox_provider_automation_notices: {},
+  enabled_connections: [],
+  // Sharing fails OPEN (opposite of the other caps): a failed probe must
+  // not silently disable sharing, so the sentinel is the permissive "on".
+  sharing_mode: "on",
+  public_sharing_enabled: true,
+  public_sharing_max_level: "read",
+  server_version: null,
+  smart_routing_enabled: false,
+  smart_routing_sources: { external: false, oss: false },
+  features: {},
+  harness_install_enabled: false,
+  installable_harnesses: [],
+  dictation_available: false,
+  scheduled_task_worktrees: false,
+  archive_worktree_cleanup: false,
+  automations_enabled: true,
+  session_search_scope: false,
+  session_mute: false,
+  scheduled_task_session_modes: false,
+  session_create_permission_modes: false,
+  session_create_workflow_id: false,
+  scheduled_task_mcp_services: false,
+  scheduled_task_source_sessions: false,
+  scheduled_task_subhour: false,
+  scheduled_task_trigger_headers: false,
+  scheduled_task_sandbox_workspaces: false,
+  request_managed_sandbox_host_id: false,
+  session_fork_workspaces: false,
+  move_to_managed_sandbox: false,
+  comment_anchor_metadata: false,
+  branding: null,
+  picker: UNRESTRICTED_PICKER,
+};
+
+/**
+ * Read ``smart_routing_sources`` off the probe payload.
+ *
+ * Missing or non-object (a server that predates the field) degrades to
+ * ``smart_routing_enabled`` on both keys: a server that can route is assumed
+ * able to serve either source, so nothing is hidden on an older build.
+ */
+function parseSmartRoutingSources(raw: unknown, routingEnabled: boolean): SmartRoutingSources {
+  if (typeof raw !== "object" || raw === null) {
+    return { external: routingEnabled, oss: routingEnabled };
+  }
+  const sources = raw as Partial<Record<keyof SmartRoutingSources, unknown>>;
+  return { external: sources.external === true, oss: sources.oss === true };
+}
+
+function parseFeatures(raw: unknown, harnessInstallEnabled: boolean): FeatureValues {
+  const parsed: FeatureValues = {};
+  if (typeof raw === "object" && raw !== null && !Array.isArray(raw)) {
+    for (const [key, value] of Object.entries(raw)) {
+      if (typeof value === "boolean") parsed[key] = value;
+    }
+  }
+  // A server predating the feature map exposed this one release gate as a
+  // top-level field. Preserve mixed-version behavior without making it a
+  // second source for new features.
+  if (!("harness_install" in parsed)) parsed.harness_install = harnessInstallEnabled;
+  return parsed;
+}
+
+/** Return whether a known release feature is enabled; missing/loading is off. */
+export function isFeatureEnabled(info: ServerInfo | "loading", feature: FeatureKey): boolean {
+  return info !== "loading" && info.features?.[feature] === true;
+}
+
+export function sandboxProfilesEnabled(info: ServerInfo | "loading"): boolean {
+  return (
+    isFeatureEnabled(info, "sandbox_profiles") &&
+    info !== "loading" &&
+    info.managed_sandboxes_enabled
+  );
+}
+
+/** Whether the Admin > General page has a setting to show: nested agents or Omni Advisor. */
+export function adminGeneralSettingsAvailable(info: ServerInfo | "loading"): boolean {
+  return (
+    info !== "loading" &&
+    (info.sibling_sessions === true || info.proactive_agent_available === true)
+  );
+}
+
+export function customAgentsSettingsEnabled(info: ServerInfo | "loading"): boolean {
+  return info !== "loading" && info.agent_install === true;
+}
+
+let cachedServerInfo: ServerInfo | null = null;
+let pendingServerInfo: Promise<ServerInfo> | null = null;
+
+function parseSandboxProviderCapabilities(
+  value: unknown,
+): NonNullable<ServerInfo["sandbox_provider_capabilities"]> {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value).flatMap(([provider, capabilities]) => {
+      if (
+        capabilities === null ||
+        typeof capabilities !== "object" ||
+        Array.isArray(capabilities)
+      ) {
+        return [];
+      }
+      return [
+        [
+          provider,
+          {
+            ...capabilities,
+            repo_catalog: Array.isArray(capabilities.repo_catalog)
+              ? capabilities.repo_catalog.filter(
+                  (repo: unknown): repo is { name: string; url: string } =>
+                    repo !== null &&
+                    typeof repo === "object" &&
+                    "name" in repo &&
+                    typeof repo.name === "string" &&
+                    repo.name.trim() !== "" &&
+                    "url" in repo &&
+                    typeof repo.url === "string" &&
+                    repo.url.trim() !== "",
+                )
+              : [],
+          },
+        ],
+      ];
+    }),
+  );
+}
+
+function parseProviderAutomationNotices(value: unknown): Record<string, string> {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value).filter(
+      (entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].trim() !== "",
+    ),
+  );
+}
+
+/**
+ * Fetch ``/v1/info`` once and cache the result.
+ *
+ * Resolves to ``FALLBACK_SERVER_INFO`` on any failure (network error, non-JSON,
+ * 5xx). The frontend treats "no probe result" as "accounts is
+ * off" — failing closed prevents the accounts UI from rendering
+ * against a server that doesn't actually support it.
+ */
+export async function resolveServerInfo(): Promise<ServerInfo> {
+  if (cachedServerInfo !== null) return cachedServerInfo;
+  if (pendingServerInfo !== null) return pendingServerInfo;
+  pendingServerInfo = (async () => {
+    try {
+      // Route through the host transport (`hostFetch`) so the embed hits the
+      // proxied omnigent API; standalone `hostFetch` falls back to plain
+      // `fetch("/v1/info")`, preserving the original behavior.
+      const res = await hostFetch("/v1/info", undefined, { hostless: true });
+      if (res.ok) {
+        const data = (await res.json()) as Partial<ServerInfo>;
+        const smartRoutingEnabled = data.smart_routing_enabled === true;
+        const harnessInstallEnabled = data.harness_install_enabled === true;
+        cachedServerInfo = {
+          sibling_sessions: data.sibling_sessions === true,
+          session_nest_moves: data.session_nest_moves === true,
+          sibling_session_destinations: parseSiblingSessionDestinations(
+            data.sibling_session_destinations,
+          ),
+          session_bundle_workspaces: data.session_bundle_workspaces === true,
+          accounts_enabled: data.accounts_enabled === true,
+          single_user: data.single_user === true,
+          login_url: typeof data.login_url === "string" ? data.login_url : null,
+          needs_setup: data.needs_setup === true,
+          databricks_features: data.databricks_features === true,
+          managed_sandboxes_enabled: data.managed_sandboxes_enabled === true,
+          durable_initial_input: data.durable_initial_input === true,
+          sandbox_provider:
+            typeof data.sandbox_provider === "string" ? data.sandbox_provider : null,
+          sandbox_providers: Array.isArray(data.sandbox_providers)
+            ? data.sandbox_providers.filter((p): p is string => typeof p === "string")
+            : [],
+          sandbox_provider_capabilities: parseSandboxProviderCapabilities(
+            data.sandbox_provider_capabilities,
+          ),
+          sandbox_provider_automation_notices: parseProviderAutomationNotices(
+            data.sandbox_provider_automation_notices,
+          ),
+          enabled_connections: Array.isArray(data.enabled_connections)
+            ? data.enabled_connections.filter((p): p is string => typeof p === "string")
+            : [],
+          sharing_mode: SHARING_MODES.includes(data.sharing_mode as SharingMode)
+            ? (data.sharing_mode as SharingMode)
+            : "on",
+          // Fail open: only an explicit false disables the public toggle.
+          public_sharing_enabled: data.public_sharing_enabled !== false,
+          public_sharing_max_level: data.public_sharing_max_level === "edit" ? "edit" : "read",
+          server_version: typeof data.server_version === "string" ? data.server_version : null,
+          smart_routing_enabled: smartRoutingEnabled,
+          smart_routing_sources: parseSmartRoutingSources(
+            data.smart_routing_sources,
+            smartRoutingEnabled,
+          ),
+          features: parseFeatures(data.features, harnessInstallEnabled),
+          harness_install_enabled: harnessInstallEnabled,
+          installable_harnesses: Array.isArray(data.installable_harnesses)
+            ? data.installable_harnesses.filter((h): h is string => typeof h === "string")
+            : [],
+          dictation_available: data.dictation_available === true,
+          scheduled_task_worktrees: data.scheduled_task_worktrees === true,
+          archive_worktree_cleanup: data.archive_worktree_cleanup === true,
+          automations_enabled: data.automations_enabled !== false,
+          session_search_scope: data.session_search_scope === true,
+          session_mute: data.session_mute === true,
+          scheduled_task_session_modes: data.scheduled_task_session_modes === true,
+          session_create_permission_modes: data.session_create_permission_modes === true,
+          session_create_workflow_id: data.session_create_workflow_id === true,
+          scheduled_task_mcp_services: data.scheduled_task_mcp_services === true,
+          scheduled_task_source_sessions: data.scheduled_task_source_sessions === true,
+          scheduled_task_subhour: data.scheduled_task_subhour === true,
+          scheduled_task_trigger_headers: data.scheduled_task_trigger_headers === true,
+          session_message_max_chars:
+            typeof data.session_message_max_chars === "number" &&
+            Number.isInteger(data.session_message_max_chars) &&
+            data.session_message_max_chars > 0
+              ? data.session_message_max_chars
+              : undefined,
+          automation_trigger_poll_minutes:
+            typeof data.automation_trigger_poll_minutes === "number" &&
+            Number.isInteger(data.automation_trigger_poll_minutes) &&
+            data.automation_trigger_poll_minutes >= 10 &&
+            data.automation_trigger_poll_minutes <= 240
+              ? data.automation_trigger_poll_minutes
+              : 10,
+          scheduled_task_sandbox_workspaces: data.scheduled_task_sandbox_workspaces === true,
+          request_managed_sandbox_host_id: data.request_managed_sandbox_host_id === true,
+          session_fork_workspaces: data.session_fork_workspaces === true,
+          move_to_managed_sandbox: data.move_to_managed_sandbox === true,
+          agent_install: data.agent_install === true,
+          agent_detail: data.agent_detail === true,
+          agent_config_edit: data.agent_config_edit === true,
+          session_event_types: Array.isArray(data.session_event_types)
+            ? data.session_event_types.filter((t): t is string => typeof t === "string")
+            : [],
+          session_claude_sdk_clear: data.session_claude_sdk_clear === true,
+          session_rewind: data.session_rewind === true,
+          session_pull_requests: data.session_pull_requests === true,
+          session_journal: data.session_journal === true,
+          workflows: data.workflows === true,
+          workflow_sharing: data.workflow_sharing === true,
+          session_title_instructions: data.session_title_instructions === true,
+          admin_view: data.admin_view === true,
+          comment_anchor_metadata: data.comment_anchor_metadata === true,
+          filesystem_attachments: parseFilesystemAttachments(data.filesystem_attachments),
+          scheduled_task_projects: data.scheduled_task_projects === true,
+          scheduled_task_inbox: data.scheduled_task_inbox === true,
+          scheduled_task_sharing: data.scheduled_task_sharing === true,
+          inbox_items_available: data.inbox_items_available === true,
+          scheduled_task_shared_with_me: data.scheduled_task_shared_with_me === true,
+          scheduled_task_run_pull_requests: data.scheduled_task_run_pull_requests === true,
+          scheduled_task_clone: data.scheduled_task_clone === true,
+          proactive_agent_available: data.proactive_agent_available === true,
+          scheduled_task_harness_settings: data.scheduled_task_harness_settings === true,
+          scheduled_task_approval_skipping_modes:
+            data.scheduled_task_approval_skipping_modes === true,
+          branding: parseBranding(data.branding),
+          picker: parsePicker(data.picker),
+        };
+        return cachedServerInfo;
+      }
+    } catch {
+      // Network failure — fall through to the off sentinel.
+    }
+    cachedServerInfo = FALLBACK_SERVER_INFO;
+    return cachedServerInfo;
+  })();
+  return pendingServerInfo;
+}
+
+/**
+ * Synchronous read of the cached probe.
+ *
+ * Returns ``null`` if :func:`resolveServerInfo` hasn't been
+ * awaited yet. Components that need the value at render time
+ * should consume the React context populated from the awaited
+ * result (see ``CapabilitiesProvider`` in ``main.tsx``) rather
+ * than calling this directly.
+ */
+export function getCachedServerInfo(): ServerInfo | null {
+  return cachedServerInfo;
+}
+
+/**
+ * Whether the server is an explicit single-user local runtime, per the
+ * server's ``single_user`` signal (``OMNIGENT_LOCAL_SINGLE_USER=1``). This
+ * is NOT the same as "no accounts / no login" — a multi-user header-auth
+ * deploy (SSO proxy injecting ``X-Forwarded-Email``) also reports
+ * ``accounts_enabled: false`` / ``login_url: null`` but is genuinely
+ * multi-user, so it must keep its account/sharing chrome. Returns ``false``
+ * while the probe is still loading (and on the failed-probe sentinel).
+ */
+export function isSingleUserMode(info: ServerInfo | "loading"): boolean {
+  return info !== "loading" && info.single_user;
+}
+
+/** Why Share controls are disabled while the server turns sharing off. */
+export const SHARING_OFF_REASON = "Sharing has been disabled for this Omnigent server.";
+
+/** Whether the server turns sharing off; `false` while the probe loads (fail open). */
+export function isSharingOff(info: ServerInfo | "loading"): boolean {
+  return info !== "loading" && info.sharing_mode === "off";
+}
+
+/**
+ * Known provider id → display name for the sandbox label. Providers
+ * not listed here fall back to a title-cased id so a newly-wired
+ * provider still reads sensibly without a frontend change.
+ */
+const SANDBOX_PROVIDER_NAMES: Record<string, string> = {
+  modal: "Modal",
+  lakebox: "Databricks",
+  daytona: "Daytona",
+  e2b: "E2B",
+};
+
+/**
+ * Label for the new-session sandbox option, named per provider.
+ *
+ * Returns e.g. "Modal Sandbox" or "Databricks Sandbox" when the
+ * server reports a provider, and the generic "New Sandbox" when it
+ * names none (``null``) — the same wording the UI used before
+ * providers were surfaced.
+ */
+export function sandboxOptionLabel(provider: string | null): string {
+  if (!provider) return "New Sandbox";
+  const name =
+    SANDBOX_PROVIDER_NAMES[provider] ?? provider.charAt(0).toUpperCase() + provider.slice(1);
+  return `${name} Sandbox`;
+}
+
+/**
+ * Provider ids to offer as new-session sandbox rows.
+ *
+ * Falls back to the single ``sandbox_provider`` when the server reports
+ * no list; ``[null]`` yields one row with the generic label. Tolerates a
+ * missing list (a hand-built ServerInfo) rather than throwing on render.
+ */
+export function sandboxProviderOptions(info: ServerInfo): (string | null)[] {
+  const offered = info.sandbox_providers;
+  if (Array.isArray(offered) && offered.length > 0) return offered;
+  return [info.sandbox_provider];
+}

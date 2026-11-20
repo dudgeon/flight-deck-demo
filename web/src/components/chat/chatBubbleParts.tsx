@@ -1,0 +1,2639 @@
+// Bubble rendering, scroll helpers, and the working-indicator cluster for the
+// chat transcript. Extracted from ChatPage.tsx so <Transcript> can import them
+// without the ChatPage ↔ Transcript module cycle. ChatPage re-exports these for
+// existing importers (tests + components) and imports back the few it renders.
+import {
+  createContext,
+  memo,
+  useCallback,
+  useContext,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+} from "react";
+import {
+  ArrowUpIcon,
+  CheckIcon,
+  ChevronRightIcon,
+  ChevronUpIcon,
+  CopyIcon,
+  CornerDownRightIcon,
+  FileTextIcon,
+  Link2Icon,
+  Loader2Icon,
+  PencilIcon,
+  SplitIcon,
+  XIcon,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { askUserQuestionPayloadOf } from "@/lib/askUserQuestion";
+import { userColor, userColorTint, userInitials } from "@/lib/userBadge";
+import {
+  Message,
+  MessageActions,
+  MessageAction,
+  MessageContent,
+  type MessageResponseProps,
+} from "@/components/ai-elements/message";
+import { Shimmer } from "@/components/ai-elements/shimmer";
+import { renderLocalReviewComment } from "./LocalReviewCommentPreview";
+import { omitIncompleteLocalReviewComment } from "@/lib/localReviewComments";
+import { DesignRequestBody } from "@/components/BrowserPane/designTools/DesignRequestMessage";
+import {
+  clipDesignRequest,
+  parseDesignRequest,
+  type DesignRequest,
+} from "@/components/BrowserPane/designTools/parseDesignRequest";
+import { SessionMentionPill } from "@/components/blocks/ChatMarkdown";
+import {
+  BlockRenderer,
+  FilePathAwareMessageResponse,
+  rendersOnlyWorkedFold,
+} from "@/components/blocks/BlockRenderer";
+import {
+  CompactionMarker,
+  CONTINUE_TURN_ERROR_CODES,
+  ErrorBanner,
+  RoutingDecisionCard,
+} from "@/components/blocks/StatusBlocks";
+import { SystemMessageView } from "@/components/blocks/SystemMessage";
+import { ActivityNotice } from "@/components/blocks/TaskActivityMessage";
+import {
+  isSystemUserContent,
+  parseSystemMessage,
+  stripAutomationContext,
+} from "@/lib/systemMessage";
+import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/BrandLogo";
+import { RunningDot } from "@/components/RunningDot";
+import { formatMessageTimestamp } from "@/lib/relativeTime";
+import { cn } from "@/lib/utils";
+import {
+  splitKnownSlashCommand,
+  splitNativeShellCommand,
+  usePublishedComposerCommands,
+} from "@/components/composer/composerHighlight";
+import { readableSentText, replaceSentMentions } from "@/lib/composerMentions";
+import { mentionPillMarkdown } from "@/lib/mentionPills";
+import { splitSessionMessageOrigin, type SessionMessageOrigin } from "@/lib/sessionMessageOrigin";
+import { useSessionLabel } from "@/hooks/useSessionLabel";
+import type { AnyBlock, ImageContentBlock, MessageContentBlock } from "@/lib/blocks";
+import {
+  attachmentLabel,
+  ELICITATION_RESPONSE_PREFIX,
+  hasPendingOwnElicitation,
+  imagePreview,
+  isPendingBlockingElicitation,
+  isTextBlock,
+  keyedAttachments,
+} from "@/lib/blocks";
+import { type Bubble, type RenderItem, bubblesEqual } from "@/lib/renderItems";
+import { getCurrentAuthorId, getCurrentUserId } from "@/lib/identity";
+import { TERMINAL_PROMPT_BLOCKED_ON } from "@/lib/events";
+import { QueryClientContext } from "@tanstack/react-query";
+import { ApiError, continueFailedTurn, retrySession } from "@/lib/sessionsApi";
+import { useChatStore, withoutFailedInputs, type PendingUserMessage } from "@/store/chatStore";
+import { conversationRegistry } from "@/store/conversationRegistry";
+import { supersedePlanStop } from "@/store/planStops";
+import { useConversationEntryState } from "@/hooks/useConversationEntryState";
+import {
+  ConversationScopeContext,
+  useScopedConversationId,
+} from "@/components/chat/conversationScope";
+import { useStickToBottomContext } from "use-stick-to-bottom";
+import { isSessionScopedDecision, showsRoutingDecisionChip } from "@/lib/routingDecision";
+import { useWorkingLabelTick } from "@/hooks/useWorkingLabelTick";
+import { useForkDialog } from "@/shell/ForkDialogContext";
+import { useTerminalFirst } from "@/shell/TerminalFirstContext";
+import { DisabledActionTooltip } from "@/components/DisabledActionTooltip";
+import { ImageAttachmentPlaceholder, InlineImage, SessionImage } from "@/components/SessionImage";
+import { UndeliveredMessageNotice } from "@/components/chat/UndeliveredMessageNotice";
+import { EditSentMessageContext } from "@/components/chat/editSentMessage";
+import { buildMessageDeepLink } from "@/lib/messageDeepLink";
+import { copyText } from "@/lib/clipboard";
+import { copyMarkdown } from "@/lib/copyMarkdown";
+import { codexAsyncQuestionReplyText } from "@/lib/codexAsyncQuestionReply";
+import { showToast } from "@/components/ui/toast";
+import { useIsMobileViewport } from "@/hooks/useIsMobileViewport";
+import { useFoldAssistantNarration } from "@/lib/foldNarrationPreferences";
+import { usePeerSessionMessageDisplay } from "@/lib/peerSessionMessagePreferences";
+import type { BackgroundTaskInfo, PendingInput, SessionStatus } from "@/lib/types";
+import {
+  TRANSCRIPT_SCROLLBAR_DRAG_EVENT,
+  type TranscriptScrollbarDragDetail,
+} from "@/pages/TranscriptScrollbar";
+
+const COLLAPSE_THRESHOLD = 12000;
+
+// Slice a string by threshold and remove corrupted symbols
+function sliceByCodePoint(str: string, limit: number): string {
+  return str.slice(0, limit).replace(/[\uD800-\uDBFF]$/, "");
+}
+
+// Author labels render only in a shared session; ChatPage provides the
+// value and UserBubble reads it, so the gate lives in one place.
+export const SessionSharedContext = createContext(false);
+
+/** A user message's raw text, minus runtime context and any sender prefix. */
+function userMessageBody(content: MessageContentBlock[]): string {
+  const text = stripAutomationContext(joinTextBlocks(content));
+  return codexAsyncQuestionReplyText(splitSessionMessageOrigin(text)?.body ?? text);
+}
+
+/** The sending session of a user message another session sent, or null. */
+export function userMessageOrigin(content: MessageContentBlock[]): SessionMessageOrigin | null {
+  return splitSessionMessageOrigin(stripAutomationContext(joinTextBlocks(content)));
+}
+
+/** A user message's text for reading and copying: mention markers become ``@name``. */
+export function extractUserText(content: MessageContentBlock[]): string {
+  return readableSentText(userMessageBody(content)).trimEnd();
+}
+
+/** A user message's text for rendering: mention markers become inline pills. */
+function userMarkdownText(content: MessageContentBlock[]): string {
+  return replaceSentMentions(userMessageBody(content), mentionPillMarkdown).trimEnd();
+}
+
+/** "From @<sender>" above a message another session sent with ``sys_session_message``. */
+function SessionMessageOriginLine({
+  sourceId,
+  currentSessionId,
+  className,
+}: {
+  sourceId: string;
+  currentSessionId: string | null;
+  className?: string;
+}) {
+  const label = useSessionLabel(sourceId, currentSessionId);
+  return (
+    <div
+      data-testid="message-origin"
+      className={cn("flex shrink-0 items-center gap-1 text-xs text-muted-foreground", className)}
+    >
+      <CornerDownRightIcon className="size-3 shrink-0" />
+      <span>From</span>
+      {label ? (
+        <SessionMentionPill id={sourceId} isSubagent={label.isSubagent}>
+          @{label.title}
+        </SessionMentionPill>
+      ) : (
+        <span>another session</span>
+      )}
+    </div>
+  );
+}
+
+/** A collapsed message from another session: its sender and first line, expandable. */
+function CollapsedSessionMessage({
+  bubble,
+  origin,
+  text,
+  currentSessionId,
+  onExpand,
+}: {
+  bubble: Extract<Bubble, { kind: "user" }>;
+  origin: SessionMessageOrigin;
+  text: string;
+  currentSessionId: string | null;
+  onExpand: () => void;
+}) {
+  const preview = text.split("\n").find((line) => line.trim().length > 0) ?? "";
+  return (
+    <Message
+      from="user"
+      data-testid="message-bubble"
+      data-role="user"
+      data-user-message-id={bubble.itemId}
+      data-message-id={bubble.itemId}
+      className="max-w-[640px]"
+    >
+      <div
+        data-testid="collapsed-session-message"
+        className="ml-auto flex w-fit max-w-full items-center gap-2 rounded-lg bg-muted px-3 py-1.5"
+      >
+        <SessionMessageOriginLine sourceId={origin.sourceId} currentSessionId={currentSessionId} />
+        <button
+          type="button"
+          onClick={onExpand}
+          aria-expanded={false}
+          aria-label="Show message"
+          data-testid="expand-session-message"
+          className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <span className="min-w-0 truncate">{preview}</span>
+          <ChevronRightIcon className="size-3 shrink-0" />
+        </button>
+      </div>
+    </Message>
+  );
+}
+
+function joinTextBlocks(content: MessageContentBlock[]): string {
+  return content
+    .filter(isTextBlock)
+    .map((c) => c.text)
+    .join("");
+}
+
+/** Joins all `kind: "text"` items into a single markdown string for copying. */
+export function collectBubbleMarkdown(items: RenderItem[]): string {
+  return items
+    .filter((item): item is Extract<RenderItem, { kind: "text" }> => item.kind === "text")
+    .map((item) => item.text)
+    .join("\n\n")
+    .trim();
+}
+
+const TABLE_SEPARATOR_RE = /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/;
+const DISPLAY_MATH_RE = /(^|\n)\s*(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\])/;
+const MERMAID_FENCE_RE = /^ {0,3}(?:`{3,}|~{3,})mermaid(?:\s|$)/im;
+
+function isMarkdownTableRow(line: string): boolean {
+  return line.trim().includes("|");
+}
+
+export function containsMarkdownTable(items: RenderItem[]): boolean {
+  return items.some((item) => {
+    if (item.kind !== "text") return false;
+    const lines = item.text.split("\n");
+    return lines.some(
+      (line, index) =>
+        TABLE_SEPARATOR_RE.test(line) &&
+        index > 0 &&
+        index < lines.length - 1 &&
+        isMarkdownTableRow(lines[index - 1] ?? "") &&
+        isMarkdownTableRow(lines[index + 1] ?? ""),
+    );
+  });
+}
+
+export function containsDisplayMath(items: RenderItem[]): boolean {
+  return items.some((item) => item.kind === "text" && DISPLAY_MATH_RE.test(item.text));
+}
+
+export function containsMermaidDiagram(items: RenderItem[]): boolean {
+  return items.some((item) => item.kind === "text" && MERMAID_FENCE_RE.test(item.text));
+}
+
+/**
+ * Build optimistic user bubbles from the pending-send queue.
+ *
+ * Author priority per bubble: `p.author` (captured at send time for
+ * fresh sends, or from the snapshot's `created_by` for replayed entries)
+ * falls back to `selfAuthor` (the current viewer's identity).
+ *
+ * @param pending - the queued optimistic sends, in FIFO order.
+ * @param selfAuthor - the viewer's attribution id, or null.
+ */
+export function buildPendingBubbles(
+  pending: PendingUserMessage[],
+  selfAuthor: string | null,
+): Bubble[] {
+  return pending.map((p) => {
+    const author = p.author ?? selfAuthor;
+    return {
+      kind: "user",
+      // No server item id yet; tempId keeps React keys stable until promotion.
+      itemId: p.tempId,
+      pending: true,
+      ...(p.sentMidTurn ? { awaitingAgent: true } : {}),
+      ...(p.stillSending && p.posted !== true ? { stillSending: true } : {}),
+      ...(p.posted === true ? { accepted: true } : {}),
+      content: p.content,
+      ...(author !== null ? { createdBy: author } : {}),
+      // Stamped once at send time; absent for snapshot-replayed entries,
+      // which show no timestamp rather than a re-stamped render time.
+      ...(p.createdAtS !== undefined ? { createdAtS: p.createdAtS } : {}),
+    };
+  });
+}
+
+/**
+ * Build "Not delivered" user bubbles from a session's undelivered startup inputs.
+ *
+ * @param failedInputs - The snapshot's `failedInputs`, in submission order.
+ * @param selfAuthor - The viewer's attribution id, or null.
+ */
+export function buildUndeliveredBubbles(
+  failedInputs: PendingInput[],
+  selfAuthor: string | null,
+): Bubble[] {
+  return failedInputs.map((input) => {
+    const author = input.createdBy ?? selfAuthor;
+    return {
+      kind: "user",
+      itemId: input.pendingId,
+      // No transcript item exists, so there is nothing to link to.
+      pending: true,
+      undelivered: true,
+      content: input.content,
+      ...(author !== null ? { createdBy: author } : {}),
+    };
+  });
+}
+
+function isStartupFailureBubble(bubble: Bubble): boolean {
+  return (
+    bubble.kind === "assistant" &&
+    bubble.items.some((item) => item.kind === "error" && item.code === "startup_input_failed")
+  );
+}
+
+/**
+ * Place undelivered messages above the startup failure notice that explains
+ * them, or at the end of the transcript when that notice isn't loaded.
+ */
+export function placeUndeliveredBubbles(committed: Bubble[], undelivered: Bubble[]): Bubble[] {
+  if (undelivered.length === 0) return committed;
+  const notice = committed.findIndex(isStartupFailureBubble);
+  if (notice === -1) return [...committed, ...undelivered];
+  return [...committed.slice(0, notice), ...undelivered, ...committed.slice(notice)];
+}
+
+/**
+ * Add a conversation's uncommitted user messages to its committed bubbles: the
+ * undelivered startup messages, and the optimistic sends they don't replace.
+ *
+ * @param committed - Bubbles built from the transcript.
+ * @param pendingUserMessages - The conversation's optimistic sends.
+ * @param failedInputs - The snapshot's undelivered startup messages.
+ * @param selfAuthor - The viewer's attribution id, or null.
+ */
+export function withUncommittedUserBubbles(
+  committed: Bubble[],
+  pendingUserMessages: PendingUserMessage[],
+  failedInputs: PendingInput[],
+  selfAuthor: string | null,
+): Bubble[] {
+  const withUndelivered = placeUndeliveredBubbles(
+    committed,
+    buildUndeliveredBubbles(failedInputs, selfAuthor),
+  );
+  const pending = withoutFailedInputs(pendingUserMessages, failedInputs);
+  if (pending.length === 0) return withUndelivered;
+  return mergePendingBubbles(withUndelivered, buildPendingBubbles(pending, selfAuthor));
+}
+
+// A committed bubble that exists ONLY to render one or more
+// REQUEST-phase policy elicitation cards. See mergePendingBubbles /
+// reorderCommittedRequestElicitations for how the prompt stays above the card.
+function isStandaloneElicitationBubble(bubble: Bubble): boolean {
+  return (
+    bubble.kind === "assistant" &&
+    bubble.responseId.startsWith(ELICITATION_RESPONSE_PREFIX) &&
+    bubble.items.length > 0 &&
+    bubble.items.every(
+      (it) => it.kind === "elicitation" && (it.phase === "request" || it.phase === "pre_tool_use"),
+    )
+  );
+}
+
+// Pull a committed REQUEST-phase elicitation card below the user message
+// it gated. Returns the input array unchanged (same reference) when no swap
+// applies, so the memo stays stable.
+export function reorderCommittedRequestElicitations(committed: Bubble[]): Bubble[] {
+  let result: Bubble[] | null = null;
+  for (let i = 0; i < committed.length - 1; i += 1) {
+    if (isStandaloneElicitationBubble(committed[i]!) && committed[i + 1]!.kind === "user") {
+      if (result === null) result = [...committed];
+      const card = result[i]!;
+      result[i] = result[i + 1]!;
+      result[i + 1] = card;
+    }
+  }
+  return result ?? committed;
+}
+
+// Insertion point above a run of create-time routing chips that STARTS the
+// committed timeline.
+function liftAboveCreateRoutingChips(committed: Bubble[], end: number): number {
+  let start = end;
+  while (start > 0) {
+    const chip = committed[start - 1]!;
+    if (chip.kind !== "routing_decision" || !isSessionScopedDecision(chip.routing?.scope)) break;
+    start -= 1;
+  }
+  return start === 0 ? start : end;
+}
+
+// Place optimistic pending user bubbles into the committed timeline, keeping
+// the prompt above a trailing REQUEST-phase card or create-time routing chip.
+export function mergePendingBubbles(committed: Bubble[], pending: Bubble[]): Bubble[] {
+  if (pending.length === 0) return committed;
+  let insertAt = committed.length;
+  while (insertAt > 0 && isStandaloneElicitationBubble(committed[insertAt - 1]!)) {
+    insertAt -= 1;
+  }
+  insertAt = liftAboveCreateRoutingChips(committed, insertAt);
+  if (insertAt === committed.length) return [...committed, ...pending];
+  return [...committed.slice(0, insertAt), ...pending, ...committed.slice(insertAt)];
+}
+
+type ElicitationItem = Extract<RenderItem, { kind: "elicitation" }>;
+
+// A pending elicitation is unanswered — only these float to the bottom.
+function isPendingElicitation(item: RenderItem): item is ElicitationItem {
+  return item.kind === "elicitation" && item.status === "pending";
+}
+
+// Pending elicitation cards float to the bottom of the chat. Collect them in
+// document order — oldest first, so the newest sits last, closest to composer.
+export function collectPendingElicitations(bubbles: Bubble[]): ElicitationItem[] {
+  const pending: ElicitationItem[] = [];
+  for (const bubble of bubbles) {
+    if (bubble.kind !== "assistant") continue;
+    for (const item of bubble.items) {
+      if (isPendingElicitation(item)) pending.push(item);
+    }
+  }
+  return pending;
+}
+
+// Keyboard input drives the newest pending AskUserQuestion. A newer one still
+// awaiting delivery holds the keys, so older questions stay inert.
+export function keyboardActiveQuestionId(pending: ElicitationItem[]): string | null {
+  for (let index = pending.length - 1; index >= 0; index -= 1) {
+    const item = pending[index]!;
+    if (askUserQuestionPayloadOf(item) === null) continue;
+    const awaitingDelivery = item.nativeDelivery && item.nativeDelivery.state !== "ready";
+    return awaitingDelivery ? null : item.elicitationId;
+  }
+  return null;
+}
+
+// Drop the pending elicitation cards from the transcript bubbles so they
+// don't render twice. Returns the input array unchanged when nothing is
+// pending, so the memo stays stable.
+export function stripPendingElicitations(bubbles: Bubble[]): Bubble[] {
+  let result: Bubble[] | null = null;
+  for (let i = 0; i < bubbles.length; i += 1) {
+    const bubble = bubbles[i]!;
+    if (bubble.kind !== "assistant" || !bubble.items.some(isPendingElicitation)) continue;
+    if (result === null) result = [...bubbles];
+    result[i] = { ...bubble, items: bubble.items.filter((it) => !isPendingElicitation(it)) };
+  }
+  return result ?? bubbles;
+}
+
+// Hide the sub-agent spawn chips of a session whose sub-agent routing is not
+// "on". Returns the input array unchanged when nothing is hidden, so the memo
+// stays stable.
+export function stripGatedSubagentRoutingChips(
+  bubbles: Bubble[],
+  subagentRoutingOverride: "on" | "off" | null,
+): Bubble[] {
+  if (subagentRoutingOverride === "on") return bubbles;
+  const shown = bubbles.filter(
+    (b) =>
+      b.kind !== "routing_decision" ||
+      showsRoutingDecisionChip(b.routing?.scope, subagentRoutingOverride),
+  );
+  return shown.length === bubbles.length ? bubbles : shown;
+}
+
+// Whether a user bubble should carry the author's avatar badge (and the
+// author-tinted background): only in a shared session, only when a human
+// author is attached, and NEVER on the viewer's own messages.
+export function shouldShowAuthorBadge(
+  author: string | undefined,
+  viewerId: string | null,
+  isSessionShared: boolean,
+): boolean {
+  return isSessionShared && author !== undefined && author !== viewerId;
+}
+
+export function computeIsWorking(sessionStatus: SessionStatus): boolean {
+  return sessionStatus === "running" || sessionStatus === "waiting";
+}
+
+/** Stable React key per bubble. */
+export function bubbleKey(bubble: Bubble): string {
+  // Prefer stableKey (the optimistic temp id) for promoted user bubbles
+  // so the key holds steady across the optimistic→committed swap on
+  // `session.input.consumed` — a changing key remounts the node (flink).
+  if (bubble.kind === "user") return `user:${bubble.stableKey ?? bubble.itemId}`;
+  if (bubble.kind === "compaction_loading") return `compaction_loading:${bubble.itemId}`;
+  if (bubble.kind === "compaction") return `compaction:${bubble.itemId}`;
+  if (bubble.kind === "routing_decision") return `routing_decision:${bubble.itemId}`;
+  if (bubble.kind === "subagent_activity") return `subagent_activity:${bubble.itemId}`;
+  return `assistant:${bubble.stableId}`;
+}
+
+/**
+ * Playful labels the idle-but-busy indicator rotates through (one per
+ * `ROTATE_MS`). Index 0 MUST stay "Working…": it's the label a fresh tick
+ * (and every unit test) lands on.
+ */
+export const WORKING_MESSAGES = [
+  "Working…",
+  "Cooking…",
+  "Crunching…",
+  "Tinkering…",
+  "Pondering…",
+  "Brewing…",
+  "Noodling…",
+  "Wrangling…",
+  "Conjuring…",
+  "Assembling…",
+  "Percolating…",
+  "Untangling…",
+  "Scheming…",
+  "Finagling…",
+  "Whirring…",
+  "Puzzling…",
+] as const;
+
+/**
+ * Busy only because background tasks outlive a FINISHED turn. While the turn
+ * is still active (`agentWorking`) the shimmer wins.
+ */
+export function isBackgroundTasksOnly(
+  bgCount: number,
+  blockedOn: string | null,
+  agentWorking: boolean,
+): boolean {
+  return !agentWorking && !blockedOn && bgCount > 0;
+}
+
+/**
+ * Waiting only on background agents a FINISHED claude-native turn left running.
+ * The turn is over, so this replaces the shimmer; a dialog or a new local send
+ * wins.
+ */
+export function isBackgroundAgentsOnly(
+  sessionStatus: SessionStatus,
+  agents: readonly BackgroundTaskInfo[],
+  blockedOn: string | null,
+  localSending: boolean,
+): boolean {
+  return sessionStatus === "waiting" && agents.length > 0 && !blockedOn && !localSending;
+}
+
+/**
+ * What the session still waits on, e.g. "Background agent running: Audit the
+ * auth flow", or "2 background agents running" when there are several.
+ */
+export function backgroundAgentsLabel(agents: readonly BackgroundTaskInfo[]): string {
+  if (agents.length !== 1) return `${agents.length} background agents running`;
+  const description = agents[0]?.description?.trim();
+  return description ? `Background agent running: ${description}` : "Background agent running";
+}
+
+/**
+ * Whether the agent's own turn is in progress — server `running`/`waiting`, or
+ * a local send in flight. Shared by the transcript's working shimmer and the
+ * composer's background-task tally, so the two surfaces never disagree.
+ */
+export function computeIsTurnActive(sessionStatus: SessionStatus, localSending: boolean): boolean {
+  return computeIsWorking(sessionStatus) || localSending;
+}
+
+export function useAgentTurnActive(): boolean {
+  const sessionStatus = useChatStore((s) => s.sessionStatus);
+  const localSending = useChatStore((s) => s.status === "streaming");
+  return computeIsTurnActive(sessionStatus, localSending);
+}
+
+/** Whether any elicitation card still parks the turn on the user's answer. */
+function hasPendingElicitationBlock(blocks: readonly AnyBlock[]): boolean {
+  return blocks.some(isPendingBlockingElicitation);
+}
+
+/**
+ * The label shown next to the working shimmer. When the agent is parked on a
+ * dialog (`blockedOn`) it says so; otherwise it rotates through
+ * `WORKING_MESSAGES` by wall-clock `tick`.
+ *
+ * @param options.answerableInChat - A pending chat card can answer the block.
+ * @param options.terminalView - The Chat/Terminal toggle reaches the agent's terminal.
+ */
+export function workingIndicatorLabel(
+  tick = 0,
+  blockedOn: string | null = null,
+  { answerableInChat = false, terminalView = false } = {},
+): string {
+  if (blockedOn) {
+    // A "dialog open" block lives only in the terminal tab, so point the user
+    // there to respond rather than leaving the session looking hung.
+    if (blockedOn === "dialog open") {
+      return "Waiting on a dialog in the terminal. Open the terminal tab to respond.";
+    }
+    if (blockedOn === TERMINAL_PROMPT_BLOCKED_ON) {
+      // Inferred from the terminal's screen, so the hint stays tentative.
+      const hint = "Something in the agent's terminal may need your input.";
+      return terminalView ? `${hint} Open the Terminal view to check.` : hint;
+    }
+    if (answerableInChat) return `Blocked on: ${blockedOn}`;
+    const waiting =
+      blockedOn === "permission prompt"
+        ? "Waiting for your approval in the agent's terminal."
+        : `Waiting for you in the agent's terminal (${blockedOn}).`;
+    return terminalView ? `${waiting} Open the Terminal view to respond.` : waiting;
+  }
+  return WORKING_MESSAGES[tick % WORKING_MESSAGES.length]!;
+}
+
+export function WorkingIndicator() {
+  const scopedConversationId = useContext(ConversationScopeContext);
+  const scopedState = useConversationEntryState(scopedConversationId);
+  const rootBgCount = useChatStore((s) => s.backgroundTaskCount);
+  const rootBackgroundAgents = useChatStore((s) => s.backgroundAgents);
+  const rootSessionStatus = useChatStore((s) => s.sessionStatus);
+  const rootLocalSending = useChatStore((s) => s.status === "streaming");
+  const rootBlockedOn = useChatStore((s) => s.blockedOn);
+  const rootHasOwnPendingElicitation = useChatStore((s) =>
+    hasPendingOwnElicitation(s.blocks, s.conversationId),
+  );
+  const rootAgentWorking = useAgentTurnActive();
+  const terminalFirst = useTerminalFirst();
+  const bgCount = scopedConversationId ? scopedState.backgroundTaskCount : rootBgCount;
+  const blockedOn = scopedConversationId ? scopedState.blockedOn : rootBlockedOn;
+  const hasOwnPendingElicitation = scopedConversationId
+    ? hasPendingOwnElicitation(scopedState.blocks, scopedConversationId)
+    : rootHasOwnPendingElicitation;
+  const agentWorking = scopedConversationId
+    ? computeIsTurnActive(scopedState.sessionStatus, scopedState.status === "streaming")
+    : rootAgentWorking;
+  const tick = useWorkingLabelTick();
+  const backgroundAgents = scopedConversationId
+    ? scopedState.backgroundAgents
+    : rootBackgroundAgents;
+  const waitsOnBackgroundAgents = isBackgroundAgentsOnly(
+    scopedConversationId ? scopedState.sessionStatus : rootSessionStatus,
+    backgroundAgents,
+    blockedOn,
+    scopedConversationId ? scopedState.status === "streaming" : rootLocalSending,
+  );
+  if (waitsOnBackgroundAgents) {
+    // The turn ended and the composer is free, but the session isn't idle:
+    // name the agent it still waits on rather than shimmering "Working…".
+    const label = backgroundAgentsLabel(backgroundAgents);
+    return (
+      <>
+        <span role="status" aria-live="polite" className="sr-only">
+          {label}
+        </span>
+        <Message from="assistant" data-testid="background-agents-indicator" aria-hidden="true">
+          <MessageContent>
+            <div className="flex min-w-0 items-center gap-1.5 py-0.5 text-muted-foreground">
+              <RunningDot className="size-3.5 shrink-0" />
+              <span className="truncate text-sm font-mono">{label}</span>
+            </div>
+          </MessageContent>
+        </Message>
+      </>
+    );
+  }
+  // Background shells outliving a finished turn keep the session in progress,
+  // but the agent isn't thinking: show a plain spinner instead of the shimmer.
+  // The main composer's pill announces the count; side chats have no pill.
+  if (isBackgroundTasksOnly(bgCount, blockedOn, agentWorking)) {
+    const label = `${bgCount} background task${bgCount === 1 ? "" : "s"} running`;
+    return (
+      <>
+        {scopedConversationId && (
+          <span role="status" aria-live="polite" className="sr-only">
+            {label}
+          </span>
+        )}
+        <Message from="assistant" data-testid="background-tasks-indicator" aria-hidden="true">
+          <MessageContent>
+            <div className="flex items-center gap-1.5 py-0.5 text-muted-foreground">
+              <RunningDot className="size-3.5" />
+              <span className="text-sm font-mono">{label}</span>
+            </div>
+          </MessageContent>
+        </Message>
+      </>
+    );
+  }
+  const label = workingIndicatorLabel(tick, blockedOn, {
+    answerableInChat: hasOwnPendingElicitation,
+    // The toggle switches to the root session's terminal, not a side chat's.
+    terminalView: !scopedConversationId && (terminalFirst?.isTerminalFirst ?? false),
+  });
+  return (
+    <>
+      {/* Sole aria-live region: a stable "Working…" or block reason, so the rotating
+          label isn't re-announced. The visible shimmer below stays aria-hidden. */}
+      <span role="status" aria-live="polite" className="sr-only">
+        {blockedOn ? label : "Working…"}
+      </span>
+      <Message from="assistant" data-testid="working-indicator" aria-hidden="true">
+        <MessageContent>
+          <div className="flex items-center gap-1.5 py-0.5">
+            <BrandLogo variant="icon" className="otto-working h-4 w-auto shrink-0" />
+            <Shimmer className="text-sm" duration={1.5}>
+              {label}
+            </Shimmer>
+          </div>
+        </MessageContent>
+      </Message>
+    </>
+  );
+}
+
+// Timed like the sidebar's "Show more" and the file tree's rows.
+const WORKING_ROW_CLOSE: KeyframeAnimationOptions = {
+  duration: 180,
+  easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+  fill: "forwards",
+};
+
+/**
+ * The Working row, kept while it eases closed after the turn ends, so a
+ * transcript scrolled to its end doesn't drop by the row's height in one frame.
+ */
+export function WorkingIndicatorRow({ show }: { show: boolean }) {
+  const rowRef = useRef<HTMLDivElement>(null);
+  const [shown, setShown] = useState(show);
+  const [closing, setClosing] = useState(false);
+  if (shown !== show) {
+    setShown(show);
+    setClosing(!show);
+  }
+  useLayoutEffect(() => {
+    const row = rowRef.current;
+    if (!closing || !row) return;
+    if (
+      typeof row.animate !== "function" ||
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+    ) {
+      setClosing(false);
+      return;
+    }
+    // Close the column's gap above the row along with the row itself.
+    const gap = Number.parseFloat(getComputedStyle(row.parentElement ?? row).rowGap) || 0;
+    const animation = row.animate(
+      [
+        { height: `${row.offsetHeight}px`, marginTop: "0px", opacity: 1, overflow: "hidden" },
+        { height: "0px", marginTop: `${-gap}px`, opacity: 0, overflow: "hidden" },
+      ],
+      WORKING_ROW_CLOSE,
+    );
+    animation.onfinish = () => setClosing(false);
+    return () => animation.cancel();
+  }, [closing]);
+  if (!shown && !closing) return null;
+  return (
+    <div ref={rowRef} aria-hidden={closing || undefined}>
+      <WorkingIndicator />
+    </div>
+  );
+}
+
+/**
+ * Decide whether to render the main chat's "Working…" indicator.
+ *
+ * @param showsWorking - True when the session snapshot or local response
+ *   state says the main session is still working.
+ * @param bubbles - Rendered chat bubbles currently hydrated in the main session.
+ * @returns True when the standalone working indicator should render.
+ */
+export function shouldShowWorkingIndicator(showsWorking: boolean, bubbles: Bubble[]): boolean {
+  if (!showsWorking) return false;
+  return bubbles[bubbles.length - 1]?.kind !== "compaction_loading";
+}
+
+/**
+ * Whether a user-role bubble is a runtime-injected `[System: ...]`
+ * notification (rendered via SystemMessageView, not as a normal user bubble).
+ */
+export function isSystemBubble(bubble: Bubble): boolean {
+  if (bubble.kind !== "user") return false;
+  return isSystemUserContent(bubble.content);
+}
+
+function CompactionLoadingIndicator({ createdAtS }: { createdAtS?: number }) {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    // Calculate elapsed time from the actual compaction start time (if available)
+    // rather than component mount time, so the timer persists across session switches.
+    const startTimeMs = createdAtS != null ? createdAtS * 1000 : Date.now();
+
+    const updateElapsed = () => {
+      // Clamp: a server-provided start marginally ahead of this client's
+      // clock must read as "just started", not a negative count.
+      setElapsed(Math.max(0, Math.round((Date.now() - startTimeMs) / 1000)));
+    };
+
+    updateElapsed();
+    const id = window.setInterval(updateElapsed, 1000);
+    return () => window.clearInterval(id);
+  }, [createdAtS]);
+
+  return (
+    <Message from="assistant" data-testid="compacting-indicator">
+      <MessageContent>
+        <div className="flex items-center gap-2 text-sm">
+          <Shimmer as="span" duration={1.5}>
+            Compacting conversation…
+          </Shimmer>
+          {elapsed > 0 && <span className="text-muted-foreground">({elapsed}s)</span>}
+        </div>
+        <div className="mt-2 h-1 overflow-hidden rounded-full bg-muted">
+          <div
+            className="h-full w-1/3 rounded-full bg-muted-foreground/40"
+            style={{ animation: "compaction-slide 1.5s ease-in-out infinite alternate" }}
+          />
+        </div>
+      </MessageContent>
+    </Message>
+  );
+}
+
+function formatBubbleTimestamp(epochSeconds: number | undefined): string | null {
+  if (epochSeconds === undefined || epochSeconds === 0) return null;
+  return formatMessageTimestamp(epochSeconds);
+}
+
+// Memoized so a streaming delta (which rebuilds the whole bubble array) only
+// re-renders the bubble that actually changed, not every prior message's
+// markdown/syntax-highlighting subtree. See `bubblesEqual`.
+export const BubbleView = memo(
+  function BubbleView({
+    bubble,
+    isLastAssistant = false,
+    showsWorking = false,
+    actionsPersistent = false,
+    recoveryDisabled = false,
+  }: {
+    bubble: Bubble;
+    isLastAssistant?: boolean;
+    showsWorking?: boolean;
+    actionsPersistent?: boolean;
+    /** Hide retry/recovery controls when the surrounding session is sealed. */
+    recoveryDisabled?: boolean;
+  }) {
+    if (bubble.kind === "user") return <UserBubble bubble={bubble} />;
+    if (bubble.kind === "compaction_loading") {
+      return <CompactionLoadingIndicator createdAtS={bubble.createdAtS} />;
+    }
+    if (bubble.kind === "compaction") return <CompactionMarker />;
+    if (bubble.kind === "subagent_activity") {
+      return <ActivityNotice data={bubble.data} />;
+    }
+    if (bubble.kind === "routing_decision") {
+      return (
+        <RoutingDecisionCard
+          model={bubble.model}
+          applied={bubble.applied}
+          rationale={bubble.rationale}
+          agent={bubble.agent}
+          routing={bubble.routing}
+        />
+      );
+    }
+    return (
+      <AssistantBubble
+        bubble={bubble}
+        isLastAssistant={isLastAssistant}
+        showsWorking={showsWorking}
+        actionsPersistent={actionsPersistent}
+        recoveryDisabled={recoveryDisabled}
+      />
+    );
+  },
+  (prev, next) =>
+    (prev.isLastAssistant ?? false) === (next.isLastAssistant ?? false) &&
+    (prev.showsWorking ?? false) === (next.showsWorking ?? false) &&
+    (prev.actionsPersistent ?? false) === (next.actionsPersistent ?? false) &&
+    (prev.recoveryDisabled ?? false) === (next.recoveryDisabled ?? false) &&
+    bubblesEqual(prev.bubble, next.bubble),
+);
+
+/**
+ * Copy-to-clipboard handler for a message bubble's "Copy" action.
+ *
+ * @param getText - Produces the text to copy at click time.
+ * @param copy - Clipboard writer; assistant bubbles pass {@link copyMarkdown}
+ *   so the paste keeps its formatting.
+ * @returns `{ isCopied, handleCopy }` for the action button.
+ */
+function useCopyMessage(
+  getText: () => string,
+  copy: (value: string) => Promise<void> = copyText,
+): {
+  isCopied: boolean;
+  handleCopy: () => void;
+} {
+  const [isCopied, setIsCopied] = useState(false);
+  const timeoutRef = useRef<number>(0);
+  const isMobile = useIsMobileViewport();
+
+  useEffect(() => () => window.clearTimeout(timeoutRef.current), []);
+
+  const handleCopy = useCallback(() => {
+    if (isCopied) return;
+    const text = getText();
+    if (!text) return;
+    copy(text).then(
+      () => {
+        setIsCopied(true);
+        window.clearTimeout(timeoutRef.current);
+        timeoutRef.current = window.setTimeout(() => setIsCopied(false), 2000);
+        if (isMobile) {
+          showToast(<span className="text-ui">Copied to clipboard</span>, { duration: 1500 });
+        }
+      },
+      (error) => {
+        console.warn("Failed to copy message", error);
+      },
+    );
+  }, [copy, getText, isCopied, isMobile]);
+
+  return { isCopied, handleCopy };
+}
+
+/** Pill for an attachment with no preview of its own: a non-image file, an
+ *  upload still in flight, or an image block carrying nothing renderable. */
+function AttachmentChip({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
+  return (
+    <span className="flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-sm text-muted-foreground">
+      <Icon className="size-3 shrink-0" />
+      <span className="max-w-[180px] truncate">{label}</span>
+    </span>
+  );
+}
+
+// User-authored tags and placeholders are text, including valid HTML examples.
+const USER_MESSAGE_REMARK_REHYPE_OPTIONS: MessageResponseProps["remarkRehypeOptions"] = {
+  handlers: {
+    html: (_state, node: { value: string }) =>
+      node.value
+        .split("\n")
+        .flatMap((line, index) => [
+          ...(index
+            ? [{ type: "element" as const, tagName: "br", properties: {}, children: [] }]
+            : []),
+          { type: "text" as const, value: line },
+        ]),
+  },
+};
+
+/** A user message's text as Markdown, as the bubble renders it. */
+function UserMessageMarkdown({ text, leadingCommand }: { text: string; leadingCommand?: string }) {
+  return (
+    <FilePathAwareMessageResponse
+      className="text-message"
+      breaks
+      mode="static"
+      linkPullRequestRefs
+      remarkRehypeOptions={USER_MESSAGE_REMARK_REHYPE_OPTIONS}
+      renderLocalReviewComment={renderLocalReviewComment}
+      leadingCommand={leadingCommand}
+    >
+      {text}
+    </FilePathAwareMessageResponse>
+  );
+}
+
+/** A design-tool message's card, its words rendered like any user message's. */
+function DesignRequestCard({ request }: { request: DesignRequest }) {
+  return (
+    <DesignRequestBody request={request} words={<UserMessageMarkdown text={request.request} />} />
+  );
+}
+
+/**
+ * Copy a deep link to this message (``?message=<id>`` on the session URL).
+ * Same confirmation UX as {@link useCopyMessage}.
+ *
+ * @param messageId - Stable id stamped on the bubble (user itemId / assistant responseId).
+ */
+function useCopyMessageLink(messageId: string | null): {
+  isLinkCopied: boolean;
+  handleCopyLink: () => void;
+} {
+  const [isLinkCopied, setIsLinkCopied] = useState(false);
+  const timeoutRef = useRef<number>(0);
+  const isMobile = useIsMobileViewport();
+
+  useEffect(() => () => window.clearTimeout(timeoutRef.current), []);
+
+  const handleCopyLink = useCallback(() => {
+    if (!messageId || isLinkCopied) return;
+    copyText(buildMessageDeepLink(messageId)).then(
+      () => {
+        setIsLinkCopied(true);
+        window.clearTimeout(timeoutRef.current);
+        timeoutRef.current = window.setTimeout(() => setIsLinkCopied(false), 2000);
+        if (isMobile) {
+          showToast(<span className="text-ui">Link copied</span>, { duration: 1500 });
+        }
+      },
+      (error) => {
+        console.warn("Failed to copy message link", error);
+      },
+    );
+  }, [messageId, isLinkCopied, isMobile]);
+
+  return { isLinkCopied, handleCopyLink };
+}
+
+function useMessageActionVisibility(persistentOnMobile = false, persistentOnDesktop = false) {
+  const isMobile = useIsMobileViewport();
+  const actionsId = useId();
+  const [actionsRevealed, setActionsRevealed] = useState<boolean | null>(null);
+  const actionsVisible = isMobile ? (actionsRevealed ?? persistentOnMobile) : persistentOnDesktop;
+  const toggleVisibility = () => setActionsRevealed((visible) => !(visible ?? persistentOnMobile));
+
+  return {
+    actionsId,
+    visibilityToggle: isMobile ? (
+      <button
+        type="button"
+        aria-controls={actionsId}
+        aria-expanded={actionsVisible}
+        onClick={toggleVisibility}
+        className="sr-only focus:not-sr-only focus:rounded focus:p-1 focus:outline-2 focus:outline-ring"
+      >
+        {actionsVisible ? "Hide message actions" : "Show message actions"}
+      </button>
+    ) : null,
+    toggleActions: isMobile
+      ? (event: ReactMouseEvent<HTMLDivElement>) => {
+          if (
+            event.target instanceof Element &&
+            event.target.closest("a, button, input, textarea, select, [role=button]")
+          )
+            return;
+          toggleVisibility();
+        }
+      : undefined,
+    visibilityClassName: actionsVisible
+      ? "opacity-100"
+      : isMobile
+        ? "invisible opacity-0"
+        : "opacity-40 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100",
+  };
+}
+
+// How a composer reply quote is serialized into the sent text (see serializeReplyDraft).
+const REPLY_QUOTE_PARAGRAPH = /(^|\n\n)> /;
+
+function UserBubble({ bubble }: { bubble: Extract<Bubble, { kind: "user" }> }) {
+  // Scoped so a side-chat bubble builds attachment URLs against the CHILD, not
+  // the main conversation the root store projects.
+  const sessionId = useScopedConversationId();
+  // Author labels only matter once the session is shared with someone else.
+  const isSessionShared = useContext(SessionSharedContext);
+  const editSentMessage = useContext(EditSentMessageContext);
+  // - input_image: `imagePreview` picks the variant — an uploaded file, an
+  //   imported inline data URI, an in-flight upload chip, or a placeholder
+  //   for a block carrying neither.
+  // - input_file: always render as a chip (non-image files can't be
+  //   previewed inline).
+  const published = usePublishedComposerCommands(sessionId);
+  const text =
+    bubble.shellCommand !== undefined ? `!${bubble.shellCommand}` : extractUserText(bubble.content);
+  // The backend classifies the raw block, before sender and context wrappers
+  // are stripped for display.
+  const rawText =
+    bubble.content.length === 1 && bubble.content[0]?.type === "input_text"
+      ? bubble.content[0].text
+      : null;
+  // An optimistic `!cmd` has no shellCommand until the terminal mirror lands.
+  const isShellCommand =
+    bubble.shellCommand !== undefined ||
+    (bubble.pending === true &&
+      published?.nativeShell != null &&
+      rawText !== null &&
+      splitNativeShellCommand(rawText, published.nativeShell) !== null);
+  const origin = isShellCommand ? null : userMessageOrigin(bubble.content);
+  const collapsesOrigin = usePeerSessionMessageDisplay() === "collapse" && origin !== null;
+  const [originExpanded, setOriginExpanded] = useState(false);
+  const images = bubble.content.filter((c): c is ImageContentBlock => c.type === "input_image");
+  const fileChips = bubble.content.filter(
+    (c): c is Extract<MessageContentBlock, { type: "input_file" }> => c.type === "input_file",
+  );
+  // "@"-tagged files and sessions ride in as text markers; render them as
+  // inline pills where they sit in the sentence.
+  const renderedText = isShellCommand ? text : userMarkdownText(bubble.content);
+  // Equality selector so Zustand only re-renders the matching bubble.
+  const flashing = useChatStore((s) => s.flashItemId === bubble.itemId);
+  const { isCopied, handleCopy } = useCopyMessage(() => text);
+  const ts = formatBubbleTimestamp(bubble.createdAtS);
+  const awaitingAgent = Boolean(bubble.pending && bubble.awaitingAgent);
+  const { toggleActions, visibilityClassName, visibilityToggle, actionsId } =
+    useMessageActionVisibility(awaitingAgent, awaitingAgent && !text);
+  const { isLinkCopied, handleCopyLink } = useCopyMessageLink(
+    bubble.pending ? null : bubble.itemId,
+  );
+  // Collapse long prompts by default to avoid expensive Markdown parsing and
+  // a large DOM for text the user hasn't asked to read yet.
+  const isLong = renderedText.length > COLLAPSE_THRESHOLD;
+  const [isCollapsed, setIsCollapsed] = useState(isLong);
+  const visibleText = isCollapsed
+    ? omitIncompleteLocalReviewComment(sliceByCodePoint(renderedText, COLLAPSE_THRESHOLD))
+    : renderedText;
+  // Another session's message reaches the agent as plain input, and attachments or a reply
+  // quote make a send an ordinary message, so none of these is a command.
+  const command =
+    !isShellCommand &&
+    origin === null &&
+    published &&
+    images.length === 0 &&
+    fileChips.length === 0 &&
+    !REPLY_QUOTE_PARAGRAPH.test(renderedText)
+      ? splitKnownSlashCommand(visibleText, published.commandNames)
+      : null;
+  // Runtime-injected `[System: ...]` notifications ride in on role=user. When
+  // the content is a pure system marker, swap in a muted centered indicator.
+  // Another session's message is never one: it keeps its sender attribution.
+  if (!origin && images.length === 0 && fileChips.length === 0) {
+    const parsed = parseSystemMessage(text);
+    if (parsed) return <SystemMessageView message={parsed} />;
+  }
+  // Parsed from the rendered text, so its words keep their mention pills.
+  const designRequest = isShellCommand || origin ? null : parseDesignRequest(renderedText);
+  if (origin && collapsesOrigin && !originExpanded) {
+    return (
+      <CollapsedSessionMessage
+        bubble={bubble}
+        origin={origin}
+        text={text}
+        currentSessionId={sessionId ?? null}
+        onExpand={() => setOriginExpanded(true)}
+      />
+    );
+  }
+  // Badge OTHER contributors' messages only (never your own).
+  const author = bubble.createdBy;
+  const showAuthorBadge = shouldShowAuthorBadge(author, getCurrentAuthorId(), isSessionShared);
+  // Edit copies the text of a message you sent, shared session or not; single-user
+  // messages carry no author. A pending message counts once the server has it.
+  const canEdit =
+    editSentMessage !== null &&
+    (!bubble.pending || bubble.accepted === true) &&
+    (author === undefined || author === getCurrentUserId()) &&
+    text.trim().length > 0;
+
+  return (
+    <Message
+      from="user"
+      data-testid="message-bubble"
+      data-role="user"
+      data-user-message-id={bubble.itemId}
+      data-message-id={bubble.itemId}
+      className={cn("max-w-[640px]", bubble.pending && "animate-user-message-enter")}
+      onClick={toggleActions}
+    >
+      <div className="ml-auto flex w-fit max-w-full flex-col items-end">
+        {/* Keep the avatar beside the attachments and text as one aligned message. */}
+        <div className="flex w-fit max-w-full items-end gap-1.5">
+          {showAuthorBadge && author && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Avatar
+                  size="sm"
+                  data-testid="message-author"
+                  aria-label={author}
+                  className="shrink-0"
+                >
+                  <AvatarFallback
+                    className="font-medium text-white"
+                    style={{ backgroundColor: userColor(author) }}
+                  >
+                    {userInitials(author)}
+                  </AvatarFallback>
+                </Avatar>
+              </TooltipTrigger>
+              <TooltipContent>{author}</TooltipContent>
+            </Tooltip>
+          )}
+          <div className="flex min-w-0 max-w-full flex-col items-end gap-1.5">
+            {images.length > 0 && (
+              <div
+                data-testid="user-image-attachments"
+                className={cn(
+                  "flex max-w-full flex-wrap justify-end gap-1.5",
+                  flashing && "animate-message-highlight rounded-lg",
+                )}
+              >
+                {keyedAttachments(
+                  images,
+                  (img) => img.file_id ?? img.image_url ?? img.filename,
+                ).map(({ key, item: img }) => {
+                  const preview = imagePreview(img);
+                  if (preview.kind === "uploaded") {
+                    return (
+                      <SessionImage
+                        key={key}
+                        path={
+                          sessionId
+                            ? `/v1/sessions/${encodeURIComponent(sessionId)}/resources/files/${encodeURIComponent(preview.fileId)}/content`
+                            : undefined
+                        }
+                        alt={preview.alt}
+                        variant="userAttachment"
+                      />
+                    );
+                  }
+                  if (preview.kind === "inline") {
+                    return (
+                      <InlineImage
+                        key={key}
+                        src={preview.src}
+                        alt={preview.alt}
+                        variant="userAttachment"
+                      />
+                    );
+                  }
+                  return (
+                    <ImageAttachmentPlaceholder
+                      key={key}
+                      label={preview.label}
+                      pending={preview.kind === "pending"}
+                    />
+                  );
+                })}
+              </div>
+            )}
+            {(text || fileChips.length > 0) && (
+              <MessageContent
+                data-testid="user-message-content"
+                className={flashing ? "animate-message-highlight" : undefined}
+                // Another contributor's bubble takes their avatar color at low
+                // alpha instead of the default bg-muted.
+                style={
+                  showAuthorBadge && author ? { backgroundColor: userColorTint(author) } : undefined
+                }
+              >
+                {origin && (
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <SessionMessageOriginLine
+                      sourceId={origin.sourceId}
+                      currentSessionId={sessionId ?? null}
+                    />
+                    {collapsesOrigin && (
+                      <button
+                        type="button"
+                        onClick={() => setOriginExpanded(false)}
+                        aria-expanded
+                        aria-label="Collapse message"
+                        data-testid="collapse-session-message"
+                        className="text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        <ChevronUpIcon className="size-3" />
+                      </button>
+                    )}
+                  </div>
+                )}
+                {/* Non-image file chips */}
+                {fileChips.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {keyedAttachments(fileChips, (att) => att.file_id ?? att.filename).map(
+                      ({ key, item: att }) => (
+                        <AttachmentChip
+                          key={key}
+                          icon={FileTextIcon}
+                          label={attachmentLabel(att)}
+                        />
+                      ),
+                    )}
+                  </div>
+                )}
+                {/* Render user text as markdown, matching the assistant bubble.
+              `breaks` keeps single newlines as line breaks. Empty text renders
+              nothing rather than an empty markdown block.
+              For long prompts, only the visible slice is passed to the renderer
+              so the Markdown parser never processes hidden text. */}
+                {text && (
+                  <>
+                    <div className={cn("relative", isCollapsed && "max-h-64 overflow-hidden")}>
+                      {isShellCommand ? (
+                        <pre className="whitespace-pre-wrap break-words font-mono text-sm">
+                          <code>{visibleText}</code>
+                        </pre>
+                      ) : designRequest ? (
+                        <DesignRequestCard
+                          request={
+                            isCollapsed
+                              ? clipDesignRequest(designRequest, COLLAPSE_THRESHOLD)
+                              : designRequest
+                          }
+                        />
+                      ) : (
+                        <UserMessageMarkdown text={visibleText} leadingCommand={command?.token} />
+                      )}
+                      {/* Gradient fade at the bottom of collapsed prompts to signal
+                      there is more content below. */}
+                      {isCollapsed && isLong && (
+                        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-muted to-transparent" />
+                      )}
+                    </div>
+                    {isLong && (
+                      <button
+                        type="button"
+                        onClick={() => setIsCollapsed((c) => !c)}
+                        className="mt-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {isCollapsed
+                          ? `Show full prompt (${text.length.toLocaleString()} chars)`
+                          : "Collapse prompt"}
+                      </button>
+                    )}
+                  </>
+                )}
+              </MessageContent>
+            )}
+          </div>
+        </div>
+        {bubble.undelivered && (
+          <UndeliveredMessageNotice sessionId={sessionId} text={text} content={bubble.content} />
+        )}
+        {bubble.pending && bubble.stillSending && (
+          <div
+            className="flex items-center gap-1 pt-1 text-[11px] leading-4 text-muted-foreground"
+            data-testid="message-still-sending"
+          >
+            <Loader2Icon size={12} className="animate-spin" aria-hidden />
+            Still sending…
+          </div>
+        )}
+        {visibilityToggle}
+        <div className="flex max-w-full items-center justify-end gap-3 pt-1 mobile-app:py-0">
+          {/* Outside the hover-revealed actions: a mid-turn message can wait
+              minutes behind a long tool call and must not look delivered. */}
+          {awaitingAgent && (
+            <span
+              className="min-w-0 truncate text-sm leading-4 text-muted-foreground"
+              data-testid="message-awaiting-agent"
+              title="The agent will read this after its current step"
+            >
+              The agent will read this after its current step
+            </span>
+          )}
+          <div
+            id={actionsId}
+            className={cn("flex shrink-0 items-center gap-3", visibilityClassName)}
+          >
+            {ts && (
+              <span
+                className="shrink-0 select-none whitespace-nowrap text-sm leading-4 text-foreground/56"
+                data-testid="message-timestamp"
+              >
+                {ts}
+              </span>
+            )}
+            <MessageActions className="shrink-0">
+              {text && (
+                <MessageAction
+                  tooltip="Copy"
+                  size="icon-xxs"
+                  className="max-md:size-8"
+                  onClick={handleCopy}
+                  componentId="chat.message.copy_user"
+                >
+                  {isCopied ? <CheckIcon size={14} /> : <CopyIcon size={14} />}
+                </MessageAction>
+              )}
+              {canEdit && (
+                <MessageAction
+                  tooltip="Edit and resend"
+                  size="icon-xxs"
+                  className="max-md:size-8"
+                  onClick={() =>
+                    editSentMessage({
+                      text: isShellCommand ? text : userMessageBody(bubble.content),
+                    })
+                  }
+                  componentId="chat.message.edit_user"
+                >
+                  <PencilIcon size={14} />
+                </MessageAction>
+              )}
+              <MessageAction
+                tooltip={isLinkCopied ? "Copied!" : "Copy link"}
+                size="icon-xxs"
+                className="max-md:size-8"
+                data-testid="copy-message-link"
+                disabled={bubble.pending}
+                onClick={handleCopyLink}
+              >
+                {isLinkCopied ? <CheckIcon size={14} /> : <Link2Icon size={14} />}
+              </MessageAction>
+            </MessageActions>
+          </div>
+        </div>
+      </div>
+    </Message>
+  );
+}
+
+function AssistantBubble({
+  bubble,
+  isLastAssistant = false,
+  showsWorking = false,
+  actionsPersistent = false,
+  recoveryDisabled = false,
+}: {
+  bubble: Extract<Bubble, { kind: "assistant" }>;
+  isLastAssistant?: boolean;
+  showsWorking?: boolean;
+  actionsPersistent?: boolean;
+  recoveryDisabled?: boolean;
+}) {
+  const { toggleActions, visibilityClassName, visibilityToggle, actionsId } =
+    useMessageActionVisibility(isLastAssistant, actionsPersistent);
+  // The walker only emits an assistant bubble when at least one assistant-side
+  // block exists. The "Working…" shimmer for the empty-items / streaming gap
+  // is rendered at the page level, not inside this component.
+  //
+  // Scoped so a side-chat bubble reads the CHILD's status and targets the child
+  // for retry — not whatever the root store currently projects. Unscoped (the
+  // main transcript) reads the root store exactly as before; `useConversationEntryState(null)`
+  // is inert (no subscription, stable empty snapshot).
+  const scopedConversationId = useContext(ConversationScopeContext);
+  const scopedState = useConversationEntryState(scopedConversationId);
+  const activeConversationId = useChatStore((s) => s.conversationId);
+  const conversationId = scopedConversationId ?? activeConversationId;
+  const rootSessionStatus = useChatStore((s) => s.sessionStatus);
+  const rootHasPendingElicitation = useChatStore((s) => hasPendingElicitationBlock(s.blocks));
+  const sessionStatus = scopedConversationId ? scopedState.sessionStatus : rootSessionStatus;
+  // A pending blocking elicitation means the turn is parked awaiting the user — still in
+  // flight even when its lifecycle or the session status reads settled.
+  const hasPendingElicitation = scopedConversationId
+    ? hasPendingElicitationBlock(scopedState.blocks)
+    : rootHasPendingElicitation;
+  // Getter computes the markdown lazily at click time.
+  const { isCopied, handleCopy } = useCopyMessage(
+    () => collectBubbleMarkdown(bubble.items),
+    copyMarkdown,
+  );
+  const { isLinkCopied, handleCopyLink } = useCopyMessageLink(bubble.responseId);
+  const flashing = useChatStore((s) => s.flashItemId === bubble.responseId);
+  const foldNarration = useFoldAssistantNarration();
+  // null outside AppShell's provider (isolated tests) → hide the action.
+  const forkDialog = useForkDialog();
+  const queryClient = useContext(QueryClientContext);
+  const handleRetryError = useCallback(
+    async (item: Extract<RenderItem, { kind: "error" }>) => {
+      if (!conversationId) throw new Error("Session is not available");
+      if (CONTINUE_TURN_ERROR_CODES.has(item.code)) {
+        // Read a FRESH snapshot of the target conversation at click time: the
+        // scoped child's own entry in a side chat, else the root store. The
+        // child tab is fixed, so only the main chat guards against the user
+        // switching the active conversation out from under a queued retry.
+        const current = scopedConversationId
+          ? conversationRegistry.peek(scopedConversationId)?.getState()
+          : useChatStore.getState();
+        if (!current) throw new Error("The selected session has changed");
+        if (!scopedConversationId && useChatStore.getState().conversationId !== conversationId) {
+          throw new Error("The selected session has changed");
+        }
+        if (!isLastAssistant) throw new Error("Only the latest failed turn can be retried");
+        if (
+          current.status === "streaming" ||
+          current.sessionStatus === "launching" ||
+          current.sessionStatus === "running" ||
+          current.sessionStatus === "waiting" ||
+          current.pendingUserMessages.length > 0 ||
+          current.blocks.some(isPendingBlockingElicitation)
+        ) {
+          throw new Error("Wait for the current turn to finish before retrying");
+        }
+        const endPlanStop = supersedePlanStop(conversationId);
+        await continueFailedTurn(conversationId);
+        endPlanStop();
+        return;
+      }
+      try {
+        const result = await retrySession(conversationId);
+        if (!result.recovered) {
+          throw new Error("The session is already connected; no recovery was performed");
+        }
+      } catch (error) {
+        // Resume can seal a lost side chat; refresh its read-only state immediately.
+        if (error instanceof ApiError && error.code === "conflict") {
+          void queryClient?.invalidateQueries({ queryKey: ["session", conversationId] });
+        }
+        throw error;
+      }
+    },
+    [conversationId, scopedConversationId, isLastAssistant, queryClient],
+  );
+
+  if (bubble.items.length === 0) return null;
+
+  const markdownText = collectBubbleMarkdown(bubble.items);
+  const ts = formatBubbleTimestamp(bubble.createdAtS);
+
+  // The bubble collapses to nothing but the "Worked for" row — its text all
+  // sits inside the fold, and its answer lands in a later bubble.
+  const foldOnly = rendersOnlyWorkedFold({
+    items: bubble.items,
+    sessionStatus,
+    turnLifecycle: bubble.lifecycle,
+    continued: bubble.continued,
+    isLastAssistant,
+    hasPendingElicitation,
+    showsWorking,
+    defaultExpanded: bubble.defaultExpanded,
+    foldNarration,
+  });
+
+  // Elicitation cards want full chat-column width to match the composer.
+  const hasElicitation = bubble.items.some((it) => it.kind === "elicitation");
+  const isWide =
+    hasElicitation ||
+    containsMarkdownTable(bubble.items) ||
+    containsDisplayMath(bubble.items) ||
+    containsMermaidDiagram(bubble.items);
+  // An error banner's dashed rule spans the full chat column.
+  const hasError = bubble.items.some((it) => it.kind === "error");
+  // A bubble carrying an error but no prose stands alone as a thread-level
+  // element — the hover footer belongs to assistant text, not to the error.
+  const errorOnly = hasError && !markdownText;
+  // A bubble whose items are all errors (e.g. an undelivered-message notice) is a
+  // thread-level card, not an assistant reply, so it takes the "error" role; a
+  // failed turn that still produced tool or reasoning output keeps the assistant role.
+  const errorNotice = hasError && bubble.items.every((it) => it.kind === "error");
+  const spansFullColumn = isWide || hasError;
+  const hasSubagentNotice = bubble.items.some((it) => it.kind === "subagent_activity");
+  // Shrink-wrapped to a short reply, tool rows would cut their titles off mid-column.
+  const hasToolRows = bubble.items.some((it) => it.kind === "tool" || it.kind === "native_tool");
+  // Keep a simple trailing notice after the footer so it ends the visible row.
+  const detachTrailingNotices =
+    !foldOnly &&
+    bubble.lifecycle !== "cancelled" &&
+    !!markdownText &&
+    bubble.items.at(-1)?.kind === "subagent_activity" &&
+    bubble.items.every((item) => item.kind === "text" || item.kind === "subagent_activity");
+  const trailingNoticeStart = detachTrailingNotices
+    ? bubble.items.findLastIndex((item) => item.kind === "text") + 1
+    : bubble.items.length;
+  const mainItems =
+    trailingNoticeStart === bubble.items.length
+      ? bubble.items
+      : bubble.items.slice(0, trailingNoticeStart);
+  const trailingNotices = bubble.items.slice(trailingNoticeStart);
+
+  return (
+    <>
+      <Message
+        from="assistant"
+        data-testid="message-bubble"
+        data-role={errorNotice ? "error" : "assistant"}
+        data-response-stable-id={bubble.stableId}
+        data-message-id={bubble.responseId}
+        onClick={toggleActions}
+        className={cn(
+          "mobile-app:gap-0",
+          spansFullColumn ? "max-w-full" : "max-w-[var(--chat-prose-width)]",
+        )}
+      >
+        {/* Fold-only rows and notices fill the prose width so their hairlines stay visible. */}
+        <MessageContent
+          className={cn(
+            // The final code card has its own margin inside the custom pre wrapper.
+            "mobile-app:[&_.message-markdown>.chat-code-block:last-child>[data-streamdown=code-block]]:mb-0",
+            (spansFullColumn || foldOnly || hasSubagentNotice || hasToolRows) && "w-full",
+            flashing && "animate-message-highlight rounded-lg",
+          )}
+        >
+          <BlockRenderer
+            items={mainItems}
+            sessionStatus={sessionStatus}
+            turnLifecycle={bubble.lifecycle}
+            workedForS={bubble.workedForS}
+            continued={bubble.continued}
+            isLastAssistant={isLastAssistant}
+            hasPendingElicitation={hasPendingElicitation}
+            lastActivityAtS={bubble.lastActivityAtS}
+            showsWorking={showsWorking}
+            defaultExpanded={bubble.defaultExpanded}
+            foldNarration={foldNarration}
+            onRetryError={recoveryDisabled ? undefined : handleRetryError}
+          />
+        </MessageContent>
+        {bubble.lifecycle === "cancelled" && (
+          <p
+            className="mt-1 flex items-center gap-1 text-sm text-muted-foreground"
+            data-testid="assistant-interrupted-indicator"
+          >
+            <XIcon className="size-3" aria-hidden="true" />
+            <span>Interrupted</span>
+          </p>
+        )}
+        {/* Skip fold-only and error-only bubbles. Order: actions, then timestamp. */}
+        {!foldOnly && !errorOnly && (
+          <>
+            {visibilityToggle}
+            <div
+              id={actionsId}
+              className={cn(
+                "flex mobile-app:flex-wrap items-center gap-3 mobile-app:py-0",
+                visibilityClassName,
+              )}
+            >
+              <MessageActions>
+                {markdownText && (
+                  <MessageAction
+                    tooltip="Copy"
+                    size="icon-xxs"
+                    className="max-md:size-8"
+                    onClick={handleCopy}
+                    componentId="chat.message.copy_assistant"
+                  >
+                    {isCopied ? <CheckIcon size={14} /> : <CopyIcon size={14} />}
+                  </MessageAction>
+                )}
+                {/* Fork from this response: clone the session with history
+                    truncated after this turn. Hidden while streaming and when
+                    the session can't be forked. */}
+                {forkDialog?.canFork && bubble.lifecycle !== "streaming" && (
+                  <DisabledActionTooltip reason={forkDialog.disabledReason} label="Fork from here">
+                    <MessageAction
+                      tooltip={forkDialog.disabledReason ? undefined : "Fork from here"}
+                      label="Fork from here"
+                      disabled={!!forkDialog.disabledReason}
+                      size="icon-xxs"
+                      data-testid="fork-from-response"
+                      onClick={() =>
+                        forkDialog.openForkDialog({
+                          sourceSessionId: scopedConversationId ?? undefined,
+                          upToResponseId: bubble.responseId,
+                        })
+                      }
+                      componentId="chat.message.fork"
+                    >
+                      <SplitIcon size={14} />
+                    </MessageAction>
+                  </DisabledActionTooltip>
+                )}
+                <MessageAction
+                  tooltip={isLinkCopied ? "Copied!" : "Copy link"}
+                  size="icon-xxs"
+                  data-testid="copy-message-link"
+                  onClick={handleCopyLink}
+                >
+                  {isLinkCopied ? <CheckIcon size={14} /> : <Link2Icon size={14} />}
+                </MessageAction>
+              </MessageActions>
+              {ts && (
+                <span
+                  className="select-none text-sm leading-4 text-foreground/56"
+                  data-testid="message-timestamp"
+                >
+                  {ts}
+                </span>
+              )}
+            </div>
+          </>
+        )}
+        {trailingNotices.map((notice, index) =>
+          notice.kind === "subagent_activity" ? (
+            <ActivityNotice
+              key={notice.itemId ?? `subagent-activity-${index}`}
+              data={notice.data}
+            />
+          ) : null,
+        )}
+      </Message>
+
+      {/* Surface a turn-level failure as the same destructive pill an error
+          block renders — never raw red text. */}
+      {bubble.lifecycle === "failed" && bubble.error && (
+        <ErrorBanner message={bubble.error} source="" code="" />
+      )}
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Scroll helpers — rendered inside <Conversation> / as its siblings.
+// ---------------------------------------------------------------------------
+
+/**
+ * Forces the conversation back to the bottom when this client submits a new
+ * message.
+ */
+export function ScrollToBottomOnSend({ nonce }: { nonce: number }) {
+  const { scrollToBottom } = useStickToBottomContext();
+
+  useLayoutEffect(() => {
+    if (nonce === 0) return;
+    scrollToBottom("instant");
+    requestAnimationFrame(() => scrollToBottom("instant"));
+  }, [nonce, scrollToBottom]);
+
+  return null;
+}
+
+const POINTER_STATE_EVENTS = ["pointerdown", "pointerup", "pointercancel"] as const;
+
+/** Keep bottom-locked readers pinned when the viewport or the transcript changes height. */
+export function KeepBottomOnResize() {
+  const ctx = useStickToBottomContext() as ReturnType<typeof useStickToBottomContext> & {
+    scrollRef?: React.RefObject<HTMLElement>;
+  };
+  const scrollRef = ctx.scrollRef;
+  const contentRef = ctx.contentRef;
+  const state = ctx.state;
+  const scrollToBottom = ctx.scrollToBottom;
+
+  useEffect(() => {
+    const el = scrollRef?.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    let clientHeight = el.clientHeight;
+    let scrollHeight = el.scrollHeight;
+    // At the end of the last observed layout or the current one: a pin's own scroll
+    // event can arrive after the next line grew the transcript, and a shrink's
+    // clamp before its resize callback.
+    const isAtEnd = () => {
+      const end = Math.min(scrollHeight - clientHeight, el.scrollHeight - el.clientHeight);
+      return end - el.scrollTop <= 1;
+    };
+    let wasBottomLocked = state.isAtBottom && !state.escapedFromLock && isAtEnd();
+    let pointerDown = false;
+    let frame: number | null = null;
+    const onScroll = () => {
+      wasBottomLocked = isAtEnd();
+    };
+    const onPointer = (event: Event) => {
+      pointerDown = event.type === "pointerdown";
+    };
+    // Like the library, hold still while the reader drags a selection in the transcript.
+    const isSelecting = () => {
+      const selection = document.getSelection();
+      if (!pointerDown || !selection || selection.isCollapsed) return false;
+      const common = selection.getRangeAt(0).commonAncestorContainer;
+      return common.contains(el) || el.contains(common);
+    };
+    const observer = new ResizeObserver(() => {
+      const viewportResized = el.clientHeight !== clientHeight;
+      const contentGrew = el.scrollHeight > scrollHeight;
+      clientHeight = el.clientHeight;
+      scrollHeight = el.scrollHeight;
+      // Rechecked by the follow-up frame: the reader may scroll away or start selecting first.
+      const shouldPin = () =>
+        wasBottomLocked &&
+        !isSelecting() &&
+        (viewportResized || (contentGrew && state.isAtBottom && !state.escapedFromLock));
+      if (!shouldPin()) return;
+      // Gecko delivers this callback before the frame paints, but the
+      // library's scrollToBottom always lands a frame later (it defers
+      // through a rAF promise), so the resize paints with the transcript
+      // off its end before the follow-up pin snaps it back — a visible
+      // bounce on every wrapped composer or streamed line. Pin synchronously here
+      // first; the async pins below stay as a safety net for engines that
+      // deliver the callback after paint. Target the library's park
+      // position (one pixel short) so the settle is identical whether our
+      // write or the library's lands last.
+      el.scrollTop = Math.max(0, el.scrollHeight - el.clientHeight - 1);
+      scrollToBottom("instant");
+      if (frame !== null) cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        frame = null;
+        if (!shouldPin()) return;
+        el.scrollTop = Math.max(0, el.scrollHeight - el.clientHeight - 1);
+        scrollToBottom("instant");
+      });
+    });
+    el.addEventListener("scroll", onScroll, { passive: true });
+    for (const type of POINTER_STATE_EVENTS) document.addEventListener(type, onPointer, true);
+    observer.observe(el);
+    if (contentRef.current) observer.observe(contentRef.current);
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      for (const type of POINTER_STATE_EVENTS) document.removeEventListener(type, onPointer, true);
+      observer.disconnect();
+      if (frame !== null) cancelAnimationFrame(frame);
+    };
+  }, [scrollRef, contentRef, scrollToBottom, state]);
+
+  return null;
+}
+
+export function HistoryLoadingIndicator() {
+  return (
+    <div
+      role="status"
+      className="flex items-center justify-center gap-2 py-2 text-muted-foreground text-ui"
+    >
+      <Loader2Icon className="size-4 animate-spin" aria-hidden />
+      Loading earlier messages…
+    </div>
+  );
+}
+
+/**
+ * Builds the initial history window, then keeps loading near the top. The fetch
+ * fires this many viewports from the top; it has to be generous because the
+ * browser suppresses scroll anchoring at offset 0.
+ */
+const HISTORY_LOAD_TOP_VIEWPORTS = 2.5;
+/** Floor for very short viewports, where 2.5x would still be a few hundred px. */
+const HISTORY_LOAD_TOP_MIN_PX = 1200;
+
+function historyLoadThreshold(el: HTMLElement): number {
+  return Math.max(HISTORY_LOAD_TOP_MIN_PX, el.clientHeight * HISTORY_LOAD_TOP_VIEWPORTS);
+}
+
+/** Finger travel before a touch drag counts as "show me what's above". */
+const TOUCH_DRAG_SLOP_PX = 8;
+
+/**
+ * Quiet gap after which the next upward tick — a wheel notch, a scrollbar-drag
+ * move, a repeating key — counts as a new gesture with a fresh budget.
+ */
+const WHEEL_GESTURE_QUIET_MS = 300;
+
+/**
+ * Pages one gesture — a wheel flick, a finger drag, a key, a scrollbar drag —
+ * may chain beyond its first while every page folds into a turn already on
+ * screen. One enormous turn would otherwise let a single gesture page in the
+ * whole transcript with the reader's hands off.
+ */
+const SEEK_PAGES_PER_GESTURE = 30;
+
+/**
+ * Quiet time after the last scroll event before a touch-armed page may land.
+ * On a phone a flick keeps the pane moving after the finger lifts, and a page
+ * landing mid-motion writes the scroll offset, which kills that momentum dead —
+ * the fling stops a third of the way. Only a pane that moved this recently is
+ * held; a drag that has already come to rest fetches at once, finger down or
+ * not. Wheel, keyboard, and scrollbar gestures carry no native momentum and are
+ * not held.
+ */
+const TOUCH_SETTLE_MS = 120;
+
+/** Keys that scroll a pane upward: a request for older history when pressed outside an editor. */
+const HISTORY_SCROLL_KEYS = new Set(["ArrowUp", "PageUp", "Home"]);
+/** Keys that scroll a pane downward: the reader is done asking for older history. */
+const HISTORY_LEAVE_KEYS = new Set(["ArrowDown", "PageDown", "End"]);
+
+function isEditableTarget(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLElement &&
+    (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))
+  );
+}
+
+export function HistoryAutoLoader({
+  scrollElement,
+  rowCount,
+}: {
+  scrollElement?: HTMLElement | null;
+  /**
+   * Rows the transcript renders. A page that adds none folded into a turn
+   * already on screen. A row streaming in at the bottom also counts and ends a
+   * seek one page early; the reader's next flick resumes it.
+   */
+  rowCount: number;
+}) {
+  // useStickToBottomContext exposes scrollRef in the runtime context even though
+  // the public TS types only declare isAtBottom and scrollToBottom. Cast to it.
+  const ctx = useStickToBottomContext() as ReturnType<typeof useStickToBottomContext> & {
+    scrollRef: React.RefObject<HTMLElement>;
+  };
+  const historyGeneration = useChatStore((s) => s.historyGeneration);
+  const loadingMoreHistory = useChatStore((s) => s.loadingMoreHistory);
+  // A successful page updates this cursor in the same store transaction that
+  // prepends its items and clears loadingMoreHistory.
+  const oldestItemId = useChatStore((s) => s.oldestItemId);
+  const generationRef = useRef(historyGeneration);
+  const [scrollRevision, setScrollRevision] = useState(0);
+  const handledScrollRevisionRef = useRef(scrollRevision);
+  const oldestItemIdRef = useRef(oldestItemId);
+  // The reader's unserved request for older history. Armed only by input —
+  // wheel, touch, keyboard, or a scrollbar drag — and consumed by the fetch it
+  // triggers. Movement alone is not intent: the
+  // virtualizer, the bottom lock, and native anchoring all move scrollTop
+  // upward while a page settles, and reading those as gestures paged the whole
+  // transcript in with the reader's hands off the trackpad.
+  const scrolledUpRef = useRef(false);
+  // Whether the browser would send keyboard scrolling to the transcript: the
+  // last pointer press landed on it or its scrollbar, and focus has not since
+  // moved to something else on the page.
+  const pointerInTranscriptRef = useRef(false);
+  const touchStartYRef = useRef<number | null>(null);
+  const touchLastYRef = useRef<number | null>(null);
+  // Whether the request in hand was armed by a finger. A touch request waits
+  // for the pane to stop moving before it fetches; see TOUCH_SETTLE_MS.
+  const touchArmedRef = useRef(false);
+  const lastScrollAtRef = useRef(Number.NEGATIVE_INFINITY);
+  const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Whether the current touch sequence already armed a request.
+  const touchGestureSpentRef = useRef(false);
+  const lastUpwardTickAtRef = useRef(Number.NEGATIVE_INFINITY);
+  // Rows on screen when the gesture being served began, while it is still
+  // seeking. A settled tool-heavy turn is one folded row, so a page can land
+  // entirely inside it and show the reader nothing; the gesture keeps paging
+  // until a page adds a row, then waits for the next gesture.
+  const seekBaseRowsRef = useRef<number | null>(null);
+  const seekPagesLeftRef = useRef(SEEK_PAGES_PER_GESTURE);
+  // Whether the current gesture has fetched yet: its first page is free, every
+  // later one — chained or from a further tick of the same gesture — spends
+  // the budget, even after a page that added a row ended the seek.
+  const gestureFetchedRef = useRef(false);
+
+  // Position across a prepend is held by the transcript (VirtualBubbleList), not
+  // by this component. Writing scrollTop here instead used to interrupt the
+  // reader's gesture.
+  useLayoutEffect(() => {
+    const el = scrollElement ?? ctx.scrollRef?.current;
+    if (!el) return;
+    const noteUpwardGesture = (seekPages: number, viaTouch = false) => {
+      touchArmedRef.current = viaTouch;
+      scrolledUpRef.current = true;
+      // A fresh gesture seeks from what is on screen now, with a fresh budget.
+      seekBaseRowsRef.current = null;
+      seekPagesLeftRef.current = seekPages;
+      gestureFetchedRef.current = false;
+      setScrollRevision((revision) => revision + 1);
+    };
+    // Scrolling back down withdraws the request: the page in flight still
+    // lands, but nothing chains after it.
+    const noteDownwardGesture = () => {
+      scrolledUpRef.current = false;
+      seekBaseRowsRef.current = null;
+    };
+    // Scroll movement alone is never intent: the virtualizer, the bottom lock,
+    // and the transcript's own hold all move scrollTop while a page settles. It
+    // only re-evaluates an already armed request against the threshold.
+    const handleScroll = () => {
+      lastScrollAtRef.current = performance.now();
+      setScrollRevision((revision) => revision + 1);
+    };
+    // One upward tick of a wheel, a scrollbar drag, or a repeating key. The
+    // first after a quiet gap is a fresh gesture; later ticks keep the request
+    // open on the same budget, so a long scroll keeps paging at the reader's
+    // pace without refilling.
+    const noteUpwardTick = () => {
+      const now = performance.now();
+      const newGesture = now - lastUpwardTickAtRef.current > WHEEL_GESTURE_QUIET_MS;
+      lastUpwardTickAtRef.current = now;
+      if (newGesture) {
+        noteUpwardGesture(SEEK_PAGES_PER_GESTURE);
+        return;
+      }
+      scrolledUpRef.current = true;
+      setScrollRevision((revision) => revision + 1);
+    };
+    // The transcript draws its own scrollbar; a thumb drag reports its direction
+    // here, so a drag up asks and a drag back down withdraws.
+    const handleScrollbarDrag = (event: Event) => {
+      const { direction } = (event as CustomEvent<TranscriptScrollbarDragDetail>).detail;
+      if (direction === "down") noteDownwardGesture();
+      else noteUpwardTick();
+    };
+    const handleWheel = (event: WheelEvent) => {
+      if (event.deltaY > 0) noteDownwardGesture();
+      else if (event.deltaY < 0) noteUpwardTick();
+    };
+    const handleTouchStart = (event: TouchEvent) => {
+      touchStartYRef.current = event.touches[0]?.clientY ?? null;
+      touchLastYRef.current = touchStartYRef.current;
+      touchGestureSpentRef.current = false;
+    };
+    // Lift: re-evaluate at once, so a drag that stopped still fetches without
+    // waiting for another scroll event.
+    const handleTouchEnd = () => {
+      setScrollRevision((revision) => revision + 1);
+    };
+    const handleTouchMove = (event: TouchEvent) => {
+      const start = touchStartYRef.current;
+      const last = touchLastYRef.current;
+      const current = event.touches[0]?.clientY;
+      if (start === null || last === null || current === undefined) return;
+      // A finger moving back up the screen (scrolling down) by more than the
+      // slop since its last position withdraws, mid-drag or not.
+      if (current < last - TOUCH_DRAG_SLOP_PX) {
+        touchLastYRef.current = current;
+        noteDownwardGesture();
+        return;
+      }
+      if (current > last) touchLastYRef.current = current;
+      if (current <= start + TOUCH_DRAG_SLOP_PX || touchGestureSpentRef.current) return;
+      touchGestureSpentRef.current = true;
+      noteUpwardGesture(SEEK_PAGES_PER_GESTURE, true);
+    };
+    const inTranscript = (target: EventTarget | null) =>
+      target instanceof Node &&
+      (el.contains(target) ||
+        (target instanceof Element && target.closest("[data-transcript-scrollbar]") !== null));
+    const handlePointerDown = (event: PointerEvent) => {
+      pointerInTranscriptRef.current = inTranscript(event.target);
+    };
+    // Focus moving elsewhere (Tab, a dialog opening) takes keyboard scrolling
+    // with it; focus inside the transcript is covered by the activeElement check.
+    const handleFocusIn = (event: FocusEvent) => {
+      if (!inTranscript(event.target)) pointerInTranscriptRef.current = false;
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // A control that consumed the key (a menu, a listbox) scrolled nothing.
+      if (event.defaultPrevented || isEditableTarget(event.target)) return;
+      // Only plain keys the browser would scroll this pane with; modified ones
+      // are shortcuts (turn navigation is Cmd/Ctrl+Alt+Arrow). Space pages down
+      // and Shift+Space pages up.
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      // Shift+Arrow/Home/PageUp extends a text selection; only Shift+Space scrolls.
+      if (event.shiftKey && event.key !== " ") return;
+      if (!pointerInTranscriptRef.current && !el.contains(el.ownerDocument.activeElement)) return;
+      const key = event.key === " " ? (event.shiftKey ? "PageUp" : "PageDown") : event.key;
+      if (HISTORY_LEAVE_KEYS.has(key)) noteDownwardGesture();
+      if (HISTORY_SCROLL_KEYS.has(key)) noteUpwardTick();
+    };
+    const doc = el.ownerDocument;
+    el.addEventListener("scroll", handleScroll, { passive: true });
+    el.addEventListener("wheel", handleWheel, { passive: true });
+    el.addEventListener("touchstart", handleTouchStart, { passive: true });
+    el.addEventListener("touchmove", handleTouchMove, { passive: true });
+    el.addEventListener("touchend", handleTouchEnd, { passive: true });
+    el.addEventListener("touchcancel", handleTouchEnd, { passive: true });
+    el.addEventListener(TRANSCRIPT_SCROLLBAR_DRAG_EVENT, handleScrollbarDrag);
+    doc.addEventListener("pointerdown", handlePointerDown, { passive: true });
+    doc.addEventListener("focusin", handleFocusIn);
+    doc.addEventListener("keydown", handleKeyDown);
+    return () => {
+      el.removeEventListener("scroll", handleScroll);
+      el.removeEventListener("wheel", handleWheel);
+      el.removeEventListener("touchstart", handleTouchStart);
+      el.removeEventListener("touchmove", handleTouchMove);
+      el.removeEventListener("touchend", handleTouchEnd);
+      el.removeEventListener("touchcancel", handleTouchEnd);
+      if (settleTimerRef.current !== null) clearTimeout(settleTimerRef.current);
+      el.removeEventListener(TRANSCRIPT_SCROLLBAR_DRAG_EVENT, handleScrollbarDrag);
+      doc.removeEventListener("pointerdown", handlePointerDown);
+      doc.removeEventListener("focusin", handleFocusIn);
+      doc.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [ctx.scrollRef, scrollElement]);
+
+  // The single paging effect. Re-evaluated on reader input, scroll movement, and
+  // a changed oldest item (a settled prepend, even a height-neutral one).
+  useLayoutEffect(() => {
+    const el = scrollElement ?? ctx.scrollRef?.current;
+    if (!el) return;
+
+    const generationChanged = generationRef.current !== historyGeneration;
+    const itemsChanged = !generationChanged && oldestItemIdRef.current !== oldestItemId;
+    const scrollPositionChanged =
+      !generationChanged && handledScrollRevisionRef.current !== scrollRevision;
+    oldestItemIdRef.current = oldestItemId;
+    handledScrollRevisionRef.current = scrollRevision;
+
+    if (generationChanged) {
+      generationRef.current = historyGeneration;
+      // A new window is a new open: require a fresh gesture, with a fresh budget.
+      scrolledUpRef.current = false;
+      seekBaseRowsRef.current = null;
+      seekPagesLeftRef.current = SEEK_PAGES_PER_GESTURE;
+      gestureFetchedRef.current = false;
+      lastUpwardTickAtRef.current = Number.NEGATIVE_INFINITY;
+    }
+
+    const state = useChatStore.getState();
+    if (
+      !state.oldestItemId ||
+      !state.hasMoreHistory ||
+      state.loadingMoreHistory ||
+      !(itemsChanged || scrollPositionChanged)
+    ) {
+      return;
+    }
+    if (el.scrollTop >= historyLoadThreshold(el)) return;
+    // A finger-armed request waits while the pane is still moving, so the page
+    // cannot land mid-fling. A pane that has been still for the settle window
+    // fetches at once — a slow drag that stopped at the top has no momentum to
+    // protect, finger down or not. The scroll listener re-runs this effect while
+    // a fling decelerates; a timer covers the final quiet stretch.
+    if (touchArmedRef.current && (scrolledUpRef.current || seekBaseRowsRef.current !== null)) {
+      const sinceScroll = performance.now() - lastScrollAtRef.current;
+      if (sinceScroll < TOUCH_SETTLE_MS) {
+        if (settleTimerRef.current !== null) clearTimeout(settleTimerRef.current);
+        settleTimerRef.current = setTimeout(
+          () => {
+            settleTimerRef.current = null;
+            setScrollRevision((revision) => revision + 1);
+          },
+          Math.max(16, TOUCH_SETTLE_MS - sinceScroll),
+        );
+        return;
+      }
+    }
+    if (scrolledUpRef.current) {
+      scrolledUpRef.current = false;
+      // A gesture's first page is free; the budget bounds the pages after it,
+      // including those a further tick of the same gesture asks for.
+      if (gestureFetchedRef.current) {
+        if (seekPagesLeftRef.current <= 0) return;
+        seekPagesLeftRef.current -= 1;
+      }
+      gestureFetchedRef.current = true;
+      seekBaseRowsRef.current ??= rowCount;
+      void state.loadMoreHistory();
+      return;
+    }
+    // No open request: a settled page chains only while the gesture is still
+    // seeking, the page showed the reader nothing new, and budget remains.
+    if (!itemsChanged || seekBaseRowsRef.current === null) return;
+    if (rowCount > seekBaseRowsRef.current || seekPagesLeftRef.current <= 0) {
+      seekBaseRowsRef.current = null;
+      return;
+    }
+    seekPagesLeftRef.current -= 1;
+    void state.loadMoreHistory();
+  }, [
+    ctx.scrollRef,
+    historyGeneration,
+    loadingMoreHistory,
+    oldestItemId,
+    rowCount,
+    scrollElement,
+    scrollRevision,
+  ]);
+
+  // No visible control — history loads purely on reader input.
+  return null;
+}
+
+/** Top inset for a pinned anchor: 16px beyond the fade's fully opaque edge. */
+const PINNED_ANCHOR_TOP_GAP_PX = 96;
+
+/**
+ * Ceiling on the reserved space, as a share of the viewport. Capping it keeps
+ * most of the viewport showing real messages.
+ */
+const MAX_RESERVED_VIEWPORT_FRACTION = 1 / 3;
+
+/** Frames to wait for the windowed anchor row to mount before settling capture. */
+const ANCHOR_CAPTURE_MAX_RETRIES = 10;
+
+/**
+ * Trailing spacer that pins the initially loaded turn's anchor to the top of
+ * the viewport. The anchor is captured once when the hydrated chat surface
+ * mounts, so live sends consume the reserved space instead of jumping to top.
+ */
+export function LatestTurnSpacer({
+  scrollElement,
+  conversationId,
+  blockCount: blockCountProp,
+  committedUserIds,
+  hasCommittedAnchor: hasCommittedAnchorProp,
+  // Gap left above the pinned anchor. Defaults to clearing the top fade band;
+  // with the Plan accordion pinned above (fade dropped, container already below
+  // the header), the caller passes the small content inset so a framed turn
+  // rests just below the accordion instead of 80px lower.
+  topGapPx = PINNED_ANCHOR_TOP_GAP_PX,
+  // Set to the spacer's latest measure() so a sibling (the composer's
+  // same-task growth pin) can re-measure before reading scroll geometry —
+  // the spacer's own ResizeObserver delivery runs a frame later, and the
+  // intervening paint is the visible transcript jump.
+  measureRef,
+  // Bumped by the transcript when the virtualizer's mounted range changes, so a
+  // windowed-out anchor that has since remounted (which needn't resize any
+  // observed element) triggers a fresh measure — the ResizeObserver alone would
+  // miss it, leaving a stale reservation.
+  remeasureNonce = 0,
+}: {
+  scrollElement?: HTMLElement | null;
+  conversationId?: string | null;
+  blockCount?: number;
+  committedUserIds?: ReadonlySet<string>;
+  hasCommittedAnchor?: boolean;
+  topGapPx?: number;
+  measureRef?: React.RefObject<(() => void) | null>;
+  remeasureNonce?: number;
+} = {}) {
+  const ctx = useStickToBottomContext() as ReturnType<typeof useStickToBottomContext> & {
+    scrollRef: React.RefObject<HTMLElement>;
+  };
+  const storeBlockCount = useChatStore((s) => s.blocks.length);
+  const blockCount = blockCountProp ?? storeBlockCount;
+  const spacerRef = useRef<HTMLDivElement>(null);
+  // The anchor is stored by stable id, not by node reference: the transcript is
+  // windowed, so its DOM node is destroyed when the row scrolls out and a fresh
+  // node is mounted when it returns — a captured node reference would stay
+  // detached forever, and a semantic "last assistant text" would silently
+  // retarget to whatever earlier turn is still mounted. `undefined` = capture
+  // not run yet; a resolved value is a {kind,id} anchor (a committed user
+  // message, or an assistant response by its stable id) or `null` (a settled
+  // capture with no suitable anchor, e.g. a brand-new conversation).
+  const initialAnchorRef = useRef<{ kind: "user" | "assistant"; id: string } | null | undefined>(
+    undefined,
+  );
+  const initialCommittedUserIdsRef = useRef<Set<string> | null>(null);
+  // Bounded rAF retries for capturing the anchor when committed blocks exist but
+  // their rows haven't mounted yet (windowed transcript, published a frame
+  // before the virtualizer fills its window). A resize we could observe isn't
+  // guaranteed — the wrapper's height tracks the estimate — so we drive the
+  // retry ourselves rather than wait for one. When the budget runs out (e.g. a
+  // tool-only trailing turn that never has an anchor) capture settles to `null`.
+  const captureFrameRef = useRef(0);
+  const captureAttemptsRef = useRef(0);
+  // The anchor node measured last, and a flag the ResizeObserver sets to force
+  // the next measure past the same-node skip (viewport/content size changed).
+  const lastAnchorNodeRef = useRef<HTMLElement | null>(null);
+  const forceMeasureRef = useRef(true);
+
+  // Transcript keys the spacer by displayed conversation; this reset also
+  // covers callers that reuse one spacer instance across conversation changes.
+  const storeConversationId = useChatStore((s) => s.conversationId);
+  const displayedConversationId = conversationId ?? storeConversationId;
+  const prevConversationIdRef = useRef(displayedConversationId);
+  if (prevConversationIdRef.current !== displayedConversationId) {
+    prevConversationIdRef.current = displayedConversationId;
+    initialAnchorRef.current = undefined;
+    initialCommittedUserIdsRef.current = null; // recomputed below from new blocks
+    captureAttemptsRef.current = 0;
+    lastAnchorNodeRef.current = null;
+    forceMeasureRef.current = true;
+  }
+  if (initialCommittedUserIdsRef.current === null) {
+    if (committedUserIds) {
+      initialCommittedUserIdsRef.current = new Set(committedUserIds);
+    } else {
+      const ids = new Set<string>();
+      for (const block of useChatStore.getState().blocks) {
+        if (
+          block.type === "user_message" &&
+          !isSystemUserContent(block.content) &&
+          block.ctx.itemId !== null
+        ) {
+          ids.add(block.ctx.itemId);
+        }
+      }
+      initialCommittedUserIdsRef.current = ids;
+    }
+  }
+
+  const measure = useCallback(() => {
+    const scrollEl = scrollElement ?? ctx.scrollRef?.current;
+    const spacerEl = spacerRef.current;
+    if (!scrollEl || !spacerEl) return;
+    if (initialAnchorRef.current === undefined) {
+      // Match DOM bubbles against committed blocks so an optimistic pending
+      // send visible during this first layout can never become the anchor.
+      // Defer capture until a bubble is actually mounted — on a windowed
+      // transcript the scroll element can be published a frame before the
+      // virtualizer mounts any rows, and settling on `null` then would freeze
+      // the spacer with no anchor.
+      const users = scrollEl.querySelectorAll<HTMLElement>(
+        '[data-role="user"][data-user-message-id]',
+      );
+      let initialUserId: string | null = null;
+      for (let index = users.length - 1; index >= 0; index -= 1) {
+        const itemId = users[index]!.dataset.userMessageId;
+        if (itemId !== undefined && initialCommittedUserIdsRef.current!.has(itemId)) {
+          initialUserId = itemId;
+          break;
+        }
+      }
+      // No committed user anchor: pin the LAST assistant response by its stable
+      // id (the same id the bubble is keyed by), captured now while it's mounted
+      // at the bottom, so re-resolution later targets that exact turn — not
+      // whichever assistant text happens to be last in the windowed set.
+      let initialAssistantId: string | null = null;
+      if (initialUserId === null) {
+        const texts = scrollEl.querySelectorAll<HTMLElement>(
+          '[data-testid="assistant-text-section"]',
+        );
+        const lastText = texts[texts.length - 1];
+        initialAssistantId =
+          lastText?.closest<HTMLElement>("[data-role='assistant']")?.dataset.responseStableId ??
+          null;
+      }
+      if (initialUserId === null && initialAssistantId === null) {
+        const hasCommittedAnchor =
+          hasCommittedAnchorProp ??
+          (initialCommittedUserIdsRef.current!.size > 0 ||
+            useChatStore.getState().blocks.some((b) => b.type !== "user_message"));
+        // Rows not mounted yet: retry on the next frame, up to a small budget,
+        // so a resize that never comes can't leave the spacer uncaptured — and
+        // an anchorless turn (tool-only trailing bubble) still settles instead
+        // of retrying forever. The `requestAnimationFrame` guard keeps this a
+        // no-op in environments without it rather than throwing.
+        if (
+          hasCommittedAnchor &&
+          captureAttemptsRef.current < ANCHOR_CAPTURE_MAX_RETRIES &&
+          typeof requestAnimationFrame === "function"
+        ) {
+          if (captureFrameRef.current === 0) {
+            captureFrameRef.current = requestAnimationFrame(() => {
+              captureFrameRef.current = 0;
+              captureAttemptsRef.current += 1;
+              measure();
+            });
+          }
+          return;
+        }
+      }
+      initialAnchorRef.current =
+        initialUserId !== null
+          ? { kind: "user", id: initialUserId }
+          : initialAssistantId !== null
+            ? { kind: "assistant", id: initialAssistantId }
+            : null;
+    }
+    const anchorKey = initialAnchorRef.current;
+    if (anchorKey === null) {
+      // Do not let the always-mounted sentinel become a zero-height flex item.
+      spacerEl.style.display = "none";
+      return;
+    }
+    // Re-resolve the live node by id every measure so a windowed row that was
+    // unmounted and remounted (a new DOM node) is picked up again.
+    const anchor =
+      anchorKey.kind === "user"
+        ? scrollEl.querySelector<HTMLElement>(
+            `[data-role="user"][data-user-message-id="${CSS.escape(anchorKey.id)}"]`,
+          )
+        : scrollEl.querySelector<HTMLElement>(
+            `[data-role="assistant"][data-response-stable-id="${CSS.escape(anchorKey.id)}"] [data-testid="assistant-text-section"]`,
+          );
+    // The transcript is windowed, so the anchor can be scrolled out of the
+    // mounted set. A missing node would report a zeroed rect that blows the
+    // reservation up — hold the last good height until the anchor re-mounts.
+    if (!anchor) return;
+    spacerEl.style.display = "";
+    // The reservation depends only on the anchor NODE and the viewport height,
+    // both scroll-invariant. This effect also fires on every windowed-range
+    // change (a scroll-frequency signal), so skip the forced-layout rect reads
+    // below whenever neither changed — a viewport resize routes through the
+    // ResizeObserver, which sets `forceMeasureRef` to bypass this guard. Keeps
+    // ordinary scrolling free of per-frame getBoundingClientRect reflows while
+    // still re-measuring when the anchor node actually (re)mounts.
+    const forced = forceMeasureRef.current;
+    forceMeasureRef.current = false;
+    if (!forced && anchor === lastAnchorNodeRef.current) return;
+    lastAnchorNodeRef.current = anchor;
+    // rect diffs are scroll-invariant, and the spacer's top is fixed by the
+    // content above it, so this is stable across the height we're about to set.
+    const spacerRect = spacerEl.getBoundingClientRect();
+    const anchorToEnd = spacerRect.top - anchor.getBoundingClientRect().top;
+    // The content column's trailing padding sits below the spacer and scrolls
+    // with it; leaving it out of the reservation keeps the document from
+    // outgrowing the viewport by that padding.
+    const trailing = spacerEl.parentElement
+      ? Math.max(0, spacerEl.parentElement.getBoundingClientRect().bottom - spacerRect.bottom)
+      : 0;
+    const viewport = scrollEl.clientHeight;
+    const next = Math.max(
+      0,
+      Math.min(
+        viewport - anchorToEnd - topGapPx - trailing,
+        viewport * MAX_RESERVED_VIEWPORT_FRACTION,
+      ),
+    );
+    const current = Number.parseFloat(spacerEl.style.height) || 0;
+    if (Math.abs(current - next) >= 1) spacerEl.style.height = `${next}px`;
+  }, [ctx.scrollRef, hasCommittedAnchorProp, scrollElement, topGapPx]);
+
+  // A block-count change shifts content; force past the same-node skip. The
+  // range nonce (scroll) does NOT force — the guard skips it when the anchor
+  // node is unchanged, which is the whole point of decoupling scroll from the
+  // spacer's forced layout.
+  useLayoutEffect(() => {
+    forceMeasureRef.current = true;
+    measure();
+  }, [measure, blockCount, displayedConversationId]);
+
+  useLayoutEffect(() => {
+    measure();
+  }, [measure, remeasureNonce]);
+
+  useLayoutEffect(() => {
+    if (!measureRef) return;
+    // The composer's same-task growth pin reads geometry right after; force a
+    // real measure so it reflects the shrunk viewport, not a skipped no-op.
+    const forcedMeasure = () => {
+      forceMeasureRef.current = true;
+      measure();
+    };
+    measureRef.current = forcedMeasure;
+    return () => {
+      if (measureRef.current === forcedMeasure) measureRef.current = null;
+    };
+  }, [measure, measureRef]);
+
+  useLayoutEffect(() => {
+    const scrollEl = scrollElement ?? ctx.scrollRef?.current;
+    const contentEl = spacerRef.current?.parentElement;
+    if (!scrollEl || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => {
+      forceMeasureRef.current = true; // viewport / content size changed
+      measure();
+    });
+    observer.observe(scrollEl); // viewport (clientHeight) changes
+    if (contentEl) observer.observe(contentEl); // streaming / reflow growth
+    return () => observer.disconnect();
+  }, [ctx.scrollRef, measure, scrollElement]);
+
+  // Cancel any pending capture-retry frame when the surface unmounts.
+  useEffect(() => () => cancelAnimationFrame(captureFrameRef.current), []);
+
+  return <div ref={spacerRef} aria-hidden style={{ flexShrink: 0 }} />;
+}
+
+/**
+ * The conversation's scroll container plus the minimal StickToBottom controls
+ * the JumpToTopButton needs to override the library's bottom-lock.
+ */
+export interface ConversationScroller {
+  el: HTMLElement;
+  state: { isAtBottom: boolean; escapedFromLock: boolean };
+  stopScroll: () => void;
+}
+
+/**
+ * Lifts the StickToBottom scroll container (and lock controls) out of the
+ * context so a sibling rendered *outside* `<Conversation>` can still read and
+ * drive it. Renders nothing.
+ */
+export function ConversationScrollRefBridge({
+  onScroller,
+}: {
+  onScroller: (s: ConversationScroller | null) => void;
+}) {
+  const ctx = useStickToBottomContext() as ReturnType<typeof useStickToBottomContext> & {
+    scrollRef: React.RefObject<HTMLElement>;
+    state: ConversationScroller["state"];
+    stopScroll: () => void;
+  };
+  // Before paint: the virtualized transcript renders no rows until it has the
+  // scroll element, so handing it over later paints a newly opened session blank.
+  // Render this after StickToBottom.Content so its scrollRef is attached by now.
+  useLayoutEffect(() => {
+    const el = ctx.scrollRef?.current ?? null;
+    onScroller(el ? { el, state: ctx.state, stopScroll: ctx.stopScroll } : null);
+    return () => onScroller(null);
+  }, [ctx.scrollRef, ctx.state, ctx.stopScroll, onScroller]);
+  return null;
+}
+
+/**
+ * Hover-revealed "Jump to top" pill. Hovering near the top edge surfaces a pill
+ * at the fade border; clicking it pages in every older history block and then
+ * scrolls to the very first message.
+ *
+ * @param containerEl - The conversation wrapper; hover/anchor reference.
+ * @param scroller - Scroll container + lock controls (ConversationScrollRefBridge).
+ * @param hasMoreHistory - Whether older messages exist before the loaded window.
+ */
+export function JumpToTopButton({
+  containerEl,
+  scroller,
+  hasMoreHistory,
+}: {
+  containerEl: HTMLElement | null;
+  scroller: ConversationScroller | null;
+  hasMoreHistory: boolean;
+}) {
+  const [atTop, setAtTop] = useState(true);
+  const [hovering, setHovering] = useState(false);
+  const [jumping, setJumping] = useState(false);
+  // Reveal the pill while the user is scrolling up, then fade it back out.
+  const [scrolledUp, setScrolledUp] = useState(false);
+
+  // How long the pill lingers after the last upward scroll before fading out.
+  const SCROLL_REVEAL_MS = 2000;
+
+  // Pixels below the conversation's top edge that count as "hovering the top".
+  const HOVER_BAND_PX = 140;
+
+  // Hover detection on the wrapper so the pill (a wrapper child) stays in-band.
+  useEffect(() => {
+    if (!containerEl) return;
+    const onMove = (e: MouseEvent) => {
+      const next = e.clientY - containerEl.getBoundingClientRect().top < HOVER_BAND_PX;
+      setHovering((prev) => (prev === next ? prev : next));
+    };
+    const onLeave = () => setHovering(false);
+    containerEl.addEventListener("mousemove", onMove, { passive: true });
+    containerEl.addEventListener("mouseleave", onLeave);
+    return () => {
+      containerEl.removeEventListener("mousemove", onMove);
+      containerEl.removeEventListener("mouseleave", onLeave);
+    };
+  }, [containerEl]);
+
+  // Track whether the loaded window is scrolled to its very top, and reveal the
+  // pill whenever the user scrolls up (auto-hiding after they pause).
+  const scrollEl = scroller?.el ?? null;
+  useEffect(() => {
+    if (!scrollEl) return;
+    let lastTop = scrollEl.scrollTop;
+    let hideTimer: ReturnType<typeof setTimeout> | undefined;
+    const onScroll = () => {
+      const top = scrollEl.scrollTop;
+      const next = top <= 1;
+      const atBottom = top >= scrollEl.scrollHeight - scrollEl.clientHeight - 1;
+      setAtTop((prev) => (prev === next ? prev : next));
+      // Upward scroll (and not already pinned to the top): show the pill and
+      // (re)arm the idle timer that fades it out once scrolling settles.
+      if (top < lastTop - 1 && top > 1 && !atBottom) {
+        setScrolledUp(true);
+        clearTimeout(hideTimer);
+        hideTimer = setTimeout(() => setScrolledUp(false), SCROLL_REVEAL_MS);
+      } else if (top > lastTop + 1 || atBottom) {
+        clearTimeout(hideTimer);
+        setScrolledUp(false);
+      }
+      lastTop = top;
+    };
+    onScroll();
+    scrollEl.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      clearTimeout(hideTimer);
+      scrollEl.removeEventListener("scroll", onScroll);
+    };
+  }, [scrollEl]);
+
+  // Somewhere to go: older pages exist, or we're scrolled down within the window.
+  const canJump = hasMoreHistory || !atTop;
+  const visible = jumping || ((hovering || scrolledUp) && canJump);
+
+  const jumpToTop = useCallback(async () => {
+    if (!scroller) return;
+    const { el, state, stopScroll } = scroller;
+    const nextFrame = () =>
+      new Promise<void>((resolve) => {
+        requestAnimationFrame(() => resolve());
+      });
+    setJumping(true);
+    try {
+      // Release StickToBottom's bottom-lock so prepend-driven scrolls bail
+      // instead of yanking the view back to the bottom.
+      stopScroll();
+      state.isAtBottom = false;
+      state.escapedFromLock = true;
+
+      // Page in every older block before scrolling. loadMoreHistory serializes
+      // via its own guard; the rAF wait yields a frame for the prepend to
+      // commit. The iteration cap is a backstop against a server that never
+      // reports done.
+      /* oxlint-disable no-await-in-loop */
+      for (let i = 0; i < 1000 && useChatStore.getState().hasMoreHistory; i++) {
+        await useChatStore.getState().loadMoreHistory();
+        // Keep the lock released — a prepend that briefly lands us near the
+        // bottom can otherwise re-arm it via the library's scroll handler.
+        state.isAtBottom = false;
+        state.escapedFromLock = true;
+        await nextFrame();
+      }
+      // Pin to the very top, re-asserting across frames until it holds.
+      for (let i = 0, stable = 0; i < 60 && stable < 2; i++) {
+        if (el.scrollTop === 0) stable += 1;
+        else {
+          el.scrollTop = 0;
+          stable = 0;
+        }
+        await nextFrame();
+      }
+      /* oxlint-enable no-await-in-loop */
+    } finally {
+      setJumping(false);
+    }
+  }, [scroller]);
+
+  return (
+    <div
+      // top 50px centers the pill on the chat-scroll-fade border, just below the
+      // h-14 ChatHeader. z-40 > header z-30. On iOS the header/fade shift down by
+      // the safe-area inset, so add --omnigent-inset-top (0px off-shell).
+      style={{ top: "calc(50px + var(--omnigent-inset-top))" }}
+      className={cn(
+        "pointer-events-none absolute inset-x-0 z-40 flex justify-center transition-opacity duration-150 max-md:hidden",
+        visible ? "opacity-100" : "opacity-0",
+      )}
+    >
+      <Button
+        type="button"
+        variant="outline"
+        size="icon-sm"
+        disabled={jumping}
+        onClick={() => void jumpToTop()}
+        aria-label="Jump to the first message"
+        componentId="chat.nav.jump_to_top"
+        // When hidden keep the button out of the tab order and a11y tree.
+        tabIndex={visible ? 0 : -1}
+        aria-hidden={!visible}
+        className={cn(
+          "size-7 rounded-full p-0 shadow-sm",
+          // Force an OPAQUE background in both themes and on hover, so the faded
+          // chat text behind the pill doesn't bleed through.
+          "bg-background hover:bg-background hover:brightness-95",
+          "dark:bg-background dark:hover:bg-background dark:hover:brightness-125",
+          visible ? "pointer-events-auto" : "pointer-events-none",
+        )}
+      >
+        {jumping ? (
+          <Loader2Icon className="size-3.5 animate-spin" aria-hidden />
+        ) : (
+          <ArrowUpIcon className="size-3.5" aria-hidden />
+        )}
+      </Button>
+    </div>
+  );
+}

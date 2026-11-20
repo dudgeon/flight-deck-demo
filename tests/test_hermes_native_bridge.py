@@ -1,0 +1,954 @@
+"""Unit tests for the hermes-native tmux bridge (no real tmux needed)."""
+
+from __future__ import annotations
+
+import contextlib
+import importlib
+import json
+import logging
+import shlex
+import sqlite3
+import sys
+import uuid
+from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
+
+from omnigent.harnesses.hermes_native import bridge as b
+
+
+def test_bridge_dir_is_per_session_and_under_root() -> None:
+    d1 = b.bridge_dir_for_session_id("conv_a")
+    d2 = b.bridge_dir_for_session_id("conv_b")
+    assert d1 != d2
+    assert d1.parent == b.bridge_root()
+    # Deterministic for the same session id.
+    assert d1 == b.bridge_dir_for_session_id("conv_a")
+
+
+def test_build_spawn_env_publishes_bridge_dir(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(b, "_BRIDGE_ROOT", tmp_path / "hermes-native")
+    env = b.build_hermes_native_spawn_env("conv_x")
+    assert env[b.BRIDGE_DIR_ENV_VAR] == str(b.bridge_dir_for_session_id("conv_x"))
+    # The dir is created so the executor can read the advertised target.
+    assert Path(env[b.BRIDGE_DIR_ENV_VAR]).is_dir()
+
+
+def test_write_then_read_tmux_target_roundtrip(tmp_path) -> None:
+    b.write_tmux_target(tmp_path, socket_path=Path("/tmp/sock"), tmux_target="sess:0.0", pid=42)
+    info = b.read_tmux_info(tmp_path)
+    assert info == {"socket_path": "/tmp/sock", "tmux_target": "sess:0.0"}
+
+
+def test_read_tmux_info_missing_and_malformed(tmp_path) -> None:
+    assert b.read_tmux_info(tmp_path) is None  # no tmux.json
+    (tmp_path / "tmux.json").write_text("not json", encoding="utf-8")
+    assert b.read_tmux_info(tmp_path) is None
+    (tmp_path / "tmux.json").write_text(json.dumps({"socket_path": ""}), encoding="utf-8")
+    assert b.read_tmux_info(tmp_path) is None  # incomplete
+
+
+def test_paste_payload_bytes_normalizes() -> None:
+    out = b._paste_payload_bytes("a\r\nb\tc\x1b\n")
+    # \r\n and \n → CR (0x0D); tab kept; ESC (control) dropped.
+    assert out == b"a\rb\tc\r"
+
+
+def test_submit_needle_prefers_last_qualifying_line() -> None:
+    assert b._submit_needle("hi\nthere is a longer tail line") == "there is a longer tail l"[:24]
+    # Too-short content yields no needle (blind-submit path).
+    assert b._submit_needle("ok") == ""
+
+
+def _patch_inject_tmux(monkeypatch, calls: list[tuple[str, ...]]) -> None:
+    """Common monkeypatches: live pane, instant settle, capture shows needle."""
+    monkeypatch.setattr(
+        b, "_wait_for_tmux_info", lambda *_a, **_k: {"socket_path": "/s", "tmux_target": "t"}
+    )
+    monkeypatch.setattr(b, "_session_alive", lambda *_a, **_k: True)
+    monkeypatch.setattr(b, "_settle_pane", lambda *_a, **_k: None)
+    monkeypatch.setattr(b, "_pane_accepts_input", lambda *_a, **_k: True)
+    # Pane already shows the needle so the commit-wait returns immediately.
+    monkeypatch.setattr(b, "_capture_pane", lambda *_a, **_k: "do something now")
+    monkeypatch.setattr(b.time, "sleep", lambda *_a, **_k: None)
+    monkeypatch.setattr(b, "_run_tmux", lambda _sock, *args: calls.append(args))
+
+
+def test_inject_user_message_clears_pastes_and_submits(tmp_path, monkeypatch) -> None:
+    calls: list[tuple[str, ...]] = []
+    _patch_inject_tmux(monkeypatch, calls)
+    # No readable store → best-effort single delivery (no confirmation loop).
+    monkeypatch.setattr(b, "_state_db_path", lambda _bd: None)
+
+    b.inject_user_message(tmp_path, content="do something now")
+
+    flat = [a[0] for a in calls]
+    # Draft cleared (C-a, C-k), buffer loaded + pasted, then a single Enter.
+    assert "send-keys" in flat and "load-buffer" in flat and "paste-buffer" in flat
+    assert calls[0] == ("send-keys", "-t", "t", "C-a")
+    assert calls[1] == ("send-keys", "-t", "t", "C-k")
+    assert calls[-1] == ("send-keys", "-t", "t", "Enter")
+    # The temp paste file is cleaned up.
+    assert not list(tmp_path.glob("paste_*.bin"))
+    # Exactly one delivery: one load-buffer, one Enter.
+    assert sum(1 for a in calls if a[0] == "load-buffer") == 1
+    assert sum(1 for a in calls if a[-1] == "Enter") == 1
+
+
+def test_inject_user_message_single_delivery_when_store_confirms(tmp_path, monkeypatch) -> None:
+    """Store row appears after the first delivery → no retry."""
+    calls: list[tuple[str, ...]] = []
+    _patch_inject_tmux(monkeypatch, calls)
+    monkeypatch.setattr(b, "_state_db_path", lambda _bd: tmp_path / "state.db")
+    monkeypatch.setattr(b, "_await_session_ready", lambda *_args: True)
+    # Baseline 0, then a new row (id=1) confirms delivery on the first check.
+    ids = iter([0, 1])
+    monkeypatch.setattr(b, "_max_message_id", lambda _p: next(ids))
+
+    b.inject_user_message(tmp_path, content="do something now")
+
+    assert sum(1 for a in calls if a[0] == "load-buffer") == 1, "no retry when confirmed"
+    assert sum(1 for a in calls if a[-1] == "Enter") == 1
+
+
+def test_inject_user_message_waits_without_keys_for_delayed_persistence(
+    tmp_path, monkeypatch
+) -> None:
+    """Accepted input may be queued before persistence, even with a modal open."""
+    calls: list[tuple[str, ...]] = []
+    settle_calls: list[tuple] = []
+    _patch_inject_tmux(monkeypatch, calls)
+    monkeypatch.setattr(b, "_settle_pane", lambda *a, **k: settle_calls.append((a, k)))
+    monkeypatch.setattr(b, "_DELIVERY_CONFIRM_TIMEOUT_S", 1.0)
+    monkeypatch.setattr(b, "_state_db_path", lambda _bd: tmp_path / "state.db")
+    monkeypatch.setattr(b, "_await_session_ready", lambda *_args: True)
+    # baseline=0 → no immediate persistence → queued input eventually persists.
+    seq = iter([0, 0, 1])
+    monkeypatch.setattr(b, "_max_message_id", lambda _p: next(seq))
+
+    b.inject_user_message(tmp_path, content="do something now")
+
+    assert len(settle_calls) == 1
+    assert sum(1 for a in calls if a[0] == "load-buffer") == 1
+    assert sum(1 for a in calls if a[-1] == "Enter") == 1
+
+
+def test_inject_user_message_raises_when_never_confirmed(tmp_path, monkeypatch) -> None:
+    """Dropped and accepted-but-unpersisted inputs both remain ambiguous."""
+    calls: list[tuple[str, ...]] = []
+    _patch_inject_tmux(monkeypatch, calls)
+    monkeypatch.setattr(b, "_DELIVERY_CONFIRM_TIMEOUT_S", 0.0)
+    monkeypatch.setattr(b, "_state_db_path", lambda _bd: tmp_path / "state.db")
+    monkeypatch.setattr(b, "_await_session_ready", lambda *_args: True)
+    monkeypatch.setattr(b, "_max_message_id", lambda _p: 0)  # never advances
+
+    with pytest.raises(b.HermesDeliveryUnconfirmed, match="delivery is unconfirmed"):
+        b.inject_user_message(tmp_path, content="do something now")
+
+    assert sum(1 for a in calls if a[0] == "load-buffer") == 1
+    assert sum(1 for a in calls if a[-1] == "Enter") == 1
+
+
+@pytest.mark.parametrize("initial", ["missing", "empty", "partial-schema"])
+def test_inject_user_message_waits_for_session_store(tmp_path, monkeypatch, initial) -> None:
+    """Wait for schema readiness; Hermes can create its first row after the paste."""
+    calls: list[tuple[str, ...]] = []
+    _patch_inject_tmux(monkeypatch, calls)
+    db = tmp_path / "state #1.db"
+    if initial == "empty":
+        db.touch()
+    elif initial == "partial-schema":
+        with sqlite3.connect(db) as con:
+            con.executescript(b._SESSIONS_DDL)
+    monkeypatch.setattr(b, "_state_db_path", lambda _bd: db)
+    initialized = False
+
+    def initialize_store(_seconds: float) -> None:
+        nonlocal initialized
+        if initialized:
+            return
+        assert calls == [], "no paste before store readiness"
+        with sqlite3.connect(db) as con:
+            con.executescript(b._SESSIONS_DDL + b._MESSAGES_DDL)
+        initialized = True
+
+    def tmux(_socket, *args) -> None:
+        assert initialized
+        calls.append(args)
+        if args[-1] == "Enter":
+            with sqlite3.connect(db) as con:
+                assert con.execute("SELECT COUNT(*) FROM sessions").fetchone() == (0,)
+                con.execute(
+                    "INSERT INTO sessions (id, source, started_at) VALUES (?, ?, ?)",
+                    ("session", "cli", 0.0),
+                )
+                con.execute(
+                    "INSERT INTO messages (session_id, role, content) VALUES (?, ?, ?)",
+                    ("session", "user", "do something now"),
+                )
+
+    monkeypatch.setattr(
+        b, "time", SimpleNamespace(monotonic=b.time.monotonic, sleep=initialize_store)
+    )
+    monkeypatch.setattr(b, "_run_tmux", tmux)
+    b.inject_user_message(tmp_path, content="do something now", timeout_s=1.0)
+    assert sum(1 for args in calls if args[-1] == "Enter") == 1
+
+
+@pytest.mark.parametrize("initial", ["missing", "empty", "schema", "messages-only", "invalid"])
+def test_inject_user_message_does_not_send_when_store_is_unready(
+    tmp_path, monkeypatch, initial
+) -> None:
+    calls: list[tuple[str, ...]] = []
+    _patch_inject_tmux(monkeypatch, calls)
+    db = tmp_path / "state.db"
+    if initial == "empty":
+        db.touch()
+    elif initial == "schema":
+        with sqlite3.connect(db) as con:
+            con.executescript(b._SESSIONS_DDL)
+    elif initial == "messages-only":
+        with sqlite3.connect(db) as con:
+            con.executescript(b._MESSAGES_DDL)
+    elif initial == "invalid":
+        db.write_text("not a database")
+    before = db.read_bytes() if db.exists() else None
+    monkeypatch.setattr(b, "_state_db_path", lambda _bd: db)
+    elapsed = 0.0
+    sleeps: list[float] = []
+
+    def advance(seconds: float) -> None:
+        nonlocal elapsed
+        assert calls == [], "no paste while waiting for the store"
+        sleeps.append(seconds)
+        elapsed += seconds
+
+    monkeypatch.setattr(b, "time", SimpleNamespace(monotonic=lambda: elapsed, sleep=advance))
+    timeout = b._DELIVERY_POLL_INTERVAL_S * 2.5
+    with pytest.raises(RuntimeError, match="no message was sent"):
+        b.inject_user_message(tmp_path, content="do something now", timeout_s=timeout)
+    assert len(sleeps) == 3
+    assert elapsed == pytest.approx(timeout)
+    assert calls == []
+    assert (db.read_bytes() if db.exists() else None) == before
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Hermes native requires a Unix TTY")
+@pytest.mark.parametrize(
+    "canonical,echo,ready",
+    [(True, True, False), (False, True, False), (True, False, False), (False, False, True)],
+)
+def test_pane_accepts_input_checks_real_tty_modes(monkeypatch, canonical, echo, ready):
+    import os
+    import pty
+    import termios
+
+    master, slave = pty.openpty()
+    try:
+        attrs = termios.tcgetattr(slave)
+        attrs[3] = (attrs[3] & ~(termios.ICANON | termios.ECHO)) | (
+            (termios.ICANON if canonical else 0) | (termios.ECHO if echo else 0)
+        )
+        termios.tcsetattr(slave, termios.TCSANOW, attrs)
+        monkeypatch.setattr(
+            b.subprocess,
+            "run",
+            lambda *_a, **_k: SimpleNamespace(returncode=0, stdout=os.ttyname(slave) + "\n"),
+        )
+        assert b._pane_accepts_input("/s", "t") is ready
+    finally:
+        os.close(slave)
+        os.close(master)
+
+
+@pytest.mark.parametrize("result", ["missing", "failed", "not-tty"])
+def test_pane_accepts_input_requires_available_tty(tmp_path, monkeypatch, result):
+    path = tmp_path / "not-tty"
+    path.write_text("static startup banner")
+    monkeypatch.setattr(
+        b.subprocess,
+        "run",
+        lambda *_a, **_k: SimpleNamespace(
+            returncode=1 if result == "failed" else 0,
+            stdout="" if result == "missing" else str(path),
+        ),
+    )
+    assert not b._pane_accepts_input("/s", "t")
+
+
+def test_inject_user_message_waits_for_cooked_startup_before_any_keys(tmp_path, monkeypatch):
+    calls = []
+    _patch_inject_tmux(monkeypatch, calls)
+    monkeypatch.setattr(b, "_state_db_path", lambda _bd: None)
+    elapsed = 0.0
+
+    def advance(seconds):
+        nonlocal elapsed
+        assert not calls, "startup must receive neither clearing keys nor message bytes"
+        elapsed += seconds
+
+    monkeypatch.setattr(b, "time", SimpleNamespace(monotonic=lambda: elapsed, sleep=advance))
+    monkeypatch.setattr(b, "_pane_accepts_input", lambda *_a, **_k: False)
+    with pytest.raises(b.HermesInputNotSent, match="input is not ready; no message was sent"):
+        b.inject_user_message(tmp_path, content="do something now", timeout_s=0.5)
+    assert elapsed == pytest.approx(0.5)
+    assert calls == []
+
+
+def test_inject_user_message_sends_once_after_raw_input_becomes_ready(tmp_path, monkeypatch):
+    calls = []
+    _patch_inject_tmux(monkeypatch, calls)
+    monkeypatch.setattr(b, "_state_db_path", lambda _bd: None)
+    ready = False
+
+    def input_ready(*_args, **_kwargs):
+        return ready
+
+    def advance(_seconds):
+        nonlocal ready
+        if not ready:
+            assert not calls
+            ready = True
+
+    monkeypatch.setattr(b, "_pane_accepts_input", input_ready)
+    monkeypatch.setattr(b.time, "sleep", advance)
+    b.inject_user_message(tmp_path, content="do something now")
+    assert sum(1 for a in calls if a[0] == "paste-buffer") == 1
+    assert sum(1 for a in calls if a[-1] == "Enter") == 1
+
+
+def test_inject_user_message_requires_content(tmp_path) -> None:
+    with pytest.raises(RuntimeError):
+        b.inject_user_message(tmp_path, content="")
+
+
+def test_state_db_path_prefers_per_session_home(tmp_path, monkeypatch) -> None:
+    # No per-session home, no $HERMES_HOME, no ~/.hermes → None.
+    monkeypatch.delenv("HERMES_HOME", raising=False)
+    monkeypatch.setattr(b.Path, "home", staticmethod(lambda: tmp_path / "nohome"))
+    assert b._state_db_path(tmp_path) is None
+    # Per-session HERMES_HOME under the bridge dir wins, even before state.db exists.
+    home = tmp_path / b._HERMES_HOME_SUBDIR
+    home.mkdir()
+    assert b._state_db_path(tmp_path) == home / "state.db"
+
+
+def test_max_message_id_reads_high_water_mark(tmp_path) -> None:
+    db = tmp_path / "state.db"
+    # Missing file → 0.
+    assert b._max_message_id(db) == 0
+    con = sqlite3.connect(str(db))
+    con.executescript(b._MESSAGES_DDL)
+    # Empty table → 0.
+    assert b._max_message_id(db) == 0
+    con.execute(
+        "INSERT INTO messages (id, session_id, role, content, timestamp) VALUES (?,?,?,?,?)",
+        (7, "s1", "user", "hi", 0.0),
+    )
+    con.commit()
+    con.close()
+    assert b._max_message_id(db) == 7
+
+
+def test_await_new_message_checks_at_least_once(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(b.time, "sleep", lambda *_a, **_k: None)
+    # Even with a zero timeout, one check runs: baseline 5, current 6 → True.
+    monkeypatch.setattr(b, "_max_message_id", lambda _p: 6)
+    assert b._await_new_message(tmp_path / "state.db", 5, 0.0) is True
+    # No advance → False.
+    monkeypatch.setattr(b, "_max_message_id", lambda _p: 5)
+    assert b._await_new_message(tmp_path / "state.db", 5, 0.0) is False
+
+
+def test_inject_user_message_dead_pane_raises(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(
+        b, "_wait_for_tmux_info", lambda *_a, **_k: {"socket_path": "/s", "tmux_target": "t"}
+    )
+    monkeypatch.setattr(b, "_session_alive", lambda *_a, **_k: False)
+    with pytest.raises(RuntimeError, match="no longer running"):
+        b.inject_user_message(tmp_path, content="hi")
+
+
+def test_inject_interrupt_sends_ctrl_c(tmp_path, monkeypatch) -> None:
+    calls: list[tuple[str, ...]] = []
+    monkeypatch.setattr(
+        b, "_wait_for_tmux_info", lambda *_a, **_k: {"socket_path": "/s", "tmux_target": "t"}
+    )
+    monkeypatch.setattr(b, "_run_tmux", lambda _sock, *args: calls.append(args))
+    b.inject_interrupt(tmp_path)
+    assert calls == [("send-keys", "-t", "t", "C-c")]
+
+
+def test_kill_session_kills_target(tmp_path, monkeypatch) -> None:
+    calls: list[tuple[str, ...]] = []
+    monkeypatch.setattr(
+        b, "_wait_for_tmux_info", lambda *_a, **_k: {"socket_path": "/s", "tmux_target": "t"}
+    )
+    monkeypatch.setattr(b, "_run_tmux", lambda _sock, *args: calls.append(args))
+    b.kill_session(tmp_path)
+    assert calls == [("kill-session", "-t", "t")]
+
+
+def test_capture_pane_none_when_no_target_or_dead(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(b, "read_tmux_info", lambda _d: None)
+    assert b.capture_hermes_pane(tmp_path) is None
+    monkeypatch.setattr(b, "read_tmux_info", lambda _d: {"socket_path": "/s", "tmux_target": "t"})
+    monkeypatch.setattr(b, "_session_alive", lambda *_a, **_k: False)
+    assert b.capture_hermes_pane(tmp_path) is None
+
+
+def test_capture_pane_returns_text_when_alive(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(b, "read_tmux_info", lambda _d: {"socket_path": "/s", "tmux_target": "t"})
+    monkeypatch.setattr(b, "_session_alive", lambda *_a, **_k: True)
+    monkeypatch.setattr(b, "_capture_pane", lambda *_a, **_k: "pane text")
+    assert b.capture_hermes_pane(tmp_path) == "pane text"
+
+
+def test_send_pane_keys_forwards_to_tmux(tmp_path, monkeypatch) -> None:
+    calls: list[tuple[str, ...]] = []
+    monkeypatch.setattr(b, "read_tmux_info", lambda _d: {"socket_path": "/s", "tmux_target": "t"})
+    monkeypatch.setattr(b, "_run_tmux", lambda _sock, *args: calls.append(args))
+    b.send_hermes_pane_keys(tmp_path, "4")
+    assert calls == [("send-keys", "-t", "t", "4")]
+
+
+def test_send_pane_keys_raises_without_target(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(b, "read_tmux_info", lambda _d: None)
+    with pytest.raises(RuntimeError, match="not advertised"):
+        b.send_hermes_pane_keys(tmp_path, "1")
+
+
+# -- Compress command injection tests --
+
+
+def test_inject_compress_command_sends_keys(tmp_path, monkeypatch) -> None:
+    calls: list[tuple[str, ...]] = []
+
+    def _fake_tmux(_socket_path, *args):
+        calls.append(args)
+
+    monkeypatch.setattr(b, "_run_tmux", _fake_tmux)
+    monkeypatch.setattr(b, "read_tmux_info", lambda _d: {"socket_path": "/s", "tmux_target": "t"})
+    # _wait_for_tmux_info calls read_tmux_info internally, so patch it.
+    monkeypatch.setattr(
+        b,
+        "_wait_for_tmux_info",
+        lambda _d, timeout_s=30: {"socket_path": "/s", "tmux_target": "t"},
+    )
+    b.inject_compress_command(tmp_path)
+    assert calls == [
+        ("send-keys", "-t", "t", "C-u"),
+        ("send-keys", "-l", "-t", "t", "/compress"),
+        ("send-keys", "-t", "t", "Enter"),
+    ]
+
+
+def test_inject_compress_command_raises_without_target(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(b, "read_tmux_info", lambda _d: None)
+    with pytest.raises(RuntimeError):
+        b.inject_compress_command(tmp_path, timeout_s=0.1)
+
+
+# -- Policy hook config tests --
+
+
+def test_write_policy_hook_config_creates_expected_files(tmp_path) -> None:
+    bridge_dir = tmp_path / "bridge"
+    bridge_dir.mkdir()
+
+    hermes_home = b.write_policy_hook_config(bridge_dir, "http://localhost:6767", "session-123")
+
+    assert hermes_home == bridge_dir / "hermes_home"
+    assert hermes_home.is_dir()
+
+    # Wrapper shell script exists and is owner-only (it bakes a one-shot auth
+    # token, so the secret is never world-readable).
+    wrapper = hermes_home / "omnigent-policy-hook.sh"
+    assert wrapper.is_file()
+    assert wrapper.stat().st_mode & 0o777 == 0o700
+    wrapper_text = wrapper.read_text()
+    # Values are shlex-quoted (shell-safe URLs/ids need no quotes).
+    assert "_OMNIGENT_SERVER_URL=http://localhost:6767" in wrapper_text
+    assert "_OMNIGENT_SESSION_ID=session-123" in wrapper_text
+    assert "_OMNIGENT_AUTH_HEADERS=" in wrapper_text
+    assert sys.executable in wrapper_text
+    assert "hermes_policy_hook.py" in wrapper_text
+
+    # config.yaml with hook registered.
+    config = json.loads((hermes_home / "config.yaml").read_text())
+    assert config["hooks_auto_accept"] is True
+    hooks = config["hooks"]["pre_tool_call"]
+    assert len(hooks) == 1
+    assert hooks[0]["command"] == str(wrapper)
+    assert hooks[0]["timeout"] == 86400
+
+    # Allowlist.
+    allowlist = json.loads((hermes_home / "shell-hooks-allowlist.json").read_text())
+    assert allowlist["approvals"][0]["event"] == "pre_tool_call"
+    assert allowlist["approvals"][0]["command"] == str(wrapper)
+
+    # MCP server registered.
+    mcp = config["mcp_servers"]["omnigent"]
+    assert mcp["command"] == sys.executable
+    assert "serve-mcp" in mcp["args"]
+    assert "--bridge-dir" in mcp["args"]
+    assert str(bridge_dir) in mcp["args"]
+
+    # bridge.json written with auth token.
+    bridge_config = json.loads((bridge_dir / "bridge.json").read_text())
+    assert isinstance(bridge_config["token"], str)
+    assert len(bridge_config["token"]) > 0
+
+
+def _wrapper_hook_path(wrapper: Path) -> Path:
+    """The hook script the wrapper ``exec``s (the path after the interpreter)."""
+    for line in reversed(wrapper.read_text().splitlines()):
+        if line.startswith("exec "):
+            return Path(shlex.split(line)[-1])
+    raise AssertionError(f"no exec line in wrapper:\n{wrapper.read_text()}")
+
+
+def test_write_policy_hook_config_wrapper_execs_existing_hook(tmp_path) -> None:
+    bridge_dir = tmp_path / "bridge"
+    bridge_dir.mkdir()
+
+    hermes_home = b.write_policy_hook_config(bridge_dir, "http://localhost:6767", "session-123")
+
+    hook = _wrapper_hook_path(hermes_home / "omnigent-policy-hook.sh")
+    assert hook.is_file(), f"wrapper execs a non-existent hook: {hook}"
+    from omnigent.inner import hermes_policy_hook
+
+    assert hook == Path(hermes_policy_hook.__file__).resolve()
+
+
+def test_inject_relay_into_policy_hook_wrapper_execs_existing_hook(tmp_path: Path) -> None:
+    hermes_home = b.write_policy_hook_config(tmp_path, "http://ap", "conv_h")
+    assert b.inject_relay_into_policy_hook(
+        tmp_path,
+        relay_url="http://127.0.0.1:9999",
+        relay_token="relay-tok",
+        server_url="http://ap",
+        session_id="conv_h",
+    )
+
+    hook = _wrapper_hook_path(hermes_home / "omnigent-policy-hook.sh")
+    assert hook.is_file(), f"relay-rewritten wrapper execs a non-existent hook: {hook}"
+
+
+def test_write_policy_hook_config_copies_user_files(tmp_path, monkeypatch) -> None:
+    bridge_dir = tmp_path / "bridge"
+    bridge_dir.mkdir()
+    user_hermes = tmp_path / ".hermes"
+    user_hermes.mkdir()
+    (user_hermes / ".env").write_text("API_KEY=secret")
+    (user_hermes / "auth.json").write_text('{"token": "abc"}')
+
+    monkeypatch.setattr(b.Path, "home", staticmethod(lambda: tmp_path))
+
+    hermes_home = b.write_policy_hook_config(bridge_dir, "http://localhost:6767", "s1")
+    assert (hermes_home / ".env").read_text() == "API_KEY=secret"
+    assert (hermes_home / "auth.json").read_text() == '{"token": "abc"}'
+
+
+def test_write_policy_hook_config_merges_user_model(tmp_path, monkeypatch) -> None:
+    bridge_dir = tmp_path / "bridge"
+    bridge_dir.mkdir()
+    user_hermes = tmp_path / ".hermes"
+    user_hermes.mkdir()
+
+    import yaml
+
+    (user_hermes / "config.yaml").write_text(
+        yaml.dump({"_config_version": 12, "model": "test-model", "providers": {"test": {}}})
+    )
+
+    monkeypatch.setattr(b.Path, "home", staticmethod(lambda: tmp_path))
+
+    hermes_home = b.write_policy_hook_config(bridge_dir, "http://localhost:6767", "s2")
+    config = json.loads((hermes_home / "config.yaml").read_text())
+    assert config["_config_version"] == 12
+    assert config["model"] == "test-model"
+    assert config["providers"] == {"test": {}}
+    assert config["hooks_auto_accept"] is True
+
+
+@pytest.mark.parametrize("context", [None, "invalid", '{"pipeline":"repro-agent","run_id":"123"}'])
+@pytest.mark.parametrize("legacy", [False, True])
+def test_ci_provider_headers_survive_hermes_policy_config(
+    tmp_path, monkeypatch, caplog, context, legacy
+) -> None:
+    """Native and headless policy setup share the provider-scoped header boundary."""
+    from omnigent.databricks_ai_gateway import REQUEST_TAGS_HEADER
+
+    monkeypatch.delenv("OMNIGENT_CI_PIPELINE", raising=False)
+    monkeypatch.delenv("OMNIGENT_CI_CONTEXT", raising=False)
+    if context is not None:
+        monkeypatch.setenv("OMNIGENT_CI_CONTEXT", context)
+    if context in (None, "invalid"):
+        monkeypatch.setattr(
+            "omnigent.databricks_ai_gateway.urlparse",
+            lambda _: pytest.fail("Disabled telemetry must not parse URLs"),
+        )
+    gateway = {
+        "name": "databricks",
+        "base_url" if legacy else "api": "https://test.cloud.databricks.com/ai-gateway/codex/v1",
+        "key_env": "OPENAI_API_KEY",
+        "transport": "codex_responses",
+        "extra_headers": {"X-Existing": "kept", REQUEST_TAGS_HEADER: '{"team":"ci"}'},
+    }
+    external = {"name": "external", "base_url": "https://example.com/v1"}
+    malformed = {"name": "unused", "base_url": "https://[invalid"}
+    key = "custom_providers" if legacy else "providers"
+    original = {
+        "model": {"default": "test-model", "provider": "custom:databricks"},
+        key: [gateway, external, malformed]
+        if legacy
+        else {"databricks": gateway, "external": external, "unused": malformed},
+    }
+    user_home = tmp_path / ".hermes"
+    user_home.mkdir()
+    (user_home / "config.yaml").write_text(json.dumps(original))
+    (user_home / ".env").write_text("OPENAI_API_KEY=test-key\n")
+    monkeypatch.setattr(b.Path, "home", staticmethod(lambda: tmp_path))
+    home = b.write_policy_hook_config(tmp_path / "bridge", "http://localhost:6767", "ci-test")
+    configured = json.loads((home / "config.yaml").read_text())
+    providers = configured[key]
+    provider = providers[0] if legacy else providers["databricks"]
+    assert (providers[1] if legacy else providers["external"]) == external
+    assert (providers[2] if legacy else providers["unused"]) == malformed
+    assert configured["model"] == original["model"]
+    assert provider["transport"] == "codex_responses"
+    assert provider["key_env"] == "OPENAI_API_KEY"
+    assert (home / ".env").read_text() == "OPENAI_API_KEY=test-key\n"
+    headers = provider["extra_headers"]
+    assert headers["X-Existing"] == "kept"
+    expected = {"team": "ci"}
+    if context and context != "invalid":
+        expected.update(json.loads(context))
+    assert json.loads(headers[REQUEST_TAGS_HEADER]) == expected
+    assert ("malformed provider URL" in caplog.text) == (context not in (None, "invalid"))
+    assert gateway["extra_headers"][REQUEST_TAGS_HEADER] == '{"team":"ci"}'
+
+
+def test_read_hermes_home_returns_path_when_exists(tmp_path) -> None:
+    (tmp_path / "hermes_home").mkdir()
+    assert b.read_hermes_home(tmp_path) == tmp_path / "hermes_home"
+
+
+def test_read_hermes_home_returns_none_when_missing(tmp_path) -> None:
+    assert b.read_hermes_home(tmp_path) is None
+
+
+def test_build_spawn_env_includes_hermes_home_when_policy_written(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(b, "_BRIDGE_ROOT", tmp_path / "hermes-native")
+    bridge_dir = b.bridge_dir_for_session_id("test-session")
+    bridge_dir.mkdir(parents=True, exist_ok=True)
+    b.write_policy_hook_config(bridge_dir, "http://localhost:6767", "test-session")
+
+    env = b.build_hermes_native_spawn_env("test-session")
+    assert env["HERMES_HOME"] == str(bridge_dir / "hermes_home")
+
+
+def test_build_spawn_env_no_hermes_home_without_policy(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(b, "_BRIDGE_ROOT", tmp_path / "hermes-native")
+    env = b.build_hermes_native_spawn_env("test-no-policy")
+    assert "HERMES_HOME" not in env
+
+
+# -- Session cloning tests --
+
+
+def _create_source_db(db_path: Path, session_id: str) -> None:
+    """Create a minimal Hermes state.db with a session and a few messages."""
+    conn = sqlite3.connect(str(db_path))
+    conn.execute(b._SESSIONS_DDL)
+    conn.execute(b._MESSAGES_DDL)
+    conn.execute(
+        "INSERT INTO sessions (id, source, cwd, started_at) VALUES (?, ?, ?, ?)",
+        (session_id, "cli", "/old/path", 1700000000.0),
+    )
+    # user message
+    conn.execute(
+        "INSERT INTO messages (session_id, role, content, timestamp, active) "
+        "VALUES (?, ?, ?, ?, ?)",
+        (session_id, "user", "hello", 1700000001.0, 1),
+    )
+    # assistant message
+    conn.execute(
+        "INSERT INTO messages (session_id, role, content, timestamp, active) "
+        "VALUES (?, ?, ?, ?, ?)",
+        (session_id, "assistant", "hi there", 1700000002.0, 1),
+    )
+    # tool message with tool_calls
+    conn.execute(
+        "INSERT INTO messages "
+        "(session_id, role, content, tool_calls, tool_name, timestamp, active) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (session_id, "tool", "result", '[{"id":"tc1"}]', "bash", 1700000003.0, 1),
+    )
+    conn.commit()
+    conn.close()
+
+
+def test_clone_hermes_session_copies_rows(tmp_path: Path) -> None:
+    source_db = tmp_path / "source" / "state.db"
+    source_db.parent.mkdir()
+    target_db = tmp_path / "target" / "state.db"
+
+    src_sid = "src-session-id"
+    tgt_sid = "tgt-session-id"
+    _create_source_db(source_db, src_sid)
+
+    b.clone_hermes_session(source_db, target_db, src_sid, tgt_sid)
+
+    # Target has the cloned session.
+    tgt = sqlite3.connect(str(target_db))
+    sess = tgt.execute("SELECT id, source, cwd, started_at FROM sessions").fetchall()
+    assert len(sess) == 1
+    assert sess[0][0] == tgt_sid
+    assert sess[0][2] == "/old/path"  # cwd preserved when workspace not given
+
+    # Target has all 3 messages with the new session_id.
+    msgs = tgt.execute("SELECT session_id, role, content FROM messages ORDER BY id").fetchall()
+    assert len(msgs) == 3
+    assert all(m[0] == tgt_sid for m in msgs)
+    assert msgs[0][1] == "user"
+    assert msgs[1][1] == "assistant"
+    assert msgs[2][1] == "tool"
+    assert msgs[2][2] == "result"
+
+    # tool_calls preserved on the tool message.
+    tool_calls = tgt.execute("SELECT tool_calls FROM messages WHERE role = 'tool'").fetchone()[0]
+    assert tool_calls == '[{"id":"tc1"}]'
+    tgt.close()
+
+    # Source is unchanged.
+    src = sqlite3.connect(str(source_db))
+    src_msgs = src.execute("SELECT session_id FROM messages").fetchall()
+    assert all(m[0] == src_sid for m in src_msgs)
+    src.close()
+
+
+def test_clone_hermes_session_remaps_workspace(tmp_path: Path) -> None:
+    source_db = tmp_path / "source" / "state.db"
+    source_db.parent.mkdir()
+    target_db = tmp_path / "target" / "state.db"
+
+    src_sid = "src-ws"
+    tgt_sid = "tgt-ws"
+    _create_source_db(source_db, src_sid)
+
+    b.clone_hermes_session(source_db, target_db, src_sid, tgt_sid, workspace="/new/path")
+
+    tgt = sqlite3.connect(str(target_db))
+    cwd = tgt.execute("SELECT cwd FROM sessions WHERE id = ?", (tgt_sid,)).fetchone()[0]
+    assert cwd == "/new/path"
+    tgt.close()
+
+
+def test_mint_hermes_session_id_returns_uuid() -> None:
+    sid = b.mint_hermes_session_id()
+    # Should be a valid UUID4 string.
+    parsed = uuid.UUID(sid, version=4)
+    assert str(parsed) == sid
+
+
+def test_inject_relay_into_policy_hook_rewrites_wrapper(tmp_path: Path) -> None:
+    """inject_relay_into_policy_hook rewrites omnigent-policy-hook.sh with relay env vars."""
+    from omnigent.harnesses.hermes_native.bridge import inject_relay_into_policy_hook
+
+    hermes_home = tmp_path / "hermes_home"
+    hermes_home.mkdir(mode=0o700)
+    wrapper = hermes_home / "omnigent-policy-hook.sh"
+    wrapper.write_text("#!/bin/sh\nexport _OMNIGENT_AUTH_HEADERS=old\nexec python hook.py\n")
+    wrapper.chmod(0o700)
+
+    bridge_dir = tmp_path
+    # put hermes_home under bridge_dir/_HERMES_HOME_SUBDIR
+    import omnigent.harnesses.hermes_native.bridge as _b
+
+    (bridge_dir / _b._HERMES_HOME_SUBDIR).mkdir(parents=True, exist_ok=True)
+    real_wrapper = bridge_dir / _b._HERMES_HOME_SUBDIR / "omnigent-policy-hook.sh"
+    real_wrapper.write_text("#!/bin/sh\n")
+    real_wrapper.chmod(0o700)
+
+    updated = inject_relay_into_policy_hook(
+        bridge_dir,
+        relay_url="http://127.0.0.1:9999",
+        relay_token="relay-tok",
+        server_url="http://ap",
+        session_id="conv_h",
+    )
+
+    assert updated is True
+    text = real_wrapper.read_text()
+    assert "_OMNIGENT_RELAY_URL" in text
+    assert "http://127.0.0.1:9999" in text
+    assert "_OMNIGENT_RELAY_TOKEN" in text
+    assert "relay-tok" in text
+    # Original server vars still present for fallback path.
+    assert "_OMNIGENT_SERVER_URL" in text
+
+
+def test_inject_relay_into_policy_hook_returns_false_when_wrapper_absent(
+    tmp_path: Path,
+) -> None:
+    """inject_relay_into_policy_hook returns False when wrapper script is missing."""
+    from omnigent.harnesses.hermes_native.bridge import inject_relay_into_policy_hook
+
+    assert inject_relay_into_policy_hook(tmp_path, "http://x", "tok", "http://ap", "sid") is False
+
+
+# --- interpreter built without the _sqlite3 C extension ---------------------
+
+_BRIDGE_MODULE = "omnigent.harnesses.hermes_native.bridge"
+
+
+@contextlib.contextmanager
+def _sqlite3_blocked():
+    """Simulate an interpreter built without the ``_sqlite3`` C extension.
+
+    Evicts the cached ``sqlite3`` modules and blocks ``_sqlite3`` so any
+    ``import sqlite3`` inside the context fails, then restores the real
+    modules on exit.
+    """
+    saved = {
+        name: sys.modules.pop(name)
+        for name in list(sys.modules)
+        if name in ("_sqlite3", "sqlite3") or name.startswith("sqlite3.")
+    }
+    sys.modules["_sqlite3"] = None  # import _sqlite3 -> ModuleNotFoundError
+    try:
+        yield
+    finally:
+        sys.modules.pop("_sqlite3", None)
+        for name in list(sys.modules):
+            if name == "sqlite3" or name.startswith("sqlite3."):
+                del sys.modules[name]
+        sys.modules.update(saved)
+
+
+def test_orphan_sweep_imports_hermes_without_sqlite3(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The maintenance entry point must complete the Hermes import without SQLite."""
+    from omnigent import harness_plugins
+    from omnigent.native import native_bridge_common
+
+    parent = importlib.import_module("omnigent.harnesses.hermes_native")
+    original_import = importlib.import_module
+    loaded: list[str] = []
+    saved_bridge = sys.modules.pop(_BRIDGE_MODULE, None)
+
+    def import_bridge(name: str) -> SimpleNamespace:
+        assert name == _BRIDGE_MODULE
+        original_import(name)
+        loaded.append(name)
+        # The import boundary is under test; no real bridge directories are reaped.
+        return SimpleNamespace()
+
+    with monkeypatch.context() as patch:
+        patch.setattr(parent, "bridge", b)
+        patch.setattr(harness_plugins, "native_agents", lambda: [SimpleNamespace(key="hermes")])
+        patch.setattr(
+            native_bridge_common, "importlib", SimpleNamespace(import_module=import_bridge)
+        )
+        try:
+            with _sqlite3_blocked():
+                assert native_bridge_common.reap_orphaned_native_bridge_dirs() == 0
+                assert loaded == [_BRIDGE_MODULE]
+        finally:
+            sys.modules.pop(_BRIDGE_MODULE, None)
+            if saved_bridge is not None:
+                sys.modules[_BRIDGE_MODULE] = saved_bridge
+
+
+def test_max_message_id_zero_without_sqlite3(tmp_path: Path) -> None:
+    """Without sqlite3 the high-water mark degrades to 0 instead of raising."""
+    db = tmp_path / "state.db"
+    con = sqlite3.connect(str(db))
+    con.executescript(b._MESSAGES_DDL)
+    con.executescript(b._SESSIONS_DDL)
+    con.execute(
+        "INSERT INTO messages (id, session_id, role, content, timestamp) VALUES (?,?,?,?,?)",
+        (7, "s1", "user", "hi", 0.0),
+    )
+    con.commit()
+    con.close()
+    with _sqlite3_blocked():
+        assert b._max_message_id(db) == 0
+        assert b._await_session_ready(db, timeout_s=0) is False
+    assert b._max_message_id(db) == 7
+    assert b._await_session_ready(db, timeout_s=0) is True
+
+
+def test_clone_hermes_session_skips_without_sqlite3(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Without sqlite3 the clone is skipped (warn + return 0), not a crash."""
+    source_db = tmp_path / "source" / "state.db"
+    source_db.parent.mkdir()
+    target_db = tmp_path / "target" / "state.db"
+    _create_source_db(source_db, "src-nosqlite")
+
+    with _sqlite3_blocked(), caplog.at_level(logging.WARNING, logger=b.__name__):
+        assert b.clone_hermes_session(source_db, target_db, "src-nosqlite", "tgt") == 0
+
+    assert not target_db.exists()
+    assert any("sqlite3 unavailable" in r.getMessage() for r in caplog.records)
+
+
+def test_input_ready_subprocess_uses_remaining_budget(monkeypatch):
+    elapsed = 0.0
+    budgets = []
+
+    def advance(seconds):
+        nonlocal elapsed
+        elapsed += seconds
+
+    def probe(_socket, _target, *, timeout_s):
+        budgets.append(timeout_s)
+        return False
+
+    monkeypatch.setattr(b, "time", SimpleNamespace(monotonic=lambda: elapsed, sleep=advance))
+    monkeypatch.setattr(b, "_pane_accepts_input", probe)
+    with pytest.raises(RuntimeError, match="no message was sent"):
+        b._await_input_ready("/s", "t", timeout_s=0.5)
+    assert budgets == pytest.approx([0.5, 0.3, 0.1])
+    assert elapsed == pytest.approx(0.5)
+
+
+@pytest.mark.parametrize("failed_command", ["load-buffer", "paste-buffer", "Enter"])
+@pytest.mark.parametrize("exception", [RuntimeError, OSError])
+def test_delivery_command_failure_preserves_transfer_boundary(
+    tmp_path, monkeypatch, failed_command, exception
+):
+    calls = []
+    _patch_inject_tmux(monkeypatch, calls)
+    monkeypatch.setattr(b, "_state_db_path", lambda _bd: None)
+
+    def run(_socket, *args):
+        calls.append(args)
+        if args[0] == failed_command or args[-1] == failed_command:
+            raise exception("terminal command timed out")
+
+    monkeypatch.setattr(b, "_run_tmux", run)
+    error = (
+        b.HermesInputNotSent if failed_command == "load-buffer" else b.HermesDeliveryUnconfirmed
+    )
+    with pytest.raises(error):
+        b.inject_user_message(tmp_path, content="do something now")
+    assert sum(1 for args in calls if args[0] == "paste-buffer") == (
+        failed_command != "load-buffer"
+    )
+    assert sum(1 for args in calls if args[-1] == "Enter") == (failed_command == "Enter")
+    assert not list(tmp_path.glob("paste_*.bin"))
+
+
+@pytest.mark.parametrize("budget", [0.4, 30.0])
+def test_pane_readiness_subprocess_timeout_is_bounded(monkeypatch, budget):
+    def timeout(command, **kwargs):
+        assert kwargs["timeout"] == min(budget, b._TMUX_SEND_TIMEOUT_S)
+        raise b.subprocess.TimeoutExpired(command, kwargs["timeout"])
+
+    monkeypatch.setattr(b.subprocess, "run", timeout)
+    assert b._pane_accepts_input("/s", "t", timeout_s=budget) is False

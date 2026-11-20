@@ -1,0 +1,698 @@
+"use client";
+
+import { KeyboardShortcutTooltip } from "@/components/KeyboardShortcut";
+import type { ComposerTextTarget } from "@/components/composer/engine/composerInput";
+import { Button } from "@/components/ui/button";
+import { showToast } from "@/components/ui/toast";
+import { useVoiceDictationHotkey, VOICE_DICTATION_KEYS } from "@/hooks/useVoiceDictationHotkey";
+import { useServerInfo } from "@/lib/CapabilitiesContext";
+import { DictationBusyError, DictationSession } from "@/lib/dictation";
+import { isElectronShell, startSystemDictation, supportsSystemDictation } from "@/lib/nativeBridge";
+import { cn } from "@/lib/utils";
+import { Loader2Icon, MicIcon, SquareIcon } from "lucide-react";
+import { type RefObject, useCallback, useEffect, useRef, useState } from "react";
+
+// Local-only types; speech-input.tsx already augments Window globally.
+interface SpeechRecognitionLike {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start: () => void;
+  stop: () => void;
+  addEventListener: (type: string, listener: (event: Event) => void) => void;
+  removeEventListener: (type: string, listener: (event: Event) => void) => void;
+}
+
+interface SpeechRecognitionEventLike extends Event {
+  results: {
+    readonly length: number;
+    [index: number]: {
+      readonly length: number;
+      [index: number]: { transcript: string };
+      isFinal: boolean;
+    };
+  };
+  resultIndex: number;
+}
+
+interface SpeechRecognitionErrorEventLike extends Event {
+  error: string;
+}
+
+type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
+
+const getRecognitionCtor = (): SpeechRecognitionCtor | null => {
+  if (typeof window === "undefined") return null;
+  const w = window as unknown as {
+    SpeechRecognition?: SpeechRecognitionCtor;
+    webkitSpeechRecognition?: SpeechRecognitionCtor;
+  };
+  return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
+};
+
+const getDefaultDictationLang = (): string => {
+  if (typeof navigator === "undefined") return "en-US";
+  try {
+    return navigator.language || "en-US";
+  } catch {
+    return "en-US";
+  }
+};
+
+// FFT bin ranges per bar, weighted toward voice frequencies (~100Hz–3kHz).
+const BAR_BINS: readonly (readonly [number, number])[] = [
+  [1, 3],
+  [3, 6],
+  [6, 10],
+  [10, 16],
+];
+
+const BAR_BASELINE = 0.2;
+
+// Browsers end a Web Speech take on their own after a pause (Android after
+// ~1–2 s, even with `continuous`), so a live take restarts the recognizer until
+// the user stops it. It gives up after this long without any recognized speech.
+const WEB_SPEECH_IDLE_LIMIT_MS = 60_000;
+// A recognizer that ends this soon after starting, with no speech, is failing
+// rather than hearing silence; this many in a row ends the take with an error.
+const WEB_SPEECH_QUICK_END_MS = 1_000;
+const WEB_SPEECH_MAX_QUICK_ENDS = 3;
+
+export interface ComposerMicButtonProps {
+  onTranscript: (text: string) => void;
+  className?: string;
+  /**
+   * Streaming partial transcripts (server dictation only): called with the
+   * revisable in-progress utterance as it forms, and with "" when the take
+   * ends without finalizing it. Utterances that do finalize arrive via
+   * onTranscript, which supersedes the pending interim. When absent, the
+   * server path still works but only finals are inserted — the same
+   * behavior the Web Speech path has always had.
+   */
+  onInterim?: (text: string) => void;
+  disabled?: boolean;
+  lang?: string;
+  /** Bind the global ⌘⌥V dictation hotkey to this mic. Enable on exactly one
+   *  mounted mic (the primary composer) so two don't fight for the device. */
+  enableHotkey?: boolean;
+  /** Fired when dictation begins. The parent should snapshot the composer text
+   *  here so {@link onVoiceDiscard} can revert to it. */
+  onVoiceStart?: () => void;
+  /** Fired when Esc ends dictation. The parent should restore the text it
+   *  snapshotted in {@link onVoiceStart}, discarding what was dictated. */
+  onVoiceDiscard?: () => void;
+  /** Called when a take starts or ends listening; while listening, Enter and Esc
+   *  belong to dictation. */
+  onListeningChange?: (listening: boolean) => void;
+  /** The composer's text box. macOS Dictation types into the focused field, so
+   *  the desktop app's macOS fallback focuses this first; without it there is no
+   *  fallback. */
+  inputRef?: RefObject<ComposerTextTarget | null>;
+}
+
+/** getUserMedia permission failures, distinct from transport failures. */
+const isPermissionError = (error: unknown): boolean =>
+  error instanceof DOMException &&
+  (error.name === "NotAllowedError" || error.name === "SecurityError");
+
+export const ComposerMicButton = ({
+  onTranscript,
+  className,
+  onInterim,
+  disabled,
+  lang = getDefaultDictationLang(),
+  enableHotkey = false,
+  onVoiceStart,
+  onVoiceDiscard,
+  onListeningChange,
+  inputRef,
+}: ComposerMicButtonProps) => {
+  // Web Speech is primary wherever its constructor exists; a take that dies with
+  // "network" falls back to the server for that take only (see handleError).
+  // Electron has the constructor but never a backend, so there only the server can serve,
+  // and on macOS a server without dictation hands the take to macOS Dictation.
+  const [Ctor] = useState(getRecognitionCtor);
+  const electron = isElectronShell();
+  const [systemDictationBridge] = useState(supportsSystemDictation);
+  const serverInfo = useServerInfo();
+  const serverAvailable = serverInfo !== "loading" && serverInfo.dictation_available;
+  const systemDictation =
+    electron &&
+    systemDictationBridge &&
+    inputRef !== undefined &&
+    serverInfo !== "loading" &&
+    !serverAvailable;
+  const canDictate = serverAvailable || (Ctor !== null && !electron) || systemDictation;
+  // Mirrored into a ref so the mount-time recognition handlers (closed
+  // over [Ctor, lang]) see the current probe result.
+  const serverAvailableRef = useRef(serverAvailable);
+  serverAvailableRef.current = serverAvailable;
+  const [isListening, setIsListening] = useState(false);
+  // Server-path only: the take has started but audio isn't flowing yet (the
+  // first take cold-loads the model, up to ~40s). Shows a spinner so the click
+  // isn't a dead-looking button until it flips to listening.
+  const [connecting, setConnecting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const sessionRef = useRef<DictationSession | null>(null);
+  // Refs so handlers aren't re-attached on every parent re-render.
+  const onTranscriptRef = useRef(onTranscript);
+  onTranscriptRef.current = onTranscript;
+  const onInterimRef = useRef(onInterim);
+  onInterimRef.current = onInterim;
+  // Synced refs so the mount-time listeners call the latest callbacks.
+  const onVoiceStartRef = useRef(onVoiceStart);
+  onVoiceStartRef.current = onVoiceStart;
+  const onVoiceDiscardRef = useRef(onVoiceDiscard);
+  onVoiceDiscardRef.current = onVoiceDiscard;
+  const onListeningChangeRef = useRef(onListeningChange);
+  onListeningChangeRef.current = onListeningChange;
+  useEffect(() => {
+    if (!isListening) return;
+    onListeningChangeRef.current?.(true);
+    return () => onListeningChangeRef.current?.(false);
+  }, [isListening]);
+  // Set by the Esc handler so late results after a discard don't repopulate the
+  // composer the parent just reverted. Cleared on the next start.
+  const discardingRef = useRef(false);
+  // Synced prop ref so the recognition result handler (closure over the
+  // mount-time effect) can drop late events when the composer goes
+  // disabled mid-utterance.
+  const disabledRef = useRef(disabled);
+  disabledRef.current = disabled;
+  // Click guard: true between toggle() and the matching start/end event.
+  // Prevents rapid double-clicks from calling recognition.start() twice,
+  // which throws InvalidStateError in Chrome.
+  const transitionRef = useRef(false);
+  // Server-take guard, deliberately separate from transitionRef: a failed
+  // Web Speech attempt fires a late "end" event that resets transitionRef,
+  // which must not unlock a second server take mid-handshake.
+  const serverBusyRef = useRef(false);
+  // Lets the mount-time Web Speech error handler start the fallback take
+  // without closing over toggleServer's identity.
+  const toggleServerRef = useRef<() => Promise<void>>(async () => {});
+  // Latest server partial for the current take, so a crash can preserve what
+  // was spoken instead of blanking it. Set on each partial, cleared on final,
+  // and reset when a take starts so a stale partial can't resurrect.
+  const interimRef = useRef("");
+  // Web Speech take the user has started and not stopped. While set, a
+  // recognizer that ends on its own is restarted rather than ending the take.
+  const webSpeechTakeRef = useRef<{
+    lastSpeechAt: number;
+    recognizerStartedAt: number;
+    quickEnds: number;
+    restarting: boolean;
+    started: boolean;
+  } | null>(null);
+
+  // Surface a failure both in the button (tooltip + red tint) and as a toast,
+  // so a failed take is an explained error rather than a silent flash back to
+  // the idle mic. Stable identity: only setError/showToast, both stable.
+  const reportError = useCallback((message: string) => {
+    setError(message);
+    showToast(message);
+  }, []);
+
+  // Written via .style.transform from rAF — avoids 60Hz React re-renders.
+  const barRefs = useRef<(HTMLSpanElement | null)[]>(BAR_BINS.map(() => null));
+
+  useEffect(() => {
+    // Electron never starts a Web Speech take, so skip the dead recognizer.
+    if (!Ctor || electron) return;
+
+    const recognition = new Ctor();
+    // Ask for one long take; handleEnd restarts browsers that end it anyway.
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.lang = lang;
+
+    // A dead recognizer keeps firing start/end/error after the take has
+    // fallen back to the server; those stale events must not clobber the
+    // server session's isListening/transition state.
+    const serverTakeOwnsState = () => sessionRef.current !== null || serverBusyRef.current;
+
+    const handleStart = () => {
+      if (serverTakeOwnsState()) return;
+      transitionRef.current = false;
+      const take = webSpeechTakeRef.current;
+      // No take: the user stopped while a restart was starting; end follows.
+      if (!take) return;
+      take.started = true;
+      if (take.restarting) {
+        // A restart continues the same take: keep the Esc snapshot and state.
+        take.restarting = false;
+        return;
+      }
+      discardingRef.current = false;
+      setError(null);
+      setIsListening(true);
+      // Snapshot point: let the parent record the text so Esc can revert to it.
+      onVoiceStartRef.current?.();
+    };
+    // Restart the recognizer when it ends on its own mid-take. Returns false
+    // when the take should end instead.
+    const restartTake = (): boolean => {
+      const take = webSpeechTakeRef.current;
+      // Only a take that reached "start" is listening; a hidden page can't
+      // reacquire the mic, so let the take end rather than fail noisily.
+      if (!take?.started || disabledRef.current || discardingRef.current) return false;
+      if (document.hidden) return false;
+      const now = Date.now();
+      if (now - take.lastSpeechAt >= WEB_SPEECH_IDLE_LIMIT_MS) return false;
+      const heardNothing = take.lastSpeechAt <= take.recognizerStartedAt;
+      if (heardNothing && now - take.recognizerStartedAt < WEB_SPEECH_QUICK_END_MS) {
+        take.quickEnds += 1;
+        if (take.quickEnds >= WEB_SPEECH_MAX_QUICK_ENDS) {
+          reportError("Voice input stopped unexpectedly. Please try again.");
+          return false;
+        }
+      } else {
+        take.quickEnds = 0;
+      }
+      take.restarting = true;
+      take.recognizerStartedAt = now;
+      try {
+        recognition.start();
+      } catch {
+        return false;
+      }
+      return true;
+    };
+    const handleEnd = () => {
+      if (serverTakeOwnsState()) return;
+      transitionRef.current = false;
+      if (restartTake()) return;
+      webSpeechTakeRef.current = null;
+      setIsListening(false);
+    };
+    const handleError = (event: Event) => {
+      if (serverTakeOwnsState()) return;
+      transitionRef.current = false;
+      const err = (event as SpeechRecognitionErrorEventLike).error;
+      // "no-speech" is the browser's silence timeout: the end event that
+      // follows restarts a live take. Any other error ends it.
+      if (err === "no-speech" && webSpeechTakeRef.current) return;
+      webSpeechTakeRef.current = null;
+      // An unavailable or blocked speech service can still use client mic
+      // capture with server transcription. getUserMedia checks mic permission.
+      if (
+        (err === "network" || err === "service-not-allowed") &&
+        serverAvailableRef.current &&
+        !disabledRef.current
+      ) {
+        setIsListening(false);
+        void toggleServerRef.current();
+        return;
+      }
+      // "no-speech" / "aborted" are routine (silence timeout, user stop).
+      if (err === "not-allowed") {
+        reportError("Microphone access denied. Allow access and try again.");
+      } else if (err && err !== "no-speech" && err !== "aborted") {
+        reportError("Voice input isn't available on this device.");
+      }
+      setIsListening(false);
+    };
+    const handleResult = (event: Event) => {
+      // Drop late events that arrive after the composer went disabled, or after
+      // an Esc discard the parent has already reverted.
+      if (disabledRef.current || discardingRef.current) return;
+      const speechEvent = event as SpeechRecognitionEventLike;
+      let finalTranscript = "";
+      for (let i = speechEvent.resultIndex; i < speechEvent.results.length; i += 1) {
+        const result = speechEvent.results[i];
+        if (result.isFinal) {
+          finalTranscript += result[0]?.transcript ?? "";
+        }
+      }
+      const trimmed = finalTranscript.trim();
+      if (!trimmed) return;
+      if (webSpeechTakeRef.current) webSpeechTakeRef.current.lastSpeechAt = Date.now();
+      onTranscriptRef.current(trimmed);
+    };
+
+    recognition.addEventListener("start", handleStart);
+    recognition.addEventListener("end", handleEnd);
+    recognition.addEventListener("error", handleError);
+    recognition.addEventListener("result", handleResult);
+    recognitionRef.current = recognition;
+
+    return () => {
+      recognition.removeEventListener("start", handleStart);
+      recognition.removeEventListener("end", handleEnd);
+      recognition.removeEventListener("error", handleError);
+      recognition.removeEventListener("result", handleResult);
+      webSpeechTakeRef.current = null;
+      recognition.stop();
+      recognitionRef.current = null;
+    };
+  }, [Ctor, electron, lang, reportError]);
+
+  // Auto-stop if the composer goes disabled mid-dictation. Stops the
+  // recognizer; the disabledRef guard in handleResult catches any final
+  // events still queued before the end event fires. A server session is
+  // cancelled outright (no tail flush) — the take is moot once the
+  // composer can't accept text.
+  useEffect(() => {
+    if (!(disabled && isListening)) return;
+    if (sessionRef.current) {
+      sessionRef.current.cancel();
+      sessionRef.current = null;
+      setIsListening(false);
+      onInterimRef.current?.("");
+      return;
+    }
+    webSpeechTakeRef.current = null;
+    try {
+      recognitionRef.current?.stop();
+    } catch {
+      // .stop() on an already-stopped recognizer can throw in some
+      // browsers; safe to ignore — the end event will reconcile state.
+    }
+  }, [disabled, isListening]);
+
+  // Release the mic if the component unmounts mid-take (e.g. the
+  // new-chat dialog closes while dictating).
+  useEffect(
+    () => () => {
+      sessionRef.current?.cancel();
+      sessionRef.current = null;
+    },
+    [],
+  );
+
+  // Second getUserMedia stream just for visualization — Web Speech API
+  // hides its audio buffer. Chrome batches the permission to one prompt.
+  useEffect(() => {
+    if (!isListening) return;
+    let cancelled = false;
+    let stream: MediaStream | null = null;
+    let audioCtx: AudioContext | null = null;
+    let rafId: number | null = null;
+    // Snapshot so cleanup doesn't read a stale .current (exhaustive-deps).
+    const bars = barRefs.current;
+
+    const start = async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch {
+        // Mic permission denied just for the visualization stream — leave
+        // the bars at baseline. The speech recognition error handler will
+        // surface the user-facing message if it also fails.
+        return;
+      }
+      if (cancelled) {
+        for (const track of stream.getTracks()) track.stop();
+        return;
+      }
+      audioCtx = new AudioContext();
+      const source = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 64;
+      // Built-in temporal smoothing so bars don't jitter frame-to-frame.
+      analyser.smoothingTimeConstant = 0.75;
+      source.connect(analyser);
+      const data = new Uint8Array(analyser.frequencyBinCount);
+
+      const tick = () => {
+        analyser.getByteFrequencyData(data);
+        for (let i = 0; i < BAR_BINS.length; i += 1) {
+          const [lo, hi] = BAR_BINS[i];
+          let sum = 0;
+          for (let j = lo; j < hi; j += 1) sum += data[j];
+          const avg = sum / (hi - lo) / 255;
+          // 1.6× headroom for quiet speech; clamp at 1 to fit the button.
+          const scale = Math.max(BAR_BASELINE, Math.min(1, avg * 1.6));
+          const el = bars[i];
+          if (el) el.style.transform = `scaleY(${scale})`;
+        }
+        rafId = requestAnimationFrame(tick);
+      };
+      rafId = requestAnimationFrame(tick);
+    };
+
+    start();
+
+    return () => {
+      cancelled = true;
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      if (stream) {
+        for (const track of stream.getTracks()) track.stop();
+      }
+      if (audioCtx && audioCtx.state !== "closed") {
+        audioCtx.close();
+      }
+      // Reset for the next session.
+      for (const el of bars) {
+        if (el) el.style.transform = `scaleY(${BAR_BASELINE})`;
+      }
+    };
+  }, [isListening]);
+
+  // Server-dictation toggle. Start resolves only once the mic + socket
+  // handshake are up, so isListening flips exactly when audio flows.
+  const toggleServer = useCallback(async () => {
+    if (serverBusyRef.current) return;
+    serverBusyRef.current = true;
+    const session = sessionRef.current;
+    if (session) {
+      sessionRef.current = null;
+      const tail = (await session.stop()).trim();
+      if (!disabledRef.current) {
+        // A non-empty tail supersedes the pending interim via
+        // onTranscript; an empty one just clears the interim region.
+        if (tail) onTranscriptRef.current(tail);
+        else onInterimRef.current?.("");
+      }
+      setIsListening(false);
+      serverBusyRef.current = false;
+      return;
+    }
+    try {
+      // Snapshot point: let the parent record the text so Esc can revert to it.
+      discardingRef.current = false;
+      interimRef.current = "";
+      setConnecting(true);
+      onVoiceStartRef.current?.();
+      const next = await DictationSession.start({
+        onPartial: (text) => {
+          // Drop late partials after an Esc discard — they'd repopulate the
+          // composer the parent just reverted.
+          if (!disabledRef.current && !discardingRef.current) {
+            interimRef.current = text;
+            onInterimRef.current?.(text);
+          }
+        },
+        onFinal: (text) => {
+          interimRef.current = "";
+          const trimmed = text.trim();
+          if (trimmed && !disabledRef.current && !discardingRef.current) {
+            onTranscriptRef.current(trimmed);
+          }
+        },
+        onError: () => {
+          sessionRef.current = null;
+          // Preserve anything spoken but not yet finalized: pin the pending
+          // partial as a final rather than blanking it, so a crash mid-take
+          // doesn't discard the user's words.
+          const pending = interimRef.current.trim();
+          interimRef.current = "";
+          if (pending && !disabledRef.current && !discardingRef.current) {
+            onTranscriptRef.current(pending);
+          } else {
+            onInterimRef.current?.("");
+          }
+          reportError("Voice input failed. Please try again.");
+          setIsListening(false);
+        },
+      });
+      sessionRef.current = next;
+      setError(null);
+      setIsListening(true);
+    } catch (startError) {
+      reportError(
+        startError instanceof DictationBusyError
+          ? "Voice input is busy. Please try again shortly."
+          : isPermissionError(startError)
+            ? "Microphone access denied. Allow access and try again."
+            : "Voice input isn't available on this device.",
+      );
+      setIsListening(false);
+    }
+    // Reached only by the start path (the stop branch returns earlier), so this
+    // clears the handshake spinner on both success and failure.
+    setConnecting(false);
+    serverBusyRef.current = false;
+  }, [reportError]);
+  toggleServerRef.current = toggleServer;
+
+  // macOS owns this take: its own indicator shows listening, and its text
+  // reaches the composer as typing, so none of the take state above is used.
+  const startMacDictation = useCallback(() => {
+    const input = inputRef?.current;
+    if (!input) return;
+    input.focus();
+    void startSystemDictation().then((started) => {
+      if (started) setError(null);
+      else reportError("Voice input isn't available on this device.");
+    });
+  }, [inputRef, reportError]);
+
+  const toggle = useCallback(() => {
+    // An active (or starting) server take is owned by the server path,
+    // whichever mode started it.
+    if (sessionRef.current || serverBusyRef.current) {
+      void toggleServer();
+      return;
+    }
+    // Electron's SpeechRecognition has no backend, so a Web Speech take there
+    // always fails: go straight to the server, else to macOS Dictation.
+    if (!Ctor || electron) {
+      if (serverAvailable) void toggleServer();
+      else if (systemDictation) startMacDictation();
+      return;
+    }
+    // Guard against rapid clicks landing before start/end event fires.
+    if (transitionRef.current) return;
+    const recognition = recognitionRef.current;
+    if (!recognition) return;
+    transitionRef.current = true;
+    try {
+      if (isListening) {
+        webSpeechTakeRef.current = null;
+        recognition.stop();
+      } else {
+        const now = Date.now();
+        webSpeechTakeRef.current = {
+          lastSpeechAt: now,
+          recognizerStartedAt: now,
+          quickEnds: 0,
+          restarting: false,
+          started: false,
+        };
+        recognition.start();
+      }
+    } catch {
+      // InvalidStateError from a double-call — drop the guard so the
+      // user can try again, and let the next event reconcile state.
+      transitionRef.current = false;
+      if (!isListening) webSpeechTakeRef.current = null;
+    }
+  }, [
+    isListening,
+    Ctor,
+    electron,
+    serverAvailable,
+    systemDictation,
+    startMacDictation,
+    toggleServer,
+  ]);
+
+  // ⌘⌥V toggles dictation from anywhere — same as clicking the button. Enabled
+  // only while a dictation path can run and the composer isn't disabled, so
+  // the chord is inert when it can't do anything.
+  const hotkeyEnabled = enableHotkey && canDictate && !disabled;
+  useVoiceDictationHotkey(toggle, hotkeyEnabled);
+
+  // While listening, Enter commits (end the take, keep the text) and Esc
+  // cancels (end the take, discard back to the pre-dictation snapshot). Bound in
+  // the capture phase so it preempts the composer's own Enter-sends / Esc-stops.
+  // Path-aware: a live server take is torn down via the DictationSession, a Web
+  // Speech take via the recognizer.
+  useEffect(() => {
+    if (!isListening) return;
+    const handler = (e: globalThis.KeyboardEvent): void => {
+      if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === "Enter" && !e.shiftKey) {
+        // Commit: end the take and keep the text. toggle() routes to the right
+        // path — Web Speech stop, or a server stop that flushes the tail.
+        e.preventDefault();
+        e.stopPropagation();
+        toggle();
+      } else if (e.key === "Escape") {
+        // Cancel: flag the discard so trailing results are dropped, revert the
+        // composer, then tear the take down immediately (no tail flush).
+        e.preventDefault();
+        e.stopPropagation();
+        discardingRef.current = true;
+        onVoiceDiscardRef.current?.();
+        const session = sessionRef.current;
+        if (session) {
+          sessionRef.current = null;
+          serverBusyRef.current = false;
+          session.cancel();
+          setIsListening(false);
+        } else {
+          webSpeechTakeRef.current = null;
+          try {
+            recognitionRef.current?.stop();
+          } catch {
+            // Already stopping — the end event will reconcile state.
+          }
+        }
+      }
+    };
+    window.addEventListener("keydown", handler, true);
+    return () => window.removeEventListener("keydown", handler, true);
+  }, [isListening, toggle]);
+
+  if (!canDictate) return null;
+
+  // Stable accessible name with aria-pressed signals toggle state to
+  // screen readers. Error text takes over the tooltip when set.
+  const a11yLabel = "Voice dictation";
+  const tooltip = error ?? (connecting ? "Starting voice input…" : a11yLabel);
+
+  return (
+    <KeyboardShortcutTooltip
+      label={tooltip}
+      keys={hotkeyEnabled ? VOICE_DICTATION_KEYS : undefined}
+    >
+      <Button
+        type="button"
+        size="icon"
+        variant="ghost"
+        disabled={disabled}
+        onClick={toggle}
+        aria-pressed={isListening}
+        // While listening, Escape cancels dictation before page-wide shortcuts see it.
+        data-escape-owner={isListening ? "" : undefined}
+        aria-busy={connecting}
+        aria-label={a11yLabel}
+        data-composer-action="microphone"
+        data-server-dictation-available={serverAvailable}
+        data-dictating={isListening || undefined}
+        className={cn(
+          "size-9 mobile-touch-target md:size-8",
+          isListening &&
+            "bg-muted/60 text-foreground hover:bg-destructive/10 hover:text-destructive focus-visible:bg-destructive/10 focus-visible:text-destructive",
+          error && "text-destructive",
+          className,
+        )}
+      >
+        {connecting ? (
+          <Loader2Icon className="size-4 animate-spin" data-icon-size="16" aria-hidden />
+        ) : isListening ? (
+          // Bars fade out and stop icon fades in on hover OR keyboard focus,
+          // so keyboard users get the stop affordance without needing hover.
+          <span className="relative flex size-4 items-center justify-center" aria-hidden>
+            <span className="flex h-full items-center gap-[2px] transition-opacity group-hover/button:opacity-0 group-focus-visible/button:opacity-0">
+              {BAR_BINS.map(([lo, hi], i) => (
+                <span
+                  key={`${lo}-${hi}`}
+                  ref={(el) => {
+                    barRefs.current[i] = el;
+                  }}
+                  className="block h-3 w-[2px] origin-center rounded-full bg-current"
+                  style={{ transform: `scaleY(${BAR_BASELINE})` }}
+                />
+              ))}
+            </span>
+            <SquareIcon className="absolute size-3 fill-current opacity-0 transition-opacity group-hover/button:opacity-100 group-focus-visible/button:opacity-100" />
+          </span>
+        ) : (
+          <MicIcon className="size-4" data-icon-size="16" />
+        )}
+      </Button>
+    </KeyboardShortcutTooltip>
+  );
+};

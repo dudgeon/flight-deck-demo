@@ -1,0 +1,428 @@
+"""Integration tests for utility endpoints.
+
+Covers ``GET /health``, ``GET /api/version``, ``GET /v1/info``,
+and ``GET /v1/me``.
+
+Uses the shared ``client`` fixture from ``tests/server/conftest.py``
+(real stores + mock LLM) so the tests hit the real route-to-store
+pipeline without subprocesses.
+"""
+
+from __future__ import annotations
+
+from types import SimpleNamespace
+
+import httpx
+import pytest
+from fastapi import FastAPI
+
+from omnigent.server.app import ServerInfoResponse
+from omnigent.server.routes.sessions import CLIENT_SESSION_EVENT_TYPES
+from omnigent.stores.agent_store import AgentStore
+
+pytestmark = pytest.mark.asyncio
+
+
+# ── GET /health ──────────────────────────────────────────
+
+
+async def test_health_returns_ok(client: httpx.AsyncClient) -> None:
+    """Bare liveness probe returns 200 with status ok."""
+    resp = await client.get("/health")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "ok"
+
+
+async def test_health_with_session_id(client: httpx.AsyncClient) -> None:
+    """Health with a session_id query param includes a session object."""
+    resp = await client.get("/health", params={"session_id": "5ab79713d8c7904f4f4bf10b2da5df62"})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "ok"
+    assert "session" in data
+    assert data["session"]["id"] == "5ab79713d8c7904f4f4bf10b2da5df62"
+    assert "runner_online" in data["session"]
+
+
+async def test_health_with_batch_session_ids(client: httpx.AsyncClient) -> None:
+    """Health with comma-separated session_ids returns a sessions dict."""
+    resp = await client.get(
+        "/health",
+        params={
+            "session_ids": "94c349190e241f85a984b3df8f129696,bfcc6c068875253adf2f20bf30a19015"
+        },
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "sessions" in data
+    assert "94c349190e241f85a984b3df8f129696" in data["sessions"]
+    assert "bfcc6c068875253adf2f20bf30a19015" in data["sessions"]
+
+
+# ── GET /api/version ─────────────────────────────────────
+
+
+async def test_version_returns_string(client: httpx.AsyncClient) -> None:
+    """Version endpoint returns a version string."""
+    resp = await client.get("/api/version")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "version" in data
+    assert isinstance(data["version"], str)
+    assert len(data["version"]) > 0
+
+
+# ── GET /v1/info ─────────────────────────────────────────
+
+
+async def test_info_returns_expected_fields(client: httpx.AsyncClient) -> None:
+    """Info endpoint returns auth mode and feature flags."""
+    resp = await client.get("/v1/info")
+    assert resp.status_code == 200
+    data = resp.json()
+    # The test app has no auth provider, so accounts are disabled.
+    assert data["accounts_enabled"] is False
+    assert data["login_url"] is None
+    assert data["needs_setup"] is False
+    assert isinstance(data["databricks_features"], bool)
+    assert isinstance(data["managed_sandboxes_enabled"], bool)
+    assert data["features"] == {
+        "sandbox_profiles": False,
+        "usage_page": False,
+        "harness_install": False,
+        "canvas": False,
+        "import_review": False,
+        "sidebar_grouping_ui": True,
+        "workspace_content_search": True,
+        "grid_sessions_display_ui": True,
+        "automations_v2": True,
+        "splittable_terminal_view_ui": False,
+        "sidebar_windowed_rows": False,
+        "chat_composer_codemirror": False,
+        "workflows": False,
+        "session_overview": False,
+        "project_kanban": True,
+        "project_repository_creation": True,
+        "quick_pick_palette": False,
+        "session_orchestration": True,
+        "sibling_sessions": True,
+        "codex_plan_at_launch": True,
+        "workspace_direct_access": False,
+        "workspace_api_server_access": False,
+        "floating_composer": False,
+    }
+    assert data["sibling_sessions"] is True
+    # Compatibility field for frontend builds predating the nested map.
+    assert data["harness_install_enabled"] is False
+    # installable_harnesses is the allowlist the SPA offers setup for; blank
+    # while the feature is off so the UI never offers an install the disabled
+    # route would reject.
+    assert data["installable_harnesses"] == []
+    # Gates the web's archive worktree prompt; older servers omit it.
+    assert data["archive_worktree_cleanup"] is True
+    assert data["scheduled_task_worktrees"] is True
+    assert data["scheduled_task_default_timezone"] is True
+    # Gates the palette's grouped session search; older servers omit it.
+    assert data["session_search_scope"] is True
+    assert data["session_mute"] is True
+    # Lets sys_session_list scope archive-inclusive listings server-side.
+    assert data["session_list_scoped_archives"] is True
+    # Gates the automation dialog's Session control; older servers reject the fields.
+    assert data["scheduled_task_session_modes"] is True
+    assert data["scheduled_task_subhour"] is True
+    # The one_time_automations release feature is off by default.
+    assert data["scheduled_task_one_time"] is False
+    # Lets the trigger form save its header; older servers would send it to the model.
+    assert data["scheduled_task_trigger_headers"] is True
+    assert data["automation_trigger_poll_minutes"] == 10
+    # Lets automation forms accept long instructions; older servers deliver 8,000.
+    assert data["session_message_max_chars"] == 32_000
+    assert data["scheduled_task_harness_settings"] is True
+    # Lets sys_session_create refuse permission_mode on servers that would ignore it.
+    assert data["session_create_permission_modes"] is True
+    # Lets sys_session_create refuse workflow_id on servers that would ignore it.
+    assert data["session_create_workflow_id"] is True
+    # Gates the automation picker's approval-skipping modes; older servers reject them.
+    assert data["scheduled_task_approval_skipping_modes"] is True
+    assert data["agent_detail"] is True
+    assert data["agent_config_edit"] is True
+    # Gates the web's /clear for native sessions; older servers reject it.
+    assert data["session_event_types"] == sorted(CLIENT_SESSION_EVENT_TYPES)
+    assert "clear" in data["session_event_types"]
+    # Browser-posted despite its prefix; runner-only events stay unadvertised.
+    assert "external_btw_dismiss" in data["session_event_types"]
+    assert "external_output_text_delta" not in data["session_event_types"]
+    # Gates the web's claude-sdk /clear, which older servers list "clear" without.
+    assert data["session_claude_sdk_clear"] is True
+    # Gates the Codex forwarder's non-blocking async question cards.
+    assert data["codex_nonblocking_decline"] is True
+    # Gates the web's /rewind and the items type filter its picker uses.
+    assert data["session_rewind"] is True
+    # This app wires no project store, so automations cannot take a project.
+    assert data["scheduled_task_projects"] is False
+    # This app wires no scheduled-task store, so it has no automations to offer.
+    assert data["automations_enabled"] is False
+    # single_user reflects OMNIGENT_LOCAL_SINGLE_USER, which the suite's
+    # conftest sets to "1" (the default local-dev posture), so it's true here.
+    # The multi-user (marker-off) case is covered below.
+    assert data["single_user"] is True
+    # Without the curation keys the picker block is present and empty, never missing.
+    assert data["picker"] == {"restrict_to_agent_names": [], "default_agent_name": None}
+
+    # Older servers omit capabilities they do not support.
+    del data["agent_detail"]
+    assert ServerInfoResponse.model_validate(data).agent_detail is False
+    del data["agent_config_edit"]
+    assert ServerInfoResponse.model_validate(data).agent_config_edit is False
+    del data["session_event_types"]
+    assert ServerInfoResponse.model_validate(data).session_event_types == []
+    del data["session_claude_sdk_clear"]
+    assert ServerInfoResponse.model_validate(data).session_claude_sdk_clear is False
+    del data["codex_nonblocking_decline"]
+    assert ServerInfoResponse.model_validate(data).codex_nonblocking_decline is False
+    del data["session_rewind"]
+    assert ServerInfoResponse.model_validate(data).session_rewind is False
+    del data["automations_enabled"]
+    assert ServerInfoResponse.model_validate(data).automations_enabled is False
+
+
+async def test_info_disables_config_edit_for_unsupported_store(
+    app: FastAPI,
+    client: httpx.AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Stores inheriting the default capability cannot advertise configuration edits."""
+    monkeypatch.setattr(
+        type(app.state.agent_store), "supports_config_edit", AgentStore.supports_config_edit
+    )
+
+    response = await client.get("/v1/info")
+
+    assert response.status_code == 200, response.text
+    assert response.json()["agent_config_edit"] is False
+
+
+async def test_info_single_user_false_without_marker(
+    client: httpx.AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``single_user`` tracks ``OMNIGENT_LOCAL_SINGLE_USER`` live.
+
+    It's the sole signal that separates a genuine one-user local server
+    from a multi-user header-auth deploy (both otherwise report
+    ``accounts_enabled: false`` / ``login_url: null``), so it must come
+    from the explicit marker, not the auth shape. With the marker cleared,
+    the same auth-shape app reports false — the regression this signal fixes.
+    """
+    monkeypatch.delenv("OMNIGENT_LOCAL_SINGLE_USER", raising=False)
+    resp = await client.get("/v1/info")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["single_user"] is False
+    # Auth shape is unchanged — single_user is orthogonal to it.
+    assert data["accounts_enabled"] is False
+    assert data["login_url"] is None
+
+
+async def test_info_advertises_installable_harnesses_when_enabled(
+    app: FastAPI,
+    client: httpx.AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """With the feature on, ``/v1/info`` publishes the install allowlist.
+
+    The SPA gates its setup offer on membership in this set, so it must carry
+    the ids the route accepts — including the native spellings a session
+    declares (``codex-native``), not just the bare ids.
+    """
+    from omnigent.onboarding.harness_install import ui_installable_harnesses
+
+    monkeypatch.setattr(app.state, "harness_install", True)
+    resp = await client.get("/v1/info")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["features"]["harness_install"] is True
+    assert data["harness_install_enabled"] is True
+    assert set(data["installable_harnesses"]) == set(ui_installable_harnesses())
+    assert "codex-native" in data["installable_harnesses"]
+
+
+# ── GET /v1/info: smart_routing_enabled ──────────────────
+#
+# The flag is the SPA's and the CLI's first gate: with it false, no Smart
+# Routing surface exists anywhere (no top-level harness row, no per-harness
+# Model option, no bundle-agent brain option), and ``--smart-routing`` is a hard
+# error. It reports whether the SERVER can route at all — a host whose CLIs run
+# off a personal subscription is gated separately, per harness, off the host's
+# ``gateway_inference`` map.
+
+
+async def test_info_reports_smart_routing_off_without_a_router(
+    client: httpx.AsyncClient,
+) -> None:
+    """No ``routing:`` block and no Databricks provider means no routing."""
+    resp = await client.get("/v1/info")
+    assert resp.status_code == 200
+    assert resp.json()["smart_routing_enabled"] is False
+
+
+@pytest.mark.parametrize(
+    ("caps", "expected"),
+    [
+        # Nothing initialized at all (an embedding host that never built caps).
+        (None, False),
+        # Caps with neither routing capability.
+        (SimpleNamespace(routing_client=None, policy_llm_connection_factory=None), False),
+        # A configured RoutingClient (a server ``llm:`` block, or
+        # ``routing.provider=external``, or the Databricks-provider default).
+        (SimpleNamespace(routing_client=object(), policy_llm_connection_factory=None), True),
+        # A managed deployment supplies its own client from this factory.
+        (SimpleNamespace(routing_client=None, policy_llm_connection_factory=lambda: None), True),
+    ],
+)
+async def test_info_smart_routing_enabled_tracks_the_servers_routing_capability(
+    client: httpx.AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+    caps: object,
+    expected: bool,
+) -> None:
+    """Either routing capability turns the flag on; neither leaves it off."""
+    monkeypatch.setattr("omnigent.runtime._globals._caps", caps, raising=False)
+
+    resp = await client.get("/v1/info")
+    assert resp.status_code == 200
+    assert resp.json()["smart_routing_enabled"] is expected
+
+
+# ── GET /v1/info: smart_routing_sources ──────────────────
+#
+# Which router can answer, not whether routing exists. A harness whose inference
+# is not AI-Gateway-backed can only be served by the built-in judge, so the SPA
+# and the CLI read this to pick a source instead of hiding the surface.
+# ``smart_routing_enabled`` is unchanged and stays the "is routing configured at
+# all" answer.
+
+
+def _external_client() -> object:
+    from omnigent.server.smart_routing import ExternalRoutingClient
+
+    return ExternalRoutingClient(base_url="https://ws.example.invalid", router_name="task_v1")
+
+
+def _sources_caps(*, external: bool, local: bool, factory: bool) -> object:
+    from omnigent.server.routing_backend import RoutingBackends
+
+    backends = RoutingBackends(
+        external=_external_client() if external else None,
+        local=object() if local else None,
+    )
+    return SimpleNamespace(
+        routing_client=backends.any(),
+        routing_backends=backends,
+        policy_llm_connection_factory=(lambda: None) if factory else None,
+    )
+
+
+@pytest.mark.parametrize(
+    ("caps", "expected"),
+    [
+        # Nothing configured at all.
+        (
+            _sources_caps(external=False, local=False, factory=False),
+            {"external": False, "oss": False},
+        ),
+        # The workspace Unity Gateway alone: no fallback for an ungatewayed harness.
+        (
+            _sources_caps(external=True, local=False, factory=False),
+            {"external": True, "oss": False},
+        ),
+        # The built-in judge alone.
+        (
+            _sources_caps(external=False, local=True, factory=False),
+            {"external": False, "oss": True},
+        ),
+        # Both — the normal Databricks posture, and the only one that can serve
+        # a gateway-backed AND an ungatewayed harness.
+        (_sources_caps(external=True, local=True, factory=False), {"external": True, "oss": True}),
+        # A managed deployment supplies its own client from the factory; that
+        # counts as an OSS source, exactly as smart_routing_enabled treats it.
+        (
+            _sources_caps(external=False, local=False, factory=True),
+            {"external": False, "oss": True},
+        ),
+    ],
+)
+async def test_info_reports_which_routers_can_answer(
+    client: httpx.AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+    caps: object,
+    expected: dict[str, bool],
+) -> None:
+    monkeypatch.setattr("omnigent.runtime._globals._caps", caps, raising=False)
+
+    resp = await client.get("/v1/info")
+    assert resp.status_code == 200
+    assert resp.json()["smart_routing_sources"] == expected
+
+
+async def test_info_reports_routing_on_for_a_backends_only_deployment(
+    client: httpx.AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``routing_backends`` alone is enough — it is the managed override point.
+
+    Regression: the flag read ``routing_client`` while the sources read the
+    backends pair, so a deployment that set only ``routing_backends`` reported
+    routing off and the SPA hid a surface the server would have served.
+    """
+    from omnigent.server.routing_backend import RoutingBackends
+
+    monkeypatch.setattr(
+        "omnigent.runtime._globals._caps",
+        SimpleNamespace(
+            routing_backends=RoutingBackends(external=_external_client()),
+            routing_client=None,
+            policy_llm_connection_factory=None,
+        ),
+        raising=False,
+    )
+
+    resp = await client.get("/v1/info")
+    data = resp.json()
+    assert data["smart_routing_enabled"] is True
+    assert data["smart_routing_sources"] == {"external": True, "oss": False}
+
+
+async def test_info_classifies_a_legacy_single_routing_client_as_the_oss_judge(
+    client: httpx.AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """No ``routing_backends`` derives the pair from ``routing_client`` by type."""
+    monkeypatch.setattr(
+        "omnigent.runtime._globals._caps",
+        SimpleNamespace(
+            routing_client=object(),
+            routing_backends=None,
+            policy_llm_connection_factory=None,
+        ),
+        raising=False,
+    )
+
+    resp = await client.get("/v1/info")
+    data = resp.json()
+    assert data["smart_routing_enabled"] is True
+    assert data["smart_routing_sources"] == {"external": False, "oss": True}
+
+
+# ── GET /v1/me ───────────────────────────────────────────
+
+
+async def test_me_returns_null_user_without_auth(client: httpx.AsyncClient) -> None:
+    """Without auth, /v1/me returns user_id null and is_admin false."""
+    resp = await client.get("/v1/me")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["user_id"] is None
+    # is_admin is always present (mode-agnostic admin signal) and false
+    # for an unauthenticated / no-permission-store caller.
+    assert data["is_admin"] is False

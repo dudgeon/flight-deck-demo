@@ -1,0 +1,740 @@
+// Pure helpers for applying session-list push deltas (from the
+// `WS /v1/sessions/updates` stream) into the TanStack Query cache that
+// backs the sidebar's `["conversations", ...]` infinite queries.
+//
+// The merge / remove logic is pure so it can be unit-tested directly;
+// `overlayTitleIntoCaches` takes the QueryClient as a parameter rather than
+// reaching for a hook, keeping this module free of React runtime imports.
+// Production callers: SessionUpdatesProvider (push deltas),
+// useRenameConversation (overlaying the PATCH response after a rename), and
+// the chat store's `session.title` handler (a terminal-side `/rename`).
+
+import type { InfiniteData, QueryClient } from "@tanstack/react-query";
+import { scopeBoundaryRow } from "@/lib/sidebarData";
+import type { Conversation, ConversationsPage, SessionSortBy } from "@/hooks/useConversations";
+import type { Session } from "@/lib/types";
+import { sessionVisibility } from "@/lib/sessionVisibility";
+
+/** Cache value shape for a `useConversations` infinite query. */
+export type ConversationsInfiniteData = InfiniteData<ConversationsPage, string | undefined>;
+
+/**
+ * The reserved `conversation_labels` key that stores a session's project
+ * membership. Namespaced (`omni_*`) so it never collides with the user-facing
+ * "project" term or other reserved keys. Defined in this leaf cache module so
+ * membership checks can read it without importing back from the hooks layer
+ * (which would create a value import cycle); `useConversations` re-exports it
+ * for the existing consumers.
+ */
+export const PROJECT_LABEL_KEY = "omni_project";
+
+/**
+ * The reserved `conversation_labels` key that records whether a session is
+ * pinned in the sidebar. The value is the epoch-ms timestamp of when it was
+ * pinned (any non-empty value means pinned); the label is absent when unpinned
+ * (the server deletes it on an empty-string PATCH). Storing the pin time lets
+ * the Pinned section order by pin recency, stable when a new message bumps a
+ * session's `updated_at`. Mirrors the server's `PINNED_LABEL_KEY`. Kept beside
+ * `PROJECT_LABEL_KEY` in this leaf module so the sidebar can derive pin state
+ * without a hooks-layer import cycle.
+ */
+export const PINNED_LABEL_KEY = "omnigent.pinned";
+
+/** Mutation key shared by every pin, unpin, and pinned-reorder write. */
+export const PIN_WRITE_MUTATION_KEY = ["pin-write"] as const;
+
+/**
+ * The reserved `conversation_labels` key holding the epoch-SECONDS time a
+ * session was archived. Written by the server on the archive transition and
+ * deleted on unarchive, so its absence is normal for sessions archived before
+ * this shipped (readers fall back to `updated_at`). Seconds, not the pin key's
+ * epoch-ms, to match that fallback's unit. Mirrors the server's
+ * `ARCHIVED_AT_LABEL_KEY`.
+ */
+export const ARCHIVED_AT_LABEL_KEY = "omnigent.archived_at";
+
+/** Filter dimensions encoded by a `["conversations", ...]` query key. */
+export interface ConversationListFilters {
+  searchQuery: string;
+  includeArchived: boolean;
+  /**
+   * Project (``omni_project`` label) the list is scoped to. Present only on
+   * the project-filtered variant (the Archived settings view's picker); the
+   * default sidebar / search queries omit it entirely. ``undefined`` means
+   * "all projects".
+   */
+  project?: string;
+  /**
+   * Ownership/archive scope for the sidebar tabs. ``"mine"`` holds only owned
+   * sessions; ``"shared"`` holds accessible-but-not-owned; ``"archived"`` holds
+   * only archived sessions. ``undefined`` is the default all-sessions list.
+   */
+  visibility?: "mine" | "shared" | "archived";
+  /** Sort order, present only when it isn't the default `updated_at`. */
+  sortBy?: SessionSortBy;
+}
+
+/**
+ * A `SessionListItem` as it arrives on the wire in `snapshot` / `changed`
+ * frames. Field names match {@link Conversation}, so an item overlays a
+ * cached row directly. Always carries at least an `id`.
+ */
+export type SessionListWireItem = Partial<Conversation> & { id: string };
+
+/**
+ * Convert a wire item's `null` values to `undefined`, preserving keys.
+ *
+ * The session-updates stream sends full rows (every field, nulls included) so
+ * a field that cleared to null arrives explicitly rather than being dropped —
+ * which is what lets the overlay merge clear it. But the rest of the app reads
+ * these rows in the shape `GET /v1/sessions` produces, where an empty field is
+ * *absent* (`undefined`), not `null`. Most consumers use `?? ` and don't care,
+ * but the sidebar's `permission_level === null` full-access sentinel does: a
+ * streamed `permission_level: null` would wrongly flip a row to owner/edit/
+ * manage. Converting null → undefined here keeps streamed rows in the list's
+ * shape, so a cleared field reads as empty and the sentinel is never tripped.
+ *
+ * @param wire - A wire item from a snapshot/changed frame.
+ * @returns A copy with every `null` value replaced by `undefined`; keys are
+ *   kept (with `undefined` values) so the diff still sees a cleared field.
+ */
+export function nullsToUndefined(wire: SessionListWireItem): SessionListWireItem {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(wire)) {
+    out[key] = value === null ? undefined : value;
+  }
+  return out as SessionListWireItem;
+}
+
+/**
+ * Return the wire fields whose values differ from the cached row.
+ *
+ * Lets the merge skip rewriting rows that are already up to date, so a
+ * snapshot frame (which restates the whole watch-set, mostly unchanged)
+ * doesn't churn the cache and re-render the sidebar. `labels` and
+ * `pull_request` are compared structurally because every parsed frame yields
+ * a fresh object reference.
+ *
+ * @param conv - The cached conversation row.
+ * @param wire - The incoming wire item overlaying it.
+ * @returns Field names that would change if `wire` were applied.
+ */
+function changedWireFields(conv: Conversation, wire: SessionListWireItem): Set<string> {
+  const changed = new Set<string>();
+  // Index the typed Conversation by arbitrary wire keys to compare field
+  // by field. The double cast is required because Conversation has no index
+  // signature; the wire item's keys are a subset of Conversation's fields.
+  const row = conv as unknown as Record<string, unknown>;
+  for (const [key, value] of Object.entries(wire)) {
+    const current = row[key];
+    if (key === "labels" || key === "pull_request" || key === "family") {
+      if (JSON.stringify(current) !== JSON.stringify(value)) changed.add(key);
+    } else if (current !== value) {
+      changed.add(key);
+    }
+  }
+  return changed;
+}
+
+/**
+ * Decode the filter dimensions from a conversations query key.
+ *
+ * The base key is `["conversations", searchQuery, includeArchived]`. Variants:
+ * - 4 elements: `[..., project]` — the Archived settings picker's project filter.
+ * - 5 elements: `[..., project|null, visibility]` — the sidebar's mine/shared
+ *   tab-scoped query (project is `null` here since it's always unset for those
+ *   tabs). A sixth `created_at` element selects creation-time ordering.
+ *   These variants are accepted so the rename overlay and push-delta merge
+ *   — which iterate *every* cached `["conversations", ...]` query — never throw
+ *   on unknown variants. Query membership decisions depend on these dimensions,
+ *   so malformed keys fail loudly instead of being guessed.
+ *
+ * @param key - TanStack Query key for a conversations query.
+ * @returns Parsed list filters.
+ * @throws Error if the key is not a conversations list key.
+ */
+export function filtersFromConversationQueryKey(key: readonly unknown[]): ConversationListFilters {
+  if (key.length < 3 || key.length > 6 || key[0] !== "conversations") {
+    throw new Error("Invalid conversations query key");
+  }
+  if (key.length === 6 && key[5] !== "created_at") {
+    throw new Error("Invalid conversations query key");
+  }
+  const [, searchQuery, includeArchived, project] = key;
+  if (typeof searchQuery !== "string" || typeof includeArchived !== "boolean") {
+    throw new Error("Invalid conversations query key");
+  }
+  // project is undefined (3-element), a string (4-element project-scoped), or
+  // null (5-element visibility-scoped where project is always unset).
+  if (project !== undefined && project !== null && typeof project !== "string") {
+    throw new Error("Invalid conversations query key");
+  }
+  const visibility = key[4];
+  if (
+    visibility !== undefined &&
+    visibility !== "mine" &&
+    visibility !== "shared" &&
+    visibility !== "archived"
+  ) {
+    throw new Error("Invalid conversations query key");
+  }
+  return {
+    searchQuery,
+    includeArchived,
+    // Treat null (visibility-scoped key) the same as undefined (no project filter).
+    project: project ?? undefined,
+    visibility: visibility as ConversationListFilters["visibility"],
+    ...(key[5] === "created_at" ? { sortBy: "created_at" as const } : {}),
+  };
+}
+
+/**
+ * Check membership rules the client can decide exactly from a patched row.
+ *
+ * - Archived rows never belong in default (non-includeArchived) queries.
+ * - Project-filtered variants (the Archived picker's `["conversations","",true,
+ *   name]` key) hold only rows whose `omni_project` label matches; a row
+ *   relabeled out of that project — via a push-delta — is no longer a member.
+ *   A falsy project (`undefined` or `""`) is the "all projects" list and
+ *   applies no project constraint — consistent with the request (which omits
+ *   `project=` for a falsy value) and the query key (which drops it). This list
+ *   never requests the server's "unfiled" (`project=`) slice.
+ *
+ * @param conv - Cached row after applying the incoming wire item.
+ * @param filters - Canonical filters for the query being patched.
+ * @returns `true` when the row should be removed immediately.
+ */
+function violatesKnownMembership(conv: Conversation, filters: ConversationListFilters): boolean {
+  // Visibility-scoped caches have strict membership rules beyond archive/project:
+  if (filters.visibility === "archived") {
+    // The archived cache holds only archived rows. A non-archived row (or one
+    // that just got un-archived) does not belong; evict it so the overlay paths
+    // don't leave stale active sessions in this cache.
+    return conv.archived !== true;
+  }
+  if (filters.visibility === "mine" || filters.visibility === "shared") {
+    // Mine/shared caches hold only active (non-archived) sessions. Evict if archived.
+    if (conv.archived === true) return true;
+  }
+  if (!filters.includeArchived && conv.archived === true) return true;
+  if (filters.project && conv.labels?.[PROJECT_LABEL_KEY] !== filters.project) return true;
+  return false;
+}
+
+/**
+ * The reserved `conversation_labels` key marking a side-chat fork. The server
+ * leaves these sessions out of every `GET /v1/sessions` list.
+ */
+export const SIDE_CHAT_LABEL_KEY = "omnigent.side_chat";
+
+/**
+ * A row property some cached list's server-side filter reads, so changing it
+ * can add the row to another list or drop it from one.
+ *
+ * - `archived`: the archive flag (and its `omnigent.archived_at` label).
+ * - `title`: search lists match on it.
+ * - `project`: `project_id` or the legacy `omni_project` label.
+ * - `hidden`: the side-chat label, which removes a row from every list.
+ *
+ * Any other change (status, error labels, an `updated_at` bump) is patched in
+ * place: every list sorts its loaded rows itself, so it can't move a row in or
+ * out of a list. The exception is the row the next page's cursor names; see
+ * {@link mergeItemsIntoPages}.
+ */
+export type MembershipField = "archived" | "title" | "project" | "hidden";
+
+/** Every membership field; a row no list holds yet may match on any of them. */
+export const ALL_MEMBERSHIP_FIELDS: ReadonlySet<MembershipField> = new Set<MembershipField>([
+  "archived",
+  "title",
+  "project",
+  "hidden",
+]);
+
+const MEMBERSHIP_LABELS: readonly (readonly [string, MembershipField])[] = [
+  [PROJECT_LABEL_KEY, "project"],
+  [ARCHIVED_AT_LABEL_KEY, "archived"],
+  [SIDE_CHAT_LABEL_KEY, "hidden"],
+];
+
+/**
+ * Name the membership fields a patch moved.
+ *
+ * @param before - The cached row.
+ * @param after - The row with the wire item applied.
+ * @param changed - Wire fields that differ between them.
+ */
+function changedMembershipFields(
+  before: Conversation,
+  after: Conversation,
+  changed: Set<string>,
+): Set<MembershipField> {
+  const fields = new Set<MembershipField>();
+  if (changed.has("archived")) fields.add("archived");
+  if (changed.has("title")) fields.add("title");
+  if (changed.has("project_id")) fields.add("project");
+  if (changed.has("labels")) {
+    for (const [key, field] of MEMBERSHIP_LABELS) {
+      if (before.labels?.[key] !== after.labels?.[key]) fields.add(field);
+    }
+  }
+  return fields;
+}
+
+/** A patched row and the membership fields its patch moved. */
+export interface MembershipChange {
+  row: Conversation;
+  fields: Set<MembershipField>;
+}
+
+/** Query-key namespaces whose pages hold sidebar list rows. */
+export const LIST_ROW_QUERY_ROOTS = ["conversations", "project-sessions"] as const;
+
+/**
+ * A cached copy of one session's row from a list response: any
+ * `["conversations", ...]` variant or a project folder's
+ * `["project-sessions", ...]` pages.
+ *
+ * @param queryClient - The app QueryClient.
+ * @param id - Conversation id to find.
+ */
+export function findCachedListRow(queryClient: QueryClient, id: string): Conversation | undefined {
+  for (const root of LIST_ROW_QUERY_ROOTS) {
+    const caches = queryClient.getQueriesData<ConversationsInfiniteData>({ queryKey: [root] });
+    for (const [, data] of caches) {
+      for (const page of data?.pages ?? []) {
+        const row = page.data.find((c) => c.id === id);
+        if (row) return row;
+      }
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Overlay incoming wire items onto matching rows of one infinite query's
+ * cached pages.
+ *
+ * Only rows whose id appears in `itemsById` are touched, and only when a
+ * value actually changed — pages and the top-level object keep their old
+ * reference when nothing changed, so the caller can skip the
+ * `setQueryData` (and the re-render) entirely. Items whose id isn't present
+ * in any page are reported back via `found` so the caller can treat them as
+ * structural additions (a debounced refetch), rather than guessing where to
+ * insert them in the server's sort order.
+ *
+ * @param data - The cached infinite data, or `undefined` for an unfetched
+ *   query.
+ * @param itemsById - Wire items keyed by conversation id.
+ * @param filters - Canonical filters for this conversations query.
+ * @returns The possibly updated data, ids found in it, whether this query
+ *   needs a server refetch after the local patch, and the membership fields
+ *   each patched row moved, which can change other lists' membership.
+ */
+export function mergeItemsIntoPages(
+  data: ConversationsInfiniteData | undefined,
+  itemsById: Map<string, SessionListWireItem>,
+  filters: ConversationListFilters,
+): {
+  data: ConversationsInfiniteData | undefined;
+  found: Set<string>;
+  needsRefetch: boolean;
+  changes: Map<string, MembershipChange>;
+} {
+  const found = new Set<string>();
+  const changes = new Map<string, MembershipChange>();
+  if (!data) return { data, found, needsRefetch: false, changes };
+  let anyPageChanged = false;
+  let needsRefetch = false;
+  // The row the next page is fetched after, or the last loaded row when the
+  // server filtered the cursor row out (the sidebar's same fallback). Moving it
+  // up leaves "load more" restarting near the top, so it reconciles.
+  const tail = data.pages.at(-1);
+  const cursorId = tail?.has_more ? scopeBoundaryRow(tail.data, tail.last_id)?.id : null;
+  const pages = data.pages.map((page) => {
+    let rowChanged = false;
+    const nextData: Conversation[] = [];
+    for (const conv of page.data) {
+      const wire = itemsById.get(conv.id);
+      if (!wire) {
+        nextData.push(conv);
+        continue;
+      }
+      found.add(conv.id);
+      const changed = changedWireFields(conv, wire);
+      if (changed.size === 0) {
+        nextData.push(conv);
+        continue;
+      }
+      const nextConv = { ...conv, ...wire };
+      const fields = changedMembershipFields(conv, nextConv, changed);
+      if (fields.size > 0) changes.set(conv.id, { row: nextConv, fields });
+      if (violatesKnownMembership(nextConv, filters)) {
+        rowChanged = true;
+        needsRefetch = true;
+        continue;
+      }
+      if (
+        // The server drops side chats from every list, and a retitled row may
+        // stop matching this list's search.
+        fields.has("hidden") ||
+        (fields.has("title") && filters.searchQuery !== "") ||
+        (conv.id === cursorId && changed.has(filters.sortBy ?? "updated_at"))
+      ) {
+        needsRefetch = true;
+      }
+      rowChanged = true;
+      nextData.push(nextConv);
+    }
+    if (!rowChanged) return page;
+    anyPageChanged = true;
+    return { ...page, data: nextData };
+  });
+  if (!anyPageChanged) return { data, found, needsRefetch, changes };
+  return { data: { ...data, pages }, found, needsRefetch, changes };
+}
+
+// ── Recently-created keep-alive ───────────────────────────────────────
+//
+// The push stream inserts a just-created session into the sidebar instantly
+// (SessionUpdatesProvider → insertNewRowsIntoPages), but the create path also
+// fires a `["conversations"]` refetch, and on the search-indexed deployment
+// that fetch lags the write — so it comes back WITHOUT the new session and
+// replaces the cache, dropping the row until the index catches up (it flashes
+// in, then out). We keep the row in the first-page fetch until the index
+// reflects it — the additive mirror of the delete tombstone. Lives in this
+// leaf module so both `useConversations` (the reader) and the chat store (the
+// optimistic-create writer) can reach it without an import cycle.
+export const recentlyCreatedSessions = new Map<string, Conversation>();
+
+/** Grace window for the server's async create reindex. */
+const CREATED_KEEPALIVE_MS = 60_000;
+
+/** Keep a just-created session in the first-page list fetch until it's indexed. */
+export function markRecentlyCreated(conv: Conversation): void {
+  recentlyCreatedSessions.set(conv.id, conv);
+  setTimeout(() => recentlyCreatedSessions.delete(conv.id), CREATED_KEEPALIVE_MS);
+}
+
+/** Clear the keep-alive map — exported for test cleanup (mirrors `unmarkSessionsDeleting`). */
+export function clearRecentlyCreated(): void {
+  recentlyCreatedSessions.clear();
+}
+
+/**
+ * Drop one row from the keep-alive map — e.g. an optimistic unarchive whose
+ * PATCH failed, so the row must stop being re-injected and fall back to
+ * archived. Safe to call for an id that isn't tracked.
+ */
+export function unmarkRecentlyCreated(id: string): void {
+  recentlyCreatedSessions.delete(id);
+}
+
+/**
+ * Sidebar row from a session snapshot; snapshots carry no `owner`, so it reads as viewer-owned.
+ */
+export function conversationRowFromSession(session: Session): Conversation {
+  return {
+    id: session.id,
+    object: "conversation",
+    title: session.title,
+    created_at: session.createdAt,
+    updated_at: session.updatedAt ?? session.createdAt,
+    labels: session.labels ?? {},
+    permission_level: session.permissionLevel,
+    agent_id: session.agentId,
+    agent_name: session.agentName,
+    harness: session.harness,
+    family: session.family,
+    runner_id: session.runnerId ?? null,
+    host_id: session.hostId ?? null,
+    workspace: session.workspace ?? null,
+    git_branch: session.gitBranch ?? null,
+    archived: session.archived,
+    parent_session_id: session.parentSessionId,
+    project_id: session.projectId ?? null,
+  };
+}
+
+/**
+ * Insert a just-created session into the cached sidebar lists it belongs to and arm the keep-alive.
+ */
+export function insertCreatedRowIntoCaches(queryClient: QueryClient, row: Conversation): void {
+  markRecentlyCreated(row);
+  const candidates = new Map([[row.id, row]]);
+  for (const [key, data] of queryClient.getQueriesData<ConversationsInfiniteData>({
+    queryKey: ["conversations"],
+  })) {
+    const { data: next } = insertNewRowsIntoPages(
+      data,
+      candidates,
+      filtersFromConversationQueryKey(key),
+    );
+    if (next !== data) queryClient.setQueryData(key, next);
+  }
+}
+
+/**
+ * Prepend brand-new rows (a create here or elsewhere, a share) to page 0 so the
+ * sidebar shows them the instant the push lands, instead of after the debounced
+ * refetch (which lags the search index). A new row sorts newest-first, so page 0
+ * is its home. Skips: search lists (membership unknown), archived/wrong-project
+ * rows, sub-agent children (`parent_session_id` — they live off the sidebar),
+ * and ids the caller excludes via `skip` (e.g. an optimistic delete in flight).
+ * `candidates` should already exclude rows the list holds.
+ */
+export function insertNewRowsIntoPages(
+  data: ConversationsInfiniteData | undefined,
+  candidates: Map<string, SessionListWireItem>,
+  filters: ConversationListFilters,
+  skip?: (id: string) => boolean,
+  viewerId?: string | null,
+): { data: ConversationsInfiniteData | undefined; inserted: Conversation[] } {
+  // Archived caches hold only archived rows; new sessions are never archived.
+  if (!data || candidates.size === 0 || filters.searchQuery) return { data, inserted: [] };
+  if (filters.visibility === "archived") return { data, inserted: [] };
+  const present = new Set<string>();
+  for (const page of data.pages) for (const c of page.data) present.add(c.id);
+  const rows: Conversation[] = [];
+  for (const [id, wire] of candidates) {
+    if (present.has(id) || skip?.(id)) continue;
+    const conv: Conversation = {
+      object: "conversation",
+      title: null,
+      created_at: 0,
+      updated_at: 0,
+      labels: {},
+      permission_level: null,
+      ...nullsToUndefined(wire),
+      id,
+    };
+    if (conv.parent_session_id != null || violatesKnownMembership(conv, filters)) continue;
+    // Same ownership inference as the sidebar scopes and the targeted reconcile.
+    const visibility = sessionVisibility(conv, viewerId ?? null);
+    if (filters.visibility === "mine" && visibility !== "mine") continue;
+    if (filters.visibility === "shared" && visibility !== "shared") continue;
+    rows.push(conv);
+  }
+  if (rows.length === 0) return { data, inserted: [] };
+  const [first, ...rest] = data.pages;
+  const nextFirst = { ...first, data: [...rows, ...first.data], first_id: rows[0].id };
+  return { data: { ...data, pages: [nextFirst, ...rest] }, inserted: rows };
+}
+
+// Only known legacy row-ID cursors can be repaired after removing their anchor.
+// All other continuation tokens must round-trip unchanged, even on empty pages.
+export function lastIdAfterFiltering(
+  original: ConversationsPage,
+  rows: Conversation[],
+  emptyCursor: string | null = null,
+): string | null {
+  if (!original.data.some((row) => row.id === original.last_id)) return original.last_id;
+  return rows.at(-1)?.id ?? emptyCursor;
+}
+
+/** Drop matching rows while preserving opaque continuation metadata. */
+export function removeIdsFromPages(
+  data: ConversationsInfiniteData | undefined,
+  ids: Set<string>,
+): { data: ConversationsInfiniteData | undefined; removed: boolean } {
+  if (!data || ids.size === 0) return { data, removed: false };
+  let changed = false;
+  const pages = data.pages.map((page) => {
+    const nextData = page.data.filter((conv) => !ids.has(conv.id));
+    if (nextData.length === page.data.length) return page;
+    changed = true;
+    return {
+      ...page,
+      data: nextData,
+      first_id: nextData[0]?.id ?? null,
+      last_id: lastIdAfterFiltering(page, nextData),
+    };
+  });
+  if (!changed) return { data, removed: false };
+  return { data: { ...data, pages }, removed: true };
+}
+
+/**
+ * Collect every conversation id present across a set of infinite-query
+ * caches — the union forms the stream's watch-set.
+ *
+ * @param datas - Cached infinite data for each `["conversations", ...]`
+ *   query variant (base, search, archived). `undefined` entries are
+ *   skipped.
+ * @returns Deduplicated conversation ids.
+ */
+export function collectConversationIds(datas: (ConversationsInfiniteData | undefined)[]): string[] {
+  const ids = new Set<string>();
+  for (const data of datas) {
+    if (!data) continue;
+    for (const page of data.pages) {
+      for (const conv of page.data) ids.add(conv.id);
+    }
+  }
+  return [...ids];
+}
+
+/** Decode `["project-sessions", project, sortBy, archived]`. */
+export function parseProjectSessionsQueryKey(key: readonly unknown[]): {
+  project: string;
+  sortBy: SessionSortBy;
+  archived: boolean;
+} {
+  const [prefix, project, sortBy, archived] = key;
+  if (
+    key.length !== 4 ||
+    prefix !== "project-sessions" ||
+    typeof project !== "string" ||
+    (sortBy !== "updated_at" && sortBy !== "created_at") ||
+    typeof archived !== "boolean"
+  )
+    throw new Error("Invalid project sessions query key");
+  return { project, sortBy, archived };
+}
+
+/** Membership filters for an unsearched project-folder query. */
+export function filtersFromProjectQueryKey(key: readonly unknown[]): ConversationListFilters {
+  const { archived, sortBy } = parseProjectSessionsQueryKey(key);
+  return {
+    searchQuery: "",
+    includeArchived: archived,
+    visibility: archived ? "archived" : "mine",
+    ...(sortBy === "created_at" ? { sortBy } : {}),
+  };
+}
+
+/**
+ * Overlay a title into every cache that holds a row for one session.
+ *
+ * Only the fields a rename changes are written — a full session snapshot
+ * carries nulls for absent fields that would clobber list-shaped rows (see
+ * {@link nullsToUndefined}). Covers the flat `["conversations"]` lists, the
+ * per-project `["project-sessions"]` lists (a filed session renders from its
+ * own list, so skipping it leaves the folder row stale), the pinned-row
+ * `["conversation-backfill"]` cache, and the per-session `["session"]`
+ * snapshot — the last two have long stale times and would otherwise serve
+ * the old title long after.
+ *
+ * Shared by the two paths that learn a title changed outside a list fetch:
+ * `useRenameConversation` (optimistic paint for a Web UI rename) and the
+ * `session.title` SSE handler (a `/rename` typed in a native terminal).
+ *
+ * @param queryClient - The app QueryClient.
+ * @param id - Conversation id whose title changed.
+ * @param title - The new title, or `null` to clear it.
+ * @param updatedAt - Optional `updated_at` to write alongside the title.
+ */
+export function overlayTitleIntoCaches(
+  queryClient: QueryClient,
+  id: string,
+  title: string | null,
+  updatedAt?: number,
+): void {
+  const wire: SessionListWireItem = {
+    id,
+    title,
+    ...(updatedAt !== undefined ? { updated_at: updatedAt } : {}),
+  };
+  const itemsById = new Map([[id, wire]]);
+  for (const [key, data] of queryClient.getQueriesData<ConversationsInfiniteData>({
+    queryKey: ["conversations"],
+  })) {
+    const { data: next } = mergeItemsIntoPages(
+      data,
+      itemsById,
+      filtersFromConversationQueryKey(key),
+    );
+    if (next !== data) queryClient.setQueryData(key, next);
+  }
+  for (const [key, data] of queryClient.getQueriesData<ConversationsInfiniteData>({
+    queryKey: ["project-sessions"],
+  })) {
+    const { data: next } = mergeItemsIntoPages(data, itemsById, filtersFromProjectQueryKey(key));
+    if (next !== data) queryClient.setQueryData(key, next);
+  }
+  queryClient.setQueryData<Conversation | null>(["conversation-backfill", id], (old) =>
+    old ? { ...old, title, ...(updatedAt !== undefined ? { updated_at: updatedAt } : {}) } : old,
+  );
+  queryClient.setQueryData<Session>(["session", id], (old) => (old ? { ...old, title } : old));
+}
+
+/**
+ * Overlay an archived-flag change onto every cached list that holds the row,
+ * so archiving repaints the sidebar on the next frame instead of after the
+ * PATCH round-trips (which is what made archive feel slower than delete).
+ * Mirrors {@link overlayTitleIntoCaches}: the merge keeps the row in an
+ * include-archived list (marked archived, which the sidebar filters out
+ * client-side) and drops it from a non-archived project folder via
+ * `violatesKnownMembership`.
+ *
+ * Patched in place rather than invalidated, for the same reason rename/delete
+ * are: GET /v1/sessions may be served from a search index that lags the PATCH,
+ * so an immediate refetch races the reindex and bounces the row back. The
+ * server-confirmed state converges via the WS stream and the reconcile poll.
+ *
+ * ponytail: a reconcile poll firing inside the reindex-lag window (before the
+ * index reflects the archive) can briefly bounce the row back; it self-heals on
+ * the next poll. Add a fetch-time flag override (like `withoutDeletingSessions`)
+ * if metrics show the bounce.
+ */
+export function overlayArchivedIntoCaches(
+  queryClient: QueryClient,
+  id: string,
+  archived: boolean,
+): void {
+  const itemsById = new Map<string, SessionListWireItem>([[id, { id, archived }]]);
+  for (const [key, data] of queryClient.getQueriesData<ConversationsInfiniteData>({
+    queryKey: ["conversations"],
+  })) {
+    const { data: next } = mergeItemsIntoPages(
+      data,
+      itemsById,
+      filtersFromConversationQueryKey(key),
+    );
+    if (next !== data) queryClient.setQueryData(key, next);
+  }
+  for (const [key, data] of queryClient.getQueriesData<ConversationsInfiniteData>({
+    queryKey: ["project-sessions"],
+  })) {
+    const { data: next } = mergeItemsIntoPages(data, itemsById, filtersFromProjectQueryKey(key));
+    if (next !== data) queryClient.setQueryData(key, next);
+  }
+  queryClient.setQueryData<Conversation | null>(["conversation-backfill", id], (old) =>
+    old ? { ...old, archived } : old,
+  );
+}
+
+/**
+ * Settle server-known fields on the open session's fetched sidebar row, merged
+ * as the lists merge a streamed row but keeping the fetched owner and access
+ * level, which a streamed shared row may not carry. A detail request in flight
+ * may have been served before they changed, so it is cancelled and restarted
+ * rather than left to land.
+ *
+ * @param queryClient - The app QueryClient.
+ * @param id - The session whose fields are known.
+ * @param fields - Fields from the server, as a wire item; omitted ones are kept.
+ */
+export function settleOpenSessionRow(
+  queryClient: QueryClient,
+  id: string,
+  fields: Omit<SessionListWireItem, "id">,
+): void {
+  const queryKey = ["conversation-backfill", id];
+  if (queryClient.getQueryState(queryKey) === undefined) return;
+  const fetching = queryClient.isFetching({ queryKey, exact: true }) > 0;
+  // invalidateQueries only joins a first fetch (no data yet), so cancel explicitly.
+  if (fetching) void queryClient.cancelQueries({ queryKey, exact: true });
+  const row = queryClient.getQueryData<Conversation | null>(queryKey);
+  if (row) {
+    const wire: SessionListWireItem = { ...fields, id };
+    delete wire.owner;
+    delete wire.permission_level;
+    // A fetched row keeps the detail response's nulls, which wire items carry as undefined.
+    if (changedWireFields(nullsToUndefined(row) as Conversation, wire).size > 0) {
+      const settledRow: Conversation = { ...row, ...wire };
+      queryClient.setQueryData<Conversation | null>(queryKey, settledRow);
+    }
+  }
+  if (fetching) void queryClient.invalidateQueries({ queryKey, exact: true });
+}

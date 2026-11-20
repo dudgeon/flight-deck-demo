@@ -1,0 +1,57 @@
+const MIN_MS = 60_000;
+const HOUR_MS = 60 * MIN_MS;
+const DAY_MS = 24 * HOUR_MS;
+const WEEK_MS = 7 * DAY_MS;
+const MONTH_MS = 30 * DAY_MS;
+const YEAR_MS = 365 * DAY_MS;
+
+// "mo" (not "m") for months disambiguates from minutes.
+export function relativeTime(timestampMs: number, nowMs: number = Date.now()): string {
+  // A non-finite timestamp (missing/malformed updated_at) would make every
+  // threshold comparison false and fall through to the years branch as "NaNy".
+  // Render nothing instead of garbage.
+  if (!Number.isFinite(timestampMs)) return "";
+  const diff = Math.max(0, nowMs - timestampMs);
+  if (diff < MIN_MS) return "now";
+  if (diff < HOUR_MS) return `${Math.floor(diff / MIN_MS)}m`;
+  if (diff < DAY_MS) return `${Math.floor(diff / HOUR_MS)}h`;
+  if (diff < WEEK_MS) return `${Math.floor(diff / DAY_MS)}d`;
+  if (diff < MONTH_MS) return `${Math.floor(diff / WEEK_MS)}w`;
+  if (diff < YEAR_MS) return `${Math.floor(diff / MONTH_MS)}mo`;
+  return `${Math.floor(diff / YEAR_MS)}y`;
+}
+
+/** "8s", "1m 46s", "1h 2m": an elapsed time, as the native CLIs stamp worked-for times. */
+export function formatDuration(seconds: number): string {
+  const s = Math.max(1, Math.round(seconds));
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  const rem = s % 60;
+  if (m < 60) return rem > 0 ? `${m}m ${rem}s` : `${m}m`;
+  const h = Math.floor(m / 60);
+  const mm = m % 60;
+  return mm > 0 ? `${h}h ${mm}m` : `${h}h`;
+}
+
+/**
+ * A time as chat messages stamp it: "8:56 PM" today, "Nov 11, 8:56 PM" earlier
+ * this year, and "Nov 11, 2025, 8:56 PM" before that.
+ */
+export function formatMessageTimestamp(epochSeconds: number, now: Date = new Date()): string {
+  const date = new Date(epochSeconds * 1000);
+  const time = date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  if (date.toDateString() === now.toDateString()) return time;
+  const day = date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    ...(date.getFullYear() === now.getFullYear() ? {} : { year: "numeric" }),
+  });
+  return `${day}, ${time}`;
+}
+
+export function absoluteTime(timestampMs: number): string {
+  // Guard the same non-finite case as relativeTime — `new Date(NaN)` renders
+  // "Invalid Date" in the row's tooltip.
+  if (!Number.isFinite(timestampMs)) return "";
+  return new Date(timestampMs).toLocaleString();
+}

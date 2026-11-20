@@ -1,0 +1,206 @@
+"""Browser e2e for the sidebar's owner-vs-not row gating and scope filters.
+
+This is the end-to-end companion to the mocked ``Sidebar`` unit tests.
+The sidebar derives ownership
+(and every owner-only row action) from the session's ``owner`` — the creator's
+user id carried on each list row — NOT from an effective ``permission_level``.
+The behavior under test:
+
+- A session's **owner** sees it, with the
+  kebab's **Rename** and **Share** items **enabled**.
+- A **non-owner the session is shared with** (even at EDIT) sees it under the
+  **"Shared with me"** filter, with **Rename** and **Share** **disabled**
+  ("Only the session owner can …"). Editing shared *content* still happens in
+  the open session — that path reads the real level from the single-session
+  snapshot and is unaffected — but the sidebar affordances are owner-only.
+
+Runs against a dedicated multi-user server: the shared ``live_server`` is
+single-user (``OMNIGENT_LOCAL_SINGLE_USER=1``), which hides the Shared filter
+AND the Share item entirely, so the ownership split can't be observed there.
+The multi-user server clears that marker and declares an admin identity, exactly
+like a Databricks Apps / SSO-proxy install — the deployment shape this gating
+matters for.
+
+The admin owns the session; a second header identity (the viewer) is granted
+access via the REST API. Both identities' sidebar list loads via the initial
+``GET /v1/sessions`` (a plain authenticatedFetch that carries the context's
+``X-Forwarded-Email``), so the static post-load state asserted here is
+deterministic — unlike the ``WS /v1/sessions/updates`` push, which the
+sharing-journey test notes may not carry the header in all Chromium combos and
+which this test deliberately does not depend on.
+"""
+
+from __future__ import annotations
+
+import json
+import re
+import uuid
+from collections.abc import Iterator
+
+import httpx
+import pytest
+from playwright.sync_api import Browser, Locator, Page, Route, expect
+
+from tests._helpers.browser import user_page
+from tests.e2e_ui.collaboration._multi_user_server import (
+    ADMIN_EMAIL,
+    MultiUserServer,
+    spawn_multi_user_server,
+)
+from tests.e2e_ui.sessions._sidebar_helpers import choose_session_filter
+
+# Edit access (2) is the interesting non-owner case: it proves the sidebar gates
+# on ownership, not level — an EDIT holder still can't rename/share from the
+# sidebar. Mirrors LEVEL_EDIT in omnigent/server/auth.py.
+_LEVEL_EDIT = 2
+
+_FILTER = '[data-testid="session-filter"]'
+_API = re.compile(r"/v1/")
+_EDGE_DENIED_BODY = json.dumps(
+    {
+        "error_code": "PERMISSION_DENIED",
+        "message": "You do not have permission to access this resource.",
+    }
+)
+
+
+@pytest.fixture(scope="module")
+def multi_user_server(
+    built_spa: None,
+    mock_llm_server_url: str,
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Iterator[MultiUserServer]:
+    """A NON-single-user server so the Shared filter + Share item render."""
+    server_tmp = tmp_path_factory.mktemp("e2e_ui_sidebar_ownership_multi_user")
+    yield from spawn_multi_user_server(mock_llm_server_url, server_tmp)
+
+
+def _grant(server: MultiUserServer, user_id: str, level: int) -> None:
+    """Grant *user_id* *level* on the admin-owned session (admin acts)."""
+    resp = httpx.put(
+        f"{server.base_url}/v1/sessions/{server.session_id}/permissions",
+        json={"user_id": user_id, "level": level},
+        headers={"X-Forwarded-Email": ADMIN_EMAIL},
+        timeout=30.0,
+    )
+    resp.raise_for_status()
+
+
+def _row(page: Page, session_id: str) -> Locator:
+    """The sidebar row (``<li>``) for *session_id*, located by its href."""
+    return page.locator("li").filter(has=page.locator(f'a[href="/c/{session_id}"]'))
+
+
+def _open_row_menu(page: Page, session_id: str) -> None:
+    """Right-click the row to open the shared actions menu at the cursor.
+
+    Right-click (Radix ``ContextMenu``) renders the same
+    ``ConversationMenuItems`` body as the kebab, so the item testids and their
+    enabled/disabled state are identical — and it avoids the kebab's
+    pointer-event timing. Mirrors ``test_sidebar_context_menu.py``.
+    """
+    link = page.locator(f'a[href="/c/{session_id}"]')
+    expect(link).to_be_visible(timeout=30_000)
+    link.click(button="right")
+
+
+def test_owner_sees_session_under_my_sessions_with_enabled_actions(
+    browser: Browser,
+    multi_user_server: MultiUserServer,
+) -> None:
+    """The owner's own session: visible in the sidebar, Rename + Share enabled.
+
+    The baseline half of the ownership split — nothing about owner affordances
+    regressed when the sidebar moved off ``permission_level``.
+    """
+    server = multi_user_server
+    sid = server.session_id
+    with user_page(browser, headers={"X-Forwarded-Email": ADMIN_EMAIL}) as page:
+        page.goto(f"{server.public_url}/c/{sid}")
+
+        # Owned → shows under the default "My sessions" filter.
+        expect(page.locator(_FILTER)).to_be_visible(timeout=30_000)
+        expect(_row(page, sid)).to_be_visible(timeout=30_000)
+
+        _open_row_menu(page, sid)
+        # Owner → Rename and Share are enabled (no data-disabled marker).
+        expect(page.get_by_test_id("rename-conversation")).not_to_have_attribute(
+            "data-disabled", re.compile(r".*")
+        )
+        expect(page.get_by_test_id("share-conversation")).not_to_have_attribute(
+            "data-disabled", re.compile(r".*")
+        )
+
+        # Rename runs the real inline-edit path from here (proves "enabled" is
+        # not just cosmetic), exactly as the context-menu test asserts.
+        page.get_by_test_id("rename-conversation").click()
+        expect(page.get_by_test_id("rename-conversation-input")).to_be_visible(timeout=15_000)
+
+
+def test_owner_session_returns_to_my_sessions_after_brief_403_outage(
+    page: Page,
+    multi_user_server: MultiUserServer,
+) -> None:
+    """A reload during a brief edge 403 outage must not hide owned sessions once access returns."""
+    server = multi_user_server
+    sid = server.session_id
+    page.set_extra_http_headers({"X-Forwarded-Email": ADMIN_EMAIL})
+    page.goto(f"{server.public_url}/")
+    expect(_row(page, sid)).to_be_visible(timeout=30_000)
+
+    def deny(route: Route) -> None:
+        route.fulfill(status=403, content_type="application/json", body=_EDGE_DENIED_BODY)
+
+    page.route(_API, deny)
+    page.reload()
+    load_error = page.get_by_role("status").filter(has_text="Failed to load")
+    expect(load_error).to_be_visible(timeout=30_000)
+
+    page.unroute(_API, deny)
+    load_error.get_by_role("button", name="Retry").click()
+    # Retry refetches only the session list; the identity retry restores ownership.
+    expect(_row(page, sid)).to_be_visible(timeout=60_000)
+    _open_row_menu(page, sid)
+    expect(page.get_by_test_id("rename-conversation")).not_to_have_attribute(
+        "data-disabled", re.compile(r".*")
+    )
+    expect(page.get_by_test_id("share-conversation")).not_to_have_attribute(
+        "data-disabled", re.compile(r".*")
+    )
+
+
+@pytest.mark.flaky(reruns=2, reruns_delay=5)
+def test_shared_viewer_sees_session_under_shared_filter_with_owner_only_actions(
+    browser: Browser,
+    multi_user_server: MultiUserServer,
+) -> None:
+    """A non-owner (granted EDIT): "Shared with me" filter, Rename + Share disabled.
+
+    The behavior this PR introduces: an EDIT grant is enough to open and edit
+    the session, but the sidebar's Rename/Share are owner-only — so a shared
+    session shows under the "Shared with me" filter, and its
+    kebab Rename/Share are disabled regardless of the granted level.
+    """
+    server = multi_user_server
+    sid = server.session_id
+    viewer_email = f"viewer-{uuid.uuid4().hex[:6]}@ui.test"
+    _grant(server, viewer_email, _LEVEL_EDIT)
+
+    with user_page(browser, headers={"X-Forwarded-Email": viewer_email}) as page:
+        page.goto(f"{server.public_url}/c/{sid}")
+
+        # The shared session is not the viewer's own, so the default "My
+        # sessions" filter hides it; it shows under the "Shared with me" filter.
+        expect(page.locator(_FILTER)).to_be_visible(timeout=30_000)
+        choose_session_filter(page, "shared")
+        expect(_row(page, sid)).to_be_visible(timeout=30_000)
+
+        _open_row_menu(page, sid)
+        # Non-owner → Rename and Share are disabled even though the viewer holds
+        # EDIT. This is the owner-only gating (was edit-/manage-gated before).
+        expect(page.get_by_test_id("rename-conversation")).to_have_attribute(
+            "data-disabled", re.compile(r".*"), timeout=15_000
+        )
+        expect(page.get_by_test_id("share-conversation")).to_have_attribute(
+            "data-disabled", re.compile(r".*")
+        )

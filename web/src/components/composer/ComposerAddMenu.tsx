@@ -1,0 +1,345 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  FolderIcon,
+  LightbulbIcon,
+  MessagesSquareIcon,
+  PaperclipIcon,
+  PlusIcon,
+  TargetIcon,
+  WorkflowIcon,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { WorkflowPicker } from "@/components/composer/WorkflowPicker";
+import type { SavedWorkflow, WorkflowPagination } from "@/hooks/useSavedWorkflows";
+
+const EMPTY_PROJECTS: readonly { name: string }[] = [];
+const EMPTY_WORKFLOWS: readonly SavedWorkflow[] = [];
+
+function ActionText({ label, description }: { label: string; description: string }) {
+  // A description that doesn't fit beside the label wraps onto the clipped
+  // second line, so narrow menus hide it instead of cutting it off.
+  return (
+    <span className="flex h-lh min-w-0 flex-wrap items-center gap-x-2 overflow-hidden">
+      <span className="min-w-0 truncate">{label}</span>
+      <span className="text-xs leading-4 text-muted-foreground">{description}</span>
+    </span>
+  );
+}
+
+export function ComposerAddMenu({
+  disabled,
+  onAttach,
+  attachDisabled = false,
+  onGoal,
+  goalActive = false,
+  goalDisabled = false,
+  goalDescription = "Available after starting a session",
+  showGoal = true,
+  showPlan = true,
+  planDisabled = false,
+  planLabel,
+  planUnavailableReason = "This harness does not support plan mode",
+  testIdPrefix = "composer",
+  onPlan,
+  planActive,
+  onSideChat,
+  onWorkflow,
+  savedWorkflows = EMPTY_WORKFLOWS,
+  workflowPagination,
+  onRunSavedWorkflow,
+  onOpen,
+  projects = EMPTY_PROJECTS,
+  onProjectSelect,
+}: {
+  disabled: boolean;
+  onAttach: () => void;
+  attachDisabled?: boolean;
+  onGoal?: () => void;
+  goalActive?: boolean;
+  goalDisabled?: boolean;
+  goalDescription?: string;
+  showGoal?: boolean;
+  showPlan?: boolean;
+  planDisabled?: boolean;
+  planLabel?: string;
+  planUnavailableReason?: string;
+  testIdPrefix?: string;
+  onPlan?: () => void;
+  planActive: boolean;
+  /** Start a new side chat (a fork of this conversation opened as a rail tab).
+   *  Absent when the session can't host one. */
+  onSideChat?: () => void;
+  /** Open the "Run a workflow" dialog, once the menu has closed, with an optional
+   *  description to start from. Absent when the agent has no `workflow` skill. */
+  onWorkflow?: (description?: string) => void;
+  /** The user's saved workflows; when there are some, Run a workflow lists them. */
+  savedWorkflows?: readonly SavedWorkflow[];
+  workflowPagination?: WorkflowPagination;
+  /** Open the dialog that runs a saved workflow, once the menu has closed. */
+  onRunSavedWorkflow?: (workflow: SavedWorkflow) => void;
+  /** Called as the menu opens, e.g. to refresh the saved workflows. */
+  onOpen?: () => void;
+  projects?: readonly { name: string }[];
+  onProjectSelect?: (name: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [showProjects, setShowProjects] = useState(false);
+  const [showWorkflows, setShowWorkflows] = useState(false);
+  // A list whose loaded pages show nothing yet can still have more to load.
+  const listsSavedWorkflows =
+    (savedWorkflows.length > 0 || workflowPagination?.hasMore === true) &&
+    onRunSavedWorkflow !== undefined;
+  const pendingActionRef = useRef<(() => void) | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [geometry, setGeometry] = useState<{
+    width?: number;
+    alignOffset: number;
+    sideOffset: number;
+  }>({ width: 456, alignOffset: 0, sideOffset: 6 });
+  const measure = useCallback(() => {
+    const trigger = triggerRef.current;
+    const composer = trigger?.closest<HTMLElement>("[data-composer-card]");
+    if (!trigger || !composer) return;
+    // A panel's card is its whole window, so the menu opens from the trigger at its own width.
+    if (composer.dataset.composerAppearance === "panel") {
+      setGeometry({ alignOffset: 0, sideOffset: 6 });
+      return;
+    }
+    const triggerRect = trigger.getBoundingClientRect();
+    const composerRect = composer.getBoundingClientRect();
+    setGeometry({
+      width: composerRect.width,
+      alignOffset: composerRect.left - triggerRect.left,
+      sideOffset: triggerRect.top - composerRect.top + 6,
+    });
+  }, []);
+  useEffect(() => {
+    if (!open) return;
+    const composer = triggerRef.current?.closest("[data-composer-card]");
+    if (!composer) return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(composer);
+    window.addEventListener("resize", measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [open, measure]);
+
+  return (
+    <DropdownMenu
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (nextOpen) {
+          measure();
+          onOpen?.();
+        } else {
+          setShowProjects(false);
+          setShowWorkflows(false);
+        }
+        setOpen(nextOpen);
+      }}
+    >
+      <DropdownMenuTrigger asChild>
+        <Button
+          ref={triggerRef}
+          type="button"
+          size="icon"
+          variant="ghost"
+          className="size-8 mobile-touch-target rounded-lg data-[state=open]:bg-muted data-[state=open]:text-foreground md:size-7"
+          disabled={disabled}
+          aria-label="Add"
+          data-composer-action="add"
+          title="Add"
+          data-testid={`${testIdPrefix}-attach`}
+          componentId={`${testIdPrefix}.add_menu`}
+        >
+          <PlusIcon
+            className="size-4"
+            data-icon-size="16"
+            data-testid={`${testIdPrefix}-attach-icon`}
+          />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        onCloseAutoFocus={() => {
+          const action = pendingActionRef.current;
+          pendingActionRef.current = null;
+          if (action !== null) {
+            requestAnimationFrame(action);
+          }
+        }}
+        side="top"
+        align="start"
+        alignOffset={geometry.alignOffset}
+        sideOffset={geometry.sideOffset}
+        collisionPadding={12}
+        aria-label="Add"
+        className="composer-add-menu max-w-[calc(100vw-24px)] rounded-[16px] max-md:p-1.5"
+        style={{ width: geometry.width }}
+        data-testid={`${testIdPrefix}-add-menu`}
+      >
+        {showProjects ? (
+          <div className="flex flex-col gap-0.5">
+            <div className="px-2 py-1 text-xs leading-4 text-muted-foreground">
+              Choose a project
+            </div>
+            {projects.length === 0 && (
+              <DropdownMenuItem className="mobile-touch-target" disabled>
+                No projects yet
+              </DropdownMenuItem>
+            )}
+            {projects.map((project) => (
+              <DropdownMenuItem
+                className="mobile-touch-target"
+                key={project.name}
+                onSelect={() => onProjectSelect?.(project.name)}
+              >
+                <span className="flex size-4 shrink-0 items-center justify-center">
+                  <FolderIcon className="size-3.5" />
+                </span>
+                <span className="min-w-0 truncate">{project.name}</span>
+              </DropdownMenuItem>
+            ))}
+          </div>
+        ) : showWorkflows ? (
+          <WorkflowPicker
+            workflows={savedWorkflows}
+            pagination={workflowPagination}
+            onSelect={(workflow) => {
+              pendingActionRef.current = () => onRunSavedWorkflow?.(workflow);
+            }}
+            onDescribe={(description) => {
+              pendingActionRef.current = () => onWorkflow?.(description);
+            }}
+          />
+        ) : (
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-0.5">
+              <div className="px-2 py-1 text-xs leading-4 text-muted-foreground">Add</div>
+              <DropdownMenuItem
+                className="mobile-touch-target"
+                onSelect={onAttach}
+                disabled={attachDisabled}
+              >
+                <span className="flex size-4 shrink-0 items-center justify-center">
+                  <PaperclipIcon className="size-3.5" />
+                </span>
+                <span>Files and images</span>
+              </DropdownMenuItem>
+            </div>
+            {(showGoal || showPlan || onProjectSelect || onSideChat || onWorkflow) && (
+              <div className="flex flex-col gap-0.5">
+                <div className="px-2 py-1 text-xs leading-4 text-muted-foreground">Session</div>
+                <div className="flex flex-col gap-px">
+                  {onSideChat && (
+                    <DropdownMenuItem
+                      className="mobile-touch-target"
+                      data-testid="composer-side-chat-action"
+                      onSelect={() => {
+                        pendingActionRef.current = onSideChat;
+                      }}
+                    >
+                      <span className="flex size-4 shrink-0 items-center justify-center">
+                        <MessagesSquareIcon className="size-3.5" />
+                      </span>
+                      <ActionText
+                        label="Start a new side chat"
+                        description="Ask without affecting this conversation"
+                      />
+                    </DropdownMenuItem>
+                  )}
+                  {onWorkflow && (
+                    <DropdownMenuItem
+                      className="mobile-touch-target"
+                      data-testid="composer-workflow-action"
+                      onSelect={(event) => {
+                        if (listsSavedWorkflows) {
+                          event.preventDefault();
+                          setShowWorkflows(true);
+                          return;
+                        }
+                        pendingActionRef.current = () => onWorkflow();
+                      }}
+                    >
+                      <span className="flex size-4 shrink-0 items-center justify-center">
+                        <WorkflowIcon className="size-3.5" />
+                      </span>
+                      <ActionText
+                        label="Run a workflow"
+                        description={
+                          listsSavedWorkflows
+                            ? "Run a saved one, or describe a new one"
+                            : "Describe it, and the agent plans and runs it"
+                        }
+                      />
+                    </DropdownMenuItem>
+                  )}
+                  {showGoal && (
+                    <DropdownMenuItem
+                      className="mobile-touch-target"
+                      disabled={!onGoal || goalDisabled}
+                      title={!onGoal ? goalDescription : undefined}
+                      data-testid="composer-goal-action"
+                      data-active={goalActive || undefined}
+                      onSelect={() => {
+                        pendingActionRef.current = onGoal ?? null;
+                      }}
+                    >
+                      <span className="flex size-4 shrink-0 items-center justify-center">
+                        <TargetIcon className="size-3.5" />
+                      </span>
+                      <ActionText label="Goal" description={goalDescription} />
+                    </DropdownMenuItem>
+                  )}
+                  {showPlan && (
+                    <DropdownMenuItem
+                      className="mobile-touch-target"
+                      data-testid="composer-plan-action"
+                      data-active={planActive || undefined}
+                      aria-label={planLabel}
+                      disabled={!onPlan || planDisabled}
+                      onSelect={onPlan}
+                      title={onPlan ? undefined : planUnavailableReason}
+                    >
+                      <span className="flex size-4 shrink-0 items-center justify-center">
+                        <LightbulbIcon className="size-3.5" />
+                      </span>
+                      <ActionText
+                        label="Plan"
+                        description={planActive ? "Plan mode is on" : "Turn plan mode on"}
+                      />
+                    </DropdownMenuItem>
+                  )}
+                  {onProjectSelect && (
+                    <DropdownMenuItem
+                      className="mobile-touch-target"
+                      onSelect={(event) => {
+                        event.preventDefault();
+                        setShowProjects(true);
+                      }}
+                    >
+                      <span className="flex size-4 shrink-0 items-center justify-center">
+                        <FolderIcon className="size-3.5" />
+                      </span>
+                      <ActionText
+                        label="Work in a project"
+                        description="Choose a project for this session"
+                      />
+                    </DropdownMenuItem>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}

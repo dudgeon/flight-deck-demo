@@ -1,0 +1,215 @@
+// Find-in-file bar for the rendered markdown / notebook preview.
+//
+// The preview is React-owned DOM, so matches are painted with the CSS Custom
+// Highlight API (see previewSearch.ts) rather than by wrapping nodes. This bar
+// owns the query + current match, recomputes ranges when the query or rendered
+// content changes, and scrolls the active match into view. Its UI matches the
+// source-view and editor find bars.
+
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { ChevronDownIcon, ChevronUpIcon, SearchIcon, XIcon } from "lucide-react";
+import type { ReactElement, RefObject } from "react";
+import { isImeCompositionKeyEvent } from "@/lib/ime";
+import { clearPreviewHighlights, findTextRanges, paintPreviewHighlights } from "./previewSearch";
+
+interface PreviewSearchBarProps {
+  /** The rendered-preview container whose text is searched + highlighted. */
+  containerRef: RefObject<HTMLElement | null>;
+  /** Bumped by the caller whenever the rendered content changes, so ranges recompute. */
+  contentVersion: unknown;
+  open: boolean;
+  /** Called when the bar closes (Escape / ✕) so the toolbar toggle stays in sync. */
+  onClose: () => void;
+  inputRef: RefObject<HTMLInputElement | null>;
+}
+
+/**
+ * Where a match can be seen: its own rect, clipped sideways to the nearest
+ * ancestor that hides overflow, such as a truncated table cell. A match in a
+ * cell's hidden tail then reveals the cell rather than empty space past it.
+ */
+function visibleMatchRect(
+  range: Range,
+  scroller: Element,
+): Pick<DOMRect, "top" | "bottom" | "left" | "right" | "width" | "height"> {
+  const rect = range.getBoundingClientRect();
+  for (
+    let element = range.startContainer.parentElement;
+    element && element !== scroller;
+    element = element.parentElement
+  ) {
+    const style = getComputedStyle(element);
+    // The shorthand's first value is the horizontal one.
+    const shorthandX = style.overflow.split(" ")[0] || "visible";
+    if (style.overflowX === "visible" && shorthandX === "visible") continue;
+    const clip = element.getBoundingClientRect();
+    const left = Math.min(Math.max(rect.left, clip.left), clip.right);
+    const right = Math.max(Math.min(rect.right, clip.right), clip.left);
+    return {
+      top: rect.top,
+      bottom: rect.bottom,
+      height: rect.height,
+      left,
+      right,
+      width: right - left,
+    };
+  }
+  return rect;
+}
+
+export function PreviewSearchBar({
+  containerRef,
+  contentVersion,
+  open,
+  onClose,
+  inputRef,
+}: PreviewSearchBarProps): ReactElement | null {
+  const [query, setQuery] = useState("");
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [ranges, setRanges] = useState<Range[]>([]);
+
+  // Recompute match ranges when the query, the open state, or the rendered
+  // content changes. Ranges are DOM Ranges into the live preview nodes, so this
+  // runs in useLayoutEffect (post-commit) rather than during render: on a
+  // content change the new react-markdown/notebook DOM must be committed first,
+  // otherwise the walker would build Ranges into nodes about to be replaced.
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (!open || !container || !query.trim()) {
+      setRanges([]);
+      return;
+    }
+    setRanges(findTextRanges(container, query.trim()));
+    // contentVersion forces a rebuild after the preview re-renders.
+  }, [containerRef, open, query, contentVersion]);
+
+  const matchCount = ranges.length;
+  const safeIndex = matchCount > 0 ? currentIndex % matchCount : 0;
+
+  // Reset to the first match on every new query.
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [query]);
+
+  // Clear the query when the bar closes so a reopen starts fresh.
+  useEffect(() => {
+    if (!open) setQuery("");
+  }, [open]);
+
+  // Paint the highlights and keep them cleared when the bar is closed or empty.
+  useEffect(() => {
+    if (!open || matchCount === 0) {
+      clearPreviewHighlights();
+      return;
+    }
+    paintPreviewHighlights(ranges, safeIndex);
+    return () => clearPreviewHighlights();
+  }, [open, ranges, safeIndex, matchCount]);
+
+  // Scroll the active match into view. Ranges have no scrollIntoView, so use the
+  // client rect of the current range.
+  useEffect(() => {
+    if (!open || matchCount === 0) return;
+    const range = ranges[safeIndex];
+    const container = containerRef.current;
+    const scroller = container?.closest("[data-preview-scroll]") ?? container;
+    if (!range || !scroller) return;
+    const rect = visibleMatchRect(range, scroller);
+    if (rect.width === 0 && rect.height === 0) return;
+    const box = scroller.getBoundingClientRect();
+    // A sticky header (a data table's column names) covers the top of the scroller,
+    // so a match under it isn't shown; a match in the header itself is.
+    const sticky = scroller.querySelector("[data-preview-sticky]");
+    const belowHeader =
+      sticky && !sticky.contains(range.startContainer)
+        ? Math.max(box.top, sticky.getBoundingClientRect().bottom)
+        : box.top;
+    // A header taller than what's left of the scroller can't be scrolled past.
+    const top = box.bottom - belowHeader >= rect.height ? belowHeader : box.top;
+    // A wide table also scrolls sideways; center the match on each axis it is off.
+    const shownVertically = rect.top >= top && rect.bottom <= box.bottom;
+    const shownHorizontally = rect.left >= box.left && rect.right <= box.right;
+    if (shownVertically && shownHorizontally) return;
+    scroller.scrollBy({
+      top: shownVertically ? 0 : rect.top - top - (box.bottom - top) / 2 + rect.height / 2,
+      left: shownHorizontally ? 0 : rect.left - box.left - box.width / 2 + rect.width / 2,
+      behavior: "smooth",
+    });
+  }, [open, ranges, safeIndex, matchCount, containerRef]);
+
+  // Focus the input when the bar opens.
+  useEffect(() => {
+    if (!open) return undefined;
+    const id = setTimeout(() => inputRef.current?.focus(), 0);
+    return () => clearTimeout(id);
+  }, [open, inputRef]);
+
+  const goNext = useCallback(() => {
+    setCurrentIndex((i) => (matchCount > 0 ? (i + 1) % matchCount : 0));
+  }, [matchCount]);
+  const goPrev = useCallback(() => {
+    setCurrentIndex((i) => (matchCount > 0 ? (i - 1 + matchCount) % matchCount : 0));
+  }, [matchCount]);
+
+  const close = useCallback(() => {
+    setQuery("");
+    onClose();
+  }, [onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-card/90 px-3 py-1.5 backdrop-blur">
+      <SearchIcon className="size-3.5 shrink-0 text-muted-foreground" />
+      <input
+        ref={inputRef}
+        type="text"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        onKeyDown={(e) => {
+          // IME composition keys (CJK input) confirm text, not find.
+          if (isImeCompositionKeyEvent(e)) return;
+          if (e.key === "Enter") {
+            e.preventDefault();
+            if (e.shiftKey) goPrev();
+            else goNext();
+          } else if (e.key === "Escape") {
+            e.preventDefault();
+            close();
+          }
+        }}
+        placeholder="Find…"
+        className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+      />
+      <span className="shrink-0 text-sm text-muted-foreground">
+        {query.trim() ? (matchCount > 0 ? `${safeIndex + 1} / ${matchCount}` : "No results") : ""}
+      </span>
+      <button
+        type="button"
+        aria-label="Previous match"
+        className="rounded p-0.5 text-muted-foreground hover:bg-muted disabled:opacity-40"
+        disabled={matchCount === 0}
+        onClick={goPrev}
+      >
+        <ChevronUpIcon className="size-3.5" />
+      </button>
+      <button
+        type="button"
+        aria-label="Next match"
+        className="rounded p-0.5 text-muted-foreground hover:bg-muted disabled:opacity-40"
+        disabled={matchCount === 0}
+        onClick={goNext}
+      >
+        <ChevronDownIcon className="size-3.5" />
+      </button>
+      <button
+        type="button"
+        aria-label="Close search"
+        className="rounded p-0.5 text-muted-foreground hover:bg-muted"
+        onClick={close}
+      >
+        <XIcon className="size-3.5" />
+      </button>
+    </div>
+  );
+}

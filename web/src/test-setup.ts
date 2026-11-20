@@ -1,0 +1,145 @@
+import "@testing-library/jest-dom/vitest";
+import { configure } from "@testing-library/react";
+import type * as ReactVirtualModule from "@tanstack/react-virtual";
+import { vi } from "vitest";
+
+// Tooltip surfaces intentionally wait 1s; leave enough margin for async queries
+// to observe them without racing Testing Library's matching default timeout.
+configure({ asyncUtilTimeout: 2000 });
+
+// The @lobehub icon packages have broken nested-module resolution
+// under vitest; stub presentational glyphs so component modules that
+// import them can still load in tests. (The Antigravity glyph additionally
+// drags in @lobehub/fluent-emoji → @emoji-mart/data, whose JSON modules need
+// an import attribute Node refuses under vitest — so it must be stubbed too.)
+vi.mock("@/components/icons/ClaudeIcon", () => ({
+  ClaudeIcon: () => null,
+}));
+vi.mock("@/components/icons/CodexIcon", () => ({
+  CodexIcon: () => null,
+}));
+vi.mock("@/components/icons/OpenCodeIcon", () => ({
+  OpenCodeIcon: () => null,
+}));
+vi.mock("@/components/icons/CursorIcon", () => ({
+  CursorIcon: () => null,
+}));
+vi.mock("@/components/icons/GooseIcon", () => ({
+  GooseIcon: () => null,
+}));
+vi.mock("@/components/icons/KiroIcon", () => ({
+  KiroIcon: () => null,
+}));
+vi.mock("@/components/icons/AntigravityIcon", () => ({
+  AntigravityIcon: () => null,
+}));
+
+// Radix UI primitives (DropdownMenu, etc.) call these pointer-capture and
+// scroll APIs that jsdom doesn't implement. Stub them so component tests
+// that open a Radix menu don't throw. No-ops are sufficient — the tests
+// assert on the resulting DOM, not on capture/scroll side effects.
+if (!Element.prototype.hasPointerCapture) {
+  Element.prototype.hasPointerCapture = () => false;
+}
+if (!Element.prototype.setPointerCapture) {
+  Element.prototype.setPointerCapture = () => {};
+}
+if (!Element.prototype.releasePointerCapture) {
+  Element.prototype.releasePointerCapture = () => {};
+}
+if (!Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = () => {};
+}
+
+// jsdom has no layout. CodeMirror measures its text through Range.getClientRects, so an
+// empty list lets it measure without a rect. Tests that need a rect stub it themselves.
+if (typeof Range.prototype.getClientRects !== "function") {
+  Range.prototype.getClientRects = () => [] as unknown as DOMRectList;
+}
+
+// jsdom doesn't implement IntersectionObserver (used by the sidebar's
+// infinite-scroll sentinel). A no-op stub is enough — tests that need to drive
+// auto-loading can override the global with their own controllable mock.
+if (!("IntersectionObserver" in globalThis)) {
+  class MockIntersectionObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+    takeRecords() {
+      return [];
+    }
+    root = null;
+    rootMargin = "";
+    thresholds = [];
+  }
+  Object.defineProperty(globalThis, "IntersectionObserver", {
+    writable: true,
+    configurable: true,
+    value: MockIntersectionObserver,
+  });
+}
+
+// cmdk (the command-palette primitive) constructs a ResizeObserver on mount,
+// which jsdom doesn't implement. A no-op stub lets command-palette/selector
+// component tests render without throwing.
+if (typeof globalThis.ResizeObserver === "undefined") {
+  globalThis.ResizeObserver = class {
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+  };
+}
+
+// jsdom does no layout, so the real virtualizer renders no rows. This pass-through
+// renders every item and exposes the superset of handles its consumers read.
+// Tests of the windowing itself `vi.unmock` it and stub element sizes.
+const ROW = 200;
+vi.mock("@tanstack/react-virtual", async (importOriginal) => ({
+  measureElement: (await importOriginal<typeof ReactVirtualModule>()).measureElement,
+  useVirtualizer: vi.fn(
+    ({ count, getItemKey }: { count: number; getItemKey?: (i: number) => unknown }) => {
+      const items = Array.from({ length: count }, (_, index) => ({
+        index,
+        key: getItemKey ? getItemKey(index) : index,
+        start: index * ROW,
+        size: ROW,
+        end: (index + 1) * ROW,
+        lane: 0,
+      }));
+      return {
+        getVirtualItems: () => items,
+        getTotalSize: () => count * ROW,
+        measure: () => {},
+        measureElement: () => {},
+        scrollToIndex: () => {},
+        getVirtualItemForOffset: (offset: number) =>
+          items[Math.max(0, Math.min(Math.floor(offset / ROW), count - 1))],
+        getOffsetForIndex: (index: number) => [index * ROW, "start"] as const,
+        takeSnapshot: () => items,
+        scrollOffset: 0,
+        scrollAdjustments: 0,
+        scrollDirection: null,
+        range: count > 0 ? { startIndex: 0, endIndex: count - 1 } : null,
+        // The transcript's prepend hold measures fresh rows itself and reads the
+        // raw measurements back; sizes never change under jsdom.
+        measurementsCache: items,
+        itemSizeCache: new Map(),
+        resizeItem: () => {},
+      };
+    },
+  ),
+}));
+
+Object.defineProperty(window, "matchMedia", {
+  writable: true,
+  value: (query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  }),
+});

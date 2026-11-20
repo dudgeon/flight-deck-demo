@@ -1,0 +1,295 @@
+import { AlertTriangleIcon, Loader2Icon, WifiOffIcon, XIcon } from "lucide-react";
+import { ConversationEmptyState } from "@/components/ai-elements/conversation";
+import { Message, MessageContent } from "@/components/ai-elements/message";
+import { ErrorBanner } from "@/components/blocks/StatusBlocks";
+import { useConversationEntryValue } from "@/hooks/useConversationEntryState";
+import type { SessionLiveness } from "@/hooks/useSessionLiveness";
+import { SANDBOX_STAGE_LABELS } from "@/lib/sandboxStatus";
+import type { SandboxStatus } from "@/lib/types";
+import { cn } from "@/lib/utils";
+import { useTerminalFirst } from "@/shell/TerminalFirstContext";
+import { type ConversationState, useChatStore } from "@/store/chatStore";
+import { conversationRegistry } from "@/store/conversationRegistry";
+import { CHAT_COLUMN_WIDTH } from "./chatLayout";
+
+/** What a launch in `action_required` asks the user to do, or null. */
+function launchActionDetails(state: Pick<ConversationState, "sandboxStatus">): string | null {
+  return state.sandboxStatus?.stage === "action_required" && state.sandboxStatus.details
+    ? state.sandboxStatus.details
+    : null;
+}
+
+/**
+ * Shows what a launch in `action_required` needs the user to do. Only a
+ * warning: the launch keeps going, and the banner leaves when it moves on.
+ */
+export function SandboxActionBanner({
+  conversationId,
+  className,
+}: {
+  /** A pane showing another session names it; defaults to the open session. */
+  conversationId?: string;
+  className?: string;
+}) {
+  const openSessionAsking = useChatStore(launchActionDetails);
+  const openSessionDismissed = useChatStore((s) => s.sandboxActionDismissed);
+  const dismissOpenSession = useChatStore((s) => s.dismissSandboxAction);
+  const paneId = conversationId ?? null;
+  const paneAsking = useConversationEntryValue(paneId, launchActionDetails);
+  const paneDismissed = useConversationEntryValue(paneId, (s) => s.sandboxActionDismissed);
+  const asking = paneId === null ? openSessionAsking : paneAsking;
+  const dismissed = paneId === null ? openSessionDismissed : paneDismissed;
+  const dismiss = (details: string) => {
+    if (paneId === null) dismissOpenSession(details);
+    else conversationRegistry.peek(paneId)?.setState({ sandboxActionDismissed: details });
+  };
+  if (asking === null || dismissed === asking) return null;
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className={cn(
+        "pointer-events-auto flex max-w-2xl items-center gap-2.5 rounded-xl",
+        "px-3.5 py-2 text-ui shadow-lg",
+        "border border-amber-300 bg-amber-100 text-amber-900",
+        "dark:border-amber-700/60 dark:bg-amber-950 dark:text-amber-100",
+        "animate-in fade-in-0 slide-in-from-top-1 duration-200",
+        className,
+      )}
+    >
+      <AlertTriangleIcon className="size-4 shrink-0" aria-hidden="true" />
+      <p className="min-w-0 flex-1 whitespace-pre-wrap break-words">{asking}</p>
+      <button
+        type="button"
+        onClick={() => dismiss(asking)}
+        aria-label="Dismiss"
+        className={cn(
+          "-mr-1 shrink-0 rounded p-0.5 text-amber-900/60",
+          "hover:bg-amber-200 hover:text-amber-900",
+          "dark:text-amber-100/60 dark:hover:bg-amber-900 dark:hover:text-amber-100",
+        )}
+      >
+        <XIcon className="size-4" aria-hidden="true" />
+      </button>
+    </div>
+  );
+}
+
+/** The recorded launch failure, shared by the chat and terminal surfaces. */
+export function SandboxFailedIndicator({ status }: { status: SandboxStatus }) {
+  return (
+    <div
+      data-testid="sandbox-failed-indicator"
+      role="status"
+      className={cn("mx-auto w-full", CHAT_COLUMN_WIDTH)}
+    >
+      <ErrorBanner message={status.error ?? ""} source="" code="" title="Sandbox launch failed" />
+    </div>
+  );
+}
+
+export function ConnectionIndicator({
+  liveness,
+  onShowReconnectHelp,
+}: {
+  liveness: SessionLiveness;
+  onShowReconnectHelp: () => void;
+}) {
+  const terminalFirst = useTerminalFirst();
+  const sandboxStatus = useChatStore((s) => s.sandboxStatus);
+  // Genuinely-unreachable states get the reconnect banner, for
+  // both terminal-first and regular sessions. `runner_asleep` (host up,
+  // runner relaunches on the next message), `host_asleep` (resumable managed
+  // host the server wakes on the next message), and `unknown` (pre-poll) are
+  // NOT unreachable — they're handled below.
+  const unreachable = liveness.kind === "host_offline" || liveness.kind === "local_stranded";
+
+  if (sandboxStatus !== null) {
+    // Chat renders all launch states in the transcript. The terminal surface
+    // has no transcript, so its connection band still carries launch failures.
+    if (
+      sandboxStatus.stage === "failed" &&
+      terminalFirst?.isTerminalFirst &&
+      terminalFirst.view === "terminal"
+    ) {
+      return <SandboxFailedIndicator status={sandboxStatus} />;
+    }
+    return null;
+  }
+  if (unreachable) {
+    // A host-bound session carries the reconnect affordance in the composer's
+    // host badge (ComposerStatusLine), which names the host that dropped — so
+    // render nothing here whenever that composer is on screen (sub-agent
+    // sessions included; their badge carries it just like a normal session's).
+    // The composer is hidden only in the terminal-first *terminal* view (the
+    // PTY owns the surface); there the banner still carries the affordance.
+    // `local_stranded` keeps the banner everywhere (no host, hence no badge).
+    const composerOnScreen = !(terminalFirst?.isTerminalFirst && terminalFirst.view === "terminal");
+    if (liveness.kind === "host_offline" && composerOnScreen) {
+      return null;
+    }
+    return (
+      <div className={cn("mx-auto mb-4 flex w-full justify-center px-6", CHAT_COLUMN_WIDTH)}>
+        {/* Reconnect affordance styled as the destructive error pill (never
+              raw red text). Keeps its own click → reconnect dialog rather than
+              the ErrorBanner's async Retry, since some states need the picker. */}
+        <button
+          type="button"
+          data-testid="disconnected-indicator"
+          onClick={onShowReconnectHelp}
+          className="flex items-center gap-2 rounded-[12px] px-4 py-2 text-sm text-destructive transition-[filter] hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+          style={{
+            background:
+              "color-mix(in srgb, var(--destructive) 4%, var(--app-shell-bg, var(--background)))",
+            border: "1px solid color-mix(in srgb, var(--destructive) 32%, transparent)",
+          }}
+        >
+          <WifiOffIcon className="size-3.5 shrink-0" />
+          <span>
+            {liveness.kind === "host_offline"
+              ? "Host is offline — click to reconnect"
+              : "Agent disconnected — click to reconnect"}
+          </span>
+        </button>
+      </div>
+    );
+  }
+
+  // Terminal-first sessions: the Chat/Terminal switcher lives in the header
+  // (ViewModeToggle) on every shell, iOS included — this band renders
+  // nothing for them outside the unreachable states above.
+  if (terminalFirst?.isTerminalFirst) {
+    return null;
+  }
+
+  // A regular (non-terminal-first) session whose runner is still spinning
+  // up shows a passive "Connecting…" row — no action, no banner, just a
+  // heartbeat so the empty chat doesn't read as broken.
+  if (liveness.kind === "starting") {
+    return (
+      <div
+        data-testid="connecting-indicator"
+        className={cn(
+          "mx-auto mb-4 flex w-full items-center justify-center gap-2 px-6 py-1.5 text-muted-foreground text-sm",
+          CHAT_COLUMN_WIDTH,
+        )}
+      >
+        <Loader2Icon className="size-3.5 shrink-0 animate-spin" aria-hidden />
+        <span>Connecting…</span>
+      </div>
+    );
+  }
+
+  // `online`/`unknown` for a non-terminal-first session and
+  // `runner_asleep`/`host_asleep` for any session: status lives in the
+  // sidebar / the composer stays open, so render nothing here.
+  return null;
+}
+
+/**
+ * Main-pane managed-sandbox launch indicator. Shows the current pipeline
+ * stage or recorded failure for any session type. Ordinary terminal startup
+ * uses the standard Working indicator.
+ *
+ * Renders nothing without a launch status. `hero` is the centered
+ * empty-state placeholder (no bubbles yet); `row` is the in-thread
+ * spinner beneath the user's first message (the create-then-send path
+ * renders that bubble immediately, so the empty state never shows
+ * there).
+ */
+export function RunnerStartingIndicator({
+  variant,
+  status,
+}: {
+  variant: "hero" | "row";
+  /** A pane showing another session passes that session's launch; defaults to the open session's. */
+  status?: SandboxStatus | null;
+}) {
+  const openSessionStatus = useChatStore((s) => s.sandboxStatus);
+  const sandboxStatus = status === undefined ? openSessionStatus : status;
+  if (sandboxStatus?.stage === "failed") {
+    return <SandboxFailedIndicator status={sandboxStatus} />;
+  }
+  // `ready` clears the store; only in-flight stages have progress copy.
+  const sandboxLabel =
+    sandboxStatus !== null ? SANDBOX_STAGE_LABELS[sandboxStatus.stage] : undefined;
+  if (sandboxLabel === undefined) return null;
+  const line = `${sandboxLabel}…`;
+  // role=status + aria-live so assistive tech announces the transient wait;
+  // the spinner glyph itself is decorative (aria-hidden).
+  if (variant === "hero") {
+    return (
+      <ConversationEmptyState
+        data-testid="runner-starting-indicator"
+        role="status"
+        aria-live="polite"
+        icon={<Loader2Icon className="size-7 animate-spin" aria-hidden />}
+        title={line}
+        description="Setting up your sandbox — this can take a minute."
+      />
+    );
+  }
+  return (
+    <Message
+      from="assistant"
+      data-testid="runner-starting-indicator"
+      role="status"
+      aria-live="polite"
+    >
+      <MessageContent>
+        <span className="flex items-center gap-2 text-muted-foreground text-ui">
+          <Loader2Icon className="size-4 shrink-0 animate-spin" aria-hidden />
+          {line}
+        </span>
+      </MessageContent>
+    </Message>
+  );
+}
+
+// How many still-starting server names the startup band spells out
+// before collapsing the rest into "…" — mirrors the Codex TUI's own
+// startup header, and keeps a 20-server config to one line.
+const MCP_STARTING_NAMES_SHOWN = 3;
+
+/**
+ * The startup band's in-flight line, mirroring the Codex TUI's header.
+ *
+ * @param starting Still-starting server names, sorted.
+ * @param total Total servers in the round.
+ * @returns e.g. `"Starting MCP servers (1/20): glean, jira, safe, …"`.
+ */
+export function mcpStartingLine(starting: string[], total: number): string {
+  if (total === 1 && starting.length === 1) {
+    return `Starting MCP server: ${starting[0]}…`;
+  }
+  const shown = starting.slice(0, MCP_STARTING_NAMES_SHOWN);
+  if (starting.length > MCP_STARTING_NAMES_SHOWN) shown.push("…");
+  return `Starting MCP servers (${total - starting.length}/${total}): ${shown.join(", ")}`;
+}
+
+/**
+ * Per-MCP-server startup band for native harness sessions (codex-native).
+ * Codex defers a mid-startup turn's execution until its MCP servers
+ * settle, and the session previously showed nothing during that window.
+ * Renders a spinner naming the still-starting servers; once the round
+ * settles the band disappears entirely. Failures and cancellations are
+ * setup diagnostics, not conversation content — they stay in host logs
+ * rather than adding an item to the chat viewport.
+ */
+export function McpStartupIndicator() {
+  const mcpStartup = useChatStore((s) => s.mcpStartup);
+  if (mcpStartup === null) return null;
+  const names = Object.keys(mcpStartup).sort();
+  const starting = names.filter((name) => mcpStartup[name].status === "starting");
+  if (starting.length === 0) return null;
+  return (
+    <Message from="assistant" data-testid="mcp-startup-indicator" role="status" aria-live="polite">
+      <MessageContent>
+        <span className="flex items-center gap-2 text-muted-foreground text-ui">
+          <Loader2Icon className="size-4 shrink-0 animate-spin" aria-hidden />
+          {mcpStartingLine(starting, names.length)}
+        </span>
+      </MessageContent>
+    </Message>
+  );
+}

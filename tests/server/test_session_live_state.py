@@ -1,0 +1,751 @@
+"""Tests for the session live-state persistence chokepoint.
+
+Covers ``omnigent.server.session_live_state``: writes are deduplicated,
+ordered, and best-effort, and the pending-elicitations index drives the
+persisted count through its hook. These writes are what let a replica
+that does NOT hold a session's runner tunnel serve the sidebar's live
+fields, so the contract under test is "every real transition reaches the
+store exactly once".
+
+Writes land on a background single-worker executor, so each test waits
+on the observable effect (the recording store's captured writes) with a
+short polling deadline — the same shape as the host-tunnel route tests'
+``_wait_*`` helpers — rather than reaching into the module's executor.
+"""
+
+from __future__ import annotations
+
+import threading
+import time
+from pathlib import Path
+from types import SimpleNamespace
+from uuid import uuid4
+
+import pytest
+
+from omnigent.entities import FunctionCallData, MessageData, NewConversationItem, ResourceEventData
+from omnigent.runtime import pending_elicitations
+from omnigent.server import session_live_state
+from omnigent.stores.conversation_store import (
+    SCHEDULED_TASK_ACTIVITY_LABEL_KEY,
+    SCHEDULED_TASK_INITIAL_RUN_LABEL_KEY,
+    SCHEDULED_TASK_RUN_LABEL_KEY,
+)
+from omnigent.stores.conversation_store.sqlalchemy_store import SqlAlchemyConversationStore
+
+
+def _wait_until(predicate, *, timeout_s: float = 10.0) -> None:
+    """Poll until *predicate* holds or the deadline elapses.
+
+    The live-state writes are applied on a background executor thread, so
+    a test asserting on their effect must wait for that thread rather than
+    read synchronously. Returning on timeout (instead of raising) lets the
+    caller's own assertion produce the informative failure — including the
+    "should NOT have happened" cases where the predicate never becomes
+    true by design.
+
+    A passing predicate returns immediately, so the ceiling is only hit on
+    a genuine failure; it's set generously (not ~2s) so a loaded CI runner
+    doesn't spuriously time out before the background worker drains.
+
+    :param predicate: Zero-arg callable returning truthy when done.
+    :param timeout_s: Max seconds to poll before giving up.
+    """
+    deadline = time.monotonic() + timeout_s
+    while time.monotonic() < deadline:
+        if predicate():
+            return
+        time.sleep(0.005)
+
+
+class _RecordingStore:
+    """Conversation-store stand-in that records live-state writes."""
+
+    def __init__(self) -> None:
+        self.status_writes: list[tuple[str, str]] = []
+        self.pending_writes: list[tuple[str, int]] = []
+        self.background_writes: list[tuple[str, bool]] = []
+        self.blocked_writes: list[tuple[str, str | None]] = []
+        self.touches: list[list[str]] = []
+        self.clears: list[tuple[str, int | None]] = []
+        self.labels: dict[str, dict[str, str]] = {}
+
+    def get_conversation(self, conversation_id: str) -> SimpleNamespace:
+        return SimpleNamespace(labels=self.labels.get(conversation_id, {}))
+
+    def set_session_live_status(self, conversation_id: str, status: str) -> None:
+        self.status_writes.append((conversation_id, status))
+
+    def set_pending_elicitation_count(self, conversation_id: str, count: int) -> None:
+        self.pending_writes.append((conversation_id, count))
+
+    def set_background_work_running(
+        self,
+        conversation_id: str,
+        running: bool,
+        *,
+        runner_id: str | None = None,
+        unseen_since: int | None = None,
+        reported_at: int | None = None,
+    ) -> None:
+        guard = () if runner_id is None else (runner_id, unseen_since)
+        stamp = () if reported_at is None else (reported_at,)
+        self.background_writes.append((conversation_id, running, *guard, *stamp))
+
+    def set_blocked_on(self, conversation_id: str, blocked_on: str | None) -> None:
+        self.blocked_writes.append((conversation_id, blocked_on))
+
+    def touch_runner_liveness(self, runner_ids: list[str], now: int) -> None:
+        del now
+        self.touches.append(runner_ids)
+
+    def clear_runner_liveness(self, runner_id: str, not_after: int | None = None) -> None:
+        self.clears.append((runner_id, not_after))
+
+
+@pytest.fixture()
+def recording_store() -> _RecordingStore:
+    """Wire a recording store into the module; unwire on teardown."""
+    store = _RecordingStore()
+    session_live_state.configure(store)  # type: ignore[arg-type]
+    yield store
+    session_live_state.configure(None)
+    pending_elicitations.set_count_persist_hook(None)
+
+
+def test_persist_live_status_dedupes_transitions(recording_store: _RecordingStore) -> None:
+    """Only actual transitions reach the store; re-publishes are dropped.
+
+    The SSE relay republishes statuses freely (e.g. a PTY watcher's
+    repeated ``idle``); without dedupe every list tick would turn into
+    row churn on the conversations table.
+    """
+    session_live_state.persist_live_status("conv_1", "running")
+    session_live_state.persist_live_status("conv_1", "running")
+    session_live_state.persist_live_status("conv_1", "idle")
+    session_live_state.persist_live_status("conv_2", "idle")
+    _wait_until(lambda: len(recording_store.status_writes) >= 3)
+    assert recording_store.status_writes == [
+        ("conv_1", "running"),
+        ("conv_1", "idle"),
+        ("conv_2", "idle"),
+    ]
+
+
+def test_every_background_report_is_written_with_its_runner_and_time(
+    recording_store: _RecordingStore,
+) -> None:
+    """
+    Each report reaches the store, which keeps the newest by its time.
+
+    A replica cannot know what other replicas wrote since, so nothing is skipped
+    as a repeat. The write's future says that it ran.
+    """
+    first = session_live_state.persist_background_work_running(
+        "conv_1", True, runner_id="runner_a", reported_at=1
+    )
+    session_live_state.persist_background_work_running(
+        "conv_1", True, runner_id="runner_a", reported_at=2
+    )
+    assert first is not None and first.result(timeout=10) is True
+    _wait_until(lambda: len(recording_store.background_writes) >= 2)
+    assert recording_store.background_writes == [
+        ("conv_1", True, "runner_a", None, 1),
+        ("conv_1", True, "runner_a", None, 2),
+    ]
+
+
+def test_clearing_a_departed_runners_flag_is_guarded(
+    recording_store: _RecordingStore,
+) -> None:
+    """The clear names the departed runner, and the runner's next report is written again."""
+    session_live_state.persist_background_work_running("conv_1", True)
+    session_live_state.clear_background_work_running("conv_1", "runner_gone", unseen_since=1_000)
+    session_live_state.persist_background_work_running("conv_1", True)
+    _wait_until(lambda: len(recording_store.background_writes) >= 3)
+    assert recording_store.background_writes == [
+        ("conv_1", True),
+        ("conv_1", False, "runner_gone", 1_000),
+        ("conv_1", True),
+    ]
+
+
+def test_a_flag_write_queued_before_a_handoff_never_lands(
+    recording_store: _RecordingStore,
+) -> None:
+    """A write still queued when the session moves away cannot overwrite the new owner's."""
+    release = threading.Event()
+    session_live_state.submit("hold", release.wait, 10)
+    session_live_state.persist_background_work_running("conv_1", True)
+    session_live_state.forget_live_status("conv_1")
+    session_live_state.persist_background_work_running("conv_2", True)
+    release.set()
+    _wait_until(lambda: bool(recording_store.background_writes))
+    assert recording_store.background_writes == [("conv_2", True)]
+
+
+def test_a_report_begun_before_a_handoff_never_lands(
+    recording_store: _RecordingStore,
+) -> None:
+    """A report that arrived before the session moved away is not written, even if queued after."""
+    began = session_live_state.handoff_count("conv_1")
+    session_live_state.forget_live_status("conv_1")
+    skipped = session_live_state.persist_background_work_running("conv_1", True, handoffs=began)
+    session_live_state.persist_background_work_running("conv_2", True)
+    assert skipped is not None and skipped.result(timeout=10) is None
+    _wait_until(lambda: bool(recording_store.background_writes))
+    assert recording_store.background_writes == [("conv_2", True)]
+
+
+def test_persist_blocked_on_dedupes_changes(recording_store: _RecordingStore) -> None:
+    """Every status edge reports its reason; only a change reaches the store."""
+    session_live_state.persist_blocked_on("conv_1", "permission prompt")
+    session_live_state.persist_blocked_on("conv_1", "permission prompt")
+    session_live_state.persist_blocked_on("conv_1", None)
+    session_live_state.persist_blocked_on("conv_1", None)
+    _wait_until(lambda: len(recording_store.blocked_writes) >= 2)
+    assert recording_store.blocked_writes == [("conv_1", "permission prompt"), ("conv_1", None)]
+
+
+def test_a_reason_queued_before_a_handoff_cannot_restore_a_cleared_prompt(
+    recording_store: _RecordingStore,
+) -> None:
+    """The new owner clears the prompt; this replica's delayed write must not bring it back."""
+    release = threading.Event()
+    session_live_state.submit("hold", release.wait, 10)
+    session_live_state.persist_blocked_on("conv_1", "permission prompt")
+    session_live_state.forget_live_status("conv_1")
+    session_live_state.persist_blocked_on("conv_2", "question")
+    release.set()
+    _wait_until(lambda: bool(recording_store.blocked_writes))
+    assert recording_store.blocked_writes == [("conv_2", "question")]
+
+
+def test_status_edges_set_and_clear_the_parked_reason() -> None:
+    """A parked edge records its reason; the next edge without one clears it."""
+    from omnigent.server.routes import sessions as sessions_module
+
+    session_id = "conv_parked"
+    try:
+        sessions_module._publish_status(session_id, "running", blocked_on="x" * 200)
+        assert sessions_module._blocked_on_for(session_id, None) == "x" * 128
+        sessions_module._publish_status(session_id, "running")
+        # This replica's edge wins over a stale row from another replica.
+        assert sessions_module._blocked_on_for(session_id, "permission prompt") is None
+    finally:
+        sessions_module._session_blocked_on_cache.pop(session_id, None)
+        sessions_module._session_status_cache.pop(session_id, None)
+    assert sessions_module._blocked_on_for(session_id, "permission prompt") == "permission prompt"
+
+
+def test_forget_live_status_drops_dedupe_state(recording_store: _RecordingStore) -> None:
+    """A replica handing off a session must not keep its stale dedupe state."""
+    session_live_state._last_status["conv_1"] = "running"
+    session_live_state._last_blocked_on["conv_1"] = "permission prompt"
+    generation = session_live_state.handoff_count("conv_1")
+    for status in ("running", "waiting"):
+        session_live_state.record_child_status("conv_1", "parent", status, handoffs=generation)
+    session_live_state.record_child_status("conv_2", "parent", "running", handoffs=0)
+    assert session_live_state.has_active_child("parent")
+    session_live_state.forget_live_status("conv_1")
+    assert "conv_1" not in session_live_state._last_status
+    assert "conv_1" not in session_live_state._last_blocked_on
+    assert session_live_state.has_active_child("parent")
+    # A queued event from the previous owner cannot restore the removed child.
+    session_live_state.record_child_status("conv_1", "parent", "running", handoffs=generation)
+    session_live_state.record_child_status("conv_2", "parent", "idle", handoffs=0)
+    assert not session_live_state.has_active_child("parent")
+
+    from omnigent.db.db_models import workspace_scope
+
+    with workspace_scope(17):
+        session_live_state.record_child_status("conv_1", "parent", "waiting", handoffs=0)
+        assert session_live_state.has_active_child("parent")
+    assert not session_live_state.has_active_child("parent")
+
+
+def test_pending_count_hook_persists_publish_and_resolve(
+    recording_store: _RecordingStore,
+) -> None:
+    """The elicitation index drives the persisted count through its hook.
+
+    A publish bumps the count, a duplicate publish of the same id does
+    not (same count → deduped), and a resolve writes the decrement —
+    including the direct-``resolve`` path the approval dispatch uses,
+    which never flows through ``record_publish``.
+    """
+    pending_elicitations.set_count_persist_hook(session_live_state.persist_pending_count)
+    request = {"type": "response.elicitation_request", "elicitation_id": "elicit_1"}
+    pending_elicitations.record_publish("conv_1", request)
+    pending_elicitations.record_publish("conv_1", request)  # idempotent re-publish
+    pending_elicitations.record_publish(
+        "conv_1", {"type": "response.elicitation_request", "elicitation_id": "elicit_2"}
+    )
+    pending_elicitations.resolve("conv_1", "elicit_1")
+    pending_elicitations.resolve("conv_1", "elicit_1")  # idempotent re-resolve
+    pending_elicitations.resolve("conv_1", "elicit_2")
+    _wait_until(lambda: len(recording_store.pending_writes) >= 4)
+    assert recording_store.pending_writes == [
+        ("conv_1", 1),
+        ("conv_1", 2),
+        ("conv_1", 1),
+        ("conv_1", 0),
+    ]
+
+
+def test_runner_liveness_touch_and_clear_pass_through(
+    recording_store: _RecordingStore,
+) -> None:
+    """Touches and clears reach the store; empty touch is a no-op."""
+    session_live_state.touch_runner_liveness(["runner_a", "runner_b"])
+    session_live_state.touch_runner_liveness([])
+    session_live_state.clear_runner_liveness("runner_a")
+    _wait_until(lambda: recording_store.touches and recording_store.clears)
+    assert recording_store.touches == [["runner_a", "runner_b"]]
+    stamp = session_live_state.last_liveness_stamp("runner_a")
+    assert recording_store.clears == [("runner_a", stamp)]
+
+
+def test_touch_records_stamp_and_clear_forwards_it_as_not_after(
+    recording_store: _RecordingStore,
+) -> None:
+    """``touch`` remembers its own stamp; ``clear`` forwards it as ``not_after``.
+
+    The disconnect handler relies on this stamp surviving the clear itself
+    (never erased here — only :func:`session_live_state.configure` resets
+    it), so a later cross-replica check still has something to compare
+    against.
+    """
+    assert session_live_state.last_liveness_stamp("runner_c") is None
+
+    before = int(time.time())
+    session_live_state.touch_runner_liveness(["runner_c"])
+    stamp = session_live_state.last_liveness_stamp("runner_c")
+    assert stamp is not None and stamp >= before
+
+    session_live_state.clear_runner_liveness("runner_c")
+    _wait_until(lambda: bool(recording_store.clears))
+    assert recording_store.clears == [("runner_c", stamp)]
+
+    # The clear call itself never erases the process's own record of it.
+    assert session_live_state.last_liveness_stamp("runner_c") == stamp
+
+
+def test_unconfigured_module_is_a_no_op() -> None:
+    """Without a wired store (runner process, most tests) nothing runs.
+
+    No store means no executor work is enqueued; the calls simply return.
+    """
+    session_live_state.configure(None)
+    session_live_state.persist_live_status("conv_1", "running")
+    session_live_state.persist_pending_count("conv_1", 1)
+    session_live_state.touch_runner_liveness(["runner_a"])
+    session_live_state.clear_runner_liveness("runner_a")
+
+
+def test_write_runs_in_callers_workspace_scope(recording_store: _RecordingStore) -> None:
+    """The store write inherits the caller's ``workspace_scope``.
+
+    The store filters every query on ``current_workspace_id()`` — a
+    ``ContextVar`` the multi-tenant middleware binds per request. The
+    write runs on a background ``ThreadPoolExecutor``; a bare
+    ``submit`` would run it at the default workspace (0), so on a
+    multi-tenant replica every ``WHERE workspace_id == …`` would match
+    no rows and the whole mirror would silently no-op. Copying the
+    caller's context (as ``_submit`` does) is what carries the bound
+    workspace to the worker thread. This test binds a non-default
+    workspace and asserts the write thread observes it.
+    """
+    from omnigent.db.db_models import current_workspace_id, workspace_scope
+
+    seen: list[int] = []
+
+    def _record_ws(conversation_id: str, status: str) -> None:
+        del conversation_id, status
+        seen.append(current_workspace_id())
+
+    recording_store.set_session_live_status = _record_ws  # type: ignore[method-assign]
+
+    with workspace_scope(4242):
+        session_live_state.persist_live_status("conv_1", "running")
+    # The scope is left BEFORE the worker runs (the ``with`` block is
+    # already closed here), so a passing assertion proves the value was
+    # captured at submit time rather than read live off the worker thread
+    # (which is always at the default workspace).
+    _wait_until(lambda: bool(seen))
+
+    assert seen == [4242], "write thread did not observe the caller's bound workspace"
+
+
+def test_dropped_write_evicts_dedupe_entry_for_retry() -> None:
+    """A dropped best-effort write must not pin a stale dedupe entry.
+
+    ``persist_live_status`` records the value in its dedupe cache before
+    enqueueing the (best-effort) write. If that write is dropped, a later
+    *identical* publish would be deduped away and the row would stay stale
+    until a different value arrived. On failure the entry is evicted, so
+    the next identical publish re-attempts the write.
+    """
+    calls: list[tuple[str, str]] = []
+
+    class _FlakyStore(_RecordingStore):
+        def set_session_live_status(self, conversation_id: str, status: str) -> None:
+            calls.append((conversation_id, status))
+            if len(calls) == 1:
+                raise RuntimeError("boom")  # first attempt fails
+            super().set_session_live_status(conversation_id, status)
+
+    store = _FlakyStore()
+    session_live_state.configure(store)  # type: ignore[arg-type]
+    try:
+        session_live_state.persist_live_status("conv_1", "running")
+        # Wait for the EVICTION, not just the first call: the worker
+        # appends to ``calls`` and only then runs the failure callback that
+        # drops the dedupe entry. Gating the retry on "conv_1" leaving the
+        # dedupe map (the exact contract under test) removes the race where
+        # the second publish races the eviction and gets deduped away.
+        _wait_until(lambda: "conv_1" not in session_live_state._last_status)
+        assert "conv_1" not in session_live_state._last_status, "dropped write did not evict"
+
+        # Same value again: without the eviction above this would dedupe to
+        # a no-op; because the entry was cleared, the retry re-attempts.
+        session_live_state.persist_live_status("conv_1", "running")
+        _wait_until(lambda: bool(store.status_writes))
+    finally:
+        session_live_state.configure(None)
+
+    assert calls == [("conv_1", "running"), ("conv_1", "running")]
+    assert store.status_writes == [("conv_1", "running")], "retry never landed"
+
+
+def test_unencodable_status_is_dropped_before_enqueue(
+    recording_store: _RecordingStore,
+) -> None:
+    """A status the codec can't encode never reaches the store.
+
+    ``SessionStatusEvent.status`` permits ``"launching"``, which the
+    live-status codec (``SESSION_LIVE_STATUS``) can't encode, and the SSE
+    relay forwards raw event statuses. Enqueueing it would make the store
+    write raise, whose best-effort failure hook clears the dedupe entry, so
+    every republish would re-attempt and re-warn. ``persist_live_status``
+    instead drops an unknown status before the enqueue: no store write, and
+    a later *known* status for the same session still persists normally.
+    """
+    session_live_state.persist_live_status("conv_1", "launching")  # unknown
+    session_live_state.persist_live_status("conv_1", "launching")  # repeat, deduped
+    session_live_state.persist_live_status("conv_1", "running")  # known → persists
+    _wait_until(lambda: bool(recording_store.status_writes))
+
+    # Only the encodable status was ever enqueued; "launching" never was.
+    assert recording_store.status_writes == [("conv_1", "running")]
+
+
+# When the fake store's running runs fired.
+_FIRED_AT = 1_000
+
+
+def _transcript_item(type: str, created_at: int, role: str | None = None) -> SimpleNamespace:
+    return SimpleNamespace(
+        id=uuid4().hex, type=type, created_at=created_at, data=SimpleNamespace(role=role)
+    )
+
+
+# A run's session as a fire leaves it: runner bookkeeping, then the prompt.
+_RUN_STARTED = [
+    _transcript_item("resource_event", _FIRED_AT + 1),
+    _transcript_item("message", _FIRED_AT + 4, "user"),
+]
+_RUN_ANSWERED = [*_RUN_STARTED, _transcript_item("message", _FIRED_AT + 90, "assistant")]
+_SAME_SECOND_HISTORY = [_transcript_item("message", _FIRED_AT, "assistant")]
+
+
+class _FakeScheduledTaskStore:
+    """Scheduled-task-store stand-in recording the hook's lookup + update."""
+
+    def __init__(self, running_by_conv: dict[str, str] | None = None) -> None:
+        # conversation_id -> run_id for conversations that have a running run.
+        self._running_by_conv = running_by_conv or {}
+        self.lookup_calls: list[str] = []
+        self.update_calls: list[tuple[str, str, str | None, str | None]] = []
+        self.lookup_workspaces: list[int] = []
+
+    def get_running_run_by_conversation(self, conversation_id: str):  # type: ignore[no-untyped-def]
+        from omnigent.db.db_models import current_workspace_id
+
+        self.lookup_calls.append(conversation_id)
+        self.lookup_workspaces.append(current_workspace_id())
+        run_id = self._running_by_conv.get(conversation_id)
+        if run_id is None:
+            return None
+        # Minimal object carrying only the fields the hook reads.
+        return SimpleNamespace(id=run_id, fired_at=_FIRED_AT, scheduled_at=_FIRED_AT)
+
+    def update_run(
+        self,
+        run_id: str,
+        *,
+        status: str,
+        finished_at: int,
+        error: str | None = None,
+        error_code: str | None = None,
+    ):  # type: ignore[no-untyped-def]
+        self.update_calls.append((run_id, status, error, error_code))
+        return type("_Run", (), {"id": run_id, "status": status})()
+
+
+@pytest.mark.parametrize("legacy_run", [False, True])
+def test_scheduled_run_completion_idle_transitions_to_succeeded(legacy_run: bool) -> None:
+    """A terminal ``idle`` edge flips the conversation's running run to succeeded."""
+    sched = _FakeScheduledTaskStore({"conv_1": "run_1"})
+    conversations = _RecordingStore()
+    conversations.labels["conv_1"] = (
+        {}
+        if legacy_run
+        else {
+            SCHEDULED_TASK_RUN_LABEL_KEY: "run_1",
+            SCHEDULED_TASK_ACTIVITY_LABEL_KEY: "run_1",
+        }
+    )
+    session_live_state.configure(conversations, sched)  # type: ignore[arg-type]
+    try:
+        session_live_state.persist_scheduled_run_completion("conv_1", "succeeded")
+        _wait_until(lambda: bool(sched.update_calls))
+    finally:
+        session_live_state.configure(None)
+    assert sched.lookup_calls == ["conv_1"]
+    assert len(sched.update_calls) == 1
+    run_id, status, error, error_code = sched.update_calls[0]
+    assert (run_id, status) == ("run_1", "succeeded")
+    assert error is None and error_code is None
+
+
+@pytest.mark.parametrize(
+    ("transcript", "ends_the_run", "copied_items"),
+    [
+        # Claude Code reports idle while it starts, before it has read the prompt.
+        pytest.param(_RUN_STARTED[:1], False, 0, id="agent-starting"),
+        pytest.param(_RUN_STARTED, False, 0, id="prompt-not-yet-read"),
+        # A run started from a copy of a session: the copy keeps its history's times.
+        pytest.param(
+            [
+                _transcript_item("message", _FIRED_AT - 600, "user"),
+                _transcript_item("message", _FIRED_AT - 590, "assistant"),
+                *_RUN_STARTED,
+            ],
+            False,
+            2,
+            id="copied-history",
+        ),
+        pytest.param(
+            [*_RUN_STARTED, _transcript_item("function_call", _FIRED_AT + 9)],
+            True,
+            0,
+            id="stopped-after-a-tool-call",
+        ),
+        pytest.param(_RUN_ANSWERED, True, 0, id="agent-replied"),
+        pytest.param(_SAME_SECOND_HISTORY, False, 1, id="same-second-history-before-prompt"),
+        pytest.param(
+            [*_SAME_SECOND_HISTORY, *_RUN_STARTED], False, 1, id="same-second-history-before-work"
+        ),
+        pytest.param(
+            [
+                *_SAME_SECOND_HISTORY,
+                _transcript_item("message", _FIRED_AT, "user"),
+                _transcript_item("message", _FIRED_AT, "assistant"),
+            ],
+            True,
+            1,
+            id="same-second-new-reply",
+        ),
+    ],
+)
+@pytest.mark.parametrize("bookkeeping_tail", [0, 50, 51])
+def test_an_idle_edge_ends_a_scheduled_run_only_after_its_agent_worked(
+    transcript: list[SimpleNamespace],
+    ends_the_run: bool,
+    copied_items: int,
+    bookkeeping_tail: int,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An idle edge ends the run only once its agent has written to the session."""
+    conversations = SqlAlchemyConversationStore(f"sqlite:///{tmp_path / 'completion.db'}")
+    conversation = conversations.create_conversation(
+        labels={SCHEDULED_TASK_RUN_LABEL_KEY: "older-run"}
+    )
+
+    def append_items(session_id: str, items: list[SimpleNamespace]) -> None:
+        for item in items:
+            monkeypatch.setattr(
+                "omnigent.stores.conversation_store.sqlalchemy_store.now_epoch",
+                lambda stamp=item.created_at: stamp,
+            )
+            if item.type == "message":
+                data = MessageData(
+                    role=item.data.role,
+                    agent="agent" if item.data.role == "assistant" else None,
+                    content=[{"type": "text", "text": "Run work"}],
+                )
+            elif item.type == "function_call":
+                data = FunctionCallData(
+                    agent="agent", call_id=item.id, name="check", arguments="{}"
+                )
+            else:
+                data = ResourceEventData(
+                    event_type="session.task.updated", resource_type="task", resource_id=item.id
+                )
+            conversations.append(
+                session_id, [NewConversationItem(type=item.type, response_id="turn", data=data)]
+            )
+
+    if copied_items:
+        append_items(conversation.id, transcript[:copied_items])
+        conversation = conversations.fork_conversation(conversation.id, copy_journal=False)
+    conversations.set_labels(
+        conversation.id,
+        {
+            SCHEDULED_TASK_RUN_LABEL_KEY: "run_1",
+            SCHEDULED_TASK_INITIAL_RUN_LABEL_KEY: "run_1",
+        },
+    )
+    append_items(conversation.id, transcript[copied_items:])
+    if ends_the_run:
+        conversations.update_scheduled_run_label(conversation.id, "continuation", action="begin")
+        append_items(conversation.id, [_transcript_item("message", _FIRED_AT + 10, "assistant")])
+        assert (
+            conversations.get_conversation(conversation.id).labels[
+                SCHEDULED_TASK_ACTIVITY_LABEL_KEY
+            ]
+            == "run_1"
+        )
+    append_items(
+        conversation.id,
+        [_transcript_item("resource_event", _FIRED_AT + 100) for _ in range(bookkeeping_tail)],
+    )
+    sched = _FakeScheduledTaskStore({conversation.id: "run_1"})
+    session_live_state.configure(conversations, sched)  # type: ignore[arg-type]
+    try:
+        session_live_state.persist_scheduled_run_completion(conversation.id, "succeeded")
+        # One ordered worker: once this no-op has run, so has the hook.
+        session_live_state.submit("test_barrier", lambda: None).result(timeout=10)
+        # Evidence from this run must not complete a later invocation.
+        sched._running_by_conv[conversation.id] = "run_2"
+        conversations.set_labels(conversation.id, {SCHEDULED_TASK_RUN_LABEL_KEY: "run_2"})
+        session_live_state.persist_scheduled_run_completion(conversation.id, "succeeded")
+        session_live_state.submit("test_barrier", lambda: None).result(timeout=10)
+    finally:
+        session_live_state.configure(None)
+    assert [call[:2] for call in sched.update_calls] == (
+        [("run_1", "succeeded")] if ends_the_run else []
+    )
+
+
+def test_scheduled_run_completion_failed_carries_error_code() -> None:
+    """A terminal ``failed`` edge flips the run to failed with the error detail."""
+    sched = _FakeScheduledTaskStore({"conv_1": "run_1"})
+    session_live_state.configure(_RecordingStore(), sched)  # type: ignore[arg-type]
+    try:
+        session_live_state.persist_scheduled_run_completion(
+            "conv_1", "failed", error_code="runner_disconnected", error="dropped"
+        )
+        _wait_until(lambda: bool(sched.update_calls))
+    finally:
+        session_live_state.configure(None)
+    assert sched.update_calls == [("run_1", "failed", "dropped", "runner_disconnected")]
+
+
+def test_scheduled_run_completion_noop_for_non_scheduled_conversation() -> None:
+    """An interactive conversation has no running run → lookup only, no update.
+
+    This is the common case: the hook fires on every terminal edge, and the
+    cheap reverse lookup returning ``None`` keeps it a no-op for the vast
+    majority of (non-scheduled) conversations.
+    """
+    sched = _FakeScheduledTaskStore({})  # no running runs
+    session_live_state.configure(_RecordingStore(), sched)  # type: ignore[arg-type]
+    try:
+        session_live_state.persist_scheduled_run_completion("conv_x", "succeeded")
+        _wait_until(lambda: bool(sched.lookup_calls))
+    finally:
+        session_live_state.configure(None)
+    assert sched.lookup_calls == ["conv_x"]
+    assert sched.update_calls == []
+
+
+def test_scheduled_run_completion_noop_without_scheduled_store() -> None:
+    """With only a conversation store wired the hook is a pure no-op.
+
+    ``configure(store)`` (no scheduled-task store) must not enqueue any work —
+    the runner process and most tests never wire one.
+    """
+    session_live_state.configure(_RecordingStore())  # type: ignore[arg-type]
+    try:
+        # No scheduled store => returns before touching the executor.
+        session_live_state.persist_scheduled_run_completion("conv_1", "succeeded")
+    finally:
+        session_live_state.configure(None)
+
+
+def test_scheduled_run_completion_runs_in_callers_workspace_scope() -> None:
+    """The lookup + update inherit the caller's ``workspace_scope``.
+
+    Same contract as the live_status mirror: the store filters on
+    ``current_workspace_id()``, so the hook's reverse lookup must resolve to
+    the fired run's workspace. Bind a non-default workspace, leave the scope
+    before the worker runs, and assert the write thread still observed it.
+    """
+    from omnigent.db.db_models import workspace_scope
+
+    sched = _FakeScheduledTaskStore({"conv_1": "run_1"})
+    session_live_state.configure(_RecordingStore(), sched)  # type: ignore[arg-type]
+    try:
+        with workspace_scope(4242):
+            session_live_state.persist_scheduled_run_completion("conv_1", "succeeded")
+        _wait_until(lambda: bool(sched.lookup_workspaces))
+    finally:
+        session_live_state.configure(None)
+    assert sched.lookup_workspaces == [4242]
+
+
+@pytest.mark.asyncio
+async def test_liveness_pass_zeroes_pending_count_for_offline_runner() -> None:
+    """A stale persisted pending count can't light a phantom inbox badge.
+
+    Nothing decrements the persisted ``pending_elicitation_count`` when a
+    runner/host/replica crashes with prompts parked, so the row can outlive
+    the prompts it counts. The liveness pass (shared by ``GET /v1/sessions``
+    and the ``/v1/sessions/updates`` watched-items fetch) zeroes the count on
+    rows whose runner is offline — dead runner means dead prompts — while an
+    online runner's count passes through untouched.
+    """
+    from omnigent.server.routes.sessions import SessionLiveness, _apply_liveness_to_items
+    from omnigent.server.schemas import SessionListItem
+
+    def _item(session_id: str) -> SessionListItem:
+        return SessionListItem(
+            id=session_id,
+            agent_id="ag_1",
+            status="idle",
+            created_at=1,
+            updated_at=1,
+            pending_elicitations_count=3,
+            background_work_running=True,
+            blocked_on="permission prompt",
+        )
+
+    items = [_item("conv_dead"), _item("conv_live")]
+    liveness = {
+        "conv_dead": SessionLiveness(runner_online=False, host_online=True),
+        "conv_live": SessionLiveness(runner_online=True, host_online=True),
+    }
+
+    await _apply_liveness_to_items(items, lambda ids: {i: liveness[i] for i in ids})
+
+    # A dead runner's background shells and terminal prompts died with it too.
+    assert [
+        (i.runner_online, i.pending_elicitations_count, i.background_work_running, i.blocked_on)
+        for i in items
+    ] == [
+        (False, 0, False, None),
+        (True, 3, True, "permission prompt"),
+    ]

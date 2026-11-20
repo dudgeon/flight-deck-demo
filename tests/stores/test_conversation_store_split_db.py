@@ -1,0 +1,1339 @@
+"""Tests for SqlAlchemyConversationStore in split-DB mode.
+
+Exercises the same operations as test_conversation_store.py but with the
+Omnigent DB and AP DB backed by two separate SQLite files, verifying that
+rows land in the right database.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import sqlite3
+from pathlib import Path
+from typing import Any
+
+import pytest
+
+from omnigent.stores.conversation_store.sqlalchemy_store import (
+    SqlAlchemyConversationStore,
+)
+
+
+@pytest.fixture()
+def omnigent_db(tmp_path: Path) -> Path:
+    return tmp_path / "omnigent.db"
+
+
+@pytest.fixture()
+def conv_db(tmp_path: Path) -> Path:
+    return tmp_path / "conversations.db"
+
+
+@pytest.fixture()
+def store(omnigent_db: Path, conv_db: Path) -> SqlAlchemyConversationStore:
+    return SqlAlchemyConversationStore(
+        f"sqlite:///{omnigent_db}",
+        f"sqlite:///{conv_db}",
+    )
+
+
+def _tables(db: Path) -> set[str]:
+    with sqlite3.connect(str(db)) as conn:
+        return {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+
+
+def _count(db: Path, table: str) -> int:
+    with sqlite3.connect(str(db)) as conn:
+        return conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+
+
+def _col(db: Path, table: str, col: str, where: str = "") -> list:
+    with sqlite3.connect(str(db)) as conn:
+        q = f"SELECT {col} FROM {table}" + (f" WHERE {where}" if where else "")
+        rows = [r[0] for r in conn.execute(q).fetchall()]
+        # id columns are 16-byte blobs; present them as bare hex.
+        return [v.hex() if isinstance(v, bytes) else v for v in rows]
+
+
+# ── Table placement ────────────────────────────────────
+
+
+def test_tables_live_in_correct_db(
+    omnigent_db: Path,
+    conv_db: Path,
+    store: SqlAlchemyConversationStore,  # triggers DB init
+) -> None:
+    del store  # only used to initialise both databases
+    omnigent_tables = _tables(omnigent_db)
+    conv_tables = _tables(conv_db)
+
+    # AP tables in conv_db only
+    for t in ("conversations", "conversation_items", "conversation_labels"):
+        assert t in conv_tables, f"{t} missing from 9b7e62bfe9e16274877fe2868bffae5e"
+
+    # Omnigent tables in omnigent_db
+    for t in ("omnigent_conversation_metadata", "agents", "hosts", "policies", "comments"):
+        assert t in omnigent_tables, f"{t} missing from omnigent_db"
+
+    # AP tables must NOT appear in omnigent_db (no schema migration runs there)
+    assert "omnigent_conversation_metadata" not in conv_tables
+
+
+# ── create_conversation ────────────────────────────────
+
+
+def test_create_conversation_rows_land_in_correct_db(
+    omnigent_db: Path, conv_db: Path, store: SqlAlchemyConversationStore
+) -> None:
+    store.create_conversation(
+        kind="default",
+        title="hello",
+        runner_id="runner_abc",
+        workspace="/tmp/proj",
+    )
+
+    # AP DB: title, agent binding
+    assert _count(conv_db, "conversations") == 1
+    assert _col(conv_db, "conversations", "title") == ["hello"]
+
+    # Omnigent DB: operational fields
+    assert _count(omnigent_db, "omnigent_conversation_metadata") == 1
+    assert _col(omnigent_db, "omnigent_conversation_metadata", "runner_id") == ["runner_abc"]
+    assert _col(omnigent_db, "omnigent_conversation_metadata", "workspace") == ["/tmp/proj"]
+
+
+def test_create_sub_agent_conversation(
+    omnigent_db: Path, conv_db: Path, store: SqlAlchemyConversationStore
+) -> None:
+    parent = store.create_conversation(kind="default", title="parent")
+    child = store.create_conversation(
+        kind="sub_agent",
+        title="child",
+        parent_conversation_id=parent.id,
+        sub_agent_name="summarizer",
+    )
+
+    assert child.kind == "sub_agent"
+    assert child.parent_conversation_id == parent.id
+    # kind lives in metadata
+    kind_code = _col(omnigent_db, "omnigent_conversation_metadata", "kind", f"id=X'{child.id}'")
+    assert kind_code == [2]
+    # title and parent link live in AP
+    parent_id_col = _col(conv_db, "conversations", "parent_conversation_id", f"id=X'{child.id}'")
+    assert parent_id_col == [parent.id]
+
+
+# ── get / list ─────────────────────────────────────────
+
+
+def test_get_conversation_merges_both_dbs(store: SqlAlchemyConversationStore) -> None:
+    conv = store.create_conversation(kind="default", title="merge-test", workspace="/x")
+    fetched = store.get_conversation(conv.id)
+    assert fetched is not None
+    assert fetched.title == "merge-test"
+    assert fetched.workspace == "/x"
+    assert fetched.kind == "default"
+
+
+def test_get_conversations_bulk(store: SqlAlchemyConversationStore) -> None:
+    a = store.create_conversation(title="a")
+    b = store.create_conversation(title="b")
+    result = store.get_conversations([a.id, b.id])
+    assert set(result.keys()) == {a.id, b.id}
+    assert result[a.id].title == "a"
+    assert result[b.id].title == "b"
+
+
+def test_list_conversations_kind_filter_crosses_dbs(store: SqlAlchemyConversationStore) -> None:
+    store.create_conversation(kind="default", title="top")
+    parent = store.create_conversation(kind="default", title="parent2")
+    store.create_conversation(kind="sub_agent", title="child", parent_conversation_id=parent.id)
+
+    defaults = store.list_conversations(kind="default")
+    subs = store.list_conversations(kind="sub_agent")
+    assert all(c.kind == "default" for c in defaults.data)
+    assert all(c.kind == "sub_agent" for c in subs.data)
+
+
+def test_list_conversations_archived_filter(store: SqlAlchemyConversationStore) -> None:
+    conv = store.create_conversation(title="to-archive")
+    store.update_conversation(conv.id, archived=True)
+
+    active = store.list_conversations(include_archived=False)
+    all_ = store.list_conversations(include_archived=True)
+    assert all(not c.archived for c in active.data)
+    assert any(c.archived for c in all_.data)
+
+
+def test_kind_derived_from_parent_nullness_not_metadata(
+    omnigent_db: Path,
+    store: SqlAlchemyConversationStore,
+) -> None:
+    """``kind`` is read from parent-nullness, so it stays correct even when the
+    metadata row (the old source of the ``kind`` column) is missing.
+
+    Simulates a create that crashed after the AP conversation row landed but
+    before the Omnigent metadata row: deleting the metadata row must not flip a
+    child's kind back to ``"default"``.
+    """
+    parent = store.create_conversation(title="parent")
+    child = store.create_conversation(
+        kind="sub_agent", title="coder:child", parent_conversation_id=parent.id
+    )
+
+    # Drop the child's metadata row to mimic a crashed create (orphaned AP row).
+    with sqlite3.connect(str(omnigent_db)) as conn:
+        conn.execute("DELETE FROM omnigent_conversation_metadata WHERE id = ?", (child.id,))
+
+    fetched = store.get_conversation(child.id)
+    assert fetched is not None
+    assert fetched.kind == "sub_agent"
+    # And the parent-scoped listing still finds it despite the missing metadata.
+    page = store.list_conversations(kind="sub_agent", parent_conversation_id=parent.id)
+    assert [c.id for c in page.data] == [child.id]
+
+
+def test_child_listing_does_not_prefetch_workspace_wide(
+    monkeypatch: pytest.MonkeyPatch,
+    store: SqlAlchemyConversationStore,
+) -> None:
+    """The parent-scoped child listing must not open an Omnigent-pool session to
+    prefetch a workspace-wide id set — the post-split slowdown this fixes.
+
+    Fails the test if ``list_conversations(parent_conversation_id=...)`` touches
+    ``self._session`` (the Omnigent pool) for a kind/archived prefetch. It may
+    still use ``self._conv_session`` (the AP pool) freely, and it reads metadata
+    for the returned page via a separate, bounded ``self._session`` call — which
+    is why we only assert the *prefetch* path is gone by counting sessions: a
+    parent-scoped page fetch opens the Omnigent pool at most once (page-metadata
+    merge), never twice (prefetch + merge).
+    """
+    parent = store.create_conversation(title="parent")
+    for i in range(3):
+        store.create_conversation(
+            kind="sub_agent", title=f"coder:c{i}", parent_conversation_id=parent.id
+        )
+
+    calls = {"omnigent_sessions": 0}
+    real_session = store._session
+
+    def counting_session(*args: object, **kwargs: object) -> object:
+        calls["omnigent_sessions"] += 1
+        return real_session(*args, **kwargs)
+
+    monkeypatch.setattr(store, "_session", counting_session)
+    page = store.list_conversations(kind="sub_agent", parent_conversation_id=parent.id)
+
+    assert len(page.data) == 3
+    # One Omnigent-pool session for the page-metadata merge; the workspace-wide
+    # prefetch (a second, unbounded one) must be gone.
+    assert calls["omnigent_sessions"] <= 1
+
+
+# ── labels ─────────────────────────────────────────────
+
+
+def test_labels_land_in_conv_db(conv_db: Path, store: SqlAlchemyConversationStore) -> None:
+    conv = store.create_conversation(title="labeled")
+    store.set_labels(conv.id, {"env": "test", "owner": "alice"})
+
+    assert _count(conv_db, "conversation_labels") == 2
+    fetched = store.get_conversation(conv.id)
+    assert fetched.labels == {"env": "test", "owner": "alice"}
+
+
+def test_delete_label(store: SqlAlchemyConversationStore) -> None:
+    conv = store.create_conversation(title="label-del")
+    store.set_labels(conv.id, {"k": "v"})
+    store.delete_label(conv.id, "k")
+    fetched = store.get_conversation(conv.id)
+    assert "k" not in fetched.labels
+
+
+# ── metadata writes ────────────────────────────────────
+
+
+def test_set_runner_id_lands_in_omnigent_db(
+    omnigent_db: Path, store: SqlAlchemyConversationStore
+) -> None:
+    conv = store.create_conversation(title="runner")
+    store.set_runner_id(conv.id, "runner_xyz")
+    runner_ids = _col(
+        omnigent_db, "omnigent_conversation_metadata", "runner_id", f"id=X'{conv.id}'"
+    )
+    assert runner_ids == ["runner_xyz"]
+
+
+def test_set_session_state_lands_in_omnigent_db(
+    omnigent_db: Path, store: SqlAlchemyConversationStore
+) -> None:
+    conv = store.create_conversation(title="state")
+    store.set_session_state(conv.id, {"counter": 1})
+    fetched = store.get_conversation(conv.id)
+    assert fetched.session_state == {"counter": 1}
+
+
+def test_increment_session_usage(store: SqlAlchemyConversationStore) -> None:
+    conv = store.create_conversation(title="usage")
+    result = store.increment_session_usage(conv.id, {"input_tokens": 100, "total_cost_usd": 0.01})
+    assert result["input_tokens"] == 100
+    result2 = store.increment_session_usage(conv.id, {"input_tokens": 50})
+    assert result2["input_tokens"] == 150
+
+
+def test_apply_session_usage_delta_drops_negative_and_non_finite_increments() -> None:
+    """A forged usage frame can't drive a cumulative counter backwards or poison it.
+
+    ``apply_session_usage_delta`` is the single merge point for the relay
+    ``increment_session_usage`` path, whose totals the cost-budget gate
+    enforces on. Negative and non-finite increments — flat or nested under
+    ``by_model`` — are dropped rather than applied; well-formed non-negative
+    increments still merge.
+    """
+    from omnigent.stores.conversation_store import apply_session_usage_delta
+
+    current: dict[str, Any] = {
+        "input_tokens": 100,
+        "total_cost_usd": 1.0,
+        "by_model": {"m": {"input_tokens": 100, "total_cost_usd": 1.0}},
+    }
+    apply_session_usage_delta(
+        current,
+        {
+            "input_tokens": -1_000_000,
+            "output_tokens": float("nan"),
+            "total_cost_usd": float("-inf"),
+            "by_model": {"m": {"input_tokens": -50, "total_cost_usd": float("inf")}},
+        },
+    )
+    assert current["input_tokens"] == 100
+    assert "output_tokens" not in current
+    assert current["total_cost_usd"] == 1.0
+    assert current["by_model"]["m"] == {"input_tokens": 100, "total_cost_usd": 1.0}
+
+    apply_session_usage_delta(
+        current, {"input_tokens": 25, "by_model": {"m": {"input_tokens": 25}}}
+    )
+    assert current["input_tokens"] == 125
+    assert current["by_model"]["m"]["input_tokens"] == 125
+
+
+def test_set_external_session_id(store: SqlAlchemyConversationStore) -> None:
+    conv = store.create_conversation(title="ext")
+    updated = store.set_external_session_id(conv.id, "ext-uuid-123")
+    assert updated.external_session_id == "ext-uuid-123"
+
+
+# ── project membership ─────────────────────────────────
+
+
+def test_set_conversation_project_lands_in_omnigent_db(
+    omnigent_db: Path, store: SqlAlchemyConversationStore
+) -> None:
+    """``project_id`` is written to the metadata row in the Omnigent DB."""
+    project_id = "b" * 32
+    conv = store.create_conversation(title="filed")
+    filed = store.set_conversation_project(conv.id, project_id)
+    assert filed is True
+
+    stored = _col(omnigent_db, "omnigent_conversation_metadata", "project_id", f"id=X'{conv.id}'")
+    assert stored == [project_id]
+    # Reads back through the entity (which merges both DBs).
+    assert store.get_conversation(conv.id).project_id == project_id
+
+
+def test_list_conversations_project_name_filter_crosses_dbs(
+    store: SqlAlchemyConversationStore,
+    omnigent_db: Path,
+) -> None:
+    """The dual-read ``project`` (by name) filter resolves the first-class
+    member ids from the Omnigent DB (``projects`` JOIN ``conversation_metadata``,
+    both colocated there) and ORs them with the ``omni_project`` label on the AP
+    DB — the cross-DB path a single-DB test can't exercise.
+    """
+    from omnigent.stores.project_store.sqlalchemy_store import SqlAlchemyProjectStore
+
+    # projects lives on the Omnigent DB, so create it against that URI.
+    project_store = SqlAlchemyProjectStore(f"sqlite:///{omnigent_db}")
+    project = project_store.create("c" * 32, "Work", None)
+
+    first_class = store.create_conversation(title="first-class")
+    labelled = store.create_conversation(title="labelled")
+    unfiled = store.create_conversation(title="loose")
+    store.set_conversation_project(first_class.id, project.id)
+    store.set_labels(labelled.id, {"omni_project": "Work"})
+
+    members = store.list_conversations(project="Work", owned_by=None)
+    assert {c.id for c in members.data} == {first_class.id, labelled.id}
+
+    # Empty string means "unfiled" — the loose session, excluding both members,
+    # even though first-class membership lives in the other physical DB.
+    unfiled_ids = {c.id for c in store.list_conversations(project="", owned_by=None).data}
+    assert unfiled.id in unfiled_ids
+    assert first_class.id not in unfiled_ids
+    assert labelled.id not in unfiled_ids
+
+
+# ── conversation items ─────────────────────────────────
+
+
+def test_append_and_list_items_land_in_conv_db(
+    conv_db: Path, store: SqlAlchemyConversationStore
+) -> None:
+    from omnigent.entities import NewConversationItem
+    from omnigent.entities.conversation import MessageData
+
+    conv = store.create_conversation(title="items")
+    items = store.append(
+        conv.id,
+        [
+            NewConversationItem(
+                type="message",
+                response_id="resp_1",
+                data=MessageData(role="user", content=[{"type": "input_text", "text": "hi"}]),
+            )
+        ],
+    )
+    assert len(items) == 1
+    assert _count(conv_db, "conversation_items") == 1
+
+    listed = store.list_items(conv.id)
+    assert len(listed.data) == 1
+
+
+# ── delete ─────────────────────────────────────────────
+
+
+def test_delete_conversation_cleans_both_dbs(
+    omnigent_db: Path, conv_db: Path, store: SqlAlchemyConversationStore
+) -> None:
+    from omnigent.entities import NewConversationItem
+    from omnigent.entities.conversation import MessageData
+
+    conv = store.create_conversation(title="to-delete", runner_id="r1")
+    store.set_labels(conv.id, {"k": "v"})
+    store.append(
+        conv.id,
+        [
+            NewConversationItem(
+                type="message",
+                response_id="resp_1",
+                data=MessageData(role="user", content=[{"type": "input_text", "text": "bye"}]),
+            )
+        ],
+    )
+    assert _count(conv_db, "conversations") == 1
+    assert _count(omnigent_db, "omnigent_conversation_metadata") == 1
+
+    deleted = asyncio.run(store.delete_conversation(conv.id))
+    assert deleted is True
+    assert _count(conv_db, "conversations") == 0
+    assert _count(conv_db, "conversation_items") == 0
+    assert _count(conv_db, "conversation_labels") == 0
+    assert _count(omnigent_db, "omnigent_conversation_metadata") == 0
+
+
+def test_delete_conversation_subtree_cleans_both_dbs(
+    omnigent_db: Path, conv_db: Path, store: SqlAlchemyConversationStore
+) -> None:
+    parent = store.create_conversation(title="parent")
+    store.create_conversation(kind="sub_agent", title="child", parent_conversation_id=parent.id)
+    assert _count(conv_db, "conversations") == 2
+    assert _count(omnigent_db, "omnigent_conversation_metadata") == 2
+
+    asyncio.run(store.delete_conversation(parent.id))
+    assert _count(conv_db, "conversations") == 0
+    assert _count(omnigent_db, "omnigent_conversation_metadata") == 0
+
+
+# ── get_runner_ids / get_session_connectivity ──────────
+
+
+def test_get_runner_ids_reads_from_omnigent_db(store: SqlAlchemyConversationStore) -> None:
+    a = store.create_conversation(title="a", runner_id="runner_a")
+    b = store.create_conversation(title="b")
+    ids = store.get_runner_ids([a.id, b.id])
+    assert ids[a.id] == "runner_a"
+    assert ids[b.id] is None
+
+
+@pytest.mark.parametrize(
+    ("runner_id", "stamp"), [("runner_a", 1_000_000), ("runner_a", None), (None, None)]
+)
+def test_get_runner_liveness_reads_only_metadata(
+    store: SqlAlchemyConversationStore, runner_id: str | None, stamp: int | None
+) -> None:
+    """Liveness survives an AP database outage and stays scoped to the workspace."""
+    from sqlalchemy import event
+
+    from omnigent.db.db_models import workspace_scope
+
+    conversation = store.create_conversation(runner_id=runner_id)
+    if runner_id is not None and stamp is not None:
+        store.touch_runner_liveness([runner_id], stamp)
+
+    def unavailable(*_args: Any) -> None:
+        raise ConnectionError("conversation database unavailable")
+
+    event.listen(store._conv_engine, "before_cursor_execute", unavailable)
+    try:
+        with pytest.raises(ConnectionError, match="conversation database unavailable"):
+            store.get_session_connectivity([conversation.id])
+        assert store.get_runner_liveness(conversation.id) == (runner_id, stamp)
+        assert store.get_runner_liveness("0" * 32) is None
+        with workspace_scope(42):
+            assert store.get_runner_liveness(conversation.id) is None
+    finally:
+        event.remove(store._conv_engine, "before_cursor_execute", unavailable)
+
+
+def test_list_conversations_by_runner_id(store: SqlAlchemyConversationStore) -> None:
+    a = store.create_conversation(title="a", runner_id="runner_x")
+    store.create_conversation(title="b", runner_id="runner_y")
+    results = store.list_conversations_by_runner_id("runner_x")
+    assert len(results) == 1
+    assert results[0].id == a.id
+    assert results[0].title == "a"
+
+
+def test_runner_session_status_pages_do_not_read_conversation_db(
+    store: SqlAlchemyConversationStore,
+) -> None:
+    from sqlalchemy import event
+
+    a = store.create_conversation(runner_id="runner_x")
+    b = store.create_conversation(runner_id="runner_x")
+    store.set_session_live_status(a.id, "running")
+    store.set_session_live_status(b.id, "waiting")
+
+    def unavailable(*_args):
+        pytest.fail("runner teardown must not hydrate data from the conversation database")
+
+    event.listen(store._conv_engine, "before_cursor_execute", unavailable)
+    try:
+        first = store.list_runner_session_statuses("runner_x", limit=1)
+        second = store.list_runner_session_statuses("runner_x", after=first[-1][0], limit=1)
+        assert first + second == sorted([(a.id, "running"), (b.id, "waiting")])
+        assert store.list_runner_session_statuses("runner_x", after=second[-1][0], limit=1) == []
+    finally:
+        event.remove(store._conv_engine, "before_cursor_execute", unavailable)
+
+
+def test_intentional_stop_settlement_uses_only_metadata(
+    store: SqlAlchemyConversationStore,
+) -> None:
+    from sqlalchemy import event
+
+    conv = store.create_conversation(runner_id="runner-stopped")
+    store.set_session_live_status(conv.id, "running")
+    store.set_labels(conv.id, {"omnigent.last_task_error_code": "preserved"})
+
+    def unavailable(*_args):
+        pytest.fail("Stop settlement must not read or write the conversation database")
+
+    event.listen(store._conv_engine, "before_cursor_execute", unavailable)
+    try:
+        assert store.settle_intentionally_stopped_session(conv.id, "runner-stopped")
+    finally:
+        event.remove(store._conv_engine, "before_cursor_execute", unavailable)
+    after = store.get_conversation(conv.id)
+    assert after.live_status == "idle"
+    assert after.labels["omnigent.last_task_error_code"] == "preserved"
+
+
+# ── fork_conversation ──────────────────────────────────
+
+
+def test_fork_conversation_copies_to_both_dbs(
+    omnigent_db: Path, conv_db: Path, store: SqlAlchemyConversationStore
+) -> None:
+    from omnigent.entities import NewConversationItem
+    from omnigent.entities.conversation import MessageData
+
+    source = store.create_conversation(title="source", workspace="/src")
+    store.append(
+        source.id,
+        [
+            NewConversationItem(
+                type="message",
+                response_id="resp_1",
+                data=MessageData(
+                    role="user", content=[{"type": "input_text", "text": "original"}]
+                ),
+            )
+        ],
+    )
+
+    fork = store.fork_conversation(source.id, title="fork")
+    assert fork.id != source.id
+    assert fork.title == "fork"
+
+    assert _count(conv_db, "conversations") == 2
+    assert _count(omnigent_db, "omnigent_conversation_metadata") == 2
+    assert _count(conv_db, "conversation_items") == 2  # original + copy
+
+
+# ── AgentStore cross-DB session_id resolution ────────────────────────
+
+
+def test_agent_store_resolves_session_id_across_dbs(
+    omnigent_db: Path,
+    conv_db: Path,
+    store: SqlAlchemyConversationStore,
+) -> None:
+    """
+    ``agent.session_id`` requires a reverse lookup on
+    ``conversations.agent_id``, which lives in the AP DB. An AgentStore
+    wired only to the Omnigent DB would query the wrong database and
+    silently return ``session_id=None`` for every session-scoped agent.
+    """
+    from omnigent.stores.agent_store.sqlalchemy_store import SqlAlchemyAgentStore
+
+    created = store.create_session_with_agent(
+        agent_id="112c4ebea353b873df12de9d02f539ab",
+        agent_name="session-agent",
+        agent_bundle_location="112c4ebea353b873df12de9d02f539ab/bundle",
+        agent_description=None,
+        title="split session",
+    )
+    # Agent row lands in the Omnigent DB; the binding on the AP DB's
+    # conversations.agent_id column.
+    assert _count(omnigent_db, "agents") == 1
+    assert _col(conv_db, "conversations", "agent_id") == ["112c4ebea353b873df12de9d02f539ab"]
+
+    agent_store = SqlAlchemyAgentStore(
+        f"sqlite:///{omnigent_db}",
+        f"sqlite:///{conv_db}",
+    )
+    agent = agent_store.get("112c4ebea353b873df12de9d02f539ab")
+    assert agent is not None
+    assert agent.session_id == created.conversation.id
+
+    updated = agent_store.update(
+        "112c4ebea353b873df12de9d02f539ab", "112c4ebea353b873df12de9d02f539ab/bundle2"
+    )
+    assert updated is not None
+    assert updated.session_id == created.conversation.id
+
+
+# ── Orphan repair: update with a missing metadata row ─────────────────
+
+
+def test_update_conversation_archives_without_metadata_row(
+    omnigent_db: Path,
+    conv_db: Path,
+    store: SqlAlchemyConversationStore,
+) -> None:
+    """
+    A crash between the AP and metadata transactions during creation leaves a
+    conversation with no metadata row. ``archived`` now lives on the AP
+    conversations row, so an archive update must persist and report correctly
+    even without a metadata row — and ``kind`` stays correct (derived from the
+    parent pointer), never silently reporting ``archived=False``.
+    """
+    parent = store.create_conversation(title="orphan parent")
+    child = store.create_conversation(
+        kind="sub_agent",
+        title="orphan child",
+        parent_conversation_id=parent.id,
+    )
+    # Simulate the creation crash: drop both metadata rows directly.
+    with sqlite3.connect(str(omnigent_db)) as conn:
+        conn.execute(
+            "DELETE FROM omnigent_conversation_metadata WHERE id IN (?, ?)",
+            (bytes.fromhex(parent.id), bytes.fromhex(child.id)),
+        )
+        conn.commit()
+    assert _count(omnigent_db, "omnigent_conversation_metadata") == 0
+
+    updated = store.update_conversation(parent.id, archived=True)
+    assert updated is not None
+    assert updated.archived is True
+    assert updated.kind == "default"
+
+    child_updated = store.update_conversation(child.id, archived=True)
+    assert child_updated is not None
+    assert child_updated.archived is True
+    # kind is derived from the parent pointer, not the (missing) metadata row.
+    assert child_updated.kind == "sub_agent"
+
+    # archived is persisted on the AP conversations rows.
+    assert sorted(_col(conv_db, "conversations", "id", where="archived = 1")) == sorted(
+        [parent.id, child.id]
+    )
+    # The archive path does not resurrect metadata rows (archived is AP-side now).
+    assert _count(omnigent_db, "omnigent_conversation_metadata") == 0
+
+
+# ── Session-scoped agent cleanup on conversation delete ───────────────
+
+
+def test_delete_conversation_keeps_its_user_agent(
+    omnigent_db: Path,
+    conv_db: Path,
+    store: SqlAlchemyConversationStore,
+) -> None:
+    """Deleting a session never deletes the agent it used: agents outlive their
+    sessions and only an explicit agent removal deletes one."""
+    created = store.create_session_with_agent(
+        agent_id="d6f21846ee961735d477aae06247b99c",
+        agent_name="del-agent",
+        agent_bundle_location="d6f21846ee961735d477aae06247b99c/bundle",
+        agent_description=None,
+        title="del session",
+    )
+    assert _count(omnigent_db, "agents") == 1
+
+    asyncio.run(store.delete_conversation(created.conversation.id))
+    assert _col(omnigent_db, "agents", "id") == ["d6f21846ee961735d477aae06247b99c"]
+    assert _count(conv_db, "conversations") == 0
+
+
+def test_delete_conversation_keeps_template_agent(
+    omnigent_db: Path,
+    conv_db: Path,
+    store: SqlAlchemyConversationStore,
+) -> None:
+    """Template agents are shared; deleting a bound session must not delete them."""
+    from omnigent.stores.agent_store.sqlalchemy_store import SqlAlchemyAgentStore
+
+    agent_store = SqlAlchemyAgentStore(
+        f"sqlite:///{omnigent_db}",
+        f"sqlite:///{conv_db}",
+    )
+    template = agent_store.create(
+        "191cbf904e3223e9e00ac9a1abfe79a5",
+        "shared-template",
+        "191cbf904e3223e9e00ac9a1abfe79a5/bundle",
+    )
+    conv = store.create_conversation(title="uses template", agent_id=template.id)
+
+    asyncio.run(store.delete_conversation(conv.id))
+    assert _col(omnigent_db, "agents", "id") == ["191cbf904e3223e9e00ac9a1abfe79a5"]
+
+
+# ── ACL filters (split-DB prefetch fallback) ───────────
+#
+# In split-DB mode the session_permissions table lives on a different bind
+# than conversations, so the EXISTS pushdown is impossible; these verify the
+# id-prefetch fallback keeps ACL semantics identical.
+
+
+def _perms(omnigent_db: Path):
+    from omnigent.stores.permission_store.sqlalchemy_store import (
+        SqlAlchemyPermissionStore,
+    )
+
+    perms = SqlAlchemyPermissionStore(f"sqlite:///{omnigent_db}")
+    for user in ("alice@example.com", "bob@example.com"):
+        perms.ensure_user(user)
+    return perms
+
+
+def test_split_db_acl_filters_over_one_grant_graph(
+    omnigent_db: Path, store: SqlAlchemyConversationStore
+) -> None:
+    """
+    Split binds: every ACL filter, plus the statement shape, on one graph.
+
+    Four tests shared this setup and one of them could not observe its own
+    contract: using the same user for ``accessible_by`` and ``owned_by``
+    makes ownership imply accessibility, so the intersection is whatever
+    ``owned_by`` alone returns. The graph below gives the two operands
+    DIFFERENT users, so an intersection that ignored one of them changes the
+    answer.
+    """
+    from sqlalchemy import event
+
+    owned_by_alice = store.create_conversation(title="owned-by-alice")
+    shared_with_alice = store.create_conversation(title="shared-with-alice")
+    owned_by_bob = store.create_conversation(title="owned-by-bob")
+    # Alice can read it, Bob owns it — the only row in the intersection below.
+    alice_reads_bob_owns = store.create_conversation(title="alice-reads-bob-owns")
+
+    perms = _perms(omnigent_db)
+    perms.grant("alice@example.com", owned_by_alice.id, 4)
+    perms.grant("alice@example.com", shared_with_alice.id, 1)
+    perms.grant("bob@example.com", owned_by_bob.id, 4)
+    perms.grant("alice@example.com", alice_reads_bob_owns.id, 1)
+    perms.grant("bob@example.com", alice_reads_bob_owns.id, 4)
+
+    def _ids(**kwargs: object) -> set[str]:
+        return {c.id for c in store.list_conversations(**kwargs).data}  # type: ignore[arg-type]
+
+    # accessible_by: any grant level.
+    assert _ids(accessible_by="alice@example.com") == {
+        owned_by_alice.id,
+        shared_with_alice.id,
+        alice_reads_bob_owns.id,
+    }
+    # owned_by: owner level only — a read grant is not enough.
+    assert _ids(owned_by="alice@example.com") == {owned_by_alice.id}
+    # Both, with DIFFERENT users: alice can see it and bob owns it.
+    assert _ids(accessible_by="alice@example.com", owned_by="bob@example.com") == {
+        alice_reads_bob_owns.id
+    }
+    assert not _ids(accessible_by="nobody@example.com")
+
+    # Statement shape: split binds take the prefetch path, so a standalone
+    # session_permissions SELECT runs on the Omnigent engine and the AP
+    # conversations query carries no cross-bind EXISTS.
+    captured: dict[str, list[str]] = {"omnigent": [], "conv": []}
+
+    def _capture(key: str):
+        def _on_execute(conn, cursor, statement, parameters, context, executemany):
+            captured[key].append(statement)
+
+        return _on_execute
+
+    omni_listener = _capture("omnigent")
+    conv_listener = _capture("conv")
+    event.listen(store._engine, "before_cursor_execute", omni_listener)
+    event.listen(store._conv_engine, "before_cursor_execute", conv_listener)
+    try:
+        result = store.list_conversations(accessible_by="alice@example.com")
+    finally:
+        event.remove(store._engine, "before_cursor_execute", omni_listener)
+        event.remove(store._conv_engine, "before_cursor_execute", conv_listener)
+
+    assert len(result.data) == 3
+    prefetch = [
+        s
+        for s in captured["omnigent"]
+        if "session_permissions" in s and "FROM conversations" not in s
+    ]
+    assert prefetch, "expected a standalone session_permissions prefetch"
+    assert not any("session_permissions" in s for s in captured["conv"])
+
+
+def test_list_projects_acl_split_db_prefetch_fallback(
+    omnigent_db: Path, store: SqlAlchemyConversationStore
+) -> None:
+    """Split binds: list_projects keeps the id-prefetch ACL and scopes
+    projects to the caller's grants."""
+    mine = store.create_conversation(title="mine")
+    other = store.create_conversation(title="other")
+    read_only = store.create_conversation(title="read-only")
+    store.set_labels(mine.id, {"omni_project": "Mine"})
+    store.set_labels(other.id, {"omni_project": "Other"})
+    store.set_labels(read_only.id, {"omni_project": "ReadOnly"})
+    perms = _perms(omnigent_db)
+    perms.grant("alice@example.com", mine.id, 4)
+    perms.grant("bob@example.com", other.id, 4)
+    # Alice can read this project's session but does not own it.
+    perms.grant("alice@example.com", read_only.id, 1)
+
+    assert store.list_projects(accessible_by="alice@example.com") == ["Mine", "ReadOnly"]
+    assert store.list_projects(owned_by="bob@example.com") == ["Other"]
+    # owned_by must require owner level, not merely a grant: lowering the
+    # threshold here would add "ReadOnly".
+    assert store.list_projects(owned_by="alice@example.com") == ["Mine"]
+    assert store.list_projects(accessible_by="nobody@example.com") == []
+
+
+# ── Connection-checkout budget ─────────────────────────
+
+
+def test_get_conversation_takes_one_checkout_per_engine(
+    store: SqlAlchemyConversationStore,
+) -> None:
+    """Split-DB keeps two checkouts — one per engine — and still reads metadata.
+
+    The single-DB collapse comes from ``shared_read_scope``, which keys its
+    shared session by engine. Here the metadata table genuinely lives on another
+    engine, so its checkout cannot be shared away; what must not regress is the
+    routing (metadata still read from the Omnigent DB) or the per-engine budget.
+    """
+    from sqlalchemy import event
+
+    created = store.create_conversation(
+        title="split-budget",
+        runner_id="runner_split",
+        host_id="a6bfc420101272fcd5906a9eff904dfd",
+        workspace="/tmp/ws",
+    )
+
+    per_engine: dict[str, int] = {"conv": 0, "omnigent": 0}
+
+    def _mk(tag: str) -> Any:
+        def _on_checkout(_dbapi: object, _record: object, _proxy: object) -> None:
+            per_engine[tag] += 1
+
+        return _on_checkout
+
+    conv_hook, omni_hook = _mk("conv"), _mk("omnigent")
+    assert store._conv_engine is not store._engine, "fixture must be split-DB"
+    event.listen(store._conv_engine, "checkout", conv_hook)
+    event.listen(store._engine, "checkout", omni_hook)
+    try:
+        conv = store.get_conversation(created.id)
+    finally:
+        event.remove(store._conv_engine, "checkout", conv_hook)
+        event.remove(store._engine, "checkout", omni_hook)
+
+    assert per_engine == {"conv": 1, "omnigent": 1}, per_engine
+    assert conv is not None
+    assert conv.title == "split-budget"
+    assert (conv.runner_id, conv.host_id) == (
+        "runner_split",
+        "a6bfc420101272fcd5906a9eff904dfd",
+    )
+
+
+@pytest.mark.parametrize("single_database", [False, True])
+@pytest.mark.parametrize(
+    "superseded",
+    [
+        None,
+        "input",
+        "skill",
+        "authored-meta",
+        "synthetic-meta",
+        "command",
+        "stop",
+        "runner",
+        "host",
+        "approval",
+        "archive",
+    ],
+)
+def test_recovery_admission_checks_input_and_binding(
+    store: SqlAlchemyConversationStore,
+    omnigent_db: Path,
+    single_database: bool,
+    superseded: str | None,
+) -> None:
+    from dataclasses import replace
+
+    from omnigent.db.db_models import workspace_scope
+    from omnigent.entities import MessageData, NewConversationItem, SlashCommandData
+    from omnigent.session_recovery import SessionRecovery
+
+    if single_database:
+        store = SqlAlchemyConversationStore(f"sqlite:///{omnigent_db}")
+    conv = store.create_conversation(host_id="a" * 32, runner_id="runner", workspace="/restored")
+    intent = SessionRecovery(
+        conv.host_id,
+        conv.runner_id,
+        100,
+        phase="dispatching",
+        attempt_id="attempt",
+        launch_runner_id=conv.runner_id,
+    )
+    assert store.replace_session_recovery(conv.id, None, intent)
+    if superseded in {"input", "authored-meta", "synthetic-meta"}:
+        store.append(
+            conv.id,
+            [
+                NewConversationItem(
+                    response_id="user",
+                    type="message",
+                    data=MessageData(
+                        role="user",
+                        content=[{"type": "input_text", "text": "New work"}],
+                        is_meta=superseded != "input",
+                        user_authored=superseded == "authored-meta",
+                    ),
+                )
+            ],
+        )
+    elif superseded in {"skill", "command"}:
+        store.append(
+            conv.id,
+            [
+                NewConversationItem(
+                    response_id="user",
+                    type="slash_command",
+                    data=SlashCommandData(
+                        agent="test", kind=superseded, name="inspect", arguments=""
+                    ),
+                )
+            ],
+        )
+    elif superseded == "stop":
+        assert store.replace_session_recovery(conv.id, intent, replace(intent, phase="stopped"))
+    elif superseded == "runner":
+        store.replace_runner_id(conv.id, "replacement")
+    elif superseded == "host":
+        store.set_host_id(conv.id, "b" * 32, workspace="/restored")
+    elif superseded == "approval":
+        store.set_pending_elicitation_count(conv.id, 1)
+    elif superseded == "archive":
+        store.update_conversation(conv.id, archived=True)
+    with workspace_scope(42):
+        assert not store.admit_session_recovery(conv.id, intent)
+    assert store.admit_session_recovery(conv.id, intent) is (
+        superseded in {None, "synthetic-meta", "command"}
+    )
+
+
+@pytest.mark.parametrize("legacy_counter", [False, True])
+def test_recovery_state_shares_input_transaction_and_workspace_scope(
+    store: SqlAlchemyConversationStore, conv_db: Path, legacy_counter: bool
+) -> None:
+    from dataclasses import fields
+
+    from sqlalchemy import event
+
+    from omnigent.db.db_models import workspace_scope
+    from omnigent.entities import MessageData, NewConversationItem
+    from omnigent.session_recovery import SessionRecovery
+
+    conv = store.create_conversation(
+        host_id="a" * 32,
+        runner_id="old",
+        workspace="/restored",
+        labels={f"custom.{index}": "value" for index in range(100)},
+    )
+    intent = SessionRecovery("a" * 32, "old", 100)
+    if legacy_counter:
+        from omnigent.db.db_models import SqlConversation
+
+        with store._conv_session("seed_legacy_counter") as session:
+            session.get(SqlConversation, (0, conv.id)).next_position = None
+    snapshot = store.get_conversation(conv.id)
+    tables = _tables(conv_db)
+    assert store.replace_session_recovery(conv.id, None, intent, expected_conversation=snapshot)
+    assert _tables(conv_db) == tables
+    assert "session_recovery" not in tables
+    assert _count(conv_db, "conversation_labels") > 0
+    with workspace_scope(42):
+        assert store.get_session_recovery(conv.id) is None
+        assert not store.replace_session_recovery(conv.id, None, intent)
+    statements: list[tuple[str, Any]] = []
+
+    def capture(_conn, _cursor, statement, parameters, _context, _many):
+        if "FROM conversation_labels" in statement:
+            statements.append((statement, parameters))
+
+    event.listen(store._conv_engine, "before_cursor_execute", capture)
+    try:
+        store.append(
+            conv.id,
+            [
+                NewConversationItem(
+                    response_id="user",
+                    type="message",
+                    data=MessageData(
+                        role="user", content=[{"type": "input_text", "text": "new work"}]
+                    ),
+                )
+            ],
+        )
+    finally:
+        event.remove(store._conv_engine, "before_cursor_execute", capture)
+    assert len(statements) == 2  # Recovery read and cancellation delete.
+    with store._conv_engine.connect() as connection:
+        for statement, parameters in statements:
+            plan = " ".join(
+                str(row[-1])
+                for row in connection.exec_driver_sql(
+                    "EXPLAIN QUERY PLAN " + statement, parameters
+                )
+            )
+            assert "(workspace_id=? AND conversation_id=? AND key=?)" in plan, plan
+            assert len(parameters) == 2 + len(fields(SessionRecovery))
+    assert store.get_session_recovery(conv.id) is None
+    assert not store.replace_session_recovery(
+        conv.id, None, intent, expected_conversation=snapshot
+    )
+    assert not store.replace_session_recovery(conv.id, intent, None)
+    assert store.replace_session_recovery(conv.id, None, intent)
+    asyncio.run(store.delete_conversation(conv.id))
+    assert _count(conv_db, "conversation_labels") == 0
+
+
+@pytest.mark.parametrize(
+    "code", [None, "runner_disconnected", "runner_interrupted", "session_recovery_failed", ""]
+)
+def test_session_interruption_time_uses_error_label_timestamp_and_workspace_scope(
+    store: SqlAlchemyConversationStore, code: str | None
+) -> None:
+    from sqlalchemy import event
+
+    from omnigent.db.db_models import workspace_scope
+
+    conv = store.create_conversation()
+    if code is not None:
+        store.set_labels(conv.id, {"omnigent.last_task_error_code": code}, updated_at=100)
+    store.set_labels(conv.id, {"unrelated": "newer"}, updated_at=200)
+    statements: list[tuple[str, Any]] = []
+
+    def capture(_conn, _cursor, statement, parameters, _context, _many):
+        if statement.lstrip().startswith("SELECT"):
+            statements.append((statement, parameters))
+
+    event.listen(store._conv_engine, "before_cursor_execute", capture)
+    try:
+        assert store.get_session_interruption_time(conv.id) == (
+            100 if code in {"runner_disconnected", "runner_interrupted"} else None
+        )
+    finally:
+        event.remove(store._conv_engine, "before_cursor_execute", capture)
+    assert len(statements) == 1
+    statement, parameters = statements[0]
+    assert len(parameters) == 3
+    with store._conv_engine.connect() as connection:
+        plan = " ".join(
+            str(row[-1])
+            for row in connection.exec_driver_sql("EXPLAIN QUERY PLAN " + statement, parameters)
+        )
+    assert "(workspace_id=? AND conversation_id=? AND key=?)" in plan, plan
+    with workspace_scope(42):
+        assert store.get_session_interruption_time(conv.id) is None
+        other = store.create_conversation(conversation_id=conv.id)
+        store.set_labels(
+            other.id, {"omnigent.last_task_error_code": "runner_interrupted"}, updated_at=300
+        )
+        assert store.get_session_interruption_time(conv.id) == 300
+    assert store.get_session_interruption_time(conv.id) == (
+        100 if code in {"runner_disconnected", "runner_interrupted"} else None
+    )
+    assert store.get_session_interruption_time("0" * 32) is None
+
+
+def test_recovery_labels_are_private_and_cannot_be_overwritten_or_forked(
+    store: SqlAlchemyConversationStore, conv_db: Path
+) -> None:
+    from dataclasses import replace
+
+    from omnigent.errors import OmnigentError
+    from omnigent.session_recovery import RECOVERY_LABEL_PREFIX, SessionRecovery
+
+    conv = store.create_conversation(labels={"team": "platform"})
+    intent = SessionRecovery(
+        "a" * 64, "b" * 64, 100, attempt_id="c" * 64, attempts=3, launch_runner_id="replacement"
+    )
+    assert store.replace_session_recovery(conv.id, None, intent)
+    with sqlite3.connect(conv_db) as connection:
+        connection.execute(
+            "INSERT INTO conversation_labels "
+            "(workspace_id, conversation_id, key, value, updated_at) "
+            "VALUES (0, ?, ?, 'private', 100)",
+            (bytes.fromhex(conv.id), RECOVERY_LABEL_PREFIX + "future"),
+        )
+    assert store.get_session_recovery(conv.id) == intent
+    assert store.get_conversation(conv.id).labels == {"team": "platform"}
+    assert store.list_conversations().data[0].labels == {"team": "platform"}
+    fork = store.fork_conversation(conv.id)
+    assert store.get_session_recovery(fork.id) is None
+
+    for key in (RECOVERY_LABEL_PREFIX + "attempts", (RECOVERY_LABEL_PREFIX + "attempts").upper()):
+        with pytest.raises(OmnigentError, match="server-internal"):
+            store.create_conversation(labels={key: "0"})
+        with pytest.raises(OmnigentError, match="server-internal"):
+            store.set_labels(conv.id, {"team": "forged", key: "0"})
+        with pytest.raises(OmnigentError, match="server-internal"):
+            store.delete_label(conv.id, key)
+    with pytest.raises(ValueError, match="storage limit"):
+        store.replace_session_recovery(conv.id, intent, replace(intent, runner_id="x" * 256))
+    assert store.get_session_recovery(conv.id) == intent
+    assert store.get_conversation(conv.id).labels == {"team": "platform"}
+    assert max(map(len, _col(conv_db, "conversation_labels", "value"))) <= 256
+    assert store.replace_session_recovery(conv.id, intent, None)
+    assert store.get_session_recovery(conv.id) is None
+    assert RECOVERY_LABEL_PREFIX + "future" in _col(conv_db, "conversation_labels", "key")
+    assert store.get_conversation(conv.id).labels == {"team": "platform"}
+
+
+@pytest.mark.parametrize(
+    ("phase", "attempt_id", "user_authored", "expected_meta"),
+    [
+        (None, None, False, False),
+        ("pending", "attempt", False, False),
+        ("launching", "attempt", False, False),
+        ("dispatching", None, False, False),
+        ("dispatching", "attempt", False, True),
+        ("submitted", "attempt", False, True),
+        ("stopped", "attempt", False, True),
+        ("failed", "attempt", False, True),
+        ("dispatching", "attempt", True, False),
+    ],
+)
+@pytest.mark.parametrize("custom_prompt", [False, True])
+def test_recovery_notice_requires_a_dispatched_attempt(
+    store: SqlAlchemyConversationStore,
+    phase: Any,
+    attempt_id: str | None,
+    user_authored: bool,
+    expected_meta: bool,
+    custom_prompt: bool,
+) -> None:
+    from omnigent.entities import MessageData, NewConversationItem
+    from omnigent.session_recovery import RECOVERY_NOTICE, RECOVERY_PROMPT, SessionRecovery
+
+    conv = store.create_conversation()
+    state = (
+        SessionRecovery("a" * 32, "runner", 100, phase=phase, attempts=1, attempt_id=attempt_id)
+        if phase is not None
+        else None
+    )
+    if state is not None:
+        assert store.replace_session_recovery(conv.id, None, state)
+    notice = (
+        f"{RECOVERY_NOTICE}\nContinue from the checkpoint." if custom_prompt else RECOVERY_PROMPT
+    )
+    item = NewConversationItem(
+        response_id="native",
+        type="message",
+        data=MessageData(
+            role="user",
+            user_authored=user_authored,
+            content=[{"type": "input_text", "text": notice}],
+        ),
+    )
+    [persisted] = store.append(conv.id, [item])
+    assert persisted.data.is_meta is expected_meta
+    assert item.data.is_meta is False
+    assert store.list_items(conv.id).data == [persisted]
+    assert store.get_session_recovery(conv.id) == (state if expected_meta else None)
+
+
+@pytest.mark.parametrize("input_first", [False, True])
+def test_input_in_the_same_batch_supersedes_later_native_recovery_echoes(
+    store: SqlAlchemyConversationStore, input_first: bool
+) -> None:
+    from omnigent.entities import MessageData, NewConversationItem
+    from omnigent.session_recovery import RECOVERY_PROMPT, SessionRecovery
+
+    conv = store.create_conversation()
+    state = SessionRecovery(
+        "a" * 32, "runner", 100, phase="dispatching", attempts=1, attempt_id="attempt"
+    )
+    assert store.replace_session_recovery(conv.id, None, state)
+    texts = ["New task", RECOVERY_PROMPT] if input_first else [RECOVERY_PROMPT, "New task"]
+    persisted = store.append(
+        conv.id,
+        [
+            NewConversationItem(
+                response_id="native",
+                type="message",
+                data=MessageData(role="user", content=[{"type": "input_text", "text": text}]),
+            )
+            for text in texts
+        ],
+    )
+    assert [item.data.is_meta for item in persisted] == (
+        [False, False] if input_first else [True, False]
+    )
+    assert store.get_session_recovery(conv.id) is None
+
+
+@pytest.mark.parametrize("value", ["legacy text", '"pending"'])
+def test_legacy_recovery_labels_do_not_block_new_input(
+    store: SqlAlchemyConversationStore, conv_db: Path, value: str
+) -> None:
+    from omnigent.entities import MessageData, NewConversationItem
+
+    conv = store.create_conversation()
+    with sqlite3.connect(conv_db) as connection:
+        connection.execute(
+            "INSERT INTO conversation_labels "
+            "(workspace_id, conversation_id, key, value, updated_at) VALUES (0, ?, ?, ?, 100)",
+            (bytes.fromhex(conv.id), "omnigent.recovery.phase", value),
+        )
+    assert store.get_session_recovery(conv.id) is None
+    [item] = store.append(
+        conv.id,
+        [
+            NewConversationItem(
+                response_id="user",
+                type="message",
+                data=MessageData(
+                    role="user", content=[{"type": "input_text", "text": "new work"}]
+                ),
+            )
+        ],
+    )
+    assert store.list_items(conv.id).data == [item]
+
+
+def test_failed_input_does_not_cancel_recovery(
+    store: SqlAlchemyConversationStore, conv_db: Path
+) -> None:
+    from sqlalchemy.exc import IntegrityError
+
+    from omnigent.entities import MessageData, NewConversationItem
+    from omnigent.session_recovery import SessionRecovery
+
+    conv = store.create_conversation()
+    intent = SessionRecovery("a" * 32, "old", 100)
+    assert store.replace_session_recovery(conv.id, None, intent)
+    with sqlite3.connect(conv_db) as connection:
+        connection.execute(
+            "CREATE TRIGGER refuse_input BEFORE INSERT ON conversation_items "
+            "BEGIN SELECT RAISE(ABORT, 'input refused'); END"
+        )
+    with pytest.raises(IntegrityError, match="input refused"):
+        store.append(
+            conv.id,
+            [
+                NewConversationItem(
+                    response_id="user",
+                    type="message",
+                    data=MessageData(
+                        role="user", content=[{"type": "input_text", "text": "new work"}]
+                    ),
+                )
+            ],
+        )
+    assert store.get_session_recovery(conv.id) == intent
+
+
+def test_turn_completion_fences_recovery_in_the_input_database(
+    store: SqlAlchemyConversationStore,
+) -> None:
+    from omnigent.entities import MessageData, NewConversationItem
+    from omnigent.server.host_session_recovery import _record_interruption, record_turn
+
+    conv = store.create_conversation(host_id="a" * 32, workspace="/workspace", runner_id="runner")
+    store.set_session_live_status(conv.id, "running")
+    record_turn(store, conv.id, "runner", "first", finished=False)
+    snapshot = store.get_conversation(conv.id)
+    record_turn(store, conv.id, "runner", "first", finished=True)
+    _record_interruption(store, snapshot, interrupted_at=100)
+    assert store.get_session_recovery(conv.id).phase == "stopped"
+    store.append(
+        conv.id,
+        [
+            NewConversationItem(
+                response_id="user",
+                type="message",
+                data=MessageData(
+                    role="user", content=[{"type": "input_text", "text": "New task"}]
+                ),
+            )
+        ],
+    )
+    record_turn(store, conv.id, "runner", "second", finished=False)
+    record_turn(store, conv.id, "runner", "first", finished=True)
+    assert store.get_session_recovery(conv.id).response_id == "second"
+    assert store.get_session_recovery(conv.id).phase == "active"
+
+
+@pytest.mark.parametrize("user_authored", [False, True])
+def test_interruption_notice_preserves_stop_fence(
+    store: SqlAlchemyConversationStore, user_authored: bool
+) -> None:
+    from omnigent.entities import MessageData, NewConversationItem
+    from omnigent.inner.executor import INTERRUPTION_MARKER_TEXT
+    from omnigent.session_recovery import SessionRecovery
+
+    conv = store.create_conversation(host_id="a" * 32, workspace="/workspace", runner_id="runner")
+    state = SessionRecovery("a" * 32, "runner", 100, phase="stopped", response_id="turn")
+    assert store.replace_session_recovery(conv.id, None, state)
+    store.append(
+        conv.id,
+        [
+            NewConversationItem(
+                type="message",
+                response_id="cancel",
+                data=MessageData(
+                    role="user",
+                    user_authored=user_authored,
+                    content=[{"type": "input_text", "text": INTERRUPTION_MARKER_TEXT}],
+                ),
+            )
+        ],
+    )
+    assert store.get_session_recovery(conv.id) == (None if user_authored else state)

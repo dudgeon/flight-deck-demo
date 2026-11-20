@@ -1,0 +1,95 @@
+// Platform-aware command-modifier detection shared by every global hotkey hook.
+//
+// On Apple platforms the command modifier is ⌘ (metaKey); everywhere else it's
+// Ctrl. Detecting the platform — instead of accepting `metaKey || ctrlKey` on
+// all platforms — keeps each shortcut "what you see is what you get": the
+// shortcuts dialog shows ⌘K on macOS, so only ⌘K fires there, leaving the
+// Ctrl-based emacs/readline bindings (Ctrl+K, Ctrl+A, …) that users rely on in
+// the composer untouched. On Windows/Linux the dialog shows Ctrl and only Ctrl
+// fires.
+
+/** True on Apple platforms (⌘ is the command modifier); false elsewhere (Ctrl). */
+export function isMacPlatform(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const uaData = (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData;
+  const platform = uaData?.platform ?? navigator.platform ?? navigator.userAgent ?? "";
+  return /Mac|iPhone|iPad|iPod/i.test(platform);
+}
+
+/**
+ * True when the platform's command modifier is held *exclusively*: ⌘ (and not
+ * Ctrl) on macOS, Ctrl (and not ⌘) elsewhere. Callers layer Alt/Shift on top.
+ *
+ * Rejecting the opposite modifier matters on macOS: Ctrl+K there is a real
+ * text-editing binding (kill-to-end-of-line), so treating Ctrl as a ⌘ stand-in
+ * would swallow it. `isMac` is injectable so hooks and tests can pin a platform.
+ */
+export function hasCommandModifier(
+  e: Pick<globalThis.KeyboardEvent, "metaKey" | "ctrlKey">,
+  isMac: boolean = isMacPlatform(),
+): boolean {
+  return isMac ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey;
+}
+
+/** True while keyboard focus is in a dialog or menu, which keeps its own keys. */
+export function isFocusInDialogOrMenu(): boolean {
+  return !!document.activeElement?.closest('[role="dialog"], [role="alertdialog"], [role="menu"]');
+}
+
+/**
+ * Marks a dialog that shows a workspace sidebar over a narrow page: its tabs keep their
+ * Close, Reopen and Previous/Next keys, which other dialogs keep from the page behind.
+ */
+export const WORKSPACE_SHEET_ATTRIBUTE = "data-workspace-sheet";
+
+/** A dialog or menu that keeps the workspace tabs' keys: any but a workspace sheet. */
+export const TAB_KEY_OWNING_DIALOG_OR_MENU = `[role="dialog"]:not([${WORKSPACE_SHEET_ATTRIBUTE}]), [role="alertdialog"], [role="menu"]`;
+
+// Open surfaces that keep the keys even while focus stays outside them: a fullscreen
+// table or diagram, and the composer's model/effort preview.
+const KEY_OWNING_OVERLAYS = "[aria-modal='true'], [data-fullscreen-overlay], [data-cycle-preview]";
+
+/**
+ * Whether such a surface is open, so page-wide shortcuts leave its keys alone.
+ * @param owner An element whose own enclosing overlay doesn't count (a form inside a dialog).
+ */
+export function isKeyOwningOverlayOpen(owner?: Element | null): boolean {
+  const overlays = document.querySelectorAll(KEY_OWNING_OVERLAYS);
+  return [...overlays].some((overlay) => !owner || !overlay.contains(owner));
+}
+
+// Popovers and hover cards can open without taking focus; they and open selects close on Escape.
+const ESCAPE_OWNERS =
+  "[data-escape-owner], [data-slot='popover-content'][data-state='open'], [data-slot='hover-card-content'][data-state='open'], [data-slot='select-content'][data-state='open']";
+
+/**
+ * Whether something that closes on Escape itself is open: one marked `data-escape-owner`
+ * (the Files, Execution Logs or Terminals panel, a table of contents, or dictation), or a
+ * popover or hover card. It takes Escape first, wherever focus is.
+ */
+export function isEscapeOwnerOpen(): boolean {
+  // A collapsed workspace rail keeps its panels mounted but inert; those don't count.
+  return Array.from(document.querySelectorAll(ESCAPE_OWNERS)).some(
+    (owner) => owner.closest("[inert]") === null,
+  );
+}
+
+// Input types that take a click or a choice rather than typed text.
+const NON_TEXT_INPUT_TYPES = new Set([
+  "button",
+  "checkbox",
+  "color",
+  "file",
+  "image",
+  "radio",
+  "range",
+  "reset",
+  "submit",
+]);
+
+/** Whether the target takes typed text, so keys such as digits and Escape belong to it. */
+export function isTextEntry(target: HTMLElement): boolean {
+  if (target instanceof HTMLTextAreaElement) return true;
+  if (target instanceof HTMLInputElement) return !NON_TEXT_INPUT_TYPES.has(target.type);
+  return target.closest("[contenteditable]:not([contenteditable='false'])") !== null;
+}

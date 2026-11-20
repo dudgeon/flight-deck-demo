@@ -1,0 +1,623 @@
+"""Best-effort persistence of per-session live state to the conversations table.
+
+The sidebar's live fields — ``runner_online``, turn ``status``, the
+pending-approval count, the background-shell flag, and the parked reason —
+were historically served from in-memory caches
+that exist only on the server replica holding a session's runner tunnel
+(the tunnel registry, the SSE-relay status cache, and the
+pending-elicitations index). Under host_id replica sharding a session
+list / ``WS /v1/sessions/updates`` request can land on any replica, so
+those fields must also live somewhere every replica can read: the
+``conversations`` row (regional DB).
+
+This module is the single write chokepoint. The in-memory caches remain
+the synchronous source on the tunnel-holding replica; every cache write
+also enqueues a row write here. Writes are:
+
+- **best-effort** — a failed write logs and is dropped; live state is
+  display state, and the next transition rewrites it. A dropped write
+  also evicts its dedupe entry, so the next *identical* publish is not
+  swallowed and gets a fresh attempt (see :func:`_submit`).
+- **ordered** — a single-worker executor serializes writes, so a
+  ``running`` → ``idle`` pair can never apply out of order.
+- **off the event loop** — the store is synchronous SQLAlchemy; callers
+  (the SSE relay, the tunnel handlers, the pub-sub hot path) only pay a
+  dict check and a queue put. The write runs in a copy of the caller's
+  ``contextvars`` (see :func:`_submit`) so the per-request
+  ``workspace_scope`` — which every store query filters on — reaches the
+  worker thread; a bare executor would run at the default workspace and
+  every ``WHERE workspace_id == …`` would match no rows on a multi-tenant
+  replica.
+- **deduplicated** — re-publishing an unchanged status / count is a
+  no-op, so chatty relays don't turn into row churn.
+
+No-op until :func:`configure` wires a store (the server app does this at
+startup); the runner process and unit tests that never configure it are
+unaffected.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import contextvars
+import functools
+import logging
+import threading
+import time
+from collections.abc import Callable
+from concurrent.futures import Future, ThreadPoolExecutor
+from typing import TYPE_CHECKING, Any
+
+from omnigent.db.enum_codecs import SESSION_LIVE_STATUS
+from omnigent.db.workspace_cache import WorkspaceScopedCache
+from omnigent.stores.conversation_store import (
+    SCHEDULED_TASK_ACTIVITY_LABEL_KEY,
+    SCHEDULED_TASK_RUN_LABEL_KEY,
+)
+
+if TYPE_CHECKING:
+    from omnigent.server.host_session_recovery import HostSessionRecoverer
+    from omnigent.stores import ConversationStore
+    from omnigent.stores.scheduled_task_store import ScheduledTaskStore
+
+_logger = logging.getLogger(__name__)
+
+# Statuses the live-status codec can encode. Derived from the codec's own
+# map so the two never drift. ``SessionStatusEvent.status`` additionally
+# permits ``"launching"`` (runner-local sub-agent bookkeeping that never
+# rides as an external ``session.status`` today), which the codec can't
+# encode — see ``persist_live_status``.
+_KNOWN_LIVE_STATUSES: frozenset[str] = frozenset(SESSION_LIVE_STATUS)
+
+_store: ConversationStore | None = None
+_host_session_recoverer: HostSessionRecoverer | None = None
+# Scheduled-task store for the event-driven run-completion hook. Wired
+# alongside ``_store`` by :func:`configure`; ``None`` disables the hook (the
+# runner process and unit tests that never configure it are unaffected).
+_scheduled_task_store: ScheduledTaskStore | None = None
+# Single worker => writes apply in submission order (see module docstring).
+_executor: ThreadPoolExecutor | None = None
+# Last status seen per session, for dedupe — the value whose write was
+# enqueued, or (for an unencodable status) the value whose warning was
+# already logged, so repeats of either are suppressed. Unbounded like the
+# in-memory caches these writes mirror; entries live for the process.
+_last_status: WorkspaceScopedCache[str, str] = WorkspaceScopedCache()
+# Last count persisted per session, for dedupe.
+_last_pending: WorkspaceScopedCache[str, int] = WorkspaceScopedCache()
+# Last parked reason persisted per session (``""`` = not parked), for dedupe.
+_last_blocked_on: WorkspaceScopedCache[str, str] = WorkspaceScopedCache()
+# Handoffs to another replica per session. A write queued before a handoff sees
+# the count change and is skipped, so it cannot overwrite the new owner's value.
+_handoffs: WorkspaceScopedCache[str, int] = WorkspaceScopedCache()
+# Only active children are indexed; run pages never enumerate a parent's history.
+_active_child_parents: WorkspaceScopedCache[str, str] = WorkspaceScopedCache()
+_active_child_counts: WorkspaceScopedCache[str, int] = WorkspaceScopedCache()
+_child_activity_lock = threading.Lock()
+# This process's own last touch_runner_liveness() stamp per runner id.
+# Never erased by clear_runner_liveness — only configure() resets it.
+# custom-lint: disable-next=workspace-scoped-cache -- keyed by globally-unique runner_id
+_last_liveness_stamp: dict[str, int] = {}
+
+
+def configure(
+    store: ConversationStore | None,
+    scheduled_task_store: ScheduledTaskStore | None = None,
+    *,
+    host_session_recoverer: HostSessionRecoverer | None = None,
+) -> None:
+    """
+    Wire (or clear) the stores live-state writes go to.
+
+    :param store: The server's conversation store, or ``None`` to
+        disable persistence (tests / non-server processes).
+    :param scheduled_task_store: The server's scheduled-task store, enabling
+        the event-driven run-completion hook
+        (:func:`persist_scheduled_run_completion`); ``None`` disables it.
+    :param host_session_recoverer: Configured recovery integration; ``None`` keeps
+        recovery lifecycle writes disabled.
+    """
+    global _store, _scheduled_task_store, _host_session_recoverer
+    _store = store
+    _host_session_recoverer = host_session_recoverer
+    _scheduled_task_store = scheduled_task_store
+    _last_status.clear()
+    _last_pending.clear()
+    _last_blocked_on.clear()
+    _handoffs.clear()
+    _last_liveness_stamp.clear()
+    with _child_activity_lock:
+        _active_child_parents.clear()
+        _active_child_counts.clear()
+
+
+def record_recovery_turn(
+    store: ConversationStore,
+    session_id: str,
+    runner_id: str | None,
+    response_id: str | None,
+    *,
+    finished: bool,
+) -> None:
+    """Persist lifecycle fences only for an explicitly configured recovery integration."""
+    if _host_session_recoverer is not None and _host_session_recoverer.store is store:
+        from omnigent.server.routes.sessions import _is_native_terminal_session
+
+        conv = store.get_conversation(session_id)
+        # Native response frames acknowledge delivery; external status owns the turn.
+        if conv is not None and _is_native_terminal_session(conv):
+            return
+        _host_session_recoverer.record_turn(session_id, runner_id, response_id, finished=finished)
+
+
+def _remove_active_child(session_id: str) -> None:
+    """Caller holds the activity lock."""
+    parent_id = _active_child_parents.pop(session_id, None)
+    if parent_id is not None:
+        remaining = _active_child_counts[parent_id] - 1
+        if remaining:
+            _active_child_counts[parent_id] = remaining
+        else:
+            _active_child_counts.pop(parent_id, None)
+
+
+def record_child_status(
+    session_id: str, parent_id: str | None, status: str | None, *, handoffs: int
+) -> None:
+    """Maintain this replica's live-child rollup from ordered status events."""
+    with _child_activity_lock:
+        if handoff_count(session_id) != handoffs:
+            return
+        _remove_active_child(session_id)
+        if parent_id is not None and status in ("running", "waiting"):
+            _active_child_parents[session_id] = parent_id
+            _active_child_counts[parent_id] = _active_child_counts.get(parent_id, 0) + 1
+
+
+def has_active_child(parent_id: str) -> bool:
+    """Whether this replica observes a running or waiting direct child."""
+    with _child_activity_lock:
+        return _active_child_counts.get(parent_id, 0) > 0
+
+
+def conversation_store() -> ConversationStore | None:
+    """
+    Return the conversation store wired by :func:`configure`.
+
+    :returns: The server's conversation store, or ``None`` when live-state
+        persistence is disabled (tests / non-server processes).
+    """
+    return _store
+
+
+def submit(description: str, fn, *args, on_failure=None) -> Future[Any]:  # type: ignore[no-untyped-def]
+    """
+    Run one store-backed task on the ordered background worker.
+
+    The task runs inside a snapshot of the *caller's* ``contextvars``
+    (``copy_context().run``). The store filters every query on
+    ``current_workspace_id()``, a ``ContextVar`` the multi-tenant request
+    middleware binds per request via ``workspace_scope``; a bare
+    ``ThreadPoolExecutor.submit`` would run the write at the default
+    workspace (0), so on a multi-tenant replica every
+    ``UPDATE ... WHERE workspace_id == …`` would match no rows and the
+    whole cross-replica mirror would silently no-op. Copying the context
+    is the same thing ``asyncio.to_thread`` (used on the read path) does.
+
+    :param description: Log label on failure, e.g. ``"live_status"``.
+    :param fn: The store method to call.
+    :param args: Arguments for *fn*.
+    :param on_failure: Optional zero-arg callback run (on the worker
+        thread) when the write raises. Used to evict a dedupe entry so a
+        dropped write's value can be re-attempted by the next identical
+        publish instead of being swallowed.
+    :returns: Future containing the result, or ``None`` after a logged write failure.
+    """
+    global _executor
+    if _executor is None:
+        _executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="session-live-state")
+
+    ctx = contextvars.copy_context()
+
+    def _run() -> Any:
+        try:
+            return fn(*args)
+        except Exception:  # best-effort display state
+            _logger.warning("session live-state write failed (%s)", description, exc_info=True)
+            if on_failure is not None:
+                on_failure()
+
+    return _executor.submit(ctx.run, _run)
+
+
+def persist_live_status(session_id: str, status: str) -> None:
+    """
+    Persist a relay-observed turn status transition.
+
+    Called wherever ``_session_status_cache`` is written. Deduplicated:
+    only an actual transition reaches the database.
+
+    :param session_id: Session/conversation identifier.
+    :param status: One of ``idle`` / ``running`` / ``waiting`` / ``failed``.
+    """
+    if _store is None:
+        return
+    if status not in ("running", "waiting"):
+        record_child_status(session_id, None, status, handoffs=handoff_count(session_id))
+    if status not in _KNOWN_LIVE_STATUSES:
+        # ``SessionStatusEvent.status`` permits values the live-status codec
+        # can't encode (``"launching"``), and the relay forwards raw event
+        # statuses. Drop unknown values here rather than at the store: the
+        # encode would raise, and the best-effort ``_evict`` on that failure
+        # would clear the dedupe entry, so every republish would re-attempt
+        # and re-log. Warn once (this transition is deduped away) and skip.
+        if _last_status.get(session_id) != status:
+            _logger.warning(
+                "session live-state: skipping unencodable status %r for %s",
+                status,
+                session_id,
+            )
+        _last_status[session_id] = status
+        return
+    if _last_status.get(session_id) == status:
+        return
+    _last_status[session_id] = status
+
+    def _evict() -> None:
+        # A dropped write must not leave the dedupe cache asserting this
+        # value reached the DB — otherwise a later identical publish is
+        # swallowed and the row stays stale until a *different* status
+        # arrives. Evict only if we still own the entry (a newer publish
+        # may have overwritten it, and its write is the live one).
+        if _last_status.get(session_id) == status:
+            _last_status.pop(session_id, None)
+
+    submit("live_status", _store.set_session_live_status, session_id, status, on_failure=_evict)
+
+
+def handoff_count(session_id: str) -> int:
+    """
+    Return how often this replica has handed *session_id* to another one.
+
+    :param session_id: Session/conversation identifier, e.g. ``"conv_abc123"``.
+    :returns: The count, compared later to tell whether a handoff happened since.
+    """
+    return _handoffs.get(session_id, 0)
+
+
+def _submit_while_owned(
+    session_id: str,
+    description: str,
+    fn: Callable[..., object],
+    *args: object,
+    on_failure: Callable[[], None] | None = None,
+    handoffs: int | None = None,
+) -> Future[Any]:
+    """
+    Queue a write that is skipped if *session_id* is handed off before it runs.
+
+    :param handoffs: :func:`handoff_count` when the write's request began; a
+        handoff since then also skips it. ``None`` uses the count at queue time.
+    :returns: Future of ``True`` once the write ran, or of ``None`` when it was
+        skipped or failed.
+    """
+    if handoffs is None:
+        handoffs = _handoffs.get(session_id, 0)
+
+    def _write() -> bool | None:
+        if _handoffs.get(session_id, 0) != handoffs:
+            return None
+        fn(*args)
+        return True
+
+    return submit(description, _write, on_failure=on_failure)
+
+
+def forget_live_status(session_id: str) -> None:
+    """Drop this process's dedupe state and queued writes for a session handed off."""
+    with _child_activity_lock:
+        _handoffs[session_id] = _handoffs.get(session_id, 0) + 1
+        _remove_active_child(session_id)
+    _last_status.pop(session_id, None)
+    _last_blocked_on.pop(session_id, None)
+
+
+def persist_scheduled_run_completion(
+    conversation_id: str,
+    run_status: str,
+    *,
+    turn_completed: bool = False,
+    error_code: str | None = None,
+    error: str | None = None,
+) -> None:
+    """Transition a scheduled-task run to terminal when its turn ends.
+
+    The event-driven completion mechanism: called from ``_publish_status``
+    wherever a session reaches a durable terminal edge (``idle`` = the turn
+    completed, ``failed`` = it errored/disconnected). Most conversations are
+    not scheduled-task fires, so the reverse lookup returns ``None`` and this
+    is a cheap no-op; only a fired conversation with a still-``running`` run
+    gets transitioned.
+
+    Runs on the SAME ordered single-worker executor as
+    :func:`persist_live_status`, inside a copy of the caller's ``contextvars``
+    (see :func:`_submit`). This is load-bearing: the store filters every query
+    on ``current_workspace_id()``, and the reverse lookup + ``update_run`` must
+    resolve to the fired run's workspace — the relay call site's
+    ``workspace_scope`` reaches the worker thread exactly as it does for the
+    ``live_status`` mirror. A bare executor would run at workspace 0 and match
+    no rows on a multi-tenant replica.
+
+    A confirmed turn completion can precede transcript mirroring. Other idle
+    edges require agent activity: Claude Code also reports idle while starting,
+    before it has read the run's prompt.
+
+    Idempotent by construction: ``update_run`` is conditional on
+    ``WHERE status = running``, so a run already terminal (a fire-time
+    ``skipped``/``failed``, or the startup/lazy backstop) is never clobbered
+    and a terminal edge seen twice transitions at most once. Best-effort like
+    the other writes here — a failure logs and is dropped; the backstop
+    (startup sweep / lazy-on-read) is the durability guarantee for the rare
+    dropped-write or restart-in-flight case.
+
+    :param conversation_id: The fired conversation whose turn just ended.
+    :param run_status: Terminal run status to set — ``"succeeded"`` (turn
+        completed) or ``"failed"`` (turn errored/cancelled/disconnected).
+    :param turn_completed: The harness confirmed the turn ended, even if its
+        transcript has not reached the server yet.
+    :param error_code: Short failure classification when ``run_status`` is
+        ``"failed"`` (e.g. the conversation's ``last_task_error_code``).
+    :param error: Optional human-readable failure detail for ``"failed"``.
+    """
+    store = _scheduled_task_store
+    if store is None:
+        return
+
+    def _transition() -> None:
+        run = store.get_running_run_by_conversation(conversation_id)
+        if run is None:
+            # Not a scheduled fire, or its run is already terminal — nothing to
+            # do. This is the common case (interactive sessions).
+            return
+        if (
+            run_status == "succeeded"
+            and not turn_completed
+            and not _agent_worked_on_run(conversation_id, run.id)
+        ):
+            # The agent hasn't started on the run's prompt, so this idle isn't its end.
+            return
+        store.update_run(
+            run.id,
+            status=run_status,
+            finished_at=int(time.time()),
+            error=error,
+            error_code=error_code,
+        )
+
+    submit("scheduled_run_completion", _transition)
+
+
+def _agent_worked_on_run(conversation_id: str, run_id: str) -> bool:
+    """Read durable activity evidence that bookkeeping cannot push out of a page."""
+    conversations = _store
+    if conversations is None:
+        return True
+    conversation = conversations.get_conversation(conversation_id)
+    if conversation is None:
+        return False
+    # Runs launched before run labels existed retain their idle-completion behavior.
+    return (
+        SCHEDULED_TASK_RUN_LABEL_KEY not in conversation.labels
+        or conversation.labels.get(SCHEDULED_TASK_ACTIVITY_LABEL_KEY) == run_id
+    )
+
+
+def persist_pending_count(conversation_id: str, count: int) -> None:
+    """
+    Persist an outstanding-elicitation count change.
+
+    Wired as :func:`omnigent.runtime.pending_elicitations`'s persist
+    hook; runs on the pub-sub hot path, so it must stay cheap.
+
+    :param conversation_id: Session/conversation identifier.
+    :param count: Outstanding elicitations, ``>= 0``.
+    """
+    if _store is None or _last_pending.get(conversation_id) == count:
+        return
+    _last_pending[conversation_id] = count
+
+    def _evict() -> None:
+        # See persist_live_status._evict: keep the dedupe cache honest so a
+        # dropped count write can be re-attempted by the next publish.
+        if _last_pending.get(conversation_id) == count:
+            _last_pending.pop(conversation_id, None)
+
+    submit(
+        "pending_count",
+        _store.set_pending_elicitation_count,
+        conversation_id,
+        count,
+        on_failure=_evict,
+    )
+
+
+def persist_background_work_running(
+    session_id: str,
+    running: bool,
+    *,
+    runner_id: str | None = None,
+    handoffs: int | None = None,
+    reported_at: int | None = None,
+) -> Future[Any] | None:
+    """
+    Persist whether a session's background shells outlive its ended turn.
+
+    The stored row is what every replica's session list reads, so each report
+    is written; the store keeps the newest by *reported_at*.
+
+    :param session_id: Session/conversation identifier.
+    :param running: ``True`` while a background shell outlives the turn.
+    :param runner_id: The reporting runner, when known; the write applies only
+        while the session is still bound to it.
+    :param handoffs: :func:`handoff_count` when the report arrived; the write is
+        skipped if the session was handed to another replica since.
+    :param reported_at: When the runner decided *running*, in its epoch
+        nanoseconds; an older report than the stored one is not written.
+    :returns: Future of ``True`` once the write ran, of ``None`` when it was
+        skipped or failed; ``None`` without a store.
+    """
+    if _store is None:
+        return None
+    return _submit_while_owned(
+        session_id,
+        "background_work_running",
+        functools.partial(
+            _store.set_background_work_running, runner_id=runner_id, reported_at=reported_at
+        ),
+        session_id,
+        running,
+        handoffs=handoffs,
+    )
+
+
+def clear_background_work_running(session_id: str, runner_id: str, *, unseen_since: int) -> None:
+    """
+    Clear a session's background flag while it is still bound to a departed runner.
+
+    The write applies only while the session is bound to *runner_id* and that
+    runner has not been seen since *unseen_since*, so neither a replacement
+    runner's report nor one from the same runner reconnecting is erased.
+
+    :param session_id: Session/conversation identifier.
+    :param runner_id: The departed runner, e.g. ``"runner_abc123"``.
+    :param unseen_since: Epoch seconds the runner must not have been seen since.
+    """
+    if _store is None:
+        return
+    _submit_while_owned(
+        session_id,
+        "background_work_running",
+        functools.partial(
+            _store.set_background_work_running, runner_id=runner_id, unseen_since=unseen_since
+        ),
+        session_id,
+        False,
+    )
+
+
+def persist_blocked_on(session_id: str, blocked_on: str | None) -> None:
+    """
+    Persist why a running session's agent is parked on a terminal prompt.
+
+    Called wherever ``_session_blocked_on_cache`` is written, which is every
+    published status edge. Deduplicated: only a change reaches the database.
+
+    :param session_id: Session/conversation identifier.
+    :param blocked_on: The reason, e.g. ``"permission prompt"``, or ``None``
+        when the session is not parked.
+    """
+    value = blocked_on or ""
+    if _store is None or _last_blocked_on.get(session_id) == value:
+        return
+    _last_blocked_on[session_id] = value
+
+    def _evict() -> None:
+        # See persist_live_status._evict: a dropped write must not leave the
+        # dedupe cache asserting this value reached the database.
+        if _last_blocked_on.get(session_id) == value:
+            _last_blocked_on.pop(session_id, None)
+
+    _submit_while_owned(
+        session_id,
+        "blocked_on",
+        _store.set_blocked_on,
+        session_id,
+        value or None,
+        on_failure=_evict,
+    )
+
+
+def touch_runner_liveness(runner_ids: list[str]) -> None:
+    """
+    Stamp ``runner_last_seen`` (now) for sessions bound to live runners.
+
+    Called on the tunnel-holding replica: once on runner-tunnel connect,
+    then every ping interval from that tunnel's own ping loop
+    (``runner_tunnel._ping_loop``). Re-stamping from the per-connection
+    ping loop — rather than a central lifespan sweep over the whole
+    registry — keeps the write inside the tunnel handler's
+    ``workspace_scope``, so the row's ``workspace_id`` filter resolves to
+    the owning workspace on a multi-tenant replica. It mirrors how the
+    host tunnel refreshes ``host_store.heartbeat`` from its ping loop.
+
+    Also records the stamp in :func:`last_liveness_stamp`, so a later
+    disconnect on this same replica can tell its own writes apart from a
+    fresher one another replica made after the runner re-tunnelled there.
+
+    :param runner_ids: Runner ids with a live tunnel. Empty = no-op.
+    """
+    if _store is None or not runner_ids:
+        return
+    now = int(time.time())
+    for runner_id in runner_ids:
+        _last_liveness_stamp[runner_id] = now
+    submit("runner_liveness", _store.touch_runner_liveness, list(runner_ids), now)
+
+
+async def stamp_runner_liveness(runner_id: str) -> None:
+    """
+    Stamp ``runner_last_seen`` now and wait for the write to land.
+
+    Called before a reconnecting runner's tunnel is registered. The background
+    stamp can queue behind other writes, and in that gap another replica may
+    settle the runner's running sessions as orphaned. A failed write is logged
+    and the connection proceeds, as with the background stamp.
+
+    :param runner_id: The reconnecting runner's id, e.g. ``"runner_abc123"``.
+    """
+    if _store is None:
+        return
+    now = int(time.time())
+    _last_liveness_stamp[runner_id] = now
+    try:
+        await asyncio.to_thread(_store.touch_runner_liveness, [runner_id], now)
+    except Exception:  # best-effort, like the background stamp
+        _logger.warning("liveness stamp failed for %s", runner_id, exc_info=True)
+
+
+def last_liveness_stamp(runner_id: str) -> int | None:
+    """
+    Return the last ``runner_last_seen`` value THIS process itself stamped.
+
+    Lets a disconnect handler distinguish a stamp another replica wrote
+    after the runner re-tunnelled there from one this replica wrote
+    itself, without racing the best-effort write's own executor.
+
+    :param runner_id: Runner id to look up.
+    :returns: The epoch-second value from this process's most recent
+        :func:`touch_runner_liveness` call naming *runner_id*, or
+        ``None`` if it never stamped one.
+    """
+    return _last_liveness_stamp.get(runner_id)
+
+
+def clear_runner_liveness(runner_id: str) -> None:
+    """
+    Clear ``runner_last_seen`` for a gracefully-disconnected runner.
+
+    Flips the sidebar offline immediately instead of waiting out the
+    freshness TTL. An ungraceful death (host / replica crash) never
+    reaches this — the TTL self-corrects it. Passes this process's own
+    last stamp as ``not_after``, so the clear can never erase a fresher
+    stamp another replica already wrote for a runner that re-tunnelled
+    there before this disconnect was processed.
+
+    :param runner_id: The disconnected runner's id.
+    """
+    if _store is None:
+        return
+    submit(
+        "runner_liveness_clear",
+        _store.clear_runner_liveness,
+        runner_id,
+        last_liveness_stamp(runner_id),
+    )
