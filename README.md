@@ -29,6 +29,25 @@ What you get:
 Everything else (Python 3.12, every Python package, tmux and the built web UI)
 is in this repository.
 
+## Get it
+
+Download it in a way macOS doesn't quarantine, because the bundled tmux and
+Python are not notarized and Gatekeeper blocks quarantined copies:
+
+```bash
+git clone https://github.com/dudgeon/omnigent-slim.git
+```
+
+or, without git:
+
+```bash
+curl -fsSLO https://github.com/dudgeon/omnigent-slim/archive/refs/heads/main.zip
+unzip -q main.zip && cd omnigent-slim-main
+```
+
+A ZIP downloaded through a web browser and opened in Finder is quarantined;
+ask your IT team before clearing that flag.
+
 ## Run it
 
 ```bash
