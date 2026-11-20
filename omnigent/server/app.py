@@ -6232,8 +6232,8 @@ class _RangeAwareGZipMiddleware(GZipMiddleware):
         await super().__call__(scope, receive, send)
 
 
-#: Same-origin only: scripts, styles, fonts, images, frames and fetches all
-#: come from this server (or inline / data: / blob:), never another host.
+#: Scripts, styles, fonts, images and frames come from this server (or inline /
+#: data: / blob:); fetches and sockets reach only this machine. Never another host.
 SLIM_WEB_UI_CSP = "; ".join(
     (
         "default-src 'self'",
@@ -6242,7 +6242,8 @@ SLIM_WEB_UI_CSP = "; ".join(
         "img-src 'self' data: blob:",
         "font-src 'self' data:",
         "media-src 'self' data: blob:",
-        "connect-src 'self'",
+        # Loopback only: the UI also talks to this machine's host daemon directly.
+        "connect-src 'self' http://127.0.0.1:* ws://127.0.0.1:* http://localhost:* ws://localhost:*",
         "frame-src 'self' data: blob:",
         "worker-src 'self' blob:",
         "form-action 'self'",

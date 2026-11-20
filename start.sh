@@ -54,6 +54,9 @@ export OMNIGENT_SLIM_WORKSPACE="${OMNIGENT_SLIM_WORKSPACE:-$ROOT/workspace}"
 export OMNIGENT_SLIM_LIBRARY_DIR="${OMNIGENT_SLIM_LIBRARY_DIR:-$OMNIGENT_SLIM_WORKSPACE/templates}"
 export OMNIGENT_SLIM_PROJECT="${OMNIGENT_SLIM_PROJECT:-Workspace}"
 export OMNIGENT_HOST_NO_OPEN=1
+# Claude Code itself: skip telemetry, error reporting and auto-updates. It still
+# talks to Anthropic for the model, as it does when you run it by hand.
+export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC="${CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC:-1}"
 mkdir -p "$OMNIGENT_DATA_DIR"
 
 # 3. Start the server and host, then make sure the workspace project exists.
