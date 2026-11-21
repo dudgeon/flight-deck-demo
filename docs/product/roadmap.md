@@ -5,9 +5,8 @@ A snapshot of every workstream in Flight Deck (the fork) and Product Aviator
 what is still to be decided, and where to read more. Written for the
 production team and for whoever picks the work up next.
 
-Snapshot refreshed 2026-11-21, 20:35 UTC, after pull requests 1 to 16, 18,
-20 to 24 and 26 to 29 were merged. Open: 17 and 19 (drafts, waiting on
-Geoff) and 25 (held). What is built but
+Snapshot refreshed 2026-11-21, 22:40 UTC, after pull requests 1 to 24, 26 to 36,
+38 and 39 were merged. Open: 25 (held) and 37. What is built but
 not yet checked on a real machine is listed under
 [Not yet verified](#not-yet-verified). Where each decision stands is in
 [decision-index.md](decision-index.md); the story so far is in
@@ -19,7 +18,7 @@ in the same pull request.
 | Workstream | State |
 |---|---|
 | [Hangar (builder mode)](#hangar-builder-mode) | Built: all three slices, pictures, config in the repo; widget editing (PR 27) and Send to repo (PR 29) |
-| [Demos and the Library](#demos-and-the-library) | In draft PRs 17 and 19, which now conflict with `main` |
+| [Demos and the Library](#demos-and-the-library) | Built (PRs 17, 19); not yet flown on the work Mac |
 | [Avatars](#avatars) | Paused by Geoff; PR 25 held as a draft |
 | [Design language and tokens](#design-language-and-tokens) | Built; colors locked |
 | [Views in the chat](#views-in-the-chat) | Built |
@@ -52,7 +51,7 @@ back.
   repo (PR 15, D-74, D-75). `pa draft|publish|history|uses`. Widgets and views shown, edited and added
   in the Hangar (PR 27, D-112). "Send to repo" for Hangar edits on a git
   copy (PR 29, D-113).
-- **In an open PR.** "◆ Fly this" on a scenario page (PR 17, see below).
+- **Done.** "◆ Fly this" on a scenario page (PR 17, see below).
 - **Next.** Builder skills for workflows and skills (`build-workflow`,
   `build-skill`) beyond `build-person` and `scenario-builder`.
 - **Open.** Left for later by design: sharing a workflow or scenario with
@@ -66,13 +65,13 @@ back.
 A scenario you build becomes a demo you fly, and the Library is where real
 work and demos start.
 
-- **In open PRs.** PR 17: flying a scenario makes a "◆ Demo · <title>" project
+- **Done.** PR 17: flying a scenario makes a "◆ Demo · <title>" project
   with its own folder; each screenplay turn is canned or live; Reset to the
-  start or Keep going (D-76 to D-81). PR 19, stacked on 17: the Library shows
+  start or Keep going (D-76 to D-81). PR 19: the Library shows
   four to six featured skills generated from `workflow.json`, then a card per
   scenario with Fly and a Live turns switch; canned sessions retired and
   templates moved to the Hangar (D-82 to D-88).
-- **Next.** Merge 17, then 19. Then run each demo end to end on the work Mac.
+- **Next.** Run each demo end to end on the Mac mini and the work Mac.
 - **Open.** D-87 does not record who decided it.
 - **Read.** The two pull requests; design round at
   https://claude.ai/artifact/5XhbdjSKp7i2t1ChoxqS6Z.
@@ -400,10 +399,8 @@ Checked 2026-11-21, 20:30 UTC.
   flag or blocks the bundled Python and tmux is only known on the real
   machine. On failure, setup writes `flight-deck-setup-report.txt` to the
   Desktop.
-- **Demos and the Library (PRs 17, 19)** are drafts and conflict with `main`.
-  Only Geoff (or GitHub's Ready for review button) can take them out of
-  draft; after that, 17 needs `main` merged in and 19 retargeted onto it,
-  with the built web UI rebuilt.
+- **Demos and the Library (PRs 17, 19)** merged on 2026-11-21 and have run
+  in the cloud only; no demo has been flown on the Mac mini or the work Mac.
 - **Decision review and problem discovery** have never run live with an
   agent.
 - **A published copy of a built-in workflow** (Hangar publish into

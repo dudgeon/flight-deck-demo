@@ -5,13 +5,16 @@ stands now, and why. The full wording is in [decisions.md](decisions.md),
 which is never edited after the fact; this index is the part that changes.
 Update the status here whenever a decision is built, refined or replaced.
 
-Audit of 2026-11-21 (evening): D-01 to D-75, D-89 to D-107 and D-111 to
-D-114 are on `main`. D-60, D-61 and D-62 were never assigned (parallel threads
-claimed blocks and skipped them); they stay unused so no reference can point
-at the wrong thing. Claimed by open pull requests: D-76 to D-81 (PR 17),
-D-82 to D-88 (PR 19), and D-108 to D-110 (PR 25, avatars, held). D-100 to D-106 record decisions Geoff made earlier that
-were never logged (see "Backfilled" in decisions.md). D-116 onward is next;
-check open pull requests first, as `CLAUDE.md` says. No number is used twice.
+Audit of 2026-11-21 (22:40 UTC): D-01 to D-107 and D-111 to D-127 are on
+`main`. D-60, D-61 and D-62 were never assigned (parallel threads claimed
+blocks and skipped them); they stay unused so no reference can point at the
+wrong thing. D-76 to D-88 landed with PRs 17 and 19 (merged 22:35 and 22:37).
+Claimed by open pull requests: D-108 to D-110 (PR 25, avatars, held) and
+D-122 to D-128 (PR 37), which **collide** with the usage-log decisions
+D-122 to D-127 already on `main`; PR 37 must renumber from D-128 before it
+merges. D-100 to D-106 record decisions Geoff made earlier that were never
+logged (see "Backfilled" in decisions.md). D-128 onward is next once PR 37 is
+renumbered; check open pull requests first, as `CLAUDE.md` says.
 
 **Status words.** *Built*: in the code on `main`. *Active*: a rule or
 direction in force, nothing to build. *Refined by* / *replaced by*: a later
@@ -142,7 +145,7 @@ feature notes of the time and marked *(reconstructed)*.
 | D-54 | Intent framework stays as drafted; progressive complexity is next | Geoff | Active; **progressive complexity open** | It pressure-tested the system. |
 | D-55 | The agent directs attention: canvas greys while chat waits | Geoff | Built as an exploration | *(reconstructed)* Always obvious which side wants the person. |
 
-## Demos and the Library (pending)
+## Demos and the Library
 
 | D | Decision | Who | Status |
 |---|---|---|---|
