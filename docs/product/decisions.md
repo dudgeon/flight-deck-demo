@@ -393,6 +393,29 @@ scenario can carry an opening line (`opening` in `scenario.json`), for the
 Library's demos. *Seeing the demo is the real check that a script change
 worked.*
 
+**D-74 · 2026-11-21 · Geoff.** People and agents can have a picture. It is
+picked on the person's Hangar page from any PNG, JPEG, WebP or GIF file (under
+2 MB), copied into the draft, and on Publish into
+`workspace/participants/avatars/<id>.<ext>`, named by the `avatar` line of
+their roster file. It replaces the initials everywhere they appear: Hangar
+cards, participant turns in the chat and the Session panel. *Geoff: "we also
+need to be able to select icons/avatars for each participant… when selected
+(e.g. from a file in my desktop), they should be added to the repo."*
+
+**D-75 · 2026-11-21 · Geoff.** Configuration travels with the repo: people and
+their pictures, scenarios, workflows built in the workspace
+(`workspace/.claude/skills/`), starters and skills are committed files; a test
+fails if `.gitignore` would drop any of them. Drafts and the Hangar's own
+history (`workspace/.hangar/`) and user sessions stay local. The Hangar's
+overview lists published files not yet committed. *Geoff: "config, like
+personas, harness skills, workflows, scenarios should all travel with the repo.
+user sessions don't need to but can."*
+
+Geoff confirmed the person-editing choices on 21 Nov (combined walkthrough
+https://claude.ai/artifact/7gbkDmURSuwhWGWVzyBtU6): the page as the editor with
+autosave (D-63), the pinnable Aviator pop-over with "Try them" (D-64), casting
+from the person's page (D-65) and skills passed to the session (D-66).
+
 ## Open
 
 - Progressive complexity (from D-54): how a workflow shows less at first and

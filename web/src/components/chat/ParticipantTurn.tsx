@@ -5,7 +5,7 @@
 import type { ReactNode } from "react";
 import { useInRouterContext } from "react-router-dom";
 import { HANGAR_WRENCH_GROUP, HangarWrench } from "@/hangar/HangarWrench";
-import { hangarPath, participantSlug } from "@/hangar/hangarApi";
+import { hangarPath, participantSlug, useAvatars } from "@/hangar/hangarApi";
 import { withBasePath } from "@/lib/basePath";
 import { type ParticipantTurn, participantInitials } from "@/lib/participantTurn";
 import { Link } from "@/lib/routing";
@@ -22,12 +22,15 @@ export function ParticipantMark({
   standIn: boolean;
   className?: string;
 }) {
+  // omnigent-slim: a picture picked in the Hangar replaces the initials (D-74).
+  const { data: avatars } = useAvatars();
+  const picture = avatars?.[participantSlug(name)];
   return (
     <span
       aria-hidden="true"
       data-kind={kind}
       className={cn(
-        "inline-grid size-6 shrink-0 place-items-center border text-[10px] leading-none font-bold",
+        "inline-grid size-6 shrink-0 place-items-center overflow-hidden border text-[10px] leading-none font-bold",
         kind === "person"
           ? "rounded-full bg-emerald-600/15 text-emerald-700 dark:text-emerald-300"
           : "rounded-md bg-sky-700/15 text-sky-800 dark:text-sky-300",
@@ -35,7 +38,11 @@ export function ParticipantMark({
         className,
       )}
     >
-      {participantInitials(name)}
+      {picture ? (
+        <img src={picture} alt="" className="size-full rounded-[inherit] object-cover" />
+      ) : (
+        participantInitials(name)
+      )}
     </span>
   );
 }

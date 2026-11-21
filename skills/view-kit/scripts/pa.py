@@ -1316,7 +1316,7 @@ def cmd_preview(args: argparse.Namespace) -> None:
 # in. Only people (the roster) can be built so far.
 
 HANGAR_DIR = ".hangar"
-PERSON_FIELDS = ("name", "kind", "role", "initials", "stand_in", "backing", "call_for", "skills")
+PERSON_FIELDS = ("name", "kind", "role", "initials", "stand_in", "backing", "call_for", "skills", "avatar")
 REQUIRED_FIELDS = ("name", "kind", "role", "backing", "call_for")
 _ID = re.compile(r"[a-z][a-z0-9-]{1,40}")
 
@@ -1439,6 +1439,8 @@ def draft_info(workspace: Path, pid: str, skills: Path | None = None) -> dict[st
                 problems.append(f"this draft: missing {key.replace('_', ' ')}")
         if action == "new" and live is not None:
             problems.append(f"someone called {pid} is already on the roster; pick another name")
+        if person.get("avatar") and not (draft_avatar(workspace, pid) or live_avatar(workspace, pid)):
+            problems.append(f"this draft: the avatar {person['avatar']} is missing; pick the picture again")
     cast_changes = _cast_changes(workspace, pid, meta, uses) if action != "remove" else []
     if action != "remove":
         name = (person or {}).get("name") or pid
@@ -1461,7 +1463,8 @@ def draft_info(workspace: Path, pid: str, skills: Path | None = None) -> dict[st
                 allowed = _read_json(workflow_manifest_path(folder)).get("participants") if folder else None
                 if allowed and pid not in allowed and wid not in added_wf:
                     problems.append(f"the scenario {change['id']} runs {wid}, which does not call on {name}; tick {wid} too")
-        unchanged = live is not None and live.strip() == (text or "").strip() and not cast_changes
+        unchanged = live is not None and live.strip() == (text or "").strip() and not cast_changes \
+            and draft_avatar(workspace, pid) is None
         if unchanged:
             problems.append("nothing has changed yet")
     return {
@@ -1482,6 +1485,8 @@ def draft_info(workspace: Path, pid: str, skills: Path | None = None) -> dict[st
                           | {c["id"] for c in cast_changes if c["kind"] == k and c["change"] == "add"}) for k in CAST_KINDS},
         "cast_changes": cast_changes,
         "aviator": meta.get("aviator"),
+        "avatar_changed": draft_avatar(workspace, pid) is not None
+        or bool(live_avatar(workspace, pid)) != bool((person or {}).get("avatar")),
         "path": f"{HANGAR_DIR}/drafts/people/{pid}.md",
         "target": f"{PARTICIPANTS_DIR}/{pid}.md",
     }
@@ -1634,9 +1639,88 @@ def _apply_cast(workspace: Path, pid: str, changes: list[dict[str, str]]) -> Non
             _write_atomic(path, text)
 
 
+# Avatars (D-74): a picture for a person or agent, kept beside the roster in
+# `participants/avatars/<id>.<ext>` so it travels with the repo. A draft holds
+# its picture as `.hangar/drafts/people/<id>.avatar.<ext>` until it is published.
+
+AVATARS_DIR = "avatars"
+AVATAR_TYPES = {"png": b"\x89PNG", "jpg": b"\xff\xd8\xff", "webp": b"RIFF", "gif": b"GIF8"}
+AVATAR_MAX = 2_000_000
+
+
+def _avatar_ext(filename: str, data: bytes) -> str:
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    ext = "jpg" if ext == "jpeg" else ext
+    if ext not in AVATAR_TYPES:
+        raise PaError(f"an avatar is a {', '.join(sorted(AVATAR_TYPES))} picture, not {filename!r}")
+    if len(data) > AVATAR_MAX:
+        raise PaError("an avatar must be under 2 MB")
+    if not data.startswith(AVATAR_TYPES[ext]) or (ext == "webp" and data[8:12] != b"WEBP"):
+        raise PaError(f"{filename} is not a {ext} picture")
+    return ext
+
+
+def draft_avatar(workspace: Path, pid: str) -> Path | None:
+    base = _hangar(workspace, "drafts", "people")
+    found = sorted(base.glob(f"{pid}.avatar.*")) if base.is_dir() else []
+    return found[0] if found else None
+
+
+def live_avatar(workspace: Path, pid: str) -> Path | None:
+    folder = workspace / PARTICIPANTS_DIR / AVATARS_DIR
+    found = sorted(folder.glob(f"{pid}.*")) if folder.is_dir() else []
+    return next((p for p in found if p.suffix[1:] in AVATAR_TYPES), None)
+
+
+def avatar_of(workspace: Path, pid: str, draft: bool = False) -> Path | None:
+    """The picture for someone: the draft's when asked and there is one, else the live one."""
+    if draft:
+        meta = _participant(_draft_paths(workspace, pid)[0]) if _draft_paths(workspace, pid)[0].is_file() else {}
+        if not meta.get("avatar"):
+            return None
+        return draft_avatar(workspace, pid) or live_avatar(workspace, pid)
+    return live_avatar(workspace, pid)
+
+
+def set_draft_avatar(workspace: Path, pid: str, filename: str, data: bytes | None) -> None:
+    """Give a draft a picture (copied into the draft), or take it away (data None)."""
+    text_path, meta_path = _draft_paths(workspace, _checked_id(pid))
+    info = _read_meta(meta_path)
+    if not info or info.get("action") == "remove":
+        raise PaError(f"there is no draft of {pid} to change")
+    old = draft_avatar(workspace, pid)
+    if old:
+        old.unlink()
+    person = _participant(text_path)
+    meta = _meta_of(person)
+    if data is None:
+        meta.pop("avatar", None)
+    else:
+        ext = _avatar_ext(filename, data)
+        path = text_path.with_name(f"{pid}.avatar.{ext}")
+        path.write_bytes(data)
+        meta["avatar"] = f"{AVATARS_DIR}/{pid}.{ext}"
+    _write_draft(workspace, pid, meta, person_text(meta, person["brief"]), info)
+
+
+def _publish_avatar(workspace: Path, pid: str, avatar: str | None) -> None:
+    folder = workspace / PARTICIPANTS_DIR / AVATARS_DIR
+    drafted = draft_avatar(workspace, pid)
+    if avatar and not drafted:
+        return  # the draft keeps the live picture
+    for old in folder.glob(f"{pid}.*") if folder.is_dir() else []:
+        old.unlink()
+    if avatar and drafted:
+        folder.mkdir(parents=True, exist_ok=True)
+        (folder / f"{pid}{drafted.suffix}").write_bytes(drafted.read_bytes())
+
+
 def discard_draft(workspace: Path, pid: str) -> None:
     for path in _draft_paths(workspace, _checked_id(pid)):
         path.unlink(missing_ok=True)
+    avatar = draft_avatar(workspace, pid)
+    if avatar:
+        avatar.unlink()
 
 
 def _snapshot(workspace: Path, pid: str, text: str, summary: str, action: str) -> str:
@@ -1662,11 +1746,17 @@ def publish_draft(workspace: Path, pid: str, summary: str = "", skills: Path | N
     kept = None
     if info["live"] is not None:
         kept = _snapshot(workspace, pid, info["live"], summary or info["action"], info["action"])
+    old_avatar = live_avatar(workspace, pid)
+    if kept and old_avatar:
+        history = _hangar(workspace, "history", "people", pid)
+        (history / f"{kept}.avatar{old_avatar.suffix}").write_bytes(old_avatar.read_bytes())
     if info["action"] == "remove":
         live_path.unlink()
+        _publish_avatar(workspace, pid, None)
     else:
         live_path.parent.mkdir(parents=True, exist_ok=True)
         _write_atomic(live_path, info["text"])
+        _publish_avatar(workspace, pid, (info["person"] or {}).get("avatar"))
         _apply_cast(workspace, pid, info["cast_changes"])
     discard_draft(workspace, pid)
     return {"id": pid, "action": info["action"], "kept": kept}
@@ -1694,6 +1784,8 @@ def restore_version(workspace: Path, pid: str, version: str, skills: Path | None
     live = workspace / PARTICIPANTS_DIR / f"{pid}.md"
     _write_draft(workspace, pid, {}, old.read_text(encoding="utf-8"),
                  {"action": "change" if live.is_file() else "new", "from": f"{pid}@{version}"})
+    for picture in old.parent.glob(f"{version}.avatar.*"):
+        (_draft_paths(workspace, pid)[0].with_name(f"{pid}.avatar{picture.suffix}")).write_bytes(picture.read_bytes())
     try:
         return publish_draft(workspace, pid, f"restored the version of {version}", skills)
     except PaError:
