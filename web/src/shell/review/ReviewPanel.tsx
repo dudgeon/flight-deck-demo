@@ -45,6 +45,7 @@ import {
   sidecarPath,
   waitingOn,
 } from "./reviewModel";
+import { setReviewPanelOpen } from "./reviewRailState";
 import {
   type ThreadHighlightState,
   clearFreshEdits,
@@ -540,6 +541,13 @@ export function ReviewPanel({
         `.tiptap-md-content .md-suggestion[data-by="${CSS.escape(id)}"]{--md-suggestion-color:${color}}`,
     )
     .join("\n");
+
+  // Tell the app shell, so the rail widens while the panel is open.
+  const railId = useRef(Symbol("review-panel")).current;
+  useEffect(() => {
+    setReviewPanelOpen(railId, isOpen);
+  }, [railId, isOpen]);
+  useEffect(() => () => setReviewPanelOpen(railId, false), [railId]);
 
   const floating =
     canEdit && editor && !editor.isDestroyed && selection && !draftQuote ? (
