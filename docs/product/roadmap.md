@@ -303,10 +303,14 @@ a project means something (a goal to ship) and knows its relatives.
 - **Built.** Runs that pause, resume and stop with a where-we-left-off note
   (`pa flow`, `pa runs`), and the "In flight" section on the project page
   with Resume and a sidebar count of runs that need the person.
-- **Next.** Geoff answered all four round-two questions (D-116 to D-119),
-  which unblocks every remaining slice: the director skill and its run card;
-  the direct line and stepping into a thread; threads on items; projects
-  with a goal and their connections. Build order is in modes-and-projects.md.
+- **Built, not yet flown live.** Aviator as director: the `director` skill,
+  thread briefs (`pa brief`), thread reports (`pa report`, D-118) and the
+  live run card in the director's chat. Opt-in until it has been run with a
+  live agent on the Mac mini.
+- **Next.** Fly the director with a live agent and fix what breaks. Then the
+  direct line and stepping into a thread (D-116, D-117); threads on items
+  (D-95); projects with a goal and their connections (D-97, D-119). Build
+  order is in modes-and-projects.md.
 - **Open.** Nothing. The intent graph's detail is deliberately held (D-98).
 - **Read.** [modes-and-projects.md](modes-and-projects.md); D-89 to D-99, D-116 to D-119;
   walkthroughs at https://claude.ai/artifact/HRgpJURjcqasGSCmd3894d and

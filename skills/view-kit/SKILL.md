@@ -62,6 +62,8 @@ text; then name the file and ask the question in words.
 | `$PA flow <data> --scenario <folder> --session <id>`, then `--step <n or name> [--note "..."]`, `--done` | Record which step of a workflow the work is at. The Session panel and the project page draw it as a card with the steps and how many items are done. |
 | `$PA flow <data> --pause --note "..."`, `--resume`, `--stop`, `--state needs-you` | Set a run aside with a note on where it was left, pick it up, abandon it, or say it is waiting on the person. See "Runs" below. |
 | `$PA runs [--all] [--json]` | List the runs in this workspace: state, step and where each was left. |
+| `$PA brief <workflow folder> --subject "..." --director <id>` | Write the brief a director hands a workflow's thread and print the thread's first message. See the `director` skill. |
+| `$PA report <data> --kind milestone\|progress\|blocker\|done "one line"` | From a thread: tell the director one thing worth knowing. Shown on the run card and the project page. Never everything. |
 | `$PA who [id]` | List the participants in `participants/` (other agents and people), or show one. See the `participants` skill. |
 | `$PA check <scenario folder>` | Validate a scenario's specs, schemas and fixtures. |
 | `$PA preview <scenario folder> --out demo.html` | Build a standalone click-through of a scenario from its fixtures. |

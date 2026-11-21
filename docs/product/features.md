@@ -133,6 +133,68 @@ walkthrough.
 `projectRuns.ts`, `ProjectRunsBadge.tsx`; `web/src/lib/pendingPrompt.ts`;
 tests in `tests/test_slim_runs.py` and `web/src/projectHome/projectRuns.test.ts`.
 
+## Aviator as director: threads, briefs, reports and the run card
+
+**Intent.** The main Aviator session should feel like the lead of a project,
+not like one long transcript (D-89). A workflow's working (every question,
+every record, every file read) fills a conversation's context and crowds out
+everything else. So each workflow runs in a **thread**: a session of its own
+that the director starts, briefs and keeps track of. The person stays with
+the director for the whole picture and steps into a thread to do that work.
+This is the third slice of [modes and projects](modes-and-projects.md).
+
+**Behaviour.**
+
+- **The brief.** The director hands a thread a written brief: the workflow,
+  the subject, the dataset, the files to read, the target, who may be
+  called, and what to report. It is a file (`briefs/<run>.md`), so the person
+  can read exactly what the thread was told. `pa brief` writes it and prints
+  the thread's first message, so every brief has the same shape.
+- **Reports** (D-118). A thread tells the director milestones, progress,
+  blockers and state, one line each, pointing at files. The thread's agent
+  decides when and what; the brief tells it never to send everything.
+  `pa report` records the line in the run's file (the last twenty are kept).
+  For a blocker, a need, or a finish the thread also wakes the director with
+  a message. A blocker shows the run as waiting until work moves again.
+- **The run card.** The director shows a run as a live card in its chat: the
+  workflow and subject, the step, the state, what it needs from the person,
+  its last three reports, and a button into the thread ("Answer in the
+  thread" when it needs the person). The card says "Starting" until the
+  thread has written its first step. It reads the run from disk through the
+  server, so it still fills in when an old director session is reopened.
+- **Where things stand.** The director answers from the runs' reports and
+  notes (`pa runs`), not by reading the threads' histories.
+- A thread's run is listed under In flight in its director's project.
+
+**Choices made while building (not product decisions; change freely).**
+
+- **Directing is opt-in for now.** Aviator uses the `director` skill when
+  the person asks it to direct the project, or asks for a workflow "in a
+  thread" or "in the background". Starting a workflow the plain way still
+  runs it in the session, as before. Making threads the default for every
+  workflow (D-99) should wait until this has been flown with a live agent on
+  the Mac mini: the brief, the reports and the card are tested, but no cloud
+  session can run Claude Code inside the app, so the agent's side of the
+  conversation is not.
+- Until the direct line (D-116) is built, the person answers a thread's
+  questions in the thread. The skill tells the director not to relay turns
+  back and forth, which would double every wait and refill its context.
+- Reports live in the run's file rather than only in messages, so the card,
+  the project page and the director all read the same thing and nothing is
+  lost if a message is missed.
+
+**Not built yet.** The direct line: the strip, the rail and the thread's
+questions in the director's chat (D-90, D-91, D-116). Stepping into a thread
+in place of the chat with the director folded to a bar (D-117); today the
+card opens the thread as its own session page. Threads on items (D-95).
+
+**Where.** `skills/director/SKILL.md`; `pa brief`, `pa report` and
+`pa flow --director/--brief` in `skills/view-kit/scripts/pa.py`;
+`web/src/lib/runBlock.ts` (the ` ```run ` fence),
+`web/src/components/chat/RunCardBlock.tsx`, `web/src/projectHome/RunParts.tsx`;
+`GET /v1/slim/runs/{id}?session=` in `omnigent/server/routes/slim_runs.py`;
+the rule in `workspace/CLAUDE.md` ("Threads").
+
 ## Participants
 
 **Intent.** Product work is done with other people and other systems. Their

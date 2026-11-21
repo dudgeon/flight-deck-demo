@@ -228,7 +228,8 @@ None. The intent graph's level of detail is held until something needs it
    board, Resume, the sidebar count. **Built.**
 3. **Aviator as director**: a skill telling Aviator how to start a workflow
    in a thread, write the brief and read milestones; a live run card in the
-   director's chat. Unblocked by D-118.
+   director's chat. **Built**, opt-in until flown with a live agent; see
+   "Aviator as director" in [features.md](features.md).
 4. **The direct line**: strip, rail and the thread's turns in the director's
    chat, and stepping into a thread in place of the chat. Unblocked by D-116
    and D-117.

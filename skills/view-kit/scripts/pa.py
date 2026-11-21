@@ -170,6 +170,10 @@ def _write_flow(data: dict[str, Any], dataset: Path | None = None) -> None:
         "data": flow.get("data") or (dataset.as_posix() if dataset else ""),
         "started": flow.get("started", ""),
         "paused_at": flow.get("paused_at", ""),
+        # Threads (D-89): who started the run, what it was told, what it has reported.
+        "director": flow.get("director", ""),
+        "brief": flow.get("brief", ""),
+        "reports": flow.get("reports") or [],
         "updated": _now(),
     }
     _write_atomic(Path(flow["file"]), json.dumps(out, indent=1, ensure_ascii=False) + "\n")
@@ -198,6 +202,10 @@ def cmd_flow(args: argparse.Namespace) -> None:
             raise PaError("no workflow on this dataset yet; pass --scenario <scenario folder> once")
         flow.setdefault("started", _now())
         flow["data"] = path.as_posix()
+        if getattr(args, "director", None):
+            flow["director"] = args.director
+        if getattr(args, "brief", None):
+            flow["brief"] = args.brief
         if getattr(args, "session", None):
             flow["session"] = args.session
         total = len(flow["steps"])
@@ -281,8 +289,128 @@ def cmd_runs(args: argparse.Namespace) -> None:
         note = run.get("left_off") or run.get("note")
         if note:
             print(f"           {note}")
+        reports = run.get("reports") or []
+        if reports:
+            last = reports[-1]
+            print(f"           last report ({last.get('kind', 'milestone')}): {last.get('text', '')}")
+        if run.get("session"):
+            print(f"           thread: {run['session']}")
         if run.get("data"):
             print(f"           data: {run['data']}")
+
+
+REPORT_KINDS = ("milestone", "progress", "blocker", "done")
+MAX_REPORTS = 20
+BRIEF_DIR = "briefs"
+
+BRIEF = """# Brief: {workflow} on "{subject}"
+
+You are running one workflow in a thread of its own. The person's main
+conversation is with Aviator, the project's director, in session
+`{director}`. Aviator started this thread so the detail of the work stays
+here and out of its own context. Do the work here, with the person, who can
+see and answer everything you say in this thread.
+
+## The work
+
+- Workflow: **{workflow}**. Use the `{skill}` skill and follow it.
+- Subject: {subject}
+- Dataset: `{data}`{exists}
+- Target: {target}
+{ask}
+## Read first
+
+{context}
+
+## Who you may call
+
+{participants}
+
+## What to tell the director
+
+Aviator needs the state of this work, not its transcript. Tell it only:
+a step crossed, real progress worth knowing, a blocker, that you need the
+person, and when you finish. Use your judgment about when; never send
+everything. Each time:
+
+1. `$PA report {data} --kind <milestone|progress|blocker|done> "<one line, pointing at the file>"`
+   (this is what the run card and the project page show).
+2. For a blocker, when you need the person, and when you finish, also wake
+   Aviator: `sys_session_send` with `session_id` `{director}` and the same line.
+
+## Starting, pausing, finishing
+
+- Start the run with `$PA flow {data} --scenario <the skill's folder> --session <your session id> --director {director} --brief {brief}`
+  (your session id is `conversation_id` from `sys_session_get_info`).
+- Keep `$PA flow` true as you go (`--step`, `--state needs-you`).
+- If the person or Aviator says to pause, `$PA flow {data} --pause --note "<where we left off>"`,
+  report it as progress, and stop. Resume and stop work the same way ("Runs" in the `view-kit` skill).
+- When the last step is done: `$PA flow {data} --done`, then report with `--kind done`.
+"""
+
+
+def _slug(text: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+    return slug[:48].strip("-") or "work"
+
+
+def cmd_brief(args: argparse.Namespace) -> None:
+    """Write the brief a director hands a thread, and print the thread's first message."""
+    run = resolve_run(Path(args.workflow))
+    manifest = run["manifest"]
+    wid = str(manifest.get("workflow") or manifest.get("scenario") or Path(args.workflow).name)
+    title = manifest.get("title") or wid
+    subject = args.subject.strip()
+    if not subject:
+        raise PaError("--subject is empty")
+    pattern = (manifest.get("dataset") or {}).get("path") or "data/{slug}.json"
+    data = Path(args.data or pattern.replace("{slug}", _slug(subject)))
+    brief = Path(BRIEF_DIR) / f"{data.stem}--{wid}.md"
+    progress = Path(FLOW_DIR) / f"{data.stem}--{manifest.get('scenario') or wid}.json"
+    cast = manifest.get("participants")
+    if cast:
+        people = ("Only these, with the `participants` skill, when the work needs what they are for: "
+                  + ", ".join(f"`{c}`" for c in cast) + ".")
+    else:
+        people = "Anyone on the roster (`$PA who`), with the `participants` skill, when the work needs them."
+    text = BRIEF.format(
+        workflow=title, skill=wid, subject=subject, director=args.director, data=data.as_posix(),
+        exists=" (it exists; continue it, do not start over)" if data.exists() else " (not started yet)",
+        target=(args.target or "the workflow's usual finish").strip(),
+        ask=f"- From Aviator: {args.ask.strip()}\n" if args.ask else "",
+        context="\n".join(f"- `{c}`" for c in args.context or []) or "- Nothing was handed over. Ask the person for what you need.",
+        participants=people, brief=brief.as_posix(),
+    )
+    _write_atomic(brief, text)
+    if args.json:
+        print(json.dumps({"brief": brief.as_posix(), "data": data.as_posix(), "progress": progress.as_posix(),
+                          "title": f"{title}: {subject}", "workflow": wid}, indent=1))
+        return
+    print(f"Read your brief at `{brief.as_posix()}` and begin. It is repeated here.\n\n{text}")
+    print(f"brief: {brief.as_posix()}\nrun: {progress.as_posix()}\ntitle: {title}: {subject}", file=sys.stderr)
+
+
+def cmd_report(args: argparse.Namespace) -> None:
+    """One line from a run to its director: a milestone, progress, a blocker, or done (D-118)."""
+    path = Path(args.data)
+    text = " ".join(args.text.split())
+    if not text:
+        raise PaError("a report needs one line of text")
+    if len(text) > 280:
+        raise PaError("a report is one line, at most 280 characters; point at the file for the rest")
+    with _locked(path):
+        data = _load(path)
+        flow = data.get("flow") or {}
+        if not flow.get("steps"):
+            raise PaError("no workflow on this dataset yet; start it with pa flow --scenario first")
+        reports = list(flow.get("reports") or [])
+        reports.append({"at": _now(), "kind": args.kind, "step": flow.get("current", 1), "text": text})
+        flow["reports"] = reports[-MAX_REPORTS:]
+        if args.kind == "blocker" and (flow.get("state") or "working") == "working":
+            flow["state"] = "waiting"
+        data["flow"] = flow
+        _save(path, data)
+    print(f"reported ({args.kind}): {text}")
 
 
 # ---------------------------------------------------------------- values
@@ -2419,7 +2547,26 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--state", choices=["working", "needs-you", "waiting"],
                    help="needs-you: the run cannot move until the person answers; waiting: on someone else")
     p.add_argument("--session", help="the id of the session this run is in, so the project page can reopen it")
+    p.add_argument("--director", help="the id of the director session that started this run in a thread")
+    p.add_argument("--brief", help="the path of the brief the thread was handed")
     p.set_defaults(run=cmd_flow)
+
+    p = sub.add_parser("brief", help="write the brief a director hands a workflow's thread, and print the thread's first message")
+    p.add_argument("workflow", help="the workflow (or scenario) folder")
+    p.add_argument("--subject", required=True, help="what the run is about, in the person's words")
+    p.add_argument("--director", required=True, help="the director's session id, so the thread can report to it")
+    p.add_argument("--data", help="the dataset path; default is the workflow's own pattern for the subject")
+    p.add_argument("--context", action="append", help="a file the thread should read first; repeatable")
+    p.add_argument("--target", help="what finished looks like for this run")
+    p.add_argument("--ask", help="anything else the director wants the thread to know")
+    p.add_argument("--json", action="store_true", help="print the paths instead of the message")
+    p.set_defaults(run=cmd_brief)
+
+    p = sub.add_parser("report", help="one line from a run to its director: a milestone, progress, a blocker or done")
+    p.add_argument("data")
+    p.add_argument("text")
+    p.add_argument("--kind", choices=REPORT_KINDS, default="milestone")
+    p.set_defaults(run=cmd_report)
 
     p = sub.add_parser("runs", help="list the workflow runs in this workspace and where each was left")
     p.add_argument("--dir", help="the progress folder; default progress/ in the workspace")
