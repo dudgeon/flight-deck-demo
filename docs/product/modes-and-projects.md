@@ -1,13 +1,15 @@
 # Modes, runs, projects and the intent graph
 
-Status: **design exploration, nothing built, eleven decisions open.** Raised by
-Geoff on 2026-11-21. The walkthrough with drawings of each option, where he
-records his answers, is https://claude.ai/artifact/HRgpJURjcqasGSCmd3894d
-(answers in its database, collection `answers`). When an answer is locked
-there, it becomes a numbered entry in [decisions.md](decisions.md) and the
-matching "Open" line below is removed. The open questions are labelled M-1 to
-M-11 here so they cannot collide with decision numbers being added by other
-work.
+Status: **partly decided, nothing built.** Raised by Geoff on 2026-11-21. He
+answered the first walkthrough the same day
+(https://claude.ai/artifact/HRgpJURjcqasGSCmd3894d); those answers are D-89 to
+D-99 in [decisions.md](decisions.md) and are summarised under "Decided" below.
+Two of his answers asked for more design, which is the second walkthrough,
+https://claude.ai/artifact/YQcb4HDRGMnn6YW82uFNZd (answers in its database,
+collection `answers`): four questions, M-8 and M-12 to M-14, listed under
+"Open decisions". The sections "Proposed shape" and "What it would touch" were
+written before his answers and describe modes inside one chat; read them
+together with "The director model", which replaces that part.
 
 ## What was asked
 
@@ -141,52 +143,124 @@ D-52) and can later be replaced by a service.
 | Threads | Upstream's side chat, labelled with the record it is about; a count on the row in the view kit; `pa` reads and writes that label. |
 | Hangar | Workflow pages show how the mode looks; no new shelf. |
 
+## Decided (2026-11-21)
+
+| | Question | Geoff's answer | Decision |
+|---|---|---|---|
+| M-10 | Where a mode's conversation lives | None of the drawn options. Aviator is a project director; modes run in threads with their own context; agents message each other; the person stays with the director and clicks into a thread as needed. | D-89 |
+| M-1 | How a mode shows | A strip on the message box. | D-90 |
+| M-2 | Marking replies as the mode's | A rail, with start, pause and resume markers. | D-91 |
+| M-3 | Side questions | Answered outside the rail; the mode stays on. | D-92 |
+| M-4 | Leaving a mode | Say it or press it; three endings; a where-we-left-off note; only stop confirms. | D-93 |
+| M-5 | A second mode | One has the floor at a time, with a way back. | D-94 |
+| M-11 | Threads on single items | Any item can have a thread. | D-95 |
+| M-6 | Finding what is in flight | An "In flight" section on the project page. | D-96 |
+| M-7 | What a project is | A goal that ships, inside an area that lasts. Caveat: may need to be more graph-like; a requirement handed to another team becomes that team's project. | D-97 |
+| M-9 | Detail of the intent graph | Held until it blocks something. | D-98 |
+| M-8 | A project's relatives | Sent back: rethink in the light of M-7's caveat. | Open |
+
+## The director model (D-89)
+
+Geoff's direction, in his words: "the main session should act like a project
+director/orchestrator, with threads used to isolate context for a given
+workflow... a sub-session, running the skill, is opened for deep work that
+will require or benefit from context window isolation. The director can use
+agent-to-agent messaging to coordinate between the main thread and
+sub-threads. The user should be able to stay in the Aviator/director session
+and only click into the sub-thread as needed... Main/Aviator sessions should
+feel like a Claude Code project, and modes should be powered by threads. We
+still need to resolve how the Aviator thread shows a mode for the high-level
+interactions."
+
+What this means, and what it reuses:
+
+- **A run's thread is a child session** (upstream `parent_conversation_id`),
+  started and messaged the way participants already are (`sys_session_create`,
+  `sys_session_send`, `sys_read_inbox`; see `skills/participants/`). Upstream
+  already lists children under their parent and opens one as a tab in the
+  right-hand area, with a control to make it full size
+  (`web/src/shell/SubagentTab.tsx`).
+- **Why threads.** The workflow's working (reading the framework, scoring,
+  calling participants) stays out of the director's context, so the director
+  can keep the whole project in view for a long time.
+- **What it costs.** Each thread is another Claude Code process: seconds to
+  start, and its own usage. A thread knows only what the director hands it,
+  so the hand-over brief matters. A called session was measured answering in
+  about a minute, so any design that puts two agents in the path of every
+  turn is felt.
+- **The tension to resolve (M-12).** A mode such as intent shaping is a
+  conversation with the person, one question at a time. If the person stays
+  with the director, something must carry the thread's questions to them and
+  their answers back.
+
+How the round-one answers carry over (proposed; "How it fits together" tab of
+the second walkthrough):
+
+- A project has one standing Aviator chat, pinned, with threads under it.
+  Plain extra sessions are still allowed.
+- Every workflow run gets a thread. Aviator may open one for other deep work
+  on its own judgment and says so (as with participants, D-23). Quick asks,
+  single cards and lookups stay with the director.
+- The director hands a thread a written brief, kept as a file: the subject,
+  what to read, the target, who may be called.
+- D-94's "one at a time" means one thread has the floor. Others keep working
+  and show as cards.
+- Pausing a mode (D-93) pauses its thread, which writes the note and stops.
+  Resume wakes the same thread if it exists, else starts a fresh one from the
+  note and the data.
+- Item threads (D-95) hang off the run's thread, and their conclusions are
+  written to the record.
+- Participants do not change.
+
 ## Open decisions
 
-Each is put to Geoff in the walkthrough with drawings of every option.
+Put to Geoff with drawings at https://claude.ai/artifact/YQcb4HDRGMnn6YW82uFNZd.
 "Recommended" is the agent's recommendation, not a decision.
 
-- **M-1 · How a mode shows.** A strip on the message box (recommended), a
-  band under the header, or only the Session panel card as today. *Must stay
-  clearly lighter than the Hangar's frame change (D-40).*
-- **M-2 · Marking replies as the mode's.** A rail beside the mode's turns
-  with start, pause and resume markers (recommended), a label on every reply,
-  or the mode speaking as its own character. *Has to coexist with participant
-  marks.*
-- **M-3 · Side questions during a mode.** Answered outside the rail while the
-  mode stays on (recommended), everything counts as the mode until paused,
-  the agent asks each time, or the question goes to a side chat.
-- **M-4 · Leaving a mode.** Say it or press it, three endings, a
-  where-we-left-off note, only stop confirms (recommended); say it only, with
-  no button or note; or confirm every exit.
-- **M-5 · A second mode in the same session.** One at a time with a way back
-  (recommended), nested inside each other, several at once, or the second
-  opens as a thread beside the first.
-- **M-6 · Finding what is in flight.** An "In flight" section on the project
-  page plus a needs-you count in the sidebar (recommended), runs listed in
-  the sidebar, or only by asking Aviator.
-- **M-7 · What a project is.** A goal that ships, inside an area that lasts
-  (recommended); projects at any level, nested freely; or flat folders as
-  today. *Geoff's stated lean is the in-market goal; the area level is the
-  proposed answer to where discovery lives.*
-- **M-8 · Showing a project's relatives.** A "part of" trail and a Related
-  card, with area context inherited (recommended); a tree in the sidebar; or
-  nothing on screen, with Aviator speaking up when a relative matters.
-- **M-9 · How detailed the intent graph is.** Areas and goals pointing at
-  datasets (recommended); down to every requirement and decision; or only a
-  parent line per project for now.
+- **M-12 · How the director shows a mode.** A direct line: the thread's
+  questions appear in the director's chat inside the rail, and while it has
+  the floor the person's messages go straight to it, with `@aviator` or an
+  off-topic question answered by Aviator outside the rail (recommended; it
+  keeps D-90 to D-92 as chosen and puts no second agent in the path). Or a
+  live card per thread with the pending question answerable on it, and all
+  real conversation in the opened thread. Or Aviator relays every turn, as
+  for participants today. *The live card is the first slice of the
+  recommended option.*
+- **M-13 · Where a thread opens when the person steps in.** Beside the
+  director as a tab, expandable to full size, as upstream does (recommended);
+  as its own page with a trail back; or in place of the chat with the
+  director folded to a bar. *A tab shares the right-hand area with the
+  canvas.*
+- **M-14 · What a thread tells the director.** One line at each milestone
+  (step crossed, needs the person, blocked, finished), pointing at the files
+  (recommended); everything it says; or only the result.
+- **M-8 · A project's connections.** Reframed after D-97: a project lives in
+  one area, but its other links are typed and hang from specific things
+  (requirement R-07 *handed to* another team's project; this project *came
+  from* a problem; another project *relies on* this one), and each reads the
+  other way from the far end. Options: a chip on the linked item plus a
+  Connections card on the project page, grouped by what the link means
+  (recommended); a small map of the project and what it touches; or chips on
+  items only. *This does not build the graph (D-98); a link is one line
+  stored with the item it hangs from.*
 
-- **M-10 · Where a mode's conversation lives.** In place with threads for
-  branches (recommended); every mode in its own session under the one it was
-  started from; or everything in one chat with no threads. *First in the
-  walkthrough, because M-2, M-3 and M-5 depend on it.*
-- **M-11 · Threads on single items.** Any record can have a thread
-  (recommended); item discussion stays in the main chat; or threads only for
-  agents' own work on an item.
+## Proposed build order
 
-### Smaller calls the agent will make unless Geoff objects
+1. **Runs that can pause.** Run state and the where-we-left-off note in the
+   progress file (`pa flow --pause | --resume | --stop`, `--note`). Needs no
+   open decision.
+2. **In flight on the project page** (D-96): run cards on upstream's board,
+   Resume, the sidebar count. Needs no open decision.
+3. **Aviator as director**: a skill telling Aviator how to start a workflow
+   in a thread, write the brief and read milestones; a live run card in the
+   director's chat. Needs M-14.
+4. **The direct line**: strip, rail and the thread's turns in the director's
+   chat. Needs M-12 and M-13.
+5. **Threads on items** (D-95). After step 3.
+6. **Projects with a goal** (D-97): a project names its goal and area; an
+   area page; connections. Needs M-8.
 
-Listed on the walkthrough's "Smaller calls" tab.
+### Smaller calls from round one (accepted, D-99)
 
 - Every workflow makes a mode, not only the ones featured in the Library.
 - A mode has no color of its own; the rail and strip use the existing

@@ -416,16 +416,97 @@ https://claude.ai/artifact/7gbkDmURSuwhWGWVzyBtU6): the page as the editor with
 autosave (D-63), the pinnable Aviator pop-over with "Try them" (D-64), casting
 from the person's page (D-65) and skills passed to the session (D-66).
 
+## Modes, runs and projects
+
+Geoff's answers of 2026-11-21 to the walkthrough at
+https://claude.ai/artifact/HRgpJURjcqasGSCmd3894d (questions M-1 to M-11 in
+[modes-and-projects.md](modes-and-projects.md)). Numbers start at D-89 because
+D-76 to D-88 are taken by work in open pull requests.
+
+**D-89 · 2026-11-21 · Geoff.** The main Aviator session acts as a project
+director, and modes are powered by threads. Deep work that benefits from its
+own context window (a workflow such as intent shaping) runs in a sub-session
+that runs the skill; the director coordinates with it by agent-to-agent
+messages. The person can stay in the director session and click into a thread
+only when needed. The approach is dynamic: the director decides when work
+earns a thread. A main session should feel like a Claude Code project. *His
+words: "for context reasons, the main session should act like a project
+director/orchestrator, with threads used to isolate context for a given
+workflow." He chose this over all three drawn options (in place with threads
+for branches, every mode in its own session, everything in one chat).* Still
+open, and his to decide: how the director session shows a mode for the
+high-level interactions (M-12).
+
+**D-90 · 2026-11-21 · Geoff.** A mode shows as a one-line strip on the message
+box: the workflow, the step, and Pause. Not a band under the header, and not
+only the Session panel card. *Always in view whether the canvas or the panel
+is open, and clearly lighter than the Hangar's frame change (D-40).*
+
+**D-91 · 2026-11-21 · Geoff.** Replies that belong to a mode are marked by a
+thin rail beside them, with a marker in the transcript where the mode starts,
+pauses and resumes. Participants keep their own names inside the rail. *Who
+is speaking stays separate from what work a turn belongs to.*
+
+**D-92 · 2026-11-21 · Geoff.** A side question during a mode is answered
+outside the rail and the mode stays on. It does not end or pause the mode.
+
+**D-93 · 2026-11-21 · Geoff.** Leaving a mode: say it in plain language or
+press Pause. There are three endings, kept distinct: pause (come back), finish
+(the work product is written) and stop (not worth pursuing; what exists is
+kept). On pause the agent writes a "where we left off" note and a Resume
+control, and an unanswered question is frozen as Paused. Only stop asks for
+confirmation.
+
+**D-94 · 2026-11-21 · Geoff.** One mode has the floor at a time. Starting a
+second pauses the first and remembers it, and the agent offers to return when
+the second ends. *Chosen when modes were drawn inside one chat. Under D-89
+several threads can be in flight at once; what this fixes is that the
+person's message always has one obvious destination.*
+
+**D-95 · 2026-11-21 · Geoff.** Any item (a decision, a risk, a requirement)
+can have its own thread, attached to the record, opened from its row, with a
+count on the row. Aviator may start one when a discussion of one item runs
+long, and says so. *Keeps each item's reasoning with the item.*
+
+**D-96 · 2026-11-21 · Geoff.** In-flight work is found on the project page: an
+"In flight" section with a card per run (step, state, where it left off,
+Resume), sessions below, and a count of runs that need the person in the
+sidebar. Built on upstream's project board.
+
+**D-97 · 2026-11-21 · Geoff.** A project is one in-market goal that ships and
+then ends. It sits inside an area, a lasting problem space where problem
+discovery and shared context live; a problem marked worth solving starts a
+goal project. *His caveat, recorded as a constraint on what follows: this may
+need to become more graph-like and less hierarchical. "If project A has 20
+requirements, and implementing one of them is delegated to a different team,
+that would become project B for them." So the area is a home, not the only
+kind of link, and a record must be able to point at another project.*
+
+**D-98 · 2026-11-21 · Geoff.** The level of detail of the intent graph is not
+decided yet, on purpose: "too early for me to decide; hold decision until it
+blocks something." Nothing is built for a graph beyond what D-97 needs (a
+project names its goal and its area). *The likely first thing to force it is
+his own example in D-97, a requirement handed to another team's project.*
+
+**D-99 · 2026-11-21 · Claude, accepted by Geoff.** The smaller calls listed
+in the walkthrough stand: every workflow makes a mode, not only the ones
+featured in the Library; a mode has no color of its own (it uses the "agent
+at work" token); starting a mode never asks first; a run belongs to one
+project; threads reuse upstream's side chats and child sessions; demo
+projects (D-76) stay as they are. "Resume returns to the same session" is
+carried over as "Resume returns to the run's own thread".
+
 ## Open
 
 - Progressive complexity (from D-54): how a workflow shows less at first and
   more on demand, to the person and to the agent. Not designed yet.
-- Modes, runs, projects and the intent graph (raised by Geoff 2026-11-21):
-  eleven questions, M-1 to M-11, in [modes-and-projects.md](modes-and-projects.md),
-  each put to him with drawings at
-  https://claude.ai/artifact/HRgpJURjcqasGSCmd3894d. They are: how a mode
-  shows; how replies are marked as the mode's; side questions during a mode;
-  leaving a mode (pause, finish, stop); a second mode in the same session;
-  where in-flight work is found; what a project is; how a project's relatives
-  show; how detailed the intent graph is; where a mode's
-  conversation lives; threads on single items. Nothing is built.
+- From the modes and projects work (see
+  [modes-and-projects.md](modes-and-projects.md)), put to Geoff with drawings
+  at https://claude.ai/artifact/YQcb4HDRGMnn6YW82uFNZd:
+  - M-12: how the director session shows a mode for the high-level
+    interactions (left open by D-89).
+  - M-13: where a thread opens when the person steps into it.
+  - M-14: what a thread reports back to the director.
+  - M-8, sent back by Geoff to be rethought as a graph, not a tree: how a
+    project's connections show.
+- The intent graph's level of detail is deliberately held (D-98).
