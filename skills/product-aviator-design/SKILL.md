@@ -55,6 +55,12 @@ text in `--pa-ok` on `--pa-ok-soft`.
 
 - Color carries meaning, not decoration. If something is colored, a reader
   should be able to say why. Most of the page is ink on surface.
+- The person's color (`--pa-you`) is theirs alone. Never use it for status,
+  the agent, other authors or decoration. If the palette changes, the hue may
+  change but the rule stays: one hue for the person, unlike every other
+  color in use (decision D-49).
+- "Needs you" is `--pa-attn` (amber); red (`--pa-fail`) is only for real
+  failures (D-50).
 - Status always shows an icon and a word as well as a color.
 - One primary (navy) button per card or form. Everything else is plain.
 - Labels and headings are sentence case. No small all-caps labels, no
