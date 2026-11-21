@@ -41,6 +41,22 @@ download is the Terminal version of macOS's own "Open Anyway", and sending
 people to IT for it would stall every install. This replaces the earlier
 advice in the README to ask IT.*
 
+**D-111 · 2026-11-21 · Geoff asked, Claude chose.** The app lives in one
+fixed folder, `~/flight-deck` (Geoff chose the name). Setup copies a download
+into it, and a newer download updates it without overwriting anything the
+person made or changed: their own files are untouched, their edits to shipped
+workspace files win (the new version is saved under `updates/`), files they
+deleted stay deleted, and app code outside `workspace/` is always replaced
+(their copy saved). A manifest of the last install's file hashes tells the
+cases apart. `sh ~/flight-deck/setup.sh` finds the newest download in
+~/Downloads by itself, so nobody navigates folders in Terminal, and the
+Workspace and Hangar projects follow the app when it moves out of a download
+folder. *Geoff asked that a re-download keep the files he added rather than
+overwrite them, and said navigating in the command line is hard. One fixed
+folder in the home folder, outside iCloud and OneDrive sync, gives updates a
+place to find, and comparing against what was shipped is the only way to
+tell his edits from ours.*
+
 ## Structured work
 
 **D-05 · 2026-11-20 · Geoff.** One template system serves both the chat

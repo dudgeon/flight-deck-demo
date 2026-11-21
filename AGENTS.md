@@ -56,6 +56,10 @@ person in the conversation, from the roster in `workspace/participants/`.
   starts the server and opens `http://127.0.0.1:6767/library`. If 6767 is busy
   it takes the next free port and prints it. `./start.sh --no-open` skips the
   browser. `./stop.sh` stops it. Session data is in `~/.omnigent-slim`.
+- On the work Mac, `sh setup.sh` installs into `~/flight-deck` and updates it
+  from newer downloads without overwriting the person's files (D-107, D-111).
+  Changing the install or update rules: `scripts/install_sync.py`, then run
+  `tests/setup_sim/simulate_zip_setup.py` and `tests/test_slim_install_sync.py`.
 - `start.sh` is macOS-only. In a Linux container, use a plain venv:
   `pip install -e sdks/python-client -e sdks/ui -e .`, then `omnigent start`.
   On a machine with internet, `uv sync` and `uv run omnigent start` also work.
