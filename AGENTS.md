@@ -21,6 +21,12 @@ runs offline. Read README.md first. These rules keep it usable on the work Mac:
 - Mark slim-specific changes to upstream files with a short `omnigent-slim:`
   comment so they're easy to find when pulling from upstream.
 
+- **Write down intent and decisions as you go.** When the product owner
+  decides something, add an entry to `docs/product/decisions.md`. When you add
+  or change a feature, update its section in `docs/product/features.md` with
+  what it is for, not only what it does. The production team will rebuild this
+  from those notes.
+
 Run it with `./start.sh` (see README). For a dev loop on a machine with
 internet, `uv sync` and `uv run omnigent start` also work.
 

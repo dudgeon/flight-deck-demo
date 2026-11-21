@@ -59,11 +59,12 @@ Then `$PA flow data/<slug>-review.json --step <number> --note "<what is happenin
 when you move to another step, and `--done` when the workflow is finished.
 The steps: 1 first read, 2 call in others, 3 their reviews, 4 the user's decisions, 5 wrap up. The count of items done updates itself.
 
-## 3. Ask who else should look
+## 3. Decide who else should look
 
-Run `$PA who --scenario SKILL_DIR` for who is eligible for this workflow. If the user already named people, call them. Otherwise suggest
-the participants whose `call for` fits the document and ask, in one line,
-whether to call them. Do not call anyone the user has not agreed to.
+Run `$PA who --scenario SKILL_DIR` for who is eligible for this workflow. If
+the user already named people, call them. Otherwise pick the participants
+whose `call for` fits the document, say in one line who you are bringing in
+and why, and call them. The user can stop you.
 
 ## 4. Call them
 

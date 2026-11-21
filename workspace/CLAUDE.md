@@ -36,8 +36,9 @@ conversation: one file each, with who they are and how they are played. When
 the user asks to check in with, call or ask someone ("check in with Mara from
 design and the risk agent"), or asks who is available, use the `participants`
 skill. It tells you how to look them up, call them in a background session or
-from their script, and show what they say under their own name. Never answer
-on a participant's behalf.
+from their script, and show what they say under their own name. A message
+that mentions a participant with `@` is for them to answer, not you. Never
+answer on a participant's behalf.
 
 ## Artifacts
 
