@@ -13,7 +13,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { HANGAR_WRENCH_GROUP, HangarWrench } from "@/hangar/HangarWrench";
+import { hangarPath } from "@/hangar/hangarApi";
 import { authenticatedFetch } from "@/lib/identity";
+import { cn } from "@/lib/utils";
 
 interface CannedSessionField {
   name: string;
@@ -88,9 +91,14 @@ function SessionCard({
   const template = session.template ? templates.find((t) => t.id === session.template) : undefined;
   const start = () => navigate(composerLink(fillPrompt(session.prompt, values), project));
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border bg-background p-4">
+    <div
+      className={cn("flex flex-col gap-3 rounded-lg border border-border bg-background p-4", HANGAR_WRENCH_GROUP)}
+    >
       <div>
-        <div className="font-medium text-foreground">{session.title}</div>
+        <div className="flex items-start gap-2 font-medium text-foreground">
+          <span className="min-w-0 flex-1">{session.title}</span>
+          <HangarWrench to={hangarPath.starter(session.id)} label={`Open ${session.title} in the Hangar`} />
+        </div>
         {session.description && (
           <div className="mt-1 text-sm text-muted-foreground">{session.description}</div>
         )}
@@ -125,8 +133,13 @@ function SessionCard({
 function TemplateCard({ template, project }: { template: ArtifactTemplate; project: string | null }) {
   const navigate = useNavigate();
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-border bg-background p-4">
-      <div className="font-medium text-foreground">{template.title}</div>
+    <div
+      className={cn("flex flex-col gap-2 rounded-lg border border-border bg-background p-4", HANGAR_WRENCH_GROUP)}
+    >
+      <div className="flex items-start gap-2 font-medium text-foreground">
+        <span className="min-w-0 flex-1">{template.title}</span>
+        <HangarWrench to={hangarPath.template(template.id)} label={`Open ${template.title} in the Hangar`} />
+      </div>
       {template.description && (
         <div className="text-sm text-muted-foreground">{template.description}</div>
       )}

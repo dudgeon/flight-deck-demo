@@ -41,6 +41,8 @@ looks right opened on its own, start from a template in
 | `--pa-fail` | Failed or blocked. Reserve it for real failures. |
 | `--pa-idle` | Not started, queued |
 | `--pa-agent` | The main agent and work in progress by it |
+| `--pa-build`, `--pa-build-soft`, `--pa-on-build` | Only the Hangar (builder mode): its band, selected shelf, primary button there. Never in anything a user meets while flying. |
+| `--pa-hangar-bg`, `--pa-hangar-grid`, `--pa-hangar-paper` | The Hangar's drafting-paper ground, its grid lines, and its paper sidebar and cards |
 | `--pa-author-1` … `--pa-author-8` | Other agents and people, one hue each, in order of appearance |
 | `--pa-comment`, `--pa-comment-strong` | Highlight behind commented text, and its outline when selected |
 | `--pa-shadow` | Shadow color; only for things that float over the page |

@@ -258,7 +258,20 @@ close to amber and red.
 red, red would be everywhere and real failures would stop standing out;
 amber reads as "your turn" without alarm.* The alternative was red for both.
 
-**D-51 · 2026-11-21 · Geoff.** Asks in chat, work in canvas. Questions,
+**D-51 · 2026-11-21 · Geoff.** The "Open in Hangar" link on things met while
+flying (a participant's turn, the Session panel's workflow card, Library cards)
+is a small wrench icon with no words, invisible until the pointer is over the
+thing or the wrench has keyboard focus. *Refines D-41: it must never show in a
+screen recording of a demo.*
+
+**D-52 · 2026-11-21 · Claude.** The Hangar is its own full-screen route
+(`/hangar`) outside the flying shell, not a variant of the flying sidebar. Its
+catalog is read by the server from the existing files on every request, and
+its checks and rendered views come from the view kit's own `pa` code, so the
+Hangar can never disagree with `pa check`. *Keeps builder mode separable from
+upstream Omnigent's shell and adds no new data store.*
+
+**D-53 · 2026-11-21 · Geoff.** Asks in chat, work in canvas. Questions,
 pick-ones, single cards and summaries are drawn inside the conversation and
 fold into a record once answered; catalogs, boards and documents open in the
 canvas. *He can answer a question without losing the document in the canvas,
@@ -266,19 +279,19 @@ the transcript shows what was decided, and there is never a second live copy
 of a view.* The options not taken: canvas only (the app before this), anything
 in chat with an expand button, and still snapshots in chat.
 
-**D-52 · 2026-11-21 · Geoff.** The intent framework stays as drafted (five
+**D-54 · 2026-11-21 · Geoff.** The intent framework stays as drafted (five
 depths, seven areas). His note: it is a lot, and the product will need ways to
 add and remove complexity progressively, to focus the person on one task in
 depth or several at a high level, and to disclose progressively to both human
 and agent. The framework's job was to pressure-test the system, and it did.
 
-**D-53 · 2026-11-21 · Geoff.** The agent must be able to direct the person's
+**D-55 · 2026-11-21 · Geoff.** The agent must be able to direct the person's
 attention. First form, as he suggested: while a view in the chat is waiting
 for an answer, the canvas goes grey and returns when pointed at. This is an
 exploration to react to, not a settled design.
 
 ## Open
 
-- Progressive complexity (from D-52): how a workflow shows less at first and
+- Progressive complexity (from D-54): how a workflow shows less at first and
   more on demand, to the person and to the agent. Not designed yet.
 

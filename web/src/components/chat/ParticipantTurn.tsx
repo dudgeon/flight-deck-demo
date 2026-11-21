@@ -4,6 +4,8 @@
 
 import type { ReactNode } from "react";
 import { useInRouterContext } from "react-router-dom";
+import { HANGAR_WRENCH_GROUP, HangarWrench } from "@/hangar/HangarWrench";
+import { hangarPath, participantSlug } from "@/hangar/hangarApi";
 import { withBasePath } from "@/lib/basePath";
 import { type ParticipantTurn, participantInitials } from "@/lib/participantTurn";
 import { Link } from "@/lib/routing";
@@ -58,9 +60,12 @@ function SessionLink({ id }: { id: string }) {
 export function ParticipantTurnBlock({
   turn,
   children,
+  hangarLink = true,
 }: {
   turn: ParticipantTurn;
   children: ReactNode;
+  /** The hover-only wrench to this participant in the Hangar (off inside the Hangar). */
+  hangarLink?: boolean;
 }) {
   return (
     <section
@@ -72,7 +77,12 @@ export function ParticipantTurnBlock({
         turn.kind === "person" ? "border-l-emerald-600" : "border-l-sky-700",
       )}
     >
-      <header className="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 pt-2 text-sm">
+      <header
+        className={cn(
+          "flex flex-wrap items-center gap-x-2 gap-y-1 px-3 pt-2 text-sm",
+          HANGAR_WRENCH_GROUP,
+        )}
+      >
         <ParticipantMark name={turn.name} kind={turn.kind} standIn={turn.standIn} />
         <b className="font-semibold">{turn.name}</b>
         {turn.standIn ? (
@@ -89,6 +99,13 @@ export function ParticipantTurnBlock({
         )}
         {turn.role && <span className="text-xs text-muted-foreground">{turn.role}</span>}
         {turn.sessionId && <SessionLink id={turn.sessionId} />}
+        {hangarLink && (
+          <HangarWrench
+            to={hangarPath.person(participantSlug(turn.name))}
+            label={`Open ${turn.name} in the Hangar`}
+            className={turn.sessionId ? undefined : "ml-auto"}
+          />
+        )}
       </header>
       <div className="px-3 pt-1 pb-2">{children}</div>
     </section>
