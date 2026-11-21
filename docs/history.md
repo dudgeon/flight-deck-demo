@@ -133,13 +133,16 @@ inside the app (D-30), the work-Mac ZIP install (D-100).
   The headline: the main Aviator session acts as a project director, and
   workflows run in their own threads. A second walkthrough holds four
   remaining questions.
+- **Work-Mac setup script**: `sh setup.sh` takes a browser-downloaded ZIP to
+  a running app, clearing the download flag after asking and writing a report
+  to send back on failure (D-107). Rehearsed end to end in a Linux container.
 - **This documentation pass**: the decision index, this history, the
   architecture overview, a refreshed roadmap and a root `CLAUDE.md` for
   contributors' agents.
 
 ## Still waiting
 
-- The one-step setup script for a browser-downloaded ZIP (D-100).
+- Geoff's first install on the work Mac with `setup.sh` (D-100, D-107).
 - Live runs of decision review and problem discovery.
 - Progressive complexity (D-54) and the remaining modes questions.
 - Whether to rename the repository (D-35), and D-24 for production.

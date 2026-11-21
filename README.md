@@ -29,53 +29,70 @@ apps built on Omnigent; see [Staying close to upstream](#staying-close-to-upstre
 
 ## Quick start: from download to your first session
 
-Every step is a command or a click. Run commands in **Terminal**.
+You don't need to be technical for this. You'll click a link, double-click a
+file, and type two short lines into Terminal.
 
-### Step 0. Check what you need
+### Step 0. What you need
+
+- A Mac with Apple silicon (M1 or newer) and macOS 13 or newer.
+- **Claude Code**, installed and signed in. To check, open Terminal, type
+  `claude` and press Return. If it starts, type `/exit` to leave it. If it says
+  `command not found`, install Claude Code first.
+- About 1 GB of free disk space.
+
+The setup script checks all of this for you and tells you plainly if anything
+is missing.
+
+### Step 1. Download and unzip
+
+1. Click this link: **https://github.com/dudgeon/omnigent-slim/archive/refs/heads/main.zip**
+   Your browser saves `omnigent-slim-main.zip` (about 75 MB) to **Downloads**.
+2. In Finder, open **Downloads** and double-click the ZIP. You get a folder
+   called **omnigent-slim-main**. (Safari may unzip it for you.)
+
+You can move that folder anywhere you like first, for example to your home
+folder. If you move it later, run the setup again.
+
+### Step 2. Run the setup
+
+1. Open **Terminal**: press Command-Space, type `Terminal`, press Return.
+2. Type `cd ` (the letters c and d, then a space). Don't press Return yet.
+3. Drag the **omnigent-slim-main** folder from Finder onto the Terminal
+   window. Its location appears after `cd `. Now press Return.
+4. Type this and press Return:
+
+   ```bash
+   sh setup.sh
+   ```
+
+The setup checks your Mac, then says that macOS has flagged the folder as
+downloaded from the internet. Every browser download gets that flag, and macOS
+won't run the bundled Python and tmux while it's there. Press **Return** to
+let setup remove it, from this folder only; it's the same thing as macOS's own
+*Open Anyway* button. (If your company says not to, press Control-C instead
+and use the Terminal download below, which never adds the flag.)
+
+The first run takes about a minute. When you see **Flight Deck is running**,
+your browser opens the **Library** page at `http://127.0.0.1:6767/library`.
+
+**If it stops with a red ✗,** it says what went wrong and what to do. It also
+saves a report on your Desktop, `flight-deck-setup-report.txt`. If the fix
+doesn't work, send that file back. It lists the checks and errors, and has no
+passwords or keys in it. You can run `sh setup.sh` again as often as you like.
+
+**Next time** you only need `./start.sh` in the same folder (Step 2, parts 1
+to 3, then `./start.sh`), or the Dock icon below.
+
+**Another way to download: one line in Terminal.** This downloads to your home
+folder, unzips and runs the setup in one go. Paste it into Terminal yourself
+and press Return:
 
 ```bash
-uname -m
+cd ~ && curl -fL -o omnigent-slim.zip https://github.com/dudgeon/omnigent-slim/archive/refs/heads/main.zip && unzip -qo omnigent-slim.zip && cd omnigent-slim-main && sh setup.sh
 ```
 
-It must print `arm64` (an Apple silicon Mac). Intel Macs are not supported.
-
-```bash
-claude --version
-```
-
-It must print a version. If it says `command not found`, install Claude Code
-first. Then run `claude` once on its own, sign in, and quit it with `/exit`.
-
-### Step 1. Download the ZIP from Terminal
-
-Download with `curl`, not with a web browser. macOS marks files downloaded by a
-browser as *quarantined*, and then refuses to run the bundled tmux and Python.
-`curl` doesn't add that mark.
-
-```bash
-cd ~
-curl -fL -o omnigent-slim.zip https://github.com/dudgeon/omnigent-slim/archive/refs/heads/main.zip
-unzip -q omnigent-slim.zip
-cd omnigent-slim-main
-```
-
-The folder is `~/omnigent-slim-main`. (`git clone` works too and also avoids
-quarantine.)
-
-If you can only download through a browser, `./start.sh` will tell you the copy
-is quarantined. Ask your IT team how they want you to clear the flag; don't
-bypass it on your own.
-
-### Step 2. Start it
-
-```bash
-./start.sh
-```
-
-The first run takes about a minute: it unpacks the bundled Python into
-`.runtime/` and installs the bundled packages, with no network. Later starts take
-a few seconds. When it prints `omnigent-slim is running: http://127.0.0.1:6767/library`,
-your browser opens the **Library** page.
+A download made this way never gets the macOS flag. `git clone` works too, on
+a machine that allows it.
 
 **Optional: a Dock icon.** `scripts/make_dock_app.sh --add-to-dock` builds
 `~/Applications/Product Aviator.app` and pins it to the Dock. Clicking it starts
@@ -164,7 +181,8 @@ folder, hover over it in the sidebar, click **⋯**, then **Project settings**.
 
 | You see | Do this |
 |---|---|
-| `macOS has quarantined this copy` | Download again with `curl` (Step 1) |
+| `macOS has flagged this copy as downloaded from the internet` | Run `sh setup.sh` (Step 2) |
+| Setup stops with a red ✗ | Do what it says. If that doesn't fix it, send `flight-deck-setup-report.txt` from your Desktop |
 | `Claude Code ('claude') is not on your PATH` | Install Claude Code, run `claude` once to sign in |
 | `this build needs an Apple silicon Mac` | Use an Apple silicon Mac |
 | A session says *Waiting for you in the agent's terminal* | Click the terminal icon (top right of the session) and answer Claude's question there, e.g. whether to trust a folder or a project MCP server |

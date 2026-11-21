@@ -119,3 +119,6 @@ workspace/progress/*
 # Scenario previews written into the repo by mistake (write them to /tmp).
 /preview*.html
 workspace/.hangar/
+
+# Written by setup.sh on every run.
+setup-report.txt

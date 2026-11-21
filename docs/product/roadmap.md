@@ -216,17 +216,18 @@ arrives as a ZIP of `main` and has to be set up by someone who is not
 technical (D-100).
 
 - **Done.** Everything is vendored (Python, wheels, tmux, the built web UI).
-  `start.sh` detects a quarantined copy and says so. The README walks through
-  a download with `curl`, which avoids quarantine.
-- **Not built.** The one-step setup script for a browser-downloaded ZIP,
-  approved by Geoff on 21 Nov: plain-language steps, and failures that say
-  what broke and what to send back. Its thread has not opened a pull request.
-- **Next.** Build it, merge it to `main` (Geoff downloads the `main` ZIP), and
-  have Geoff test it on the work Mac.
-- **Open.** How the quarantine flag is cleared on a browser download. The
-  README tells people to ask IT rather than bypass it; the setup script must
-  not bypass it either.
-- **Read.** README "Quick start"; D-02, D-100; [../architecture.md](../architecture.md)
+  `sh setup.sh` takes a browser-downloaded ZIP to a running app: it checks
+  the Mac and Claude Code, clears the download flag from its own folder after
+  asking (D-107), restores execute bits, starts the app on port 6767 and
+  writes a report to send back if it stops. The README walks through it in
+  plain steps, with a one-line `curl` download as the other way.
+  `tests/setup_sim/simulate_zip_setup.sh` rehearses it in a Linux container
+  (a clean install and four failures).
+- **Next.** Geoff's first real install on the work Mac.
+- **Open.** Whether the work Mac's management locks the download flag or
+  blocks the bundled binaries; setup detects both and says so, but only the
+  real machine will tell.
+- **Read.** README "Quick start"; D-02, D-100, D-107; `setup.sh`; [../architecture.md](../architecture.md)
   "Setup on the work Mac".
 
 ## Canvas tools across several tabs

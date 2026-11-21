@@ -30,6 +30,7 @@ feature notes of the time and marked *(reconstructed)*.
 | D-02 | Claude Code as a terminal, no API, offline, no permission bypass, everything vendored | Geoff | Built (`_offline_guard.py`, `slim_policy.py`, `vendor/`) | The work Mac's constraints. |
 | D-03 | Defaults: Auto permissions, Opus 5.5, medium effort | Geoff | Built | *(reconstructed)* Auto keeps demos flowing without prompts while staying inside Claude Code's own safety checks; Bypass and Don't ask stay removed (D-02). |
 | D-04 | A "product partner" for PMs: unstructured work plus templated flows | Geoff | Active | *(reconstructed)* His vision of PM work: context files and generated artifacts alternating with structured, repeatable flows. |
+| D-107 | Setup clears the download flag on its own folder after asking; curl stays as the other way | Geoff | Built (`setup.sh`) | A browser ZIP is the main way in; this is what "Open Anyway" does, and IT for every install would stall it. |
 
 ## Structured work
 
@@ -181,7 +182,7 @@ decided but nothing is built yet.
 
 | D | Decision | Who | Status |
 |---|---|---|---|
-| D-100 | The work Mac gets the repo as a ZIP and runs one setup script that fails helpfully | Geoff | **Open: setup script not built** |
+| D-100 | The work Mac gets the repo as a ZIP and runs one setup script that fails helpfully | Geoff | Built (`setup.sh`); refined by D-107 |
 | D-101 | One active canvas tab per session, not mirrored | Geoff | Built |
 | D-102 | Sidebar brand: emblem plus name as text | Geoff | Built |
 | D-103 | Dock icon A, pinned to the Dock | Geoff | Built |
