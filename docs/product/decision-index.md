@@ -202,5 +202,8 @@ decided but nothing is built yet.
   mode, where a thread opens, what a thread reports back, how a project's
   connections show. They take the next free number when Geoff answers
   (D-115 or later).
+- Aviator coordination, skill routing and persona strictness (AV-1 to
+  AV-6 in [director-coordination.md](director-coordination.md)): put to
+  Geoff 2026-11-21; numbered when answered.
 - Progressive complexity (D-54).
 - D-24 for production.
