@@ -9,5 +9,8 @@ for, and what was tried, without asking the people who were there.
   rewrite an old entry; add a new one that replaces it.
 - `features.md`: what each feature is for, how it behaves, and where it lives
   in the code.
+- `roadmap.md`: where each workstream stands: done, partial, next, open
+  decisions and source docs. Update it when a workstream moves.
+- `hangar.md`: the spec for the Hangar (builder mode).
 
 Rules for keeping these current are in the repository's `CLAUDE.md`.

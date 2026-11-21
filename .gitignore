@@ -115,3 +115,6 @@ workspace/data/*
 workspace/progress/*
 !workspace/progress/.gitkeep
 !workspace/data/.gitkeep
+
+# Scenario previews written into the repo by mistake (write them to /tmp).
+/preview*.html

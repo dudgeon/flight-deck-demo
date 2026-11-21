@@ -65,9 +65,9 @@ Copy an existing one to start. The pattern:
 <title>Risk register</title>                        <!-- the Library card title -->
 <meta name="description" content="Risks with likelihood, impact and owner.">
 <style>
-  :root { --bg:#fff; --fg:#1d1d1f; --accent:#2f6feb; }
-  @media (prefers-color-scheme: dark) { :root { --bg:#141414; --fg:#f2f2f2; } }
-  body { background:var(--bg); color:var(--fg); font:15px/1.5 -apple-system, system-ui, sans-serif; }
+  /* pa-tokens:begin */ /* filled in by design/build_tokens.py; copy it from another template */ /* pa-tokens:end */
+  :root { --bg:var(--pa-surface); --fg:var(--pa-ink); --accent:var(--pa-navy); }
+  body { background:var(--bg); color:var(--fg); font:15px/1.5 var(--pa-font); }
 </style>
 </head>
 <body>
@@ -93,8 +93,9 @@ Rules that keep templates working in the viewer:
 - **One file.** Relative links to other files don't resolve in the viewer.
 - **Content in the JSON block.** Claude fills in data instead of rewriting
   markup, which is faster and keeps the design consistent.
-- **Light and dark.** Define colors as CSS variables and override them under
-  `@media (prefers-color-scheme: dark)`.
+- **Colors only from the tokens.** Use the `--pa-…` variables (see below),
+  never your own hex values. The token block already carries light and dark,
+  and the viewer keeps it in step with the app.
 - **Talk back with `window.omnigent?.prompt(text)`.** It puts text in the chat
   box for the user to send. Always use `?.` so the file also works outside
   Omnigent.
@@ -147,8 +148,10 @@ To write skills that work in Omnigent and elsewhere, see
 
 ## Theme and colors of the app
 
-Open **Settings** (gear icon, bottom left) → **Appearance**. Pick a palette or
-make a custom one (accent, tint, contrast). It's saved in the browser.
+The default look comes from the design tokens (above), for everyone. Upstream
+Omnigent's **Settings** → **Appearance** palettes are still there and override
+it in that one browser only; use them for personal taste, not to change the
+product's look.
 
 ## Changing the web app itself
 
@@ -206,12 +209,14 @@ for how to make one, `skills/view-kit` for the views and the `pa` command, and
 the app:
 
 ```bash
-python3 skills/view-kit/scripts/pa.py preview skills/prd-to-requirements --out preview.html
-open preview.html
+python3 skills/view-kit/scripts/pa.py preview skills/prd-to-requirements --out /tmp/preview.html
+open /tmp/preview.html
 ```
 
-The look of every view comes from `skills/view-kit/kit/pa-kit.css`. Change the
-tokens at the top of that file to restyle all of them.
+Write previews outside the repository (as above) so they don't get committed.
+
+The look of every view comes from `skills/view-kit/kit/pa-kit.css`, whose token
+block is generated: restyle through `design/tokens.json`, not that file.
 
 The Session panel (Outputs, Context, People and agents) is
 `web/src/shell/SessionOverviewFiles.tsx`.
