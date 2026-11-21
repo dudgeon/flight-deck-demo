@@ -276,6 +276,8 @@ def test_an_avatar_is_copied_in_and_published_with_the_person(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     workspace = _scratch_workspace(tmp_path, monkeypatch)
+    live = workspace / "participants" / "avatars" / "risk-review.png"
+    shipped = live.read_bytes() if live.exists() else None  # built-ins ship a picture (D-108)
     slim_hangar.start_person_draft("risk-review")
     with pytest.raises(Exception, match="not a png picture"):
         slim_hangar.set_person_avatar("risk-review", "face.png", b"<svg/>")
@@ -285,9 +287,8 @@ def test_an_avatar_is_copied_in_and_published_with_the_person(
     assert draft["problems"] == [] and draft["person"]["avatar"] == "avatars/risk-review.png"
     assert slim_hangar.avatar_file("risk-review", draft=True).read_bytes() == PNG
     # Nothing is live until publish.
-    assert not (workspace / "participants" / "avatars").exists()
+    assert (live.read_bytes() if live.exists() else None) == shipped
     slim_hangar.publish_person("risk-review", "a face")
-    live = workspace / "participants" / "avatars" / "risk-review.png"
     assert live.read_bytes() == PNG
     person = next(p for p in slim_hangar.load_hangar()["people"] if p["id"] == "risk-review")
     assert person["avatar"].startswith("/v1/slim/hangar/avatars/risk-review?v=")

@@ -3,6 +3,7 @@ name: Cards Platform
 kind: agent
 role: Authorization platform
 initials: CP
+avatar: avatars/cards-platform.png
 backing: script
 call_for: what the card authorization platform can do today, and what a change would cost
 ---

@@ -10,7 +10,7 @@ never assigned (parallel threads claimed blocks and skipped them); they stay
 unused so no reference can point at the wrong thing. D-76 to D-88 are claimed
 by open pull requests 17 and 19. D-89 to D-99 (modes and projects) are on
 `main` from pull request 21. D-100 to D-106 record decisions Geoff made earlier that were
-never logged (see "Backfilled" in decisions.md); D-107 onward is next. No
+never logged (see "Backfilled" in decisions.md); D-108 and D-109 are avatars; D-110 onward is next. No
 number is used twice.
 
 **Status words.** *Built*: in the code on `main`. *Active*: a rule or
@@ -128,6 +128,8 @@ feature notes of the time and marked *(reconstructed)*.
 | D-73 | A scenario draft plays on its page; `opening` line | Claude | Built | Seeing the demo is the real check. |
 | D-74 | Pictures for people and agents, committed with the repo | Geoff | Built | He asked for avatars chosen from a file. |
 | D-75 | Configuration travels with the repo; a test guards `.gitignore` | Geoff | Built | Personas, skills, workflows and scenarios go to the work Mac. |
+| D-108 | Avatars share the "Solid flat" look; library in `design/avatars/`, built-ins get pictures | Geoff | Pending, this PR | Distinct at 24px in both themes; people and agents read as one team. |
+| D-109 | Each agent persona gets a role robot, made from the prompt guide with the contributor's own key | Geoff | Pending, this PR | Contributors make matching avatars without Geoff's key. |
 
 ## Views in the chat
 

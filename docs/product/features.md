@@ -407,6 +407,16 @@ built in the Hangar is meant to travel with the repo. *Why:* Geoff wants
 recognisable faces for the cast, and wants the cast, workflows and scenarios
 to move with the repo to the work machine.
 
+**Avatar library and prompt guide (D-108, D-109).** `design/avatars/` holds
+pictures to pick with the Picture field: nine people, nine generic robots and
+twelve role robots (risk, planner, researcher, architect, engineer, analyst,
+support, reviewer, designer, tester, scribe, strategist), all in one flat,
+token-colored style. Its README is the style and prompt guide, and
+`generate_avatar.py` makes a new one with your own OpenAI key (a dev-machine
+tool; the app never runs it). The built-in participants use them. *Why:* each
+agent persona should be recognisable by its job at a glance, and anyone adding
+a persona can make a matching picture without Geoff's key.
+
 **Scenario and workflow builders (slice 3, D-71 to D-73).** Every scenario
 and workflow page has Edit, Duplicate and Remove (for a shipped workflow, "Edit
 a copy"), and the Scenarios shelf has "New scenario". The draft opens as an

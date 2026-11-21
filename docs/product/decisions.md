@@ -429,6 +429,25 @@ overview lists published files not yet committed. *Geoff: "config, like
 personas, harness skills, workflows, scenarios should all travel with the repo.
 user sessions don't need to but can."*
 
+**D-108 · 2026-11-21 · Geoff.** Pictures for people and agents share one
+look, "Solid flat": flat vector, a full-bleed square in one token color, the
+subject head and shoulders inside the middle 80%, no outlines, gradients or
+text. A library ships in `design/avatars/` (nine people, nine generic robots,
+twelve role robots), and the four built-in participants get pictures from it.
+Chosen over an outlined style with pale tints. *Strong color fields keep a
+mixed cast distinct at 24px in light and dark; one look makes people and
+agents read as one team.*
+
+**D-109 · 2026-11-21 · Geoff.** Each workflow agent persona gets a robot that
+shows its role (risk, planner, researcher, architect and so on): one large
+prop and a head shape no other robot uses. New ones are made from the style
+and prompt guide in `design/avatars/README.md`, with
+`design/avatars/generate_avatar.py` and the contributor's own OpenAI key from
+the environment, or by pasting the guide's prompt into any image tool. No key
+is stored in the repo, and cloners are not expected to use Geoff's. *Geoff:
+"they can use the prompt guide to make their own and upload/add to the repo in
+their contributions."*
+
 Geoff confirmed the person-editing choices on 21 Nov (combined walkthrough
 https://claude.ai/artifact/7gbkDmURSuwhWGWVzyBtU6): the page as the editor with
 autosave (D-63), the pinnable Aviator pop-over with "Try them" (D-64), casting
