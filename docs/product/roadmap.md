@@ -5,8 +5,11 @@ A snapshot of every workstream in Flight Deck (the fork) and Product Aviator
 what is still to be decided, and where to read more. Written for the
 production team and for whoever picks the work up next.
 
-Snapshot refreshed 2026-11-21 evening, after pull requests 1 to 16, 18, 20
-and 21 were merged; 17 and 19 are open. Where each decision stands is in
+Snapshot refreshed 2026-11-21, 20:35 UTC, after pull requests 1 to 16, 18,
+20 to 24 and 26 to 29 were merged. Open: 17 and 19 (drafts, waiting on
+Geoff) and 25 (held). What is built but
+not yet checked on a real machine is listed under
+[Not yet verified](#not-yet-verified). Where each decision stands is in
 [decision-index.md](decision-index.md); the story so far is in
 [../history.md](../history.md). Decision
 numbers (D-nn) refer to [decisions.md](decisions.md); feature intent is in
@@ -15,30 +18,19 @@ in the same pull request.
 
 | Workstream | State |
 |---|---|
-| [Hangar (builder mode)](#hangar-builder-mode) | Built: all three slices, pictures, config in the repo |
-| [Demos and the Library](#demos-and-the-library) | In open PRs 17 and 19 |
+| [Hangar (builder mode)](#hangar-builder-mode) | Built: all three slices, pictures, config in the repo; widget editing (PR 27) and Send to repo (PR 29) |
+| [Demos and the Library](#demos-and-the-library) | In draft PRs 17 and 19, which now conflict with `main` |
+| [Avatars](#avatars) | Paused by Geoff; PR 25 held as a draft |
 | [Design language and tokens](#design-language-and-tokens) | Built; colors locked |
 | [Views in the chat](#views-in-the-chat) | Built |
 | [Collaborative markdown editor](#collaborative-markdown-editor) | Built; two known gaps |
 | [Participants and personas](#participants-and-personas) | Built, scripted and live, with Inbox messages; some gaps |
 | [The four kinds of work](#the-four-kinds-of-work) | Built as previews; two run live so far |
-| [Work-Mac setup from a ZIP](#work-mac-setup-from-a-zip) | Setup script not built yet |
+| [Work-Mac setup from a ZIP](#work-mac-setup-from-a-zip) | Built (`setup.sh`, update-safe `~/flight-deck`); not yet run on the work Mac |
 | [Canvas tools across several tabs](#canvas-tools-across-several-tabs) | Done |
 | [Dock launcher](#dock-launcher) | Done |
-| [Branding](#branding) | Done; one naming question open |
-| [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | D-89 to D-99 decided; four questions open; nothing built |
-
----|---|
-| [Hangar (builder mode)](#hangar-builder-mode) | Designed and decided; slice 1 of 3 being built |
-| [Design language and tokens](#design-language-and-tokens) | Built; three colors and two other questions waiting on Geoff |
-| [Collaborative markdown editor](#collaborative-markdown-editor) | Built; two known gaps |
-| [Participants and personas](#participants-and-personas) | Built, scripted and live; some gaps |
-| [The four kinds of work](#the-four-kinds-of-work) | Built as previews; one run live so far |
-| [Work-Mac setup from a ZIP](#work-mac-setup-from-a-zip) | In progress, not merged |
-| [Canvas tools across several tabs](#canvas-tools-across-several-tabs) | Done |
-| [Dock launcher](#dock-launcher) | Done |
-| [Branding](#branding) | Done; one naming question open |
-| [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | Partly decided (D-89 to D-99); first two slices built; four decisions open |
+| [Branding](#branding) | Done; repository renamed (D-114) |
+| [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | D-89 to D-99 decided; runs and In flight built (PR 24); four questions open |
 
 ---
 
@@ -57,9 +49,9 @@ back.
   D-67). Slice 3, scenario and workflow builders (PR 14, D-71 to D-73).
   Pictures for people and agents, and configuration that travels with the
   repo (PR 15, D-74, D-75). `pa draft|publish|history|uses`. Widgets and views shown, edited and added
-  in the Hangar (PR 27, D-112).
+  in the Hangar (PR 27, D-112). "Send to repo" for Hangar edits on a git
+  copy (PR 29, D-113).
 - **In an open PR.** "◆ Fly this" on a scenario page (PR 17, see below).
-  "Send to repo" for Hangar edits on a git copy (D-113).
 - **Next.** Builder skills for workflows and skills (`build-workflow`,
   `build-skill`) beyond `build-person` and `scenario-builder`.
 - **Open.** Left for later by design: sharing a workflow or scenario with
@@ -83,6 +75,21 @@ work and demos start.
 - **Open.** D-87 does not record who decided it.
 - **Read.** The two pull requests; design round at
   https://claude.ai/artifact/5XhbdjSKp7i2t1ChoxqS6Z.
+
+## Avatars
+
+A consistent set of pictures for people and agent personas, with a role robot
+per workflow persona.
+
+- **Done.** Pictures are chosen from a file in the person builder (PR 15,
+  D-74). The interim look is "Solid flat".
+- **Held.** PR 25 (draft): a Solid flat library, role robots and a prompt
+  guide (D-108 to D-110). Geoff paused it on 2026-11-21 ("we're still very
+  far off") after rejecting the set; a third round with five directions is
+  drawn in the project files under `person-icons/round3/`. PR 25 must not
+  merge and its decision numbers are unconfirmed.
+- **Next.** Resume with Geoff's choice of direction when he returns to it.
+- **Read.** PR 25; D-74.
 
 ## Design language and tokens
 
@@ -228,7 +235,14 @@ technical (D-100).
   (D-111). `tests/setup_sim/simulate_zip_setup.py` rehearses it in a Linux
   container: install, update with the person's edits, moving out of
   Downloads, and four failures.
-- **Next.** Geoff's first real install on the work Mac.
+- **Next.** Geoff's first real install on the work Mac. The download is now
+  `flight-deck-demo-main.zip`, so the first command is
+  `sh ~/Downloads/flight-deck-demo-main/setup.sh` (older messages that say
+  `omnigent-slim-main` predate the rename).
+- **Hangar edits on the work Mac.** Geoff, 2026-11-21: edits made there only
+  need to survive updates (D-111 does that), not reach GitHub; later the repo
+  will likely be re-committed to a company repository as a fork. "Send to
+  repo" (PR 29, D-113) is for git copies such as the Mac mini.
 - **Open.** Whether the work Mac's management locks the download flag or
   blocks the bundled binaries; setup detects both and says so, but only the
   real machine will tell.
@@ -295,15 +309,50 @@ a project means something (a goal to ship) and knows its relatives.
 - **Open.** Four decisions (M-12 how the director shows a mode, M-13 where a
   thread opens, M-14 what a thread reports, M-8 a project's connections). The
   intent graph's detail is deliberately held (D-98). When answered, they take
-  D-107 onward.
+  the next free number (D-115 or later).
 - **Read.** [modes-and-projects.md](modes-and-projects.md); D-89 to D-99;
   walkthroughs at https://claude.ai/artifact/HRgpJURjcqasGSCmd3894d and
   https://claude.ai/artifact/YQcb4HDRGMnn6YW82uFNZd.
 
 ---
 
+## Not yet verified
+
+Built and tested in the cloud, but not yet seen working where it matters.
+Checked 2026-11-21, 20:30 UTC.
+
+- **The Mac mini runs an old build.** Its checkout
+  (`~/claude-home/omnigent-slim`) is at PR 11 (`dc47e1a`), 25 commits behind
+  `main`, so nothing from PR 12 onward (Hangar slice 3, pictures, Inbox
+  messages, setup, the rename) has run there. It needs a pull and a restart
+  (`./stop.sh`, `git pull`, `./start.sh`); its remote already points at the
+  new repository name.
+- **Inbox participant messages (PR 16)** have only run in the cloud. No shipped
+  scenario uses `pa tell` yet, so trying it means calling `pa tell` by hand
+  in a session.
+- **Work-Mac setup (PRs 23, 26)** is rehearsed in a simulated Mac in Linux
+  (44 checks). Whether the company's device management locks the download
+  flag or blocks the bundled Python and tmux is only known on the real
+  machine. On failure, setup writes `flight-deck-setup-report.txt` to the
+  Desktop.
+- **Demos and the Library (PRs 17, 19)** are drafts and conflict with `main`.
+  Only Geoff (or GitHub's Ready for review button) can take them out of
+  draft; after that, 17 needs `main` merged in and 19 retargeted onto it,
+  with the built web UI rebuilt.
+- **Decision review and problem discovery** have never run live with an
+  agent.
+- **A published copy of a built-in workflow** (Hangar publish into
+  `workspace/.claude/skills/<id>`) hides later shipped improvements to that
+  workflow. Known, not yet handled.
+- **Lint** has one error that was already on `main` (noted in PR 24).
+
+Outside the repository, for contributors' image work: the image-generation
+skill's Gemini key is out of credit, and its OpenAI call names
+`gpt-image-1`, which no longer answers; `gpt-image-2` works.
+
 ## Also still open
 
 - Ignore the production build for now; the local demo is the product (D-29).
 - Progressive complexity (D-54).
-- Whether to rename the repository (D-35).
+- The modes round-two questions (M-8, M-12 to M-14), unanswered at
+  https://claude.ai/artifact/YQcb4HDRGMnn6YW82uFNZd.
