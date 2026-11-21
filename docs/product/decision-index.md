@@ -181,6 +181,10 @@ decided but nothing is built yet.
 | D-97 | A project is one in-market goal inside a lasting area | Geoff | Decided, not built |
 | D-98 | The intent graph's detail is held until it blocks something | Geoff | Decided, not built |
 | D-99 | The smaller calls stand (every workflow makes a mode, no mode color, and so on) | Claude, accepted by Geoff | Decided, not built |
+| D-116 | The director shows a mode through a direct line to its thread; Aviator is not in the path | Geoff | Decided, not built |
+| D-117 | Stepping into a thread puts it in place of the chat, the director folded to a bar, the canvas kept | Geoff | Decided, not built |
+| D-118 | A thread reports milestones, progress, blockers and state, at its own discretion, never everything | Geoff | Decided, not built |
+| D-119 | A project's connections: a chip on the linked item and a Connections card on the project page | Geoff | Decided, not built |
 
 
 ## Backfilled (decided earlier, logged on 21 Nov)
@@ -197,10 +201,5 @@ decided but nothing is built yet.
 
 ## Open questions not yet numbered
 
-- The modes questions still unanswered (M-8, M-12 to M-14 in
-  [modes-and-projects.md](modes-and-projects.md)): how the director shows a
-  mode, where a thread opens, what a thread reports back, how a project's
-  connections show. They take the next free number when Geoff answers
-  (D-115 or later).
 - Progressive complexity (D-54).
 - D-24 for production.

@@ -586,6 +586,51 @@ project; threads reuse upstream's side chats and child sessions; demo
 projects (D-76) stay as they are. "Resume returns to the same session" is
 carried over as "Resume returns to the run's own thread".
 
+**D-116 · 2026-11-21 · Geoff.** The director shows a mode through a direct
+line to its thread. The thread's questions appear in the director's chat
+inside the rail (D-91), and while the thread has the floor the person's
+messages go straight to it; the strip (D-90) says who they are talking to.
+Aviator is not in the path. `@aviator`, or a question off the topic, is
+answered by Aviator outside the rail (D-92). *It is the only option where the
+person truly stays with the director and still does the work, it keeps D-90
+to D-92 as chosen, and it avoids a second agent's wait on every turn. This
+answers M-12, the part D-89 left open.*
+
+**D-117 · 2026-11-21 · Geoff.** Stepping into a thread puts it in place of
+the chat: the thread takes the chat column, the director folds to a bar on
+top that shows what else is in flight and leads back, and the canvas stays
+where it is. Not a tab in the side area. *Geoff: a thread in the side pane
+steals space from the canvas, and a person who steps into a thread is
+choosing to focus. He asked how upstream handles it: upstream opens a child
+session as a tab in the Workspace panel, the same area as the canvas, with a
+maximise link to the child's own session page, which has a trail back to its
+parent. So upstream's tab has exactly the cost he named, and its full page is
+most of this option already; what is new is the folded director bar. Answers
+M-13.*
+
+**D-118 · 2026-11-21 · Geoff.** A thread reports to the director in short
+lines, not transcripts: milestones, progress, blockers, and state such as
+completion. The workflow's agent uses its own judgment about when and what to
+send, and must not send everything. Each line points at the files rather
+than repeating them. *Geoff: "the workflow agents should have discretion on
+when and what to send to the director, but they should not send everything."
+The director needs the state of each piece of work to coordinate; copying
+the working would undo the context isolation that threads exist for (D-89).
+Answers M-14.*
+
+**D-119 · 2026-11-21 · Geoff.** A project's connections show in two places:
+a chip on the linked item, naming the other project and its state, and one
+Connections card on the project page that gathers them, grouped by what the
+link means (lives in, came from, handed to others, others rely on this). No
+map. A link is typed, hangs from a specific thing (a requirement, a
+problem), reads the other way from the far end, and is stored as one line
+with the item it hangs from. *This follows his caveat on D-97 that projects
+are more graph-like than a family tree: a requirement handed to another team
+is that team's project. The chip puts the news where the person acts on it,
+and the card answers "what does this project touch" without drawing a tree
+that is not there. It does not build the intent graph, whose detail stays
+held (D-98). Answers M-8.*
+
 ## Backfilled
 
 Decisions Geoff made on 20 and 21 November that were acted on but never
@@ -635,13 +680,4 @@ canvas reload work; reviewed and locked are the person's judgment.*
 
 - Progressive complexity (from D-54): how a workflow shows less at first and
   more on demand, to the person and to the agent. Not designed yet.
-- From the modes and projects work (see
-  [modes-and-projects.md](modes-and-projects.md)), put to Geoff with drawings
-  at https://claude.ai/artifact/YQcb4HDRGMnn6YW82uFNZd:
-  - M-12: how the director session shows a mode for the high-level
-    interactions (left open by D-89).
-  - M-13: where a thread opens when the person steps into it.
-  - M-14: what a thread reports back to the director.
-  - M-8, sent back by Geoff to be rethought as a graph, not a tree: how a
-    project's connections show.
 - The intent graph's level of detail is deliberately held (D-98).
