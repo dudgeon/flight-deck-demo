@@ -1,0 +1,17 @@
+{
+ "view": "problem-summary",
+ "layout": "summary",
+ "eyebrow": "Problem discovery · where things stand",
+ "title": "{dataset.title}: at a glance",
+ "records": { "type": "problem" },
+ "blocks": [
+  { "kind": "tiles", "tiles": [
+    { "label": "Sources read", "where": { "type": "source", "status": "reviewed" } },
+    { "label": "Problems found", "where": { "type": "problem" } },
+    { "label": "Worth solving", "where": { "type": "problem", "status": "reviewed" } },
+    { "label": "Need evidence", "where": { "type": "problem", "status": "returned" } }
+  ] },
+  { "kind": "bars", "label": "Problems by who has them", "count_by": "segment", "records": { "type": "problem" } },
+  { "kind": "list", "label": "What the sources do not tell us", "records": { "type": "problem", "status": ["reviewed", "ready", "returned"] }, "field": "unknown", "empty": "No open unknowns." }
+ ]
+}

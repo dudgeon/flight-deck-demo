@@ -115,3 +115,32 @@ options can use it.
 **Why it is the first of the four.** It reuses the most (one list, cards,
 participants, the workflow card) and it proves the kit is not shaped around
 requirements documents.
+
+## Problem discovery (a kind of work)
+
+**What it is for.** Before there is anything to specify, a PM has a pile of
+raw material and a hunch. Problem discovery turns the pile into a short list
+of problems in the words of the people who have them, and makes the strength
+of each one visible, so the choice of what to solve is the PM's and is made
+on evidence. It is built to resist the usual failure of synthesis by an
+agent: confident themes with nothing underneath. Every problem carries its
+quotes with sources, the evidence against it (looked for on purpose), a size
+where data allows, and the most important thing the sources cannot tell us.
+
+**What it does.** Skill `skills/problem-discovery`. A setup form (whose
+problems count, how much evidence makes a candidate, what the PM already
+believes, which is then tested rather than assumed). A `source` record per
+file, shown as a list so the PM sees exactly what was read and that nothing
+else was used. `problem` records on a board with lanes Candidate, Being
+weighed, Needs evidence, Worth solving, Not now. Actions: Worth solving
+(direct), Not now, Needs more evidence, Argue against it, Add sources, Write
+the problem brief. Participants are used the way a PM would use colleagues: a
+researcher to catch what was missed, a data owner to size a problem. The
+agent never marks a problem worth solving itself. The end product is a
+problem brief with no solutions in it.
+
+**Roster addition.** `support-insights`, a script-backed agent that answers
+questions about support contact volumes.
+
+**Deliberately a different subject** (new business accounts, not the
+allowances feature) so the demos do not all lean on one invented product.
