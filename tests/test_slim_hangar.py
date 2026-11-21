@@ -327,7 +327,7 @@ def test_published_config_travels_with_the_repo() -> None:
 
 
 def test_widgets_are_placed_by_the_instructions() -> None:
-    """D-112: a view the SKILL.md renders with --host chat is a widget; the script still wins."""
+    """D-114: a view the SKILL.md renders with --host chat is a widget; the script still wins."""
     hangar = slim_hangar.load_hangar()
     views = {(v["workflow"], v["name"]): v for v in hangar["views"]}
     assert views[("decision-review", "card")]["host"] == "chat"

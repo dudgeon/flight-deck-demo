@@ -429,7 +429,7 @@ overview lists published files not yet committed. *Geoff: "config, like
 personas, harness skills, workflows, scenarios should all travel with the repo.
 user sessions don't need to but can."*
 
-**D-112 · 2026-11-21 · Geoff asked, Claude chose.** A workflow's widgets and
+**D-114 · 2026-11-21 · Geoff asked, Claude chose.** A workflow's widgets and
 views are shown and edited in the Hangar. The workflow page splits them into
 "Widgets · in the chat" and "Views · in the canvas"; a view's page and the
 workflow page have Edit buttons that open the workflow's draft at that widget.

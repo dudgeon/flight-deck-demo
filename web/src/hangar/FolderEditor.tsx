@@ -38,7 +38,7 @@ interface Form {
   workflow: string;
   participants: string[];
   steps: string[];
-  /** A workflow's widgets and views: name to spec file (D-112). */
+  /** A workflow's widgets and views: name to spec file (D-114). */
   views: Record<string, string>;
   /** Text files changed on the page and not yet saved, by path; null deletes. */
   files: Record<string, string | null>;
@@ -867,7 +867,7 @@ export function FolderHistory({
   );
 }
 
-/** "Edit" beside a workflow's widgets, or one widget: opens the workflow's draft there (D-112). */
+/** "Edit" beside a workflow's widgets, or one widget: opens the workflow's draft there (D-114). */
 export function EditWidgetButton({
   hangar,
   workflow,

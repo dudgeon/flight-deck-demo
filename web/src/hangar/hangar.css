@@ -908,7 +908,7 @@
   display: none;
 }
 
-/* A workflow's widgets and views in its editor (D-112). */
+/* A workflow's widgets and views in its editor (D-114). */
 .hangar .widgets-group {
   display: flex;
   flex-direction: column;

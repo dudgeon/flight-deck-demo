@@ -1970,7 +1970,7 @@ def edit_folder_draft(workspace: Path, kind: str, fid: str, manifest: dict[str, 
                 raise PaError(f"{key} must be a list of text")
         views = manifest.get("views")
         if views is not None:
-            # A workflow's widgets and views (D-112): a name to a spec file in the folder.
+            # A workflow's widgets and views (D-114): a name to a spec file in the folder.
             if not isinstance(views, dict) or not all(
                 isinstance(k, str) and re.fullmatch(r"[a-z0-9][a-z0-9-]{0,40}", k)
                 and isinstance(v, str) and v.endswith(".json")

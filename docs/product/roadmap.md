@@ -58,7 +58,7 @@ back.
   Pictures for people and agents, and configuration that travels with the
   repo (PR 15, D-74, D-75). `pa draft|publish|history|uses`.
 - **In an open PR.** "◆ Fly this" on a scenario page (PR 17, see below).
-  Widgets and views shown, edited and added in the Hangar (D-112).
+  Widgets and views shown, edited and added in the Hangar (D-114).
 - **Open.** How Hangar edits get back into the repo: nothing commits or
   pushes them today, and a ZIP install on the work Mac has no git. Asked
   Geoff (a "Send to repo" button, git copies only, or warn only).
