@@ -130,7 +130,8 @@ feature notes of the time and marked *(reconstructed)*.
 | D-73 | A scenario draft plays on its page; `opening` line | Claude | Built | Seeing the demo is the real check. |
 | D-74 | Pictures for people and agents, committed with the repo | Geoff | Built | He asked for avatars chosen from a file. |
 | D-75 | Configuration travels with the repo; a test guards `.gitignore` | Geoff | Built | Personas, skills, workflows and scenarios go to the work Mac. |
-| D-113 | "Send to repo" on git copies: published config to a new branch, pushed, PR opened | Geoff | Pending, this PR | Hangar edits only shipped once someone committed them by hand. |
+| D-112 | A workflow's widgets and views are shown, edited and added in the Hangar | Geoff asked, Claude chose | Done (PR 27) | He asked that widgets tied to a workflow be visible and editable there. |
+| D-113 | "Send to repo" on git copies: published config to a new branch, pushed, PR opened | Geoff | Done (PR 29) | Hangar edits only shipped once someone committed them by hand. |
 
 ## Views in the chat
 
@@ -172,10 +173,10 @@ decided but nothing is built yet.
 | D-90 | A mode shows as a strip on the message box | Geoff | Decided, not built |
 | D-91 | A mode's replies are marked by a rail with start, pause and resume markers | Geoff | Decided, not built |
 | D-92 | Side questions are answered outside the rail; the mode stays on | Geoff | Decided, not built |
-| D-93 | Leaving: pause, finish and stop are distinct; a where-we-left-off note; only stop confirms | Geoff | Decided, not built |
+| D-93 | Leaving: pause, finish and stop are distinct; a where-we-left-off note; only stop confirms | Geoff | Partly built: pause, resume and stop with the note; the Pause button waits on D-90 |
 | D-94 | One mode has the floor at a time, with a way back | Geoff | Decided, not built |
 | D-95 | Any record can have its own thread | Geoff | Decided, not built |
-| D-96 | In-flight work shows in an "In flight" section on the project page | Geoff | Decided, not built |
+| D-96 | In-flight work shows in an "In flight" section on the project page | Geoff | Built |
 | D-97 | A project is one in-market goal inside a lasting area | Geoff | Decided, not built |
 | D-98 | The intent graph's detail is held until it blocks something | Geoff | Decided, not built |
 | D-99 | The smaller calls stand (every workflow makes a mode, no mode color, and so on) | Claude, accepted by Geoff | Decided, not built |

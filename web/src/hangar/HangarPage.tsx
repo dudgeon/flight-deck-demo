@@ -58,8 +58,25 @@ import {
   viewPagePath,
 } from "./hangarApi";
 import { AviatorPopover } from "./AviatorPopover";
-import { ActionError, Checks, Crumb, Diff, Links, Rendered, SHELF_LABELS, Section } from "./parts";
-import { FolderActions, FolderDraftPage, FolderHistory, NewScenarioButton } from "./FolderEditor";
+import {
+  ActionError,
+  Checks,
+  Crumb,
+  Diff,
+  Links,
+  Rendered,
+  SHELF_LABELS,
+  Section,
+  hostLabel,
+  layoutLabel,
+} from "./parts";
+import {
+  EditWidgetButton,
+  FolderActions,
+  FolderDraftPage,
+  FolderHistory,
+  NewScenarioButton,
+} from "./FolderEditor";
 import "./hangar.css";
 
 // ---------------------------------------------------------------- the frame
@@ -316,11 +333,6 @@ const LAYOUT_GROUPS: { layout: string; label: string }[] = [
   { layout: "form", label: "Forms" },
   { layout: "summary", label: "Summaries" },
 ];
-const layoutLabel = (layout: string) =>
-  ({ "tree-table": "Table", board: "Board", detail: "Card", form: "Form", summary: "Summary" })[
-    layout
-  ] ?? layout;
-const hostLabel = (host: string) => (host === "chat" ? "in the chat" : "in the canvas");
 
 const byId = <T extends { id: string }>(items: T[]) =>
   new Map(items.map((item) => [item.id, item]));
@@ -873,18 +885,27 @@ function WorkflowPage({ hangar }: { hangar: Hangar }) {
         )}
       </Section>
       <Section
-        title="Views, drawn from the scenario's sample data"
+        title="Widgets and views, drawn from the scenario's sample data"
         aside={
-          <Link className="link text-xs" to={hangarPath.shelf("views")}>
-            All views
-          </Link>
+          <EditWidgetButton hangar={hangar} workflow={workflow.id} builtin={workflow.builtin} />
         }
       >
-        <div className="grid4">
-          {workflow.views.map((view) => (
-            <ViewThumb key={view.key} view={view} />
-          ))}
-        </div>
+        {(["chat", "canvas"] as const).map((host) => {
+          const views = workflow.views.filter((v) => v.host === host);
+          if (views.length === 0) return null;
+          return (
+            <div key={host} className="flex flex-col gap-1.5" data-testid={`hangar-views-${host}`}>
+              <b className="text-[13px]">
+                {host === "chat" ? "Widgets · in the chat" : "Views · in the canvas"}
+              </b>
+              <div className="grid4">
+                {views.map((view) => (
+                  <ViewThumb key={view.key} view={view} />
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </Section>
       <div className="grid3">
         <Section title="Who can be called">
@@ -1038,7 +1059,19 @@ function ViewPage({ hangar }: { hangar: Hangar }) {
       <div className="row">
         <h1>{view.title}</h1>
         <span className="chip">{layoutLabel(view.layout)}</span>
-        <span className="chip">Shown {hostLabel(view.host)}</span>
+        <span className="chip">
+          {view.host === "chat" ? "Widget · in the chat" : "View · in the canvas"}
+        </span>
+        <span className="sp" />
+        {workflow && (
+          <EditWidgetButton
+            hangar={hangar}
+            workflow={workflow.id}
+            view={view.name}
+            builtin={workflow.builtin}
+            label={workflow.builtin ? "Edit a copy" : "Edit"}
+          />
+        )}
       </div>
       <div className="halves" style={{ gridTemplateColumns: "minmax(0, 2fr) minmax(0, 1fr)" }}>
         <Section title="How it looks when flying, over the scenario's sample data">

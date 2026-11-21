@@ -26,7 +26,7 @@ go to step 2. Otherwise build it from the plan the user points to:
 
 ```bash
 $PA init data/<slug>-delivery.json --title "<what is being delivered>" --meta planned="24 Mar" --meta projected="24 Mar" --meta as_of="<today, as 'Thursday 5 Mar'>" --meta source="<the plan>"
-$PA flow data/<slug>-delivery.json --scenario SKILL_DIR
+$PA flow data/<slug>-delivery.json --scenario SKILL_DIR --session <this session's id, from sys_session_get_info>
 $PA add data/<slug>-delivery.json --json '[{"id":"M-1","type":"milestone","title":"...","owner":"cards-platform","planned":"13 Mar","projected":"13 Mar","status":"on-track","critical":true}]'
 $PA render SKILL_DIR/views/plan.json --data data/<slug>-delivery.json --out artifacts/<slug>-delivery.html
 ```

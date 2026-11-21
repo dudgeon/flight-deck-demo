@@ -389,3 +389,81 @@ def test_compare_url_for_github_remotes() -> None:
         "https://github.com/a/b/compare/main...h?expand=1"
     )
     assert slim_hangar._compare_url("/srv/git/x.git", "main", "h") is None
+
+
+def test_widgets_are_placed_by_the_instructions() -> None:
+    """D-112: a view the SKILL.md renders with --host chat is a widget; the script still wins."""
+    hangar = slim_hangar.load_hangar()
+    views = {(v["workflow"], v["name"]): v for v in hangar["views"]}
+    assert views[("decision-review", "card")]["host"] == "chat"
+    assert views[("decision-review", "queue")]["host"] == "canvas"
+    assert views[("decision-review", "card")]["file"] == "views/card.json"
+    folder = REPO / "skills" / "decision-review"
+    import json
+
+    manifest = json.loads((folder / "workflow.json").read_text())
+    assert slim_hangar.skill_hosts(folder, manifest) == {"queue": "canvas", "card": "chat"}
+
+
+def test_edit_and_add_a_widget_in_a_workflow_draft(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import json
+
+    workspace = _scratch_workspace(tmp_path, monkeypatch)
+    shutil.copytree(REPO / "workspace" / "scenarios", workspace / "scenarios")
+    draft = slim_hangar.start_folder_draft("workflow", "decision-review")
+    assert {v["name"]: v["host"] for v in draft["views"]} == {
+        "queue": "canvas",
+        "card": "chat",
+        "summary": "chat",
+    }
+    # Change the card's header: the draft draws it, the live one does not.
+    card = json.loads(next(f for f in draft["files"] if f["path"] == "views/card.json")["text"])
+    card["eyebrow"] = "Your call, Geoff"
+    skill = next(f for f in draft["files"] if f["path"] == "SKILL.md")["text"]
+    form = {
+        "view": "scope-check",
+        "layout": "form",
+        "title": "A question for you",
+        "fields": [{"id": "answer", "label": "Your answer", "kind": "line"}],
+        "submit": {"label": "Send", "prompt": "{answers}"},
+    }
+    views = {**draft["manifest"]["views"], "scope-check": "views/scope-check.json"}
+    draft = slim_hangar.edit_folder_draft(
+        "workflow",
+        "decision-review",
+        {
+            "manifest": {"views": views},
+            "files": {
+                "views/card.json": json.dumps(card),
+                "views/scope-check.json": json.dumps(form),
+                "SKILL.md": skill
+                + "\n## The scope-check widget\n\n"
+                "Draw it with `$PA render SKILL_DIR/views/scope-check.json --host chat --data x`.\n",
+            },
+        },
+    )
+    assert draft["problems"] == [], draft["problems"]
+    assert {v["name"]: v["host"] for v in draft["views"]}["scope-check"] == "chat"
+    assert "Your call, Geoff" in slim_hangar.render_draft_view("decision-review", "card")
+    assert "Your call, Geoff" not in slim_hangar.render_view("decision-review", "card")
+    assert "Your answer" in slim_hangar.render_draft_view("decision-review", "scope-check")
+    # Publishing puts it in the workspace copy, which travels with the repo (D-75).
+    slim_hangar.publish_folder("workflow", "decision-review", "a scope check")
+    copy = workspace / ".claude" / "skills" / "decision-review"
+    assert (copy / "views" / "scope-check.json").is_file()
+    wf = next(w for w in slim_hangar.load_hangar()["workflows"] if w["id"] == "decision-review")
+    assert "scope-check" in {v["name"] for v in wf["views"]}
+    # Names and paths are checked.
+    slim_hangar.start_folder_draft("workflow", "decision-review")
+    with pytest.raises(HTTPException):
+        slim_hangar.edit_folder_draft(
+            "workflow", "decision-review", {"manifest": {"views": {"Bad Name": "x.json"}}}
+        )
+    with pytest.raises(HTTPException):
+        slim_hangar.edit_folder_draft(
+            "workflow", "decision-review", {"manifest": {"views": {"x": "../../evil.json"}}}
+        )
+    with pytest.raises(HTTPException):
+        slim_hangar.render_draft_view("../evil", "card")

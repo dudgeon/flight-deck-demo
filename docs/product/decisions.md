@@ -456,6 +456,23 @@ overview lists published files not yet committed. *Geoff: "config, like
 personas, harness skills, workflows, scenarios should all travel with the repo.
 user sessions don't need to but can."*
 
+**D-112 · 2026-11-21 · Geoff asked, Claude chose.** A workflow's widgets and
+views are shown and edited in the Hangar. The workflow page splits them into
+"Widgets · in the chat" and "Views · in the canvas"; a view's page and the
+workflow page have Edit buttons that open the workflow's draft at that widget.
+In the draft each one opens beside its drawing from the draft (over the
+scenario's sample data), with its header lines, form questions and buttons as
+fields and the whole spec as JSON; only valid JSON is saved. "Add a widget or
+view" starts from a blank form, a blank summary or a copy of one already
+there, adds it to `workflow.json` `views` (now editable through `pa`), and
+writes a line in `SKILL.md` telling the agent how to draw it, with
+`--host chat` for a widget. Where a view shows is read from the scenario's
+script first, then from how `SKILL.md` renders it, then from its layout.
+*Geoff: "Widgets that relate to given workflows should be visible and editable
+in the hangar." Placing by `SKILL.md` makes the label match what the agent will
+really do, and editing inside the workflow draft keeps the publish gate,
+history and "travels with the repo" (D-75) for free.*
+
 **D-113 · 2026-11-21 · Geoff.** On a git copy of the app (the Mac mini), the
 Hangar's Overview has "Send to repo": it commits the published configuration
 (the D-75 folders) to a new `hangar/<date-time>` branch, pushes it, and opens a
