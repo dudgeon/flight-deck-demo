@@ -390,6 +390,110 @@ def cmd_brief(args: argparse.Namespace) -> None:
     print(f"brief: {brief.as_posix()}\nrun: {progress.as_posix()}\ntitle: {title}: {subject}", file=sys.stderr)
 
 
+# ------------------------------------------------------- projects and links
+
+PROJECTS_DIR = "projects"
+# A link is stored once, on the item it hangs from, and reads the other way
+# from the far end (D-119): "handed-to" there is "came from" here.
+LINK_TYPES = ("handed-to", "started", "relies-on")
+PROJECT_STATES = ("shaping", "in-delivery", "shipped", "slipped", "paused", "stopped")
+_PROJECT_KEYS = ("name", "goal", "area", "team", "state", "state_note")
+
+
+def _project_path(name: str, folder: str | None = None) -> Path:
+    return Path(folder or PROJECTS_DIR) / f"{_slug(name)}.json"
+
+
+def _project_cards(folder: Path | None = None) -> dict[str, dict[str, Any]]:
+    """Every project that has a file, by name: its goal, area, team and state."""
+    folder = folder or Path(PROJECTS_DIR)
+    cards: dict[str, dict[str, Any]] = {}
+    for file in sorted(folder.glob("*.json")) if folder.is_dir() else []:
+        try:
+            raw = json.loads(file.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if isinstance(raw, dict) and isinstance(raw.get("name"), str) and raw["name"].strip():
+            cards[raw["name"].strip()] = {k: raw[k] for k in _PROJECT_KEYS if isinstance(raw.get(k), str) and raw[k]}
+    return cards
+
+
+def cmd_project(args: argparse.Namespace) -> None:
+    """Say what a project is: its goal, the area it lives in, who runs it, how it stands (D-97)."""
+    if not args.name:
+        cards = _project_cards(Path(args.dir) if args.dir else None)
+        if args.json:
+            print(json.dumps(list(cards.values()), indent=1, ensure_ascii=False))
+        elif not cards:
+            print("no projects have a file yet")
+        for card in cards.values() if not args.json else []:
+            where = f" (in {card['area']})" if card.get("area") else ""
+            state = f" [{card['state']}]" if card.get("state") else ""
+            print(f"{card['name']}{where}{state}: {card.get('goal', 'no goal written')}")
+        return
+    path = _project_path(args.name, args.dir)
+    changes = {key: getattr(args, key) for key in ("goal", "area", "team", "state", "state_note") if getattr(args, key) is not None}
+    with _locked(path):
+        try:
+            current = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            current = {}
+        if not isinstance(current, dict):
+            current = {}
+        if not changes and not args.data and not current:
+            raise PaError(f"no project file for {args.name!r} yet; give it a --goal")
+        if changes or not current:
+            card = {**current, "name": args.name.strip(), **changes, "updated": _now()}
+            if "state" in changes and "state_note" not in changes:
+                card.pop("state_note", None)  # the note described the old state
+            path.parent.mkdir(parents=True, exist_ok=True)
+            _write_atomic(path, json.dumps(card, indent=1, ensure_ascii=False) + "\n")
+            current = card
+    for dataset in args.data or []:
+        dpath = Path(dataset)
+        with _locked(dpath):
+            data = _load(dpath)
+            data["project"] = args.name.strip()
+            _save(dpath, data)
+            _render_views(dpath, data)
+    if args.json:
+        print(json.dumps(current, indent=1, ensure_ascii=False))
+    else:
+        print(f"{current['name']}: {current.get('goal', 'no goal written')}" + (f" · in {current['area']}" if current.get("area") else "")
+              + (f" · {current['state']}" if current.get("state") else "") + f" ({path.as_posix()})")
+
+
+def cmd_link(args: argparse.Namespace) -> None:
+    """Hang a typed link to another project from one record (D-119)."""
+    path = Path(args.data)
+    target = args.to.strip()
+    if not target:
+        raise PaError("--to needs the other project's name")
+    with _locked(path):
+        data = _load(path)
+        record = next((r for r in data["records"] if r.get("id") == args.id), None)
+        if record is None:
+            raise PaError(f"no record {args.id} in {path}")
+        links = [l for l in record.get("links") or [] if isinstance(l, dict)]
+        kept = [l for l in links if not (l.get("project") == target and l.get("type") == args.type)]
+        if args.remove:
+            if len(kept) == len(links):
+                raise PaError(f"{args.id} has no {args.type} link to {target!r}")
+        else:
+            kept.append({"type": args.type, "project": target})
+        if kept:
+            record["links"] = kept
+        else:
+            record.pop("links", None)
+        record["updated"] = _now()
+        _save(path, data)
+        views = _render_views(path, data)
+    known = target in _project_cards()
+    print(("removed" if args.remove else "linked") + f" {args.id} {args.type} {target!r}"
+          + ("" if known or args.remove else f"; no project file for it yet (pa project {target!r} --goal ...)")
+          + (f"; redrew {', '.join(views)}" if views else ""))
+
+
 def cmd_report(args: argparse.Namespace) -> None:
     """One line from a run to its director: a milestone, progress, a blocker, or done (D-118)."""
     path = Path(args.data)
@@ -486,6 +590,12 @@ def _public(data: dict[str, Any]) -> dict[str, Any]:
         roster = _participants(_roster_dir())
         if roster:
             public["participants"] = {k: _card(v) for k, v in roster.items()}
+    # A linked record shows a chip naming the other project and its state (D-119).
+    linked = {l.get("project") for r in data.get("records") or [] if isinstance(r, dict)
+              for l in r.get("links") or [] if isinstance(l, dict)}
+    if linked:
+        cards = _project_cards()
+        public["projects"] = {name: cards[name] for name in sorted(n for n in linked if isinstance(n, str)) if name in cards}
     return public
 
 
@@ -2567,6 +2677,26 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("text")
     p.add_argument("--kind", choices=REPORT_KINDS, default="milestone")
     p.set_defaults(run=cmd_report)
+
+    p = sub.add_parser("project", help="say what a project is: its goal, area, team and state; or list projects")
+    p.add_argument("name", nargs="?")
+    p.add_argument("--goal", help="the one in-market goal, in a line")
+    p.add_argument("--area", help="the lasting problem space it lives in")
+    p.add_argument("--team", help="who runs it, when it is another team's")
+    p.add_argument("--state", choices=PROJECT_STATES)
+    p.add_argument("--state-note", dest="state_note", help='a few words on the state, e.g. "slipped 2 wks"')
+    p.add_argument("--data", action="append", help="a dataset that belongs to this project (repeat)")
+    p.add_argument("--dir", help="the projects folder; default projects/ in the workspace")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(run=cmd_project)
+
+    p = sub.add_parser("link", help="hang a link to another project from one record")
+    p.add_argument("data")
+    p.add_argument("id")
+    p.add_argument("--to", required=True, help="the other project's name")
+    p.add_argument("--type", choices=LINK_TYPES, default="handed-to")
+    p.add_argument("--remove", action="store_true")
+    p.set_defaults(run=cmd_link)
 
     p = sub.add_parser("runs", help="list the workflow runs in this workspace and where each was left")
     p.add_argument("--dir", help="the progress folder; default progress/ in the workspace")

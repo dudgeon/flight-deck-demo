@@ -313,7 +313,8 @@ a project means something (a goal to ship) and knows its relatives.
   strip on the message box, and messages sent straight to the thread.
 - **Next.** Fly the director with a live agent and fix what breaks. Then the
   rail's start, pause and resume markers (D-91); threads on items
-  (D-95); projects with a goal and their connections (D-97, D-119). Build
+  (D-95); an area page (D-97). Built since: a project's goal line, its
+  Connections card and the chip on linked items (D-119, D-121). Build
   order is in modes-and-projects.md.
 - **Open.** Nothing. The intent graph's detail is deliberately held (D-98).
 - **Read.** [modes-and-projects.md](modes-and-projects.md); D-89 to D-99, D-116 to D-119;

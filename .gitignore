@@ -114,6 +114,7 @@ workspace/artifacts/*
 workspace/data/*
 workspace/progress/*
 workspace/briefs/
+workspace/projects/
 !workspace/progress/.gitkeep
 !workspace/data/.gitkeep
 
