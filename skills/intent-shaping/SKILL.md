@@ -41,7 +41,7 @@ level** (areas marked not needed do not count).
 Ask how far to go today with the form, unless the user said:
 
 ```bash
-$PA render SKILL_DIR/views/target.json --out artifacts/<slug>-target.html
+$PA render SKILL_DIR/views/target.json --host chat --out artifacts/<slug>-target.html
 ```
 
 The answer arrives as "Shaping setup: ..." or "Choose the target depth
@@ -74,7 +74,7 @@ Repeat until the idea reaches the target:
 2. Write its `next` (the framework's line for the next level, word for word)
    and one `question` that would get it there. Set it `needs-you` and ask the
    question in the chat. To show it as a card:
-   `$PA render SKILL_DIR/views/area.json --data data/<slug>-intent.json --record <id> --out artifacts/<slug>-area-<id>.html`
+   `$PA render SKILL_DIR/views/area.json --host chat --data data/<slug>-intent.json --record <id> --out artifacts/<slug>-area-<id>.html`
 3. When the answer comes, update `statement` in the user's words, add to
    `basis`, and re-score. Move `depth` only when what the line asks for now
    exists. If the answer is confident but does not contain it, say what is

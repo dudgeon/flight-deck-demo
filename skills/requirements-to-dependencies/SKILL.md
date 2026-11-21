@@ -100,7 +100,7 @@ The board puts text in the chat box and the user presses Send.
 Never set `reviewed` yourself. That is the user's call.
 
 To show one requirement for review inside your answer, render the review card:
-`$PA render SKILL_DIR/views/review-card.json --data data/<slug>.json --record <id> --out artifacts/<slug>-review-<id>.html`
+`$PA render SKILL_DIR/views/review-card.json --host chat --data data/<slug>.json --record <id> --out artifacts/<slug>-review-<id>.html`
 
 ## When requirements change later
 

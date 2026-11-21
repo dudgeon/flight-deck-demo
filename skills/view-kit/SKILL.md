@@ -32,6 +32,23 @@ PA="python3 <this skill's folder>/scripts/pa.py"     # standard library only
   viewer injects the current tokens, so a design change reaches every view.
   See the `product-aviator-design` skill.
 
+## Chat or canvas
+
+Asks go in the chat; work goes in the canvas.
+
+- **In the chat:** anything the user answers or glances at: a `form`, a single
+  record's card (`detail`), a `summary`. Render it with `--host chat`. The
+  command prints a fenced block (` ```view ` with `file:` and `title:`); put
+  that block in your reply as it is and do not open the file. The app draws
+  the view in the conversation. Once the user replies it folds into a
+  one-line record, so say in words what you are asking as well.
+- **In the canvas:** anything the user works in: a `tree-table`, a `board`, a
+  document. Render it without `--host` and open the file.
+
+One view in the chat at a time, and only when you need the user. Never put the
+same view in both places. Outside Product Aviator the block shows as plain
+text; then name the file and ask the question in words.
+
 ## The commands
 
 | Command | Use |

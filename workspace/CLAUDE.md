@@ -95,3 +95,10 @@ CSS/JS, colors only from the `--pa-…` design tokens (copy the
 `pa-tokens:begin`…`pa-tokens:end` block from an existing template, then run
 `python3 design/build_tokens.py`; see the `product-aviator-design` skill), a `<title>` and `<meta name="description">` (the
 Library page lists them from those).
+
+## Where views go
+
+Questions, single cards and summaries are shown in the chat: render the view
+with `--host chat` and put the block the command prints (a ` ```view ` fence
+naming the file) in your reply. Catalogs, boards and documents open in the
+canvas. Never show the same view in both.

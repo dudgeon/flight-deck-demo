@@ -30,7 +30,7 @@ Pick a short kebab-case slug for the initiative, e.g. `allowances`.
 ## 2. Ask how to catalog it (skip if the user already said)
 
 ```bash
-$PA render SKILL_DIR/views/scope-form.json --out artifacts/<slug>-scope.html
+$PA render SKILL_DIR/views/scope-form.json --host chat --out artifacts/<slug>-scope.html
 ```
 
 Open it with `ui_open_file` and say one line: "Three quick choices before I
