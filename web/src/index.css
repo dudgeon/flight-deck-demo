@@ -184,6 +184,10 @@
 }
 
 :root {
+  /* omnigent-slim: brand colors live here, so the planned navy reskin starts
+   * from one place. --brand-logo colors the Product Aviator logo. */
+  --brand-navy: #0a223d;
+  --brand-logo: var(--brand-navy);
   /* User-controlled UI font size (see Appearance settings /
    * lib/uiFontPreferences.ts). Stored as a discrete px value and overridden at
    * runtime on documentElement. It feeds typography tokens only. */
@@ -308,6 +312,8 @@
 }
 
 .dark {
+  /* omnigent-slim: light logo on dark backgrounds. */
+  --brand-logo: #f5f5f4;
   --app-shell-bg: var(--background);
   --session-composer-mask-bg: var(--app-shell-bg);
   --foreground-tertiary: rgb(245 245 244 / 24%);
