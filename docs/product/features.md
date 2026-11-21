@@ -67,6 +67,72 @@ from the header otherwise.
 `web/src/shell/SessionOverviewFiles.tsx`; `pa flow` writes the workflow card's
 data to `progress/`.
 
+## Runs and the "In flight" section
+
+**Intent.** A person should be able to walk away from a workflow in the
+middle and find it again without remembering which session it was in (D-93,
+D-96). The unit they come back to is the **run**: one workflow working on one
+subject, for example intent shaping on "Teen allowances". A run outlives its
+session, so the place to find runs is the project, not a session. This is the
+first built piece of [modes and projects](modes-and-projects.md), and it was
+built so it stays true when modes move into threads (D-89): a thread will be
+one more session a run can name.
+
+**Behaviour.**
+
+- A run has a state: working, needs you, waiting (on someone else), paused,
+  finished or stopped. Paused and stopped are the person's word and nothing
+  else overrides them. Needs-you comes from the records (any with status
+  `needs-you`) or from the agent saying the run cannot move without an answer.
+- **Pause** is said in plain language or (later) pressed. The agent records it
+  at once with a where-we-left-off note of one or two sentences: what is
+  settled, what is next, any question left unanswered. A pause without a note
+  is refused, because the note is the whole point. It does not ask to confirm.
+- **Stop** is for abandoning the work. It is the only one that confirms.
+  Nothing is deleted and a stopped run can be resumed.
+- **Resume** clears the note and carries on. Doing work on a paused run also
+  resumes it; a stopped run needs an explicit resume.
+- The project page shows **In flight** above the sessions board: a card per
+  run with the workflow, subject, step, state, the note, and one button.
+  Paused runs say Resume, a run that needs the person says Answer, the rest
+  say Open. Runs that need the person are first and outlined in amber (D-50).
+  Finished and stopped runs sit behind a "Show n finished or stopped" link.
+  A project that has never had a run shows no section at all.
+- Resume opens the run's session with "Resume intent shaping on ..." waiting
+  in the message box for the person to send. If the session is gone, it opens
+  a new session in the project with the same message, which names the run's
+  dataset so the agent picks up the same run.
+- The sidebar shows an amber count beside a project when any of its runs
+  needs the person. Paused runs are not counted: the person chose to leave
+  them.
+- The Session panel's workflow card shows Paused or Stopped and the note.
+
+**Choices made while building (not product decisions; change freely).**
+
+- The app cannot read the conversation (no model API at work), so only the
+  agent can recognise "pause this". The rule for when to pause, resume and
+  stop is in the workspace's `CLAUDE.md` and the view kit skill, so every
+  workflow follows it without each skill repeating it.
+- Runs are the `progress/*.json` files `pa flow` already wrote, with a few
+  more fields. No table. Files written before runs had a state still read.
+- The Workspace and Hangar projects share one folder. A run that names a
+  session is listed in that session's project; a run that names none is
+  listed in the default project only.
+- The Resume message goes to the message box, not straight to the agent, to
+  match how every other button outside the chat behaves (D-11 keeps direct
+  sends for state changes made inside a view).
+
+**Not built yet.** The strip on the message box with a Pause button (D-90),
+the rail beside mode turns (D-91), threads (D-89). Those wait on the second
+walkthrough.
+
+**Where.** `skills/view-kit/scripts/pa.py` (`flow --pause/--resume/--stop/
+--state/--session`, `runs`); the rule in `workspace/CLAUDE.md` and
+`skills/view-kit/SKILL.md` ("Runs"); `omnigent/server/routes/slim_runs.py`
+(`GET /v1/slim/runs?project=`); `web/src/projectHome/ProjectInFlight.tsx`,
+`projectRuns.ts`, `ProjectRunsBadge.tsx`; `web/src/lib/pendingPrompt.ts`;
+tests in `tests/test_slim_runs.py` and `web/src/projectHome/projectRuns.test.ts`.
+
 ## Participants
 
 **Intent.** Product work is done with other people and other systems. Their
@@ -419,6 +485,16 @@ built in the Hangar is meant to travel with the repo. *Why:* Geoff wants
 recognisable faces for the cast, and wants the cast, workflows and scenarios
 to move with the repo to the work machine.
 
+**Send to repo (D-113).** On a git copy of the app, the Overview's "Not in
+the repo yet" list has a Send to repo button and a line for what changed. It
+commits just those files to a new `hangar/<date-time>` branch without touching
+the folder's own branch, pushes it, and opens a pull request (with `gh`) or
+links GitHub's page to open one; the last send is shown under the list. *Why:*
+publishing wrote the files but nothing put them in the repo, so edits made on
+the Mac mini never reached the ZIP everyone downloads. On the work Mac (a ZIP,
+no git) the button does not show; there setup keeps published files across
+updates (D-111).
+
 **Scenario and workflow builders (slice 3, D-71 to D-73).** Every scenario
 and workflow page has Edit, Duplicate and Remove (for a shipped workflow, "Edit
 a copy"), and the Scenarios shelf has "New scenario". The draft opens as an
@@ -435,10 +511,25 @@ scenario|workflow`, which the scenario-builder skill now uses. *Why:* so a PM
 can make a new demo, or adjust a kind of work for their team, without editing
 files or breaking what others fly, in the same way they edit a person.
 
+**Widgets and views (D-112).** A workflow's page groups what people see into
+"Widgets · in the chat" (forms, single-record cards, summaries the agent puts
+in the conversation) and "Views · in the canvas", each drawn over the
+scenario's sample data. "Edit widgets and views" on the workflow, or "Edit" on
+one view's page, opens the workflow draft at that widget: its small line,
+heading, form questions, button labels and what each button says in the chat
+are fields, the whole spec is a JSON box, and the drawing beside it follows
+every save. "Add a widget or view" starts from a blank form, a blank summary or
+a copy, and writes the `SKILL.md` line that tells the agent when and how to
+show it. Publishing goes through the usual checks and lands in the workflow's
+workspace copy, so it travels with the repo. *Why:* the widgets are most of
+what a person sees of a workflow, and Geoff wants to shape them where he
+shapes everything else, without hand-editing files.
+
 **Where.** Design in `hangar.md`. Server: `omnigent/server/routes/slim_hangar.py`
-(`GET /v1/slim/hangar`, rendered views, templates and scenario players, and the
+(`GET /v1/slim/hangar`, `POST /v1/slim/hangar/repo/send`, rendered views, templates and scenario players, and the
 draft, publish, history and restore routes for people, scenarios and
-workflows). Folder drafts: the "workflows and scenarios" builder section of
+workflows, and `GET /v1/slim/hangar/drafts/workflow/<id>/views/<view>` for a
+draft's widget). Widget editor: `web/src/hangar/WidgetsCard.tsx`. Folder drafts: the "workflows and scenarios" builder section of
 `skills/view-kit/scripts/pa.py`. Web: `FolderEditor.tsx` beside the person
 editor. Builder skill: `skills/build-person/`.
 Web: `web/src/hangar/`. Colors: the `build` and `hangar-*` tokens.

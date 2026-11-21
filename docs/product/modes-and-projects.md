@@ -247,10 +247,10 @@ Put to Geoff with drawings at https://claude.ai/artifact/YQcb4HDRGMnn6YW82uFNZd.
 ## Proposed build order
 
 1. **Runs that can pause.** Run state and the where-we-left-off note in the
-   progress file (`pa flow --pause | --resume | --stop`, `--note`). Needs no
-   open decision.
-2. **In flight on the project page** (D-96): run cards on upstream's board,
-   Resume, the sidebar count. Needs no open decision.
+   progress file (`pa flow --pause | --resume | --stop`, `--note`). **Built**;
+   see "Runs and the In flight section" in [features.md](features.md).
+2. **In flight on the project page** (D-96): run cards above upstream's
+   board, Resume, the sidebar count. **Built.**
 3. **Aviator as director**: a skill telling Aviator how to start a workflow
    in a thread, write the brief and read milestones; a live run card in the
    director's chat. Needs M-14.

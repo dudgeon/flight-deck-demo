@@ -159,7 +159,7 @@ inside the app (D-30), the work-Mac ZIP install (D-100).
   still very far off"). PR 25 is held as a draft; a third round of five
   directions is drawn in the project files.
 
-Open at 20:30, each with the merge thread:
+Merged at about 20:33:
 
 - **PR 24**: runs that pause, resume and stop with a where-we-left-off note
   (`pa flow`, `pa runs`), and an "In flight" section on the project page with
@@ -170,6 +170,9 @@ Open at 20:30, each with the merge thread:
   editable in the Hangar.
 - **PR 29**: "Send to repo" on the Hangar Overview commits published
   configuration to a new branch and opens a pull request (D-113).
+
+Still open:
+
 - **PRs 17 and 19**: still drafts, waiting for Geoff to take them out of
   draft; both now conflict with `main`.
 - **PR 25**: avatars, held (see above).

@@ -92,6 +92,8 @@ not in the repo.
   images, telemetry, update checks or downloads. Python runs behind
   `omnigent/_offline_guard.py`; never weaken it or reintroduce uvloop.
   Artifacts are single self-contained HTML files.
+  The one exception is the Hangar's "Send to repo" (D-113): a `git push` (and
+  `gh pr create`) that runs only when a person presses it, on a git copy.
 - **Everything is vendored.** Nothing is installed at work. A new Python or
   npm dependency must be vendored: rebuild with `vendor/scripts/build_vendor.sh`
   and commit `vendor/wheels/`. Prefer the standard library (`pa.py` uses
