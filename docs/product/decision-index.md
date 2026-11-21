@@ -172,10 +172,10 @@ decided but nothing is built yet.
 | D-90 | A mode shows as a strip on the message box | Geoff | Decided, not built |
 | D-91 | A mode's replies are marked by a rail with start, pause and resume markers | Geoff | Decided, not built |
 | D-92 | Side questions are answered outside the rail; the mode stays on | Geoff | Decided, not built |
-| D-93 | Leaving: pause, finish and stop are distinct; a where-we-left-off note; only stop confirms | Geoff | Decided, not built |
+| D-93 | Leaving: pause, finish and stop are distinct; a where-we-left-off note; only stop confirms | Geoff | Partly built: pause, resume and stop with the note; the Pause button waits on D-90 |
 | D-94 | One mode has the floor at a time, with a way back | Geoff | Decided, not built |
 | D-95 | Any record can have its own thread | Geoff | Decided, not built |
-| D-96 | In-flight work shows in an "In flight" section on the project page | Geoff | Decided, not built |
+| D-96 | In-flight work shows in an "In flight" section on the project page | Geoff | Built |
 | D-97 | A project is one in-market goal inside a lasting area | Geoff | Decided, not built |
 | D-98 | The intent graph's detail is held until it blocks something | Geoff | Decided, not built |
 | D-99 | The smaller calls stand (every workflow makes a mode, no mode color, and so on) | Claude, accepted by Geoff | Decided, not built |

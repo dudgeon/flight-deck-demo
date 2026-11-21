@@ -223,6 +223,7 @@ import { useArchivePrompt } from "./ArchivePrompt";
 import { useSessionActions } from "./useSessionActions";
 import { ProjectSettingsDialog } from "./ProjectSettingsDialog";
 import { ProjectRowIcon } from "./ProjectPicker";
+import { ProjectRunsBadge } from "@/projectHome/ProjectRunsBadge"; // omnigent-slim
 import { EmojiPicker } from "@/components/ProjectIconPicker";
 import { SessionStateBadge } from "@/components/SessionStateBadge";
 import { useSessionRunnerOnline } from "@/hooks/RunnerHealthProvider";
@@ -2064,6 +2065,8 @@ function ProjectFolder({
       <ConversationSection
         headerDrag={placeholder ? undefined : headerDrag}
         title={name}
+        // omnigent-slim: how many of this project's runs are waiting on the person (D-96).
+        titleBadge={placeholder || archived ? undefined : <ProjectRunsBadge projectName={name} />}
         icon={
           icon ? (
             <span className="text-[14px] leading-none">{icon}</span>
@@ -4158,6 +4161,7 @@ function projectMarkerState(
 function SectionHeader({
   headerDrag,
   title,
+  titleBadge,
   status,
   icon,
   marker,
@@ -4173,6 +4177,8 @@ function SectionHeader({
 }: {
   headerDrag?: ProjectHeaderDrag;
   title: string;
+  /** omnigent-slim: a small count shown right after the title. */
+  titleBadge?: ReactNode;
   status?: ReactNode;
   icon?: ReactNode;
   marker?: SessionState | null;
@@ -4301,6 +4307,7 @@ function SectionHeader({
       ) : null}
       {/* Project folder names sit heavier than their session rows. */}
       <span className={cn("min-w-0 truncate", icon && "font-medium")}>{title}</span>
+      {titleBadge}
       {/* Trailing chevron, rotating on expand. Headers without a leading icon
             reveal it on desktop hover/focus; icon headers show it only on mobile
             (no hover) since desktop swaps the folder for the chevron above. */}
@@ -4819,6 +4826,7 @@ function ConversationSection({
   indentRows,
   headerAction,
   headerStatus,
+  titleBadge,
   headerContextMenu,
   persistentHeaderAction,
   afterHeader,
@@ -4866,6 +4874,8 @@ function ConversationSection({
   headerAction?: ReactNode;
   /** Progress displayed beside the title, including while collapsed. */
   headerStatus?: ReactNode;
+  /** omnigent-slim: a small count shown right after the header's title. */
+  titleBadge?: ReactNode;
   /** Optional context-menu content opened from the header button. */
   headerContextMenu?: ReactNode;
   /** Optional control that remains visible at the header's right edge. */
@@ -4942,6 +4952,7 @@ function ConversationSection({
         >
           <SectionHeader
             title={title}
+            titleBadge={titleBadge}
             status={headerStatus}
             icon={icon}
             marker={marker}

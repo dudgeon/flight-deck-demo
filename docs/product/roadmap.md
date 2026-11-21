@@ -38,7 +38,7 @@ in the same pull request.
 | [Canvas tools across several tabs](#canvas-tools-across-several-tabs) | Done |
 | [Dock launcher](#dock-launcher) | Done |
 | [Branding](#branding) | Done; one naming question open |
-| [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | Partly decided (D-89 to D-99); four decisions open; nothing built |
+| [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | Partly decided (D-89 to D-99); first two slices built; four decisions open |
 
 ---
 
@@ -282,16 +282,18 @@ a project means something (a goal to ship) and knows its relatives.
 
 - **Done.** Two design walkthroughs with drawings (2026-11-21). Geoff answered
   the first: D-89 to D-99. The headline is D-89: Aviator is a project
-  director and modes run in threads. Nothing is built.
+  director and modes run in threads.
 - **Exists already and would be reused.** The workflow card and `pa flow`
   progress files (D-16), direct actions for state changes (D-11), views in
   the chat (D-53), amber for needs-you (D-50), a project per flown demo
   (D-76). From upstream: the project board, child sessions and their tabs,
   agent-to-agent messages, side chats.
-- **Next.** Two slices need no further decision and can be built now: run
-  state with pause and resume in `pa flow`, and the "In flight" section on
-  the project page. The rest waits on the second walkthrough. Build order is
-  in modes-and-projects.md.
+- **Built.** Runs that pause, resume and stop with a where-we-left-off note
+  (`pa flow`, `pa runs`), and the "In flight" section on the project page
+  with Resume and a sidebar count of runs that need the person.
+- **Next.** The director skill and its run card, the direct line, threads on
+  items and projects with a goal all wait on the second walkthrough. Build
+  order is in modes-and-projects.md.
 - **Open.** Four decisions (M-12 how the director shows a mode, M-13 where a
   thread opens, M-14 what a thread reports, M-8 a project's connections). The
   intent graph's detail is deliberately held (D-98). When answered, they take
