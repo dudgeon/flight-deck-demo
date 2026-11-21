@@ -31,6 +31,7 @@ feature notes of the time and marked *(reconstructed)*.
 | D-03 | Defaults: Auto permissions, Opus 5.5, medium effort | Geoff | Built | *(reconstructed)* Auto keeps demos flowing without prompts while staying inside Claude Code's own safety checks; Bypass and Don't ask stay removed (D-02). |
 | D-04 | A "product partner" for PMs: unstructured work plus templated flows | Geoff | Active | *(reconstructed)* His vision of PM work: context files and generated artifacts alternating with structured, repeatable flows. |
 | D-107 | Setup clears the download flag on its own folder after asking; curl stays as the other way | Geoff | Built (`setup.sh`) | A browser ZIP is the main way in; this is what "Open Anyway" does, and IT for every install would stall it. |
+| D-111 | App lives in `~/flight-deck`; updates from a newer ZIP never overwrite the person's files or edits | Geoff asked, Claude chose | Built (`setup.sh`, `scripts/install_sync.py`) | A re-download must keep his files, and Terminal navigation is hard: one fixed folder plus a manifest of what was shipped. |
 
 ## Structured work
 

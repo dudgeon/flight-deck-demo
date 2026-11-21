@@ -221,13 +221,16 @@ technical (D-100).
   asking (D-107), restores execute bits, starts the app on port 6767 and
   writes a report to send back if it stops. The README walks through it in
   plain steps, with a one-line `curl` download as the other way.
-  `tests/setup_sim/simulate_zip_setup.sh` rehearses it in a Linux container
-  (a clean install and four failures).
+  It installs into `~/flight-deck`, and `sh ~/flight-deck/setup.sh` updates
+  from a newer download without overwriting the person's files or edits
+  (D-111). `tests/setup_sim/simulate_zip_setup.py` rehearses it in a Linux
+  container: install, update with the person's edits, moving out of
+  Downloads, and four failures.
 - **Next.** Geoff's first real install on the work Mac.
 - **Open.** Whether the work Mac's management locks the download flag or
   blocks the bundled binaries; setup detects both and says so, but only the
   real machine will tell.
-- **Read.** README "Quick start"; D-02, D-100, D-107; `setup.sh`; [../architecture.md](../architecture.md)
+- **Read.** README "Quick start"; D-02, D-100, D-107, D-111; `setup.sh`, `scripts/install_sync.py`; [../architecture.md](../architecture.md)
   "Setup on the work Mac".
 
 ## Canvas tools across several tabs

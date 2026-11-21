@@ -285,13 +285,17 @@ no open internet, no package installs, and no cloning outside the company's
 GitHub namespace.
 
 1. Download the repository as a ZIP of `main` in the browser and unzip it
-   (D-100), or use the one-line `curl` download in the README.
+   in Downloads (D-100), or use the one-line `curl` download in the README.
+   Setup copies it into `~/flight-deck` and runs it from there (D-111);
+   `sh ~/flight-deck/setup.sh` later updates from a newer download without
+   overwriting the person's files (`scripts/install_sync.py`, a manifest of
+   what was shipped).
 2. `sh setup.sh` (D-107): checks the Mac and Claude Code, clears the browser's
    quarantine flag from this folder after asking, restores execute bits,
    checks the bundled tmux, runs `start.sh` and confirms the app answers. It
    writes a report (in the folder and on the Desktop) to send back on
    failure. `start.sh` refuses a still-quarantined copy and points to
-   `setup.sh`. Rehearsed in the cloud by `tests/setup_sim/simulate_zip_setup.sh`.
+   `setup.sh`. Rehearsed in the cloud by `tests/setup_sim/simulate_zip_setup.py`.
 3. `./start.sh` (setup runs it the first time): first run unpacks the
    vendored Python and installs vendored wheels into `.runtime/` with no network (about a minute), then starts the
    server and opens `http://127.0.0.1:6767/library`.

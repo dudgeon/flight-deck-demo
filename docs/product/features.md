@@ -311,12 +311,24 @@ Terminal's PATH misses it). It clears the browser's quarantine flag from its
 own folder after asking, restores execute bits an unzip dropped, checks the
 bundled tmux runs, then runs `start.sh` and confirms the app answers on port
 6767 (or says which port it took). It never downloads or installs anything.
-Every run writes `setup-report.txt` in the folder and
+Every run writes `setup-report.txt` in the app folder and
 `flight-deck-setup-report.txt` on the Desktop; a failure names the problem,
-the fix, and that file. `tests/setup_sim/simulate_zip_setup.sh` rehearses the
+the fix, and that file. `tests/setup_sim/simulate_zip_setup.py` rehearses the
 whole flow in a Linux container.
 
-**Where.** `setup.sh`, `start.sh`, `tests/setup_sim/`, README "Quick start".
+**Updates (D-111).** Setup installs into one fixed folder, `~/flight-deck`,
+and `sh ~/flight-deck/setup.sh` finds the newest ZIP or unzipped folder in
+~/Downloads and updates from it, so the person never navigates folders.
+`scripts/install_sync.py` compares each file with the manifest of the last
+install: the person's own files, their edits to shipped workspace files and
+their deletions all survive, the new versions they didn't take are saved in
+`updates/<date>/`, and app code is always the release's. The Workspace and
+Hangar projects follow the app out of a download folder
+(`omnigent/slim_bootstrap.py`). It also builds and pins the Dock icon.
+
+**Where.** `setup.sh`, `scripts/install_sync.py`, `start.sh`,
+`omnigent/slim_bootstrap.py`, `tests/setup_sim/`, `tests/test_slim_install_sync.py`,
+README "Quick start" and "Updating to a newer version".
 
 ## Dock launcher
 
