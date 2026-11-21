@@ -12,6 +12,10 @@ Standard library only; nothing here touches the network.
   pa refresh DATA                                 redraw every view of a dataset
   pa check   SCENARIO_DIR                         validate a scenario folder
   pa preview SCENARIO_DIR --out HTML              standalone demo, no agent needed
+  pa draft   person [ID] [--name N] [--set k=v]   start or change a draft (the Hangar)
+  pa publish person ID                            check it, keep the old version, make it live
+  pa history person ID [--restore VERSION]        earlier versions; restore one
+  pa uses    person ID                            what depends on them
 
 A dataset is one JSON file: {"dataset", "title", "updated", "records": [...]}.
 Every record has "id" and "type"; "parent" nests it; "status", "stage",
@@ -1020,6 +1024,341 @@ def cmd_preview(args: argparse.Namespace) -> None:
     print(f"wrote {args.out}")
 
 
+# ------------------------------------------------------------------ builder
+#
+# The Hangar's builder (docs/product/hangar.md, D-43 to D-46). Nothing a person
+# flies is ever edited in place: a change is a draft copy under
+# `<workspace>/.hangar/drafts/`, checked on every change, and Publish keeps the
+# previous version under `<workspace>/.hangar/history/` before swapping the file
+# in. Only people (the roster) can be built so far.
+
+HANGAR_DIR = ".hangar"
+PERSON_FIELDS = ("name", "kind", "role", "initials", "stand_in", "backing", "call_for", "skills")
+REQUIRED_FIELDS = ("name", "kind", "role", "backing", "call_for")
+_ID = re.compile(r"[a-z][a-z0-9-]{1,40}")
+
+
+def slug(name: str) -> str:
+    """The id a name becomes: lower-case words joined by hyphens."""
+    return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")[:40].rstrip("-")
+
+
+def workspace_of(roster: Path) -> Path:
+    return roster.resolve().parent
+
+
+def _hangar(workspace: Path, *parts: str) -> Path:
+    return workspace / HANGAR_DIR / Path(*parts)
+
+
+def _draft_paths(workspace: Path, pid: str) -> tuple[Path, Path]:
+    base = _hangar(workspace, "drafts", "people")
+    return base / f"{pid}.md", base / f"{pid}.json"
+
+
+def _checked_id(pid: str) -> str:
+    if not _ID.fullmatch(pid):
+        raise PaError(f"{pid!r} is not an id: lower-case words joined by hyphens")
+    return pid
+
+
+def person_text(meta: dict[str, Any], brief: str) -> str:
+    """Write a participant file: the header lines in a fixed order, then the brief."""
+    lines = ["---"]
+    for key in PERSON_FIELDS:
+        value = meta.get(key)
+        if value is None or value == "" or value == []:
+            continue
+        if isinstance(value, bool):
+            value = "true" if value else "false"
+        elif isinstance(value, list):
+            value = ", ".join(str(v) for v in value)
+        text = str(value).replace("\n", " ").strip()
+        lines.append(f"{key}: {text}")
+    lines.append("---")
+    return "\n".join(lines) + "\n" + brief.strip() + "\n"
+
+
+def _meta_of(person: dict[str, Any]) -> dict[str, Any]:
+    return {k: person[k] for k in PERSON_FIELDS if k in person and k != "id"}
+
+
+def _read_meta(path: Path) -> dict[str, Any]:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def person_uses(workspace: Path, pid: str, skills: Path | None = None) -> dict[str, list[str]]:
+    """What depends on a participant: workflows that list them, starters that cast them."""
+    skills = skills or KIT_DIR.parent.parent
+    workflows = []
+    for manifest in sorted(skills.glob("*/scenario.json")):
+        try:
+            data = json.loads(manifest.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if pid in (data.get("participants") or []):
+            workflows.append(manifest.parent.name)
+    starters = []
+    cast = re.compile(r"participants for this session:\s*([^\n]+)", re.I)
+    for path in sorted((workspace / "templates" / "sessions").glob("*.md")):
+        found = cast.search(path.read_text(encoding="utf-8"))
+        if found and pid in [p.strip().rstrip(".") for p in found.group(1).split(",")]:
+            starters.append(path.stem)
+    return {"workflows": workflows, "starters": starters}
+
+
+def draft_info(workspace: Path, pid: str, skills: Path | None = None) -> dict[str, Any]:
+    """One draft: what it is, what changes, what it affects, and whether it may be published."""
+    text_path, meta_path = _draft_paths(workspace, pid)
+    if not meta_path.is_file():
+        raise PaError(f"there is no draft of {pid}")
+    meta = _read_meta(meta_path)
+    roster = workspace / PARTICIPANTS_DIR
+    live_path = roster / f"{pid}.md"
+    live = live_path.read_text(encoding="utf-8") if live_path.is_file() else None
+    action = meta.get("action", "change")
+    uses = person_uses(workspace, pid, skills)
+    problems: list[str] = []
+    person: dict[str, Any] | None = None
+    text = None
+    if action == "remove":
+        if live is None:
+            problems.append(f"{pid} is not live, so there is nothing to remove")
+        for wid in uses["workflows"]:
+            problems.append(f"the workflow {wid} names {pid}; take them out of it first")
+        for sid in uses["starters"]:
+            problems.append(f"the starter {sid} casts {pid}; take them out of it first")
+    else:
+        text = text_path.read_text(encoding="utf-8") if text_path.is_file() else ""
+        person = _participant(text_path)
+        problems += [p.replace(f"{PARTICIPANTS_DIR}/{pid}.md", "this draft") for p in _check_participants({pid: person})]
+        for key in REQUIRED_FIELDS:
+            if not person.get(key) and key not in ("role",):
+                problems.append(f"this draft: missing {key.replace('_', ' ')}")
+        if action == "new" and live is not None:
+            problems.append(f"someone called {pid} is already on the roster; pick another name")
+        unchanged = live is not None and live.strip() == text.strip()
+        if unchanged:
+            problems.append("nothing has changed yet")
+    return {
+        "kind": "person",
+        "id": pid,
+        "action": action,
+        "from": meta.get("from"),
+        "started": meta.get("started"),
+        "updated": meta.get("updated"),
+        "step": meta.get("step"),
+        "person": {k: v for k, v in (person or {}).items() if k != "brief"} if person else None,
+        "brief": (person or {}).get("brief", ""),
+        "text": text,
+        "live": live,
+        "problems": problems,
+        "uses": uses,
+        "path": f"{HANGAR_DIR}/drafts/people/{pid}.md",
+        "target": f"{PARTICIPANTS_DIR}/{pid}.md",
+    }
+
+
+def list_drafts(workspace: Path, skills: Path | None = None) -> list[dict[str, Any]]:
+    base = _hangar(workspace, "drafts", "people")
+    return [draft_info(workspace, p.stem, skills) for p in sorted(base.glob("*.json"))] if base.is_dir() else []
+
+
+def _write_draft(workspace: Path, pid: str, meta: dict[str, Any], text: str | None, info: dict[str, Any]) -> None:
+    text_path, meta_path = _draft_paths(workspace, pid)
+    text_path.parent.mkdir(parents=True, exist_ok=True)
+    if text is not None:
+        _write_atomic(text_path, text)
+    info = {**info, "updated": _now()}
+    info.setdefault("started", info["updated"])
+    _write_atomic(meta_path, json.dumps(info, indent=1, ensure_ascii=False) + "\n")
+
+
+def start_draft(workspace: Path, *, pid: str | None = None, name: str | None = None,
+                duplicate_of: str | None = None, remove: bool = False) -> str:
+    """Start a draft: of a live person (`pid`), a new one (`name`), a copy (`duplicate_of` + `name`) or a removal."""
+    roster = workspace / PARTICIPANTS_DIR
+    if pid and not name:
+        pid = _checked_id(pid)
+        if _draft_paths(workspace, pid)[1].is_file():
+            return pid
+        live = roster / f"{pid}.md"
+        if not live.is_file():
+            raise PaError(f"{pid} is not on the roster; use --name to start someone new")
+        action = "remove" if remove else "change"
+        _write_draft(workspace, pid, {}, None if remove else live.read_text(encoding="utf-8"), {"action": action, "from": pid})
+        return pid
+    if not name:
+        raise PaError("give the id of someone on the roster, or --name for someone new")
+    new_id = _checked_id(slug(name))
+    if (roster / f"{new_id}.md").is_file() or _draft_paths(workspace, new_id)[1].is_file():
+        raise PaError(f"the id {new_id} is taken; pick a different name")
+    if duplicate_of:
+        source = roster / f"{_checked_id(duplicate_of)}.md"
+        if not source.is_file():
+            raise PaError(f"{duplicate_of} is not on the roster")
+        person = _participant(source)
+        meta = {**_meta_of(person), "name": name, "initials": ""}
+        brief = person["brief"].replace(str(person["name"]), name)
+    else:
+        meta = {"name": name, "kind": "agent", "backing": "session"}
+        brief = ""
+    meta["initials"] = "".join(w[0] for w in name.split()[:2]).upper()
+    _write_draft(workspace, new_id, meta, person_text(meta, brief), {"action": "new", "from": duplicate_of})
+    return new_id
+
+
+def edit_draft(workspace: Path, pid: str, fields: dict[str, Any], brief: str | None = None, step: str | None = None) -> None:
+    """Change fields of a draft. A person is always a stand-in; the id never changes."""
+    text_path, meta_path = _draft_paths(workspace, _checked_id(pid))
+    info = _read_meta(meta_path)
+    if not info:
+        raise PaError(f"there is no draft of {pid}; start one with `pa draft person {pid}`")
+    if info.get("action") == "remove":
+        raise PaError(f"the draft of {pid} removes them; discard it to make changes instead")
+    unknown = sorted(set(fields) - set(PERSON_FIELDS))
+    if unknown:
+        raise PaError(f"a person has no {', '.join(unknown)}; fields are {', '.join(PERSON_FIELDS)}")
+    if fields.get("kind") not in (None, *PARTICIPANT_KINDS):
+        raise PaError(f"kind must be one of {', '.join(PARTICIPANT_KINDS)}")
+    if fields.get("backing") not in (None, *PARTICIPANT_BACKINGS):
+        raise PaError(f"backing must be one of {', '.join(PARTICIPANT_BACKINGS)}")
+    person = _participant(text_path)
+    meta = {**_meta_of(person), **fields}
+    if meta.get("kind") == "person":
+        meta["stand_in"] = True
+    if "name" in fields and "initials" not in fields:
+        meta["initials"] = "".join(w[0] for w in str(meta["name"]).split()[:2]).upper()
+    _write_draft(workspace, pid, meta, person_text(meta, person["brief"] if brief is None else brief),
+                 {**info, **({"step": step} if step else {})})
+
+
+def discard_draft(workspace: Path, pid: str) -> None:
+    for path in _draft_paths(workspace, _checked_id(pid)):
+        path.unlink(missing_ok=True)
+
+
+def _snapshot(workspace: Path, pid: str, text: str, summary: str, action: str) -> str:
+    stamp = _dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+    folder = _hangar(workspace, "history", "people", pid)
+    folder.mkdir(parents=True, exist_ok=True)
+    n = 1
+    version = stamp
+    while (folder / f"{version}.md").exists():
+        n += 1
+        version = f"{stamp}-{n}"
+    _write_atomic(folder / f"{version}.md", text)
+    _write_atomic(folder / f"{version}.json", json.dumps({"at": _now(), "summary": summary, "replaced_by": action}, indent=1) + "\n")
+    return version
+
+
+def publish_draft(workspace: Path, pid: str, summary: str = "", skills: Path | None = None) -> dict[str, Any]:
+    """Check, keep the live version, swap the draft in, and drop the draft."""
+    info = draft_info(workspace, _checked_id(pid), skills)
+    if info["problems"]:
+        raise PaError("cannot publish while checks fail: " + "; ".join(info["problems"]))
+    live_path = workspace / PARTICIPANTS_DIR / f"{pid}.md"
+    kept = None
+    if info["live"] is not None:
+        kept = _snapshot(workspace, pid, info["live"], summary or info["action"], info["action"])
+    if info["action"] == "remove":
+        live_path.unlink()
+    else:
+        live_path.parent.mkdir(parents=True, exist_ok=True)
+        _write_atomic(live_path, info["text"])
+    discard_draft(workspace, pid)
+    return {"id": pid, "action": info["action"], "kept": kept}
+
+
+def person_history(workspace: Path, pid: str) -> list[dict[str, Any]]:
+    folder = _hangar(workspace, "history", "people", _checked_id(pid))
+    out = []
+    for path in sorted(folder.glob("*.md"), reverse=True) if folder.is_dir() else []:
+        meta = _read_meta(path.with_suffix(".json"))
+        out.append({"version": path.stem, "at": meta.get("at", ""), "summary": meta.get("summary", ""),
+                    "text": path.read_text(encoding="utf-8")})
+    return out
+
+
+def restore_version(workspace: Path, pid: str, version: str, skills: Path | None = None) -> dict[str, Any]:
+    """Make an earlier version live again. It goes through the same gate, and is itself a new version."""
+    if not re.fullmatch(r"\d{8}-\d{6}(-\d+)?", version):
+        raise PaError(f"{version!r} is not a version")
+    old = _hangar(workspace, "history", "people", _checked_id(pid), f"{version}.md")
+    if not old.is_file():
+        raise PaError(f"{pid} has no version {version}")
+    if _draft_paths(workspace, pid)[1].is_file():
+        raise PaError(f"{pid} has a draft in progress; publish or discard it first")
+    live = workspace / PARTICIPANTS_DIR / f"{pid}.md"
+    _write_draft(workspace, pid, {}, old.read_text(encoding="utf-8"),
+                 {"action": "change" if live.is_file() else "new", "from": f"{pid}@{version}"})
+    try:
+        return publish_draft(workspace, pid, f"restored the version of {version}", skills)
+    except PaError:
+        discard_draft(workspace, pid)
+        raise
+
+
+def cmd_draft(args: argparse.Namespace) -> None:
+    workspace = workspace_of(_roster_dir(args.dir))
+    if args.list:
+        print(json.dumps([{k: v for k, v in d.items() if k not in ("text", "live")} for d in list_drafts(workspace)], indent=1))
+        return
+    if args.discard:
+        discard_draft(workspace, args.id or "")
+        print(f"discarded the draft of {args.id}")
+        return
+    pid = start_draft(workspace, pid=args.id, name=args.name, duplicate_of=args.duplicate, remove=args.remove)
+    fields = _pairs(args.set)
+    for key in ("stand_in",):
+        if isinstance(fields.get(key), str):
+            fields[key] = fields[key].lower() in ("true", "yes", "1")
+    brief = Path(args.brief_file).read_text(encoding="utf-8") if args.brief_file else args.brief
+    if fields or brief is not None or args.step:
+        edit_draft(workspace, pid, fields, brief, args.step)
+    info = draft_info(workspace, pid)
+    if args.json:
+        print(json.dumps({k: v for k, v in info.items() if k not in ("live",)}, indent=1, ensure_ascii=False))
+        return
+    print(f"draft {info['path']} ({info['action']})")
+    print("checks: ok, ready to publish" if not info["problems"] else "checks: " + "; ".join(info["problems"]))
+
+
+def cmd_publish(args: argparse.Namespace) -> None:
+    result = publish_draft(workspace_of(_roster_dir(args.dir)), args.id, args.summary or "")
+    kept = f"; the previous version is kept as {result['kept']}" if result["kept"] else ""
+    print(f"published {result['id']} ({result['action']}){kept}")
+
+
+def cmd_history(args: argparse.Namespace) -> None:
+    workspace = workspace_of(_roster_dir(args.dir))
+    if args.restore:
+        result = restore_version(workspace, args.id, args.restore)
+        print(f"restored {args.id} to {args.restore}; the version it replaced is kept as {result['kept']}")
+        return
+    versions = person_history(workspace, args.id)
+    if not versions:
+        print(f"{args.id} has no earlier versions")
+    for v in versions:
+        print(f"{v['version']}  {v['summary']}")
+
+
+def cmd_uses(args: argparse.Namespace) -> None:
+    uses = person_uses(workspace_of(_roster_dir(args.dir)), _checked_id(args.id))
+    if args.json:
+        print(json.dumps(uses))
+        return
+    if not any(uses.values()):
+        print(f"nothing names {args.id}")
+    for kind, items in uses.items():
+        for item in items:
+            print(f"{kind[:-1]}: {item}")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="pa", description="Product Aviator data and view command")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -1102,6 +1441,44 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--out", required=True)
     p.add_argument("--participants", help="the roster folder; default participants/ in the workspace")
     p.set_defaults(run=cmd_preview)
+
+    # The Hangar's builder: drafts, publish, history, used-by.
+    p = sub.add_parser("draft", help="start or change a draft of a participant (nothing is live until publish)")
+    p.add_argument("kind", choices=["person"], help="what is being built; only person so far")
+    p.add_argument("id", nargs="?", help="the id of someone on the roster")
+    p.add_argument("--name", help="a new person's name (their id is made from it)")
+    p.add_argument("--duplicate", help="with --name: start from a copy of this id")
+    p.add_argument("--remove", action="store_true", help="draft taking them off the roster")
+    p.add_argument("--set", action="append", default=[], help="field=value: " + ", ".join(PERSON_FIELDS))
+    p.add_argument("--brief", help="replace the brief or script")
+    p.add_argument("--brief-file", help="replace the brief or script with this file")
+    p.add_argument("--step", help="which step of the guided build the draft is at, for the Hangar")
+    p.add_argument("--discard", action="store_true")
+    p.add_argument("--list", action="store_true", help="list every draft as JSON")
+    p.add_argument("--json", action="store_true")
+    p.add_argument("--dir", help="the roster folder; default participants/ in the workspace")
+    p.set_defaults(run=cmd_draft)
+
+    p = sub.add_parser("publish", help="check a draft, keep the live version, and make the draft live")
+    p.add_argument("kind", choices=["person"])
+    p.add_argument("id")
+    p.add_argument("--summary", help="one line on what changed")
+    p.add_argument("--dir")
+    p.set_defaults(run=cmd_publish)
+
+    p = sub.add_parser("history", help="earlier versions of a participant, or restore one")
+    p.add_argument("kind", choices=["person"])
+    p.add_argument("id")
+    p.add_argument("--restore", metavar="VERSION")
+    p.add_argument("--dir")
+    p.set_defaults(run=cmd_history)
+
+    p = sub.add_parser("uses", help="what depends on a participant")
+    p.add_argument("kind", choices=["person"])
+    p.add_argument("id")
+    p.add_argument("--json", action="store_true")
+    p.add_argument("--dir")
+    p.set_defaults(run=cmd_uses)
 
     # Comments and suggested changes in markdown documents (docreview.py).
     from docreview import ReviewError, register as register_review

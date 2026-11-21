@@ -23,26 +23,34 @@ import {
   SparklesIcon,
   UsersIcon,
   WarehouseIcon,
+  WrenchIcon,
 } from "lucide-react";
-import { type ReactNode, useMemo } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { Route, Routes } from "react-router-dom";
 import { useResolvedThemeMode } from "@/components/theme/useResolvedThemeMode";
 import { ParticipantTurnBlock } from "@/components/chat/ParticipantTurn";
 import { injectDesignTokens } from "@/lib/artifactBridge";
-import { Link, useLocation, useParams } from "@/lib/routing";
+import { Link, useLocation, useNavigate, useParams } from "@/lib/routing";
 import { cn } from "@/lib/utils";
 import {
   type Hangar,
   type HangarPerson,
   type HangarView,
   type HangarWorkflow,
+  BUILD_STEPS,
+  builderSessionLink,
+  buildPrompts,
+  type HangarDraft,
   hangarPath,
+  lineDiff,
   participantSlug,
   previewPagePath,
   templatePagePath,
   unwrap,
   useHangar,
+  useHangarActions,
   useHangarPage,
+  useHangarVersion,
   viewPagePath,
 } from "./hangarApi";
 import "./hangar.css";
@@ -95,9 +103,22 @@ function HangarSidebar({ hangar }: { hangar: Hangar | undefined }) {
         </Link>
       ))}
       <div className="hangar-sidehd">Drafts</div>
-      <p className="hangar-sidenote">
-        Nothing is being built. Building arrives in the next version.
-      </p>
+      {hangar && hangar.drafts.length === 0 && (
+        <p className="hangar-sidenote">Nothing is being built.</p>
+      )}
+      {hangar?.drafts.map((draft) => (
+        <Link
+          key={draft.id}
+          to={hangarPath.draft(draft.id)}
+          className="hangar-nav"
+          aria-current={pathname === hangarPath.draft(draft.id) ? "page" : undefined}
+          data-testid="hangar-draft-nav"
+        >
+          <WrenchIcon aria-hidden="true" />
+          <span className="min-w-0 flex-1 truncate">{draftName(draft)}</span>
+          <span className="n">{draft.problems.length === 0 ? "ready" : draftStepLabel(draft)}</span>
+        </Link>
+      ))}
       <div className="grow" />
       <div className="hangar-foot">
         <Link to="/" className="hangar-back" data-testid="hangar-back-foot">
@@ -117,7 +138,8 @@ export function HangarPage() {
         <WarehouseIcon aria-hidden="true" className="size-4 shrink-0" />
         Hangar
         <small>
-          Where the people, workflows and views others fly are defined. Looking changes nothing.
+          Where the people, workflows and views others fly are defined. Nothing is live until you
+          publish.
         </small>
         <span className="sp" />
         <Link to="/" data-testid="hangar-back-band">
@@ -134,6 +156,8 @@ export function HangarPage() {
               <Route index element={<Overview hangar={data} />} />
               <Route path="people" element={<PeopleShelf hangar={data} />} />
               <Route path="people/:id" element={<PersonPage hangar={data} />} />
+              <Route path="people/:id/history" element={<HistoryPage hangar={data} />} />
+              <Route path="drafts/person/:id" element={<DraftPage hangar={data} />} />
               <Route path="workflows" element={<WorkflowShelf hangar={data} />} />
               <Route path="workflows/:id" element={<WorkflowPage hangar={data} />} />
               <Route path="views" element={<ViewShelf hangar={data} />} />
@@ -445,6 +469,25 @@ function Overview({ hangar }: { hangar: Hangar }) {
           </Link>
         ))}
       </div>
+      <div className="grid2">
+        <Section title="Build something">
+          <p className="sub">
+            Each build is a guided session with Aviator, on a draft nobody else sees until you
+            publish it. You can stop and come back.
+          </p>
+          <div className="row">
+            <NewPersonButton />
+            <span className="lab">Workflows, scenarios and skills come next.</span>
+          </div>
+        </Section>
+        <Section title="In progress">
+          {hangar.drafts.length === 0 ? (
+            <p className="lab">No drafts.</p>
+          ) : (
+            hangar.drafts.map((draft) => <DraftCard key={draft.id} draft={draft} />)
+          )}
+        </Section>
+      </div>
       <Section title="How the pieces fit">
         <p style={{ lineHeight: 2 }}>
           A <span className="chip">Starter</span> starts a{" "}
@@ -489,17 +532,25 @@ function PersonCard({ person }: { person: HangarPerson }) {
 function PeopleShelf({ hangar }: { hangar: Hangar }) {
   return (
     <>
-      <div>
-        <h1>People and agents</h1>
-        <p className="sub">
-          Who Aviator can bring into a conversation. Square marks are agents, round marks are
-          people, and a dashed edge is an agent standing in for a real person.
-        </p>
+      <div className="row">
+        <div className="min-w-0 flex-1">
+          <h1>People and agents</h1>
+          <p className="sub">
+            Who Aviator can bring into a conversation. Square marks are agents, round marks are
+            people, and a dashed edge is an agent standing in for a real person.
+          </p>
+        </div>
+        <NewPersonButton />
       </div>
       <div className="grid2">
         {hangar.people.map((person) => (
           <PersonCard key={person.id} person={person} />
         ))}
+        {hangar.drafts
+          .filter((d) => d.action === "new")
+          .map((draft) => (
+            <DraftCard key={draft.id} draft={draft} />
+          ))}
       </div>
     </>
   );
@@ -521,6 +572,8 @@ function PersonPage({ hangar }: { hangar: Hangar }) {
         <h1>{person.name}</h1>
         <KindChip person={person} />
         <Health problems={person.problems} />
+        <span className="sp" />
+        <PersonActions hangar={hangar} id={person.id} name={person.name} />
       </div>
       <div className="halves">
         <div className="flex flex-col gap-3.5">
@@ -1369,6 +1422,418 @@ function FrameworkPage({ hangar }: { hangar: Hangar }) {
             }))}
             empty="No skill reads it yet."
           />
+        </Section>
+      </div>
+    </>
+  );
+}
+
+// ------------------------------------------------------------------ building
+
+const draftName = (draft: HangarDraft) => draft.person?.name ?? draft.id;
+function draftStepLabel(draft: HangarDraft): string {
+  if (draft.action === "remove") return "remove";
+  const at = draft.step ? BUILD_STEPS.indexOf(draft.step as (typeof BUILD_STEPS)[number]) : -1;
+  return at >= 0 ? `${at + 1}/${BUILD_STEPS.length}` : "draft";
+}
+const ACTION_LABEL = { new: "New", change: "Change", remove: "Removal" } as const;
+
+function NewPersonButton() {
+  return (
+    <Link
+      to={builderSessionLink(buildPrompts.create())}
+      className="hangar-btn pri"
+      data-testid="hangar-new-person"
+    >
+      New person or agent
+    </Link>
+  );
+}
+
+function DraftCard({ draft }: { draft: HangarDraft }) {
+  return (
+    <Link to={hangarPath.draft(draft.id)} className="card draft" data-testid="hangar-draft-card">
+      <div className="row">
+        {draft.person && (
+          <Mark person={{ ...draft.person, initials: draft.person.initials }} small />
+        )}
+        <b>{draftName(draft)}</b>
+        <span className="chip build">{ACTION_LABEL[draft.action]} · draft</span>
+        <span className="sp" />
+        <span className="lab">{draftStepLabel(draft)}</span>
+      </div>
+      <span className="lab">Not published. Nobody flying can see this.</span>
+    </Link>
+  );
+}
+
+function ActionError({ error }: { error: unknown }) {
+  return error ? (
+    <p className="chip fail">{error instanceof Error ? error.message : String(error)}</p>
+  ) : null;
+}
+
+/** Edit, duplicate, retire and history for a live person. Edits always open a draft. */
+function PersonActions({ hangar, id, name }: { hangar: Hangar; id: string; name: string }) {
+  const navigate = useNavigate();
+  const { startDraft } = useHangarActions();
+  const existing = hangar.drafts.find((d) => d.id === id);
+  const person = hangar.people.find((p) => p.id === id);
+  const inUse = person ? person.used_in.workflows.length + person.used_in.starters.length : 0;
+  const open = (remove: boolean) =>
+    startDraft.mutate(
+      { id, remove },
+      {
+        onSuccess: () =>
+          navigate(remove ? hangarPath.draft(id) : builderSessionLink(buildPrompts.edit(id, name))),
+      },
+    );
+  return (
+    <div className="row">
+      {existing ? (
+        <Link to={hangarPath.draft(id)} className="hangar-btn pri">
+          Open the draft
+        </Link>
+      ) : (
+        <button
+          type="button"
+          className="hangar-btn pri"
+          onClick={() => open(false)}
+          disabled={startDraft.isPending}
+          data-testid="hangar-edit"
+        >
+          Edit
+        </button>
+      )}
+      <Link to={builderSessionLink(buildPrompts.duplicate(id, name))} className="hangar-btn">
+        Duplicate
+      </Link>
+      <Link to={hangarPath.history(id)} className="hangar-btn">
+        History{person && person.history.length > 0 ? ` · ${person.history.length}` : ""}
+      </Link>
+      {!existing && (
+        <button
+          type="button"
+          className="hangar-btn quiet"
+          onClick={() => open(true)}
+          disabled={startDraft.isPending}
+          title={
+            inUse ? `Used in ${inUse} places: removing is blocked until each is changed` : undefined
+          }
+        >
+          Remove…
+        </button>
+      )}
+      <ActionError error={startDraft.error} />
+    </div>
+  );
+}
+
+function StepBar({ step, action }: { step: string | null; action: HangarDraft["action"] }) {
+  if (action === "remove") return null;
+  const at = step ? BUILD_STEPS.indexOf(step as (typeof BUILD_STEPS)[number]) : -1;
+  return (
+    <div className="steps" aria-label="Steps of the guided build">
+      {BUILD_STEPS.map((label, index) => (
+        <span
+          key={label}
+          className={cn(index < at && "done", index === at && "now")}
+          aria-current={index === at ? "step" : undefined}
+        >
+          {label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function Diff({ before, after }: { before: string; after: string }) {
+  const all = lineDiff(before, after).map((row, line) => ({ ...row, line }));
+  const changed = (i: number) => all[i] !== undefined && all[i].op !== "same";
+  // Changed lines, with one line of context either side.
+  const rows = all.filter((r, i) => r.op !== "same" || changed(i - 1) || changed(i + 1));
+  if (!rows.some((r) => r.op !== "same")) return <p className="lab">No changes yet.</p>;
+  return (
+    <pre className="text diff" data-testid="hangar-diff">
+      {rows.map((row) => (
+        <span key={row.line} className={row.op}>
+          {row.op === "add" ? "+ " : row.op === "del" ? "− " : "  "}
+          {row.text}
+          {"\n"}
+        </span>
+      ))}
+    </pre>
+  );
+}
+
+function DraftPage({ hangar }: { hangar: Hangar }) {
+  const { id = "" } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { publish, discard } = useHangarActions();
+  const [summary, setSummary] = useState("");
+  const draft = hangar.drafts.find((d) => d.id === id);
+  if (!draft) {
+    const live = hangar.people.find((p) => p.id === id);
+    return live ? (
+      <p className="empty">
+        There is no draft of {live.name} now: it was published or discarded.{" "}
+        <Link className="link" to={hangarPath.person(id)}>
+          See {live.name}
+        </Link>
+      </p>
+    ) : (
+      <NotHere />
+    );
+  }
+  const workflows = byId(hangar.workflows);
+  const starters = byId(hangar.starters);
+  const removal = draft.action === "remove";
+  const blocked = draft.problems.length > 0;
+  const name = draftName(draft);
+  const affected = draft.uses.workflows.length + draft.uses.starters.length;
+  return (
+    <>
+      <div className="crumb">
+        <Link to={hangarPath.shelf("people")}>People and agents</Link>
+        <span aria-hidden="true">/</span>
+        <span>Draft: {name}</span>
+      </div>
+      <div className="row">
+        {draft.person && <Mark person={draft.person} />}
+        <h1>{removal ? `Remove ${name}` : name}</h1>
+        <span className="chip build">{ACTION_LABEL[draft.action]} · draft</span>
+        {blocked ? (
+          <span className="chip fail">✕ {draft.problems.length} to fix before publishing</span>
+        ) : (
+          <span className="chip ok">✓ Ready to publish</span>
+        )}
+      </div>
+      <p className="sub">
+        Nobody flying sees this until you publish it. Sessions already running keep what they
+        started with.
+      </p>
+      <StepBar step={draft.step} action={draft.action} />
+      <div className="halves">
+        <div className="flex flex-col gap-3.5">
+          {draft.person && (
+            <Section title="How they will appear when flying">
+              <ParticipantTurnBlock
+                hangarLink={false}
+                turn={{
+                  name: draft.person.name,
+                  kind: draft.person.kind,
+                  role: draft.person.role,
+                  standIn: draft.person.stand_in,
+                  sessionId: null,
+                  body: "",
+                }}
+              >
+                <span className="lab">
+                  {draft.person.call_for
+                    ? `Called for ${draft.person.call_for}.`
+                    : "No call-for line yet."}
+                </span>
+              </ParticipantTurnBlock>
+            </Section>
+          )}
+          <Section title="Checks">
+            <Checks problems={draft.problems} passed="Every check passes." />
+          </Section>
+          <Section title={removal ? "What still uses them" : "Who is affected"}>
+            {affected === 0 ? (
+              <p className="lab">
+                {removal
+                  ? "Nothing names them."
+                  : "No workflow or starter names them. New sessions can call them."}
+              </p>
+            ) : (
+              <>
+                <Links
+                  items={[
+                    ...draft.uses.workflows.map((w) => ({
+                      to: hangarPath.workflow(w),
+                      label: workflows.get(w)?.title ?? w,
+                      note: "workflow",
+                    })),
+                    ...draft.uses.starters.map((st) => ({
+                      to: hangarPath.starter(st),
+                      label: starters.get(st)?.title ?? st,
+                      note: "starter",
+                    })),
+                  ]}
+                  empty=""
+                />
+                {!removal && (
+                  <p className="lab">Only sessions started after you publish see the change.</p>
+                )}
+              </>
+            )}
+          </Section>
+        </div>
+        <div className="flex flex-col gap-3.5">
+          <Section title="Publish">
+            {!removal && (
+              <label className="flex flex-col gap-1">
+                <span className="lab">One line on what changed (kept in History)</span>
+                <input
+                  className="hangar-input"
+                  value={summary}
+                  placeholder={
+                    draft.action === "new" ? "Added for fraud questions" : "What changed"
+                  }
+                  onChange={(e) => setSummary(e.target.value)}
+                />
+              </label>
+            )}
+            <div className="row">
+              <button
+                type="button"
+                className="hangar-btn pri"
+                disabled={blocked || publish.isPending}
+                title={blocked ? "Fix every check first" : undefined}
+                data-testid="hangar-publish"
+                onClick={() =>
+                  publish.mutate(
+                    {
+                      id: draft.id,
+                      summary:
+                        summary ||
+                        (removal
+                          ? `removed ${name}`
+                          : draft.action === "new"
+                            ? `added ${name}`
+                            : ""),
+                    },
+                    {
+                      onSuccess: () =>
+                        navigate(
+                          removal ? hangarPath.shelf("people") : hangarPath.person(draft.id),
+                        ),
+                    },
+                  )
+                }
+              >
+                {removal ? "Remove from the roster" : "Publish"}
+              </button>
+              {!removal && (
+                <Link
+                  to={builderSessionLink(buildPrompts.resume(draft.id, draft.step))}
+                  className="hangar-btn"
+                >
+                  Continue with Aviator
+                </Link>
+              )}
+              {!removal && draft.person && (
+                <Link
+                  to={builderSessionLink(buildPrompts.trial(draft.id, name))}
+                  className="hangar-btn"
+                >
+                  Try them
+                </Link>
+              )}
+              <span className="sp" />
+              <button
+                type="button"
+                className="hangar-btn quiet"
+                disabled={discard.isPending}
+                onClick={() =>
+                  discard.mutate(draft.id, {
+                    onSuccess: () =>
+                      navigate(
+                        draft.action === "new"
+                          ? hangarPath.shelf("people")
+                          : hangarPath.person(draft.id),
+                      ),
+                  })
+                }
+              >
+                Discard draft
+              </button>
+            </div>
+            {draft.live !== null && !removal && (
+              <p className="lab">Publishing keeps the current version in History.</p>
+            )}
+            <ActionError error={publish.error ?? discard.error} />
+          </Section>
+          {!removal && (
+            <Section title={draft.live === null ? "The new file" : "What changes"}>
+              {draft.live === null ? (
+                <pre className="text">{draft.text}</pre>
+              ) : (
+                <Diff before={draft.live} after={draft.text ?? ""} />
+              )}
+              <span className="path">
+                {draft.path} → {draft.target}
+              </span>
+            </Section>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function HistoryPage({ hangar }: { hangar: Hangar }) {
+  const { id = "" } = useParams<{ id: string }>();
+  const { restore } = useHangarActions();
+  const [open, setOpen] = useState<string | null>(null);
+  const version = useHangarVersion(id, open);
+  const person = hangar.people.find((p) => p.id === id);
+  if (!person) return <NotHere />;
+  const busy = hangar.drafts.some((d) => d.id === id);
+  return (
+    <>
+      <div className="crumb">
+        <Link to={hangarPath.shelf("people")}>People and agents</Link>
+        <span aria-hidden="true">/</span>
+        <Link to={hangarPath.person(id)}>{person.name}</Link>
+        <span aria-hidden="true">/</span>
+        <span>History</span>
+      </div>
+      <h1>{person.name}: earlier versions</h1>
+      <p className="sub">
+        Every publish keeps the version it replaced. Restoring one makes it live again through the
+        same checks, and keeps the version it replaces too.
+      </p>
+      {busy && (
+        <p className="chip build">
+          There is a draft in progress. Publish or discard it before restoring.
+        </p>
+      )}
+      <div className="halves">
+        <Section
+          title={`${person.history.length} earlier version${person.history.length === 1 ? "" : "s"}`}
+        >
+          {person.history.length === 0 && (
+            <p className="lab">Nothing has been published over this version yet.</p>
+          )}
+          <ul className="plain" data-testid="hangar-history">
+            {person.history.map((v) => (
+              <li key={v.version} className="row">
+                <button
+                  type="button"
+                  className={cn("link", open === v.version && "font-semibold")}
+                  onClick={() => setOpen(v.version)}
+                >
+                  {new Date(v.at || 0).toLocaleString()}
+                </button>
+                <span className="lab">{v.summary}</span>
+                <span className="sp" />
+                <button
+                  type="button"
+                  className="hangar-btn"
+                  disabled={busy || restore.isPending}
+                  onClick={() => restore.mutate({ id, version: v.version })}
+                >
+                  Restore
+                </button>
+              </li>
+            ))}
+          </ul>
+          <ActionError error={restore.error} />
+        </Section>
+        <Section title={open ? "That version, against what is live" : "Pick a version to compare"}>
+          {open && version.data && <Diff before={version.data.text} after={person.text} />}
         </Section>
       </div>
     </>

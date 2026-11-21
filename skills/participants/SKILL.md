@@ -189,36 +189,13 @@ can narrow it:
 If the user asks for someone who is on the roster but not eligible here, say
 so and ask whether to call them anyway. Their answer decides.
 
-## Adding or changing a participant
+## Adding, changing or retiring a participant
 
-Use this when the user asks to add a person, an agent, a platform or a persona
-to the roster, or to change one. The files are plain markdown, so the user can
-also edit them by hand; `participants/README.md` explains the format to people.
-
-1. Ask only for what you do not have: their name; whether they are an agent
-   or a real person; their role; what they should be called for; and whether
-   they answer from a brief (`session`) or from fixed lines (`script`). For a
-   real person, an agent always stands in, and you need notes on what they
-   care about and how they talk. Never write a brief for a real person from
-   your own guesses: use what the user gives you, and say what you assumed.
-2. Copy `participants/_template.md` to `participants/<id>.md`. The id is the
-   name in lower case with hyphens.
-3. Fill in the header and the body:
-   - `backing: session`: the body is the brief. Who they are, what they look
-     for, how they work, how they talk. A page at most. Write it to them
-     ("You are...").
-   - `backing: script`: one or two lines on who they are, then `## Script`
-     with a `### <kind of question>` heading above each answer, and a last
-     entry for anything else. Answers are passed on word for word, so write
-     them as that participant would say them.
-4. Run `$PA who --check`, fix what it reports, then `$PA who <id>` and show the
-   user the result in two lines.
-5. To make them eligible for a workflow that lists its participants, add
-   their id to `participants` in that scenario's `scenario.json`, and run
-   `$PA check <scenario folder>`.
-
-To retire someone, delete their file and remove their id from any scenario
-that lists it.
+Use the `build-person` skill. It works on a draft that nobody else sees until
+the user publishes it, checks it on every change, lets the user try it, and
+keeps the previous version. Never edit or delete a file in `participants/`
+directly: other people's sessions and workflows use them. (The user may still
+edit the files by hand; `participants/README.md` explains the format.)
 
 ## Without Omnigent
 

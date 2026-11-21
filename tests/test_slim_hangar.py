@@ -89,3 +89,73 @@ def test_a_broken_person_shows_its_problem(
     person = next(p for p in slim_hangar.load_hangar()["people"] if p["id"] == "no-role")
     assert any("stand_in" in problem for problem in person["problems"])
     assert any("role" in problem for problem in person["problems"])
+
+
+def _scratch_workspace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    workspace = tmp_path / "workspace"
+    shutil.copytree(REPO / "workspace" / "participants", workspace / "participants")
+    shutil.copytree(REPO / "workspace" / "templates", workspace / "templates")
+    monkeypatch.setenv("OMNIGENT_SLIM_WORKSPACE", str(workspace))
+    monkeypatch.setenv("OMNIGENT_SLIM_LIBRARY_DIR", str(workspace / "templates"))
+    return workspace
+
+
+def test_edit_publish_and_restore_a_person(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = _scratch_workspace(tmp_path, monkeypatch)
+    pa = slim_hangar._pa()
+    draft = slim_hangar.start_person_draft("mara-okafor")
+    assert draft["action"] == "change"
+    assert "nothing has changed yet" in draft["problems"]
+    with pytest.raises(HTTPException) as err:
+        slim_hangar.publish_person("mara-okafor", "")
+    assert err.value.status_code == 409
+    pa.edit_draft(workspace, "mara-okafor", {"role": "Design director, Cards"})
+    # Live is untouched until publish.
+    assert "Design lead" in (workspace / "participants" / "mara-okafor.md").read_text()
+    hangar = slim_hangar.load_hangar()
+    assert [d["id"] for d in hangar["drafts"]] == ["mara-okafor"]
+    assert hangar["drafts"][0]["problems"] == []
+    result = slim_hangar.publish_person("mara-okafor", "promoted")
+    assert result["kept"]
+    assert "Design director" in (workspace / "participants" / "mara-okafor.md").read_text()
+    person = next(p for p in slim_hangar.load_hangar()["people"] if p["id"] == "mara-okafor")
+    assert person["history"][0]["summary"] == "promoted"
+    slim_hangar.restore_person("mara-okafor", result["kept"])
+    assert "Design lead" in (workspace / "participants" / "mara-okafor.md").read_text()
+    assert slim_hangar.load_hangar()["drafts"] == []
+
+
+def test_removal_is_blocked_while_in_use(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    workspace = _scratch_workspace(tmp_path, monkeypatch)
+    draft = slim_hangar.start_person_draft("risk-review", remove=True)
+    assert any("document-review" in p for p in draft["problems"])
+    with pytest.raises(HTTPException):
+        slim_hangar.publish_person("risk-review", "")
+    assert (workspace / "participants" / "risk-review.md").is_file()
+    slim_hangar.discard_person_draft("risk-review")
+    assert slim_hangar.load_hangar()["drafts"] == []
+
+
+def test_new_person_needs_every_required_line(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = _scratch_workspace(tmp_path, monkeypatch)
+    pa = slim_hangar._pa()
+    pid = pa.start_draft(workspace, name="Fraud Ops")
+    assert pid == "fraud-ops"
+    problems = slim_hangar.draft_detail(pid)["problems"]
+    assert any("call for" in p for p in problems) and any("brief" in p for p in problems)
+    pa.edit_draft(
+        workspace,
+        pid,
+        {"role": "Fraud operations", "call_for": "chargebacks", "kind": "person"},
+        "You are Fraud Ops.",
+    )
+    detail = slim_hangar.draft_detail(pid)
+    assert detail["problems"] == [] and detail["person"]["stand_in"] is True
+    slim_hangar.publish_person(pid, "new")
+    assert (workspace / "participants" / "fraud-ops.md").is_file()
+    with pytest.raises(pa.PaError):
+        pa.start_draft(workspace, name="Fraud Ops")

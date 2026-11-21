@@ -231,6 +231,9 @@ by listing ids under `participants` in its `scenario.json`. `backing: session` p
 a background session from their brief, `backing: script` answers from text in
 the file. Their turns are drawn by `web/src/components/chat/ParticipantTurn.tsx`
 from a fenced block described in `web/src/lib/participantTurn.ts`.
+To add, change or remove someone safely, use the Hangar (People and agents)
+or the `build-person` skill: both edit a draft and publish it through `pa`'s
+checks, keeping the version they replace.
 
 ## Frameworks
 
