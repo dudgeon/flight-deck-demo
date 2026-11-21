@@ -46,6 +46,16 @@ as true as what you record with the `pa flow` command (see "Runs" in the
 - When the user abandons a workflow, confirm once, then `--stop`.
 - A question on the side is not a pause. Answer it and carry on.
 
+### Threads
+
+A workflow can run in a thread of its own, with you as the project's
+director, so its detail stays out of this conversation. Use the `director`
+skill when the user asks you to direct or coordinate the project, asks for
+a workflow "in a thread", "in the background" or "on the side", or wants two
+pieces of work going at once. If your first message is a brief from a
+director (it starts "Read your brief at"), you are the thread: follow the
+brief, including what to report and when.
+
 ## Other people and agents
 
 `participants/` is the roster of other agents and people who can join a

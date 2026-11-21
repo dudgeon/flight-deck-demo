@@ -17,20 +17,10 @@ import {
   type ProjectRun,
   resumeMessage,
   RUN_STATE_LABELS,
-  type RunState,
   runStepLine,
   useProjectRuns,
 } from "./projectRuns";
-
-// Amber means "needs the person" and nothing else (D-50).
-const CHIP: Record<RunState, string> = {
-  "needs-you": "bg-[var(--pa-attn-soft)] text-[var(--pa-attn)]",
-  paused: "bg-[var(--pa-idle-soft)] text-[var(--pa-ink-2)]",
-  waiting: "bg-[var(--pa-info-soft)] text-[var(--pa-info)]",
-  working: "bg-[var(--pa-agent-soft)] text-[var(--pa-agent)]",
-  stopped: "bg-[var(--pa-idle-soft)] text-[var(--pa-ink-3)]",
-  finished: "bg-[var(--pa-ok-soft)] text-[var(--pa-ok)]",
-};
+import { RunStateChip, RunStepsBar } from "./RunParts";
 
 const BUTTON =
   "rounded-[var(--pa-r)] px-2.5 py-1 text-[13px] font-medium outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--pa-navy)]";
@@ -38,20 +28,6 @@ const BUTTON =
 function age(run: ProjectRun): string {
   const at = Date.parse(run.updated);
   return Number.isFinite(at) ? formatAge(at / 1000) : "";
-}
-
-export function RunStateChip({ state }: { state: RunState }) {
-  return (
-    <span
-      data-state={state}
-      className={cn(
-        "shrink-0 rounded-full px-2 py-0.5 text-[11px] leading-4 font-semibold",
-        CHIP[state],
-      )}
-    >
-      {RUN_STATE_LABELS[state]}
-    </span>
-  );
 }
 
 /** Where pressing the card's button goes, and what it leaves in the message box. */
@@ -104,21 +80,7 @@ function RunCard({ run, onOpen }: { run: ProjectRun; onOpen: (resume: boolean) =
         <RunStateChip state={run.state} />
       </div>
       <div className="flex flex-col gap-1">
-        <div className="flex gap-1" aria-hidden="true">
-          {run.steps.map((step, index) => (
-            <span
-              key={step}
-              className={cn(
-                "h-1 flex-1 rounded-full",
-                index + 1 < run.current
-                  ? "bg-[var(--pa-ok)]"
-                  : index + 1 === run.current
-                    ? "bg-[var(--pa-navy)]"
-                    : "bg-[var(--pa-line)]",
-              )}
-            />
-          ))}
-        </div>
+        <RunStepsBar run={run} />
         <p className="truncate text-[var(--pa-ink-2)]">{runStepLine(run)}</p>
       </div>
       {note && (
@@ -128,6 +90,9 @@ function RunCard({ run, onOpen }: { run: ProjectRun; onOpen: (resume: boolean) =
           )}
           {note}
         </p>
+      )}
+      {!note && run.reports.length > 0 && (
+        <p className="line-clamp-2 text-[var(--pa-ink-2)]">{run.reports[run.reports.length - 1].text}</p>
       )}
       {run.counts && (
         <p className="text-[12px] text-[var(--pa-ink-3)]">

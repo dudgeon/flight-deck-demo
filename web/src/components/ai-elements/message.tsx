@@ -17,6 +17,9 @@ import { PARTICIPANT_LANGUAGE, parseParticipantTurn } from "@/lib/participantTur
 // omnigent-slim: views the agent draws in the chat (see lib/chatView.ts).
 import { ChatViewBlock } from "@/components/chat/ChatViewBlock";
 import { CHAT_VIEW_LANGUAGE, parseChatView } from "@/lib/chatView";
+// omnigent-slim: a workflow running in a thread, as a live card (see lib/runBlock.ts).
+import { RunCardBlock } from "@/components/chat/RunCardBlock";
+import { parseRunBlock, RUN_BLOCK_LANGUAGE } from "@/lib/runBlock";
 import type { UIMessage } from "ai";
 import { ChevronLeftIcon, ChevronRightIcon, PlayIcon, XIcon } from "lucide-react";
 import type { ComponentProps, HTMLAttributes, ReactElement, ReactNode } from "react";
@@ -743,6 +746,12 @@ export function ChatCodeBlockPre({ children }: ComponentProps<"pre">) {
   if (language === CHAT_VIEW_LANGUAGE && !fenceOpen) {
     const view = parseChatView(code);
     if (view) return <ChatViewBlock view={view} />;
+  }
+
+  // omnigent-slim: a ```run fence is a live card for a thread's run, once the fence has closed.
+  if (language === RUN_BLOCK_LANGUAGE && !fenceOpen) {
+    const run = parseRunBlock(code);
+    if (run) return <RunCardBlock block={run} />;
   }
 
   if (!isMermaid) return codeBlock(block);

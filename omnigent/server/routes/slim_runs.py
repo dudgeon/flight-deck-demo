@@ -20,6 +20,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 from pathlib import Path
 from typing import Any
 
@@ -40,10 +41,33 @@ RUN_STATES = ("working", "needs-you", "waiting", "paused", "finished", "stopped"
 _ORDER = {state: i for i, state in enumerate(("needs-you", "paused", "waiting", "working", "stopped", "finished"))}
 _MAX_FILES = 200
 _MAX_FILE_BYTES = 256 * 1024
+# A progress file's name: no separators, no dots at the start.
+_RUN_ID = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]{0,160}$")
 
 
 def _text(value: Any) -> str:
     return value.strip() if isinstance(value, str) else ""
+
+
+REPORT_KINDS = ("milestone", "progress", "blocker", "done")
+_MAX_REPORTS = 20
+
+
+def _reports(raw: Any) -> list[dict[str, Any]]:
+    """The one-line reports a run has sent its director, oldest first."""
+    if not isinstance(raw, list):
+        return []
+    out: list[dict[str, Any]] = []
+    for item in raw[-_MAX_REPORTS:]:
+        if not isinstance(item, dict) or not _text(item.get("text")):
+            continue
+        kind = _text(item.get("kind"))
+        out.append({
+            "at": _text(item.get("at")),
+            "kind": kind if kind in REPORT_KINDS else "milestone",
+            "text": _text(item.get("text"))[:280],
+        })
+    return out
 
 
 def parse_run(run_id: str, raw: Any) -> dict[str, Any] | None:
@@ -77,6 +101,10 @@ def parse_run(run_id: str, raw: Any) -> dict[str, Any] | None:
         "started": _text(raw.get("started")),
         "paused_at": _text(raw.get("paused_at")),
         "updated": _text(raw.get("updated")),
+        # Threads (D-89, D-118): who directs the run and what it has reported.
+        "director": _text(raw.get("director")) or None,
+        "brief": _text(raw.get("brief")),
+        "reports": _reports(raw.get("reports")),
     }
 
 
@@ -119,7 +147,7 @@ def create_slim_runs_router(
     conversation_store: ConversationStore | None = None,
     auth_provider: AuthProvider | None = None,
 ) -> APIRouter:
-    """Build the router for ``GET /v1/slim/runs?project=<name>``."""
+    """Build the router for ``GET /v1/slim/runs?project=<name>`` and ``GET /v1/slim/runs/{id}?session=``."""
     router = APIRouter()
 
     def _runs_for(project_name: str, user_id: str | None) -> dict[str, Any]:
@@ -135,6 +163,19 @@ def create_slim_runs_router(
             workspace = candidate if candidate.is_dir() else None
         elif is_default:
             workspace = _default_workspace()
+
+        def _project_of(conversation: Any) -> str | None:
+            # A thread is a child session; it belongs to its director's project.
+            for _ in range(4):
+                if getattr(conversation, "project_id", None) or conversation_store is None:
+                    break
+                parent = getattr(conversation, "parent_conversation_id", None)
+                parent_conversation = conversation_store.get_conversation(parent) if parent else None
+                if parent_conversation is None:
+                    break
+                conversation = parent_conversation
+            return getattr(conversation, "project_id", None)
+
         runs: list[dict[str, Any]] = []
         for run in load_runs(workspace):
             conversation = None
@@ -148,7 +189,7 @@ def create_slim_runs_router(
                 run["session"] = None
                 run["session_title"] = None
             else:
-                if project is not None and conversation.project_id != project.id:
+                if project is not None and _project_of(conversation) != project.id:
                     continue
                 run["session_title"] = conversation.title
             runs.append(run)
@@ -163,5 +204,43 @@ def create_slim_runs_router(
         user_id = require_user(request, auth_provider)
         name = project.strip() or os.environ.get(PROJECT_ENV, "").strip() or "Workspace"
         return await asyncio.to_thread(_runs_for, name, user_id)
+
+    def _run_for_session(run_id: str, session_id: str, user_id: str | None) -> dict[str, Any]:
+        """One run, found through the session whose chat shows its card.
+
+        Read from disk, so the card still fills in when that session has no
+        runner bound (an old session opened to look back).
+        """
+        if not _RUN_ID.match(run_id) or conversation_store is None or project_store is None:
+            return {"run": None}
+        conversation = conversation_store.get_conversation(session_id)
+        project_id = None
+        for _ in range(4):
+            if conversation is None:
+                break
+            project_id = getattr(conversation, "project_id", None)
+            parent = getattr(conversation, "parent_conversation_id", None)
+            if project_id or not parent:
+                break
+            conversation = conversation_store.get_conversation(parent)
+        project = project_store.get(project_id, user_id=user_id) if project_id else None
+        raw = (project.config or {}).get("workspace") if project is not None else None
+        if not isinstance(raw, str) or not raw.strip():
+            return {"run": None}
+        path = Path(raw).expanduser() / PROGRESS_FOLDER / f"{run_id}.json"
+        try:
+            if path.stat().st_size > _MAX_FILE_BYTES:
+                return {"run": None}
+            run = parse_run(run_id, json.loads(path.read_text(encoding="utf-8")))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            return {"run": None}
+        if run is not None and run["session"] and conversation_store.get_conversation(run["session"]) is None:
+            run["session"] = None
+        return {"run": run}
+
+    @router.get("/slim/runs/{run_id}")
+    async def get_run(request: Request, run_id: str, session: str = "") -> dict[str, Any]:
+        user_id = require_user(request, auth_provider)
+        return await asyncio.to_thread(_run_for_session, run_id, session.strip(), user_id)
 
     return router
