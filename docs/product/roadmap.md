@@ -31,7 +31,7 @@ in the same pull request.
 | [Dock launcher](#dock-launcher) | Done |
 | [Branding](#branding) | Done; repository renamed (D-114) |
 | [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | D-89 to D-99 and D-116 to D-119 decided; runs and In flight built (PR 24) |
-| [Aviator coordination and skill routing](#aviator-coordination-and-skill-routing) | Designed; D-120 decided; seven questions (AV-1 to AV-7) with Geoff; nothing built |
+| [Aviator coordination and skill routing](#aviator-coordination-and-skill-routing) | Decided (D-120, D-122 to D-128); nothing built |
 
 ---
 
@@ -337,13 +337,14 @@ strictly as the moment needs, measured by evals rather than argued.
 - **Constraint (Geoff).** Modular: adding a workflow never means editing
   Aviator. Routing, lifecycle stage, persona and eval examples ship in each
   workflow's `workflow.json`; Aviator reads them with `pa workflows`.
-- **Next.** Once answered: the eight gaps as director rules; the routing eval
+- **Next.** The eight gaps as director rules; the routing eval
   suite and its runner on the Mac mini, before any tuning; then persona
   blocks and strictness; then the lifecycle skill.
-- **Open.** AV-1 routing, AV-2 the lifecycle skill, AV-3 default strictness,
-  AV-4 who changes it, AV-5 news while the person is mid-conversation, AV-6
-  how to test, AV-7 whether the person sees what the director remembers across
-  sessions and compactions. They take D-numbers when answered.
+- **Decided.** Geoff answered all seven on 2026-11-21, as recommended:
+  D-122 routing ladder, D-123 lifecycle skill with project retrieval (not a
+  hero skill), D-124 guide by default, D-125 strictness changed in words,
+  D-126 hold news while the person is mid-exchange, D-127 evals on light
+  models, D-128 director memory with editable Director's notes. Nothing open.
 - **Read.** [director-coordination.md](director-coordination.md); walkthrough
   at https://claude.ai/artifact/La4Qa5THk5JhwQBQGcVY7d.
 

@@ -260,8 +260,9 @@
       "title": "Aviator Coordination and Routing",
       "kind": "Decision walkthrough",
       "about": "Coordination patterns for the director, routing to hero skills, the feature lifecycle, persona strictness, how to test it, and what the director remembers across sessions (AV-1 to AV-7)",
-      "decisions": "D-120",
-      "status": "Open"
+      "decisions": "D-120, D-122 to D-128",
+      "status": "Answered (7)",
+      "answers_as_of": "2026-11-21"
     }
   ]
 }

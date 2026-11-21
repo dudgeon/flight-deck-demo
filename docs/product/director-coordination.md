@@ -1,12 +1,13 @@
 # Aviator as director: coordination, skill routing and persona strictness
 
-Status: **proposed; one rule decided (D-120, modular routing); nothing built.** Asked for by Geoff on
+Status: **decided (D-120, D-122 to D-128); nothing built.** Asked for by Geoff on
 2026-11-21. Put to him as a walkthrough,
 https://claude.ai/artifact/La4Qa5THk5JhwQBQGcVY7d (answers in its database,
 collection `answers`; offline copy in
 [../decision-artifacts/2026-11-21-aviator-coordination/](../decision-artifacts/2026-11-21-aviator-coordination/index.html)).
-The open questions are labelled AV-1 to AV-7 and take D-numbers only when
-Geoff answers them. Read with [modes-and-projects.md](modes-and-projects.md)
+Geoff answered AV-1 to AV-7 on 2026-11-21 (D-122 to D-128), all as
+recommended, with two notes folded in below (project retrieval, light models). 
+Read with [modes-and-projects.md](modes-and-projects.md)
 (D-89 to D-99, and D-116 to D-119 in PR 32) and the `director` skill (PR 33).
 
 ## What was asked
@@ -138,7 +139,7 @@ What stays in Aviator is only what is true of every workflow: the ladder, the
 offer-once rule, strictness levels and how to change them, and the honesty
 rule that invariants never relax.
 
-### The routing ladder (AV-1, recommended)
+### The routing ladder (AV-1, D-122)
 
 | Rung | When | What Aviator does | Example |
 |---|---|---|---|
@@ -159,7 +160,7 @@ we make last week" (a lookup, not a decision review).
 Alternatives put to Geoff: start whenever it fits (fewest steps, most false
 starts); ask what kind of work at each new topic (never wrong, tiring).
 
-### "I'm working on a new feature" (AV-2, Geoff's option, recommended)
+### "I'm working on a new feature" (AV-2, D-123)
 
 A **feature lifecycle** skill, Aviator's playbook for a goal project rather
 than a seventh hero skill. On "I'm working on a new feature" (or "starting",
@@ -206,7 +207,7 @@ Strictness is a setting for the style; the honesty rules hold at every level.
 | Level | Behaviour | Example (hurried PM: "just put Problem as framed") |
 |---|---|---|
 | Light touch | Takes the person's word as evidence, marked as theirs, and keeps moving | Problem goes to 2 · Framed, "your word"; the brief says so. Bends the first honesty rule. |
-| **Guide** (recommended default, AV-3) | Honesty rules hard, style flexible: a missing piece becomes a gap with who could close it, the score stays true, work moves on | Problem stays 1 · Spark; a gap is sent to Support Insights; on to Outcome. |
+| **Guide** (the default, D-124) | Honesty rules hard, style flexible: a missing piece becomes a gap with who could close it, the score stays true, work moves on | Problem stays 1 · Spark; a gap is sent to Support Insights; on to Outcome. |
 | By the book | Every area held to the framework's line before moving on; missing evidence stops the run | Problem needs you; Outcome waits. |
 
 Each workflow declares its own persona in the `routing.persona` block of its
@@ -223,7 +224,7 @@ Each workflow declares its own persona in the `routing.persona` block of its
 The levels themselves are defined once, in the view kit, so every workflow
 means the same thing by "Guide".
 
-**Who changes it (AV-4, recommended):** the person, in words, per run ("be
+**Who changes it (AV-4, D-125):** the person, in words, per run ("be
 tough on this one", "go easier"); the switch is said in one line, shown on the
 mode strip (D-90) and recorded in the run, so a brief can say "shaped by the
 book". The Hangar sets each workflow's default. The agent may suggest a switch
@@ -251,7 +252,7 @@ workspace and success criteria; a *trial* is one run of it; *graders* score
 it; the *transcript* is the record; the *outcome* is the state of the
 workspace afterwards (datasets, run files, threads started).
 
-**Three suites, recommended:**
+**Three suites (D-127):**
 
 | Suite | Size to start | What it checks | Graded by |
 |---|---|---|---|
@@ -364,7 +365,7 @@ knows what is in flight without opening threads, and asks the person nothing
 already in `memory.md`. A small test checks that the charter and the recap are
 added after a `SessionStart` with source `compact`.
 
-**What the person sees (AV-7, the one product question).** Recommended: the
+**What the person sees (AV-7, D-128).** Decided: the
 director's notes appear on the project page as "Director's notes", readable
 and editable, so the person can correct a wrong memory and see what the
 director is holding. Alternatives: hidden files only (simplest, but a wrong
@@ -375,32 +376,44 @@ Build notes, not for Geoff: the charter is a file in `skills/director/`
 that adds `pa recap` to the startup context is marked `omnigent-slim:`; which
 session is the director comes from the project manifest.
 
-## Open questions
+## Decided
 
-| | Question | Recommended |
-|---|---|---|
-| AV-1 | How forward Aviator is when a request fits a hero skill | The ladder: start when named, offer once when it clearly fits, otherwise work openly |
-| AV-2 | "I'm working on a new feature" | A lifecycle skill that makes the project, links assets, shows the stages and offers the next one |
-| AV-3 | Default persona strictness | Guide: honesty rules hard, style flexible |
-| AV-4 | Who changes strictness | The person in words, per run, visible; the Hangar sets the default |
-| AV-5 | News while the person is mid-conversation | Hold until a break, except failures and blockers |
-| AV-6 | How to test and tune | Three suites through the real app on the Mac mini, with Geoff ranking blind pairs |
-| AV-7 | Whether the person sees what the director remembers | "Director's notes" on the project page, readable and editable |
+| | Question | Geoff's answer | D |
+|---|---|---|---|
+| AV-1 | How forward Aviator is when a request fits a hero skill | The ladder | D-122 |
+| AV-2 | "I'm working on a new feature" | A lifecycle skill, **not a hero skill**, paired with project retrieval: find and use a relevant project, or create one and link it to related ones | D-123 |
+| AV-3 | Default persona strictness | Guide | D-124 |
+| AV-4 | Who changes strictness | The person in words, per run; the Hangar sets the default | D-125 |
+| AV-5 | News while the person is mid-conversation | Hold until a break, except failures and blockers | D-126 |
+| AV-6 | How to test and tune | Three suites on the Mac mini, **on light models**: Sonnet under test, Haiku as the simulated person and the judge; Opus only when Geoff asks | D-127 |
+| AV-7 | Whether the person sees what the director remembers | Director's notes on the project page, editable | D-128 |
 
-## Build order once answered
+**Project retrieval (D-123).** Before creating anything, the lifecycle skill
+reads the workspace's projects (`projects/<slug>.json`, D-121) and their
+goals. One clear match: use it and say so. Several possible: ask with one
+card. None: create the project, then link it to related ones with `pa link`
+(D-119). A link type for "related but separate" may be needed beside
+`handed-to`, `started` and `relies-on`; that is a build call.
+
+**Light models (D-127).** Each eval trial sets the model of the sessions it
+starts. With the simulated person and judge on Haiku, the judge's agreement
+with Geoff's blind choices is tracked from the first round; if it is poor, the
+judge moves to Sonnet before anything else changes.
+
+## Build order
 
 1. `pa workflows` and the `routing` block, filled in for the six hero
    workflows, with `pa check` enforcing it; director skill rules for the eight
-   pattern gaps and the routing ladder, naming no workflow (needs AV-1, AV-5).
-2. Routing suite and runner on the Mac mini (needs AV-6). Build it before
+   pattern gaps and the routing ladder, naming no workflow (D-122, D-126).
+2. Routing suite and runner on the Mac mini (D-127). Build it before
    tuning anything else, so every later change is measured.
 3. Persona blocks in each hero workflow's manifest, strictness on the strip
-   and in the run (needs AV-3, AV-4); persona suite.
-4. Feature lifecycle skill and its view (needs AV-2, and D-97's project
+   and in the run (D-124, D-125); persona suite.
+4. Feature lifecycle skill and its view (D-123, and D-97's project
    manifest).
 5. Coordination suite, now that the direct line (D-116) is built, with the
    long-haul stories.
 6. Director memory: `charter.md`, `state.md` and `memory.md`, `pa recap`, the
    `SessionStart` re-orientation, and Director's notes on the project page
-   (needs AV-7). Steps 1 and 6 can go together: the charter is where the
+   (D-128). Steps 1 and 6 can go together: the charter is where the
    ladder lives.

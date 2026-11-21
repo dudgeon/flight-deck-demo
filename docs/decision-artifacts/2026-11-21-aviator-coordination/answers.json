@@ -1,0 +1,51 @@
+{
+  "evals": {
+    "at": "2026-11-21T22:10:24.005Z",
+    "locked": true,
+    "pick": 0,
+    "text": "Use a light model — sonnet or haiku; i need to preserve usage for further dev.",
+    "title": "6. How we test and tune it"
+  },
+  "hold": {
+    "at": "2026-11-21T22:09:37.480Z",
+    "locked": true,
+    "pick": 0,
+    "text": "",
+    "title": "5. News while you're mid-conversation"
+  },
+  "lifecycle": {
+    "at": "2026-11-21T22:00:54.727Z",
+    "locked": true,
+    "pick": 0,
+    "text": "Should be paired with a project retrieval function — could perform both; ie if a project actually exists that is relevant, find and use, or associate (with cross links) if the thing is truly new but related. This should not be a hero skill.",
+    "title": "2. “I'm working on a new feature”"
+  },
+  "memory": {
+    "at": "2026-11-21T22:10:50.884Z",
+    "locked": true,
+    "pick": 0,
+    "text": "",
+    "title": "7. What the director remembers"
+  },
+  "route": {
+    "at": "2026-11-21T21:57:31.182Z",
+    "locked": true,
+    "pick": 0,
+    "text": "",
+    "title": "1. Routing to hero skills"
+  },
+  "strict": {
+    "at": "2026-11-21T22:01:36.760Z",
+    "locked": true,
+    "pick": 0,
+    "text": "",
+    "title": "3. How strictly a skill holds its persona"
+  },
+  "who": {
+    "at": "2026-11-21T22:05:06.639Z",
+    "locked": true,
+    "pick": 0,
+    "text": "",
+    "title": "4. Who can change the strictness"
+  }
+}
