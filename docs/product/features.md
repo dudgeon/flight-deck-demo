@@ -144,3 +144,36 @@ questions about support contact volumes.
 
 **Deliberately a different subject** (new business accounts, not the
 allowances feature) so the demos do not all lean on one invented product.
+
+## Delivery status update (a kind of work)
+
+**What it is for.** Status reporting is where a PM's time goes and where
+plans quietly rot: last week's date gets repeated as this week's fact. This
+kind of work makes the agent do what a careful PM does: ask each owner this
+week, check what can be checked, carry a slip through to the final date, look
+for ways to get the time back, and write an update whose first line is the
+truth. The four things the product owner named (D-31) map to its steps:
+executing the plan (checking milestones), monitoring dependencies, exploring
+alternatives, and updated projections.
+
+**What it does.** Skill `skills/delivery-status`. `milestone` records (plan
+date, date now expected, slip, confidence, what changed, and always how it is
+known), `dependency` records under them, and `alternative` records under a
+milestone that has moved (effect on the date, cost, who must agree). One plan
+view in the canvas, a single-milestone card for the chat with the ways to
+recover, and a summary. Owners on the roster are called without asking
+first, because that is what a status check is. "Accept the new date" is
+always one of the alternatives, with its real cost, so doing nothing is a
+visible choice. The agent never chooses an alternative, and a recovered date
+stays "at risk" until whoever must agree has agreed. The end product is a
+status update in markdown, shaped for the audience.
+
+**Kit additions that came from it.** Dataset facts can change after creation
+(`pa set --meta`, and `[fact ...]` in preview scripts), so a header can show
+a projected date that moves. The `who` mark understands `you`. Short values
+such as dates no longer wrap in narrow columns. A summary list about one
+field skips records that lack it.
+
+**Continuity between demos.** The invented plan delivers the top problem from
+the problem-discovery demo (held payments with no release date), so the two
+can be shown as one story, but neither depends on the other.

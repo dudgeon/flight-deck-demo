@@ -1,0 +1,16 @@
+{
+ "scenario": "delivery-status",
+ "title": "Delivery status update",
+ "summary": "Check a delivery plan against what is actually happening: ask the owners, watch the dependencies, project a new date when something moves, explore ways to recover, and write the update for whoever needs it.",
+ "inputs": [ { "name": "plan", "kind": "any", "hint": "The plan: a document, a dataset of milestones, or a list in the chat." } ],
+ "dataset": { "path": "data/{slug}-delivery.json", "adds": ["milestone", "dependency", "alternative"], "status_field": "status" },
+ "steps": ["Load the plan", "Check each milestone with its owner", "Project the date", "Explore ways to recover", "Write the update"],
+ "progress": { "records": { "type": "milestone" }, "field": "status", "done": ["done"], "noun": "milestones", "label": "done" },
+ "schemas": "schemas/records.json",
+ "views": { "plan": "views/plan.json", "milestone": "views/milestone.json", "summary": "views/summary.json" },
+ "work_products": [ { "name": "Delivery plan", "view": "plan", "out": "artifacts/{slug}-delivery.html" }, { "name": "Status update", "out": "artifacts/{slug}-status-<date>.md" } ],
+ "participants": ["cards-platform", "risk-review", "mara-okafor"],
+ "fixtures": { "dataset": "fixtures/release-dates-delivery.json", "document": "fixtures/status-update.md" },
+ "script": "script.md",
+ "launchers": [ { "label": "Update delivery status", "on": "any", "prompt": "Update the delivery status for {path}." } ]
+}

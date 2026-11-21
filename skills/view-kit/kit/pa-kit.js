@@ -165,13 +165,16 @@
       case "who":
         /* Who made or last touched the record: a participant id from the roster. */
         if (v == null || v === "") return "";
-        var who = v === "aviator" ? { name: "Aviator", kind: "agent host", initials: "PA", role: "Your agent" } : (data.participants || {})[v] || { name: v, kind: "agent" };
+        var who = v === "aviator" ? { name: "Aviator", kind: "agent host", initials: "PA", role: "Your agent" } : v === "you" ? { name: "You", kind: "person", initials: "You", role: "You" } : (data.participants || {})[v] || { name: v, kind: "agent" };
         var ini = who.initials || String(who.name).split(/\s+/).slice(0, 2).map(function (w) { return w.charAt(0); }).join("").toUpperCase();
         return '<span class="pa-who" title="' + esc((who.role || who.kind) + (who.stand_in ? ", stand-in played by an agent" : "")) + '"><i class="pa-mark ' + esc(who.kind) + (who.stand_in ? " standin" : "") + '">' + esc(ini) + "</i>" + esc(who.name) + "</span>";
       case "ref":
         var target = byId[v];
         return target ? '<span class="pa-chip">' + esc(target.title || target.id) + "</span>" : v ? esc(v) : "";
-      default: return esc(Array.isArray(v) ? v.join(", ") : v == null ? "" : v);
+      default:
+        /* Short values such as dates stay on one line in a narrow column. */
+        var plain = esc(Array.isArray(v) ? v.join(", ") : v == null ? "" : v);
+        return typeof v === "string" && v.length <= 12 ? '<span class="pa-short">' + plain + "</span>" : plain;
     }
   }
 
@@ -283,7 +286,7 @@
   var LAYOUT_NAMES = { "tree-table": "Catalog", board: "Board", detail: "Detail", summary: "Summary", form: "Form" };
   function head() {
     var acts = actionsFor("view").map(function (a) { return actionBtn(a); }).join("");
-    return '<div class="pa-head"><div class="pa-headmain"><span class="pa-eyebrow">' + esc(spec.eyebrow || "Template · " + (LAYOUT_NAMES[spec.layout] || spec.layout || "View")) + "</span>" +
+    return '<div class="pa-head"><div class="pa-headmain"><span class="pa-eyebrow">' + esc(spec.eyebrow ? fmt(spec.eyebrow) : "Template · " + (LAYOUT_NAMES[spec.layout] || spec.layout || "View")) + "</span>" +
       "<h1>" + esc(fmt(spec.title || "Untitled view")) + "</h1>" +
       (spec.subtitle ? '<div class="pa-sub">' + esc(fmt(spec.subtitle)) + "</div>" : "") + "</div>" +
       (acts ? '<div class="pa-tools">' + acts + "</div>" : "") + "</div>";
@@ -522,6 +525,8 @@
       }
       if (b.kind === "text") return '<div class="pa-text">' + esc(fmt(b.text)) + "</div>";
       if (b.kind === "list") {
+        /* A list about one field only shows the records that have it. */
+        if (b.field) list = list.filter(function (r) { var x = val(r, b.field); return x != null && x !== ""; });
         var items = b.limit ? list.slice(0, b.limit) : list;
         if (!items.length) return b.empty ? '<div class="pa-sub">' + esc(b.empty) + "</div>" : "";
         return '<div class="pa-card">' + h + '<div class="pa-tablewrap" style="border:0"><table class="pa-table"><tbody>' + items.map(function (r) {

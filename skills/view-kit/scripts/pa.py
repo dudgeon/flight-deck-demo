@@ -616,14 +616,18 @@ def cmd_set(args: argparse.Namespace) -> None:
         if not isinstance(extra, dict):
             raise PaError("--json must be an object of fields")
         changes.update(extra)
-    if not changes:
+    facts = _pairs(args.meta)
+    if "records" in facts or "views" in facts:
+        raise PaError("--meta cannot replace records or views")
+    if not changes and not facts:
         raise PaError("nothing to set (give key=value pairs)")
-    if not ids and not args.where:
+    if changes and not ids and not args.where:
         raise PaError("say which records: ids like R-01,R-02 or --where type=requirement")
     path = Path(args.data)
     with _locked(path):
         data = _load(path)
-        records = _select(data, ids, args.where)
+        data.update(facts)  # dataset facts such as projected="2 Apr"
+        records = _select(data, ids, args.where) if changes else []
         content_changed: set[str] = set()
         for record in records:
             for key, value in changes.items():
@@ -810,6 +814,8 @@ def _directive(text: str, roster: dict[str, dict[str, Any]], where: str, state: 
         return "step", {"restore": _ids(tail("restore "))}
     if low == "apply edits":
         return "step", {"apply": "edits"}
+    if low.startswith("fact "):  # dataset facts such as projected="2 Apr"
+        return "step", {"fact": _fields(tail("fact "))}
     m = re.fullmatch(rf"tab {_QUOTED}", text, re.I)
     if m:
         return "step", {"tab": m.group(1)}
@@ -1043,6 +1049,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--where", action="append", default=[])
     p.add_argument("--json")
     p.add_argument("--no-stale", action="store_true", help="do not flag derived records")
+    p.add_argument("--meta", action="append", default=[], help="dataset fact to change, key=value")
     p.set_defaults(run=cmd_set)
 
     p = sub.add_parser("render", help="draw a view as one HTML file")

@@ -59,6 +59,7 @@ One per line, in square brackets. Names in angle brackets are yours to fill.
 | `[set <id>: <field>=<value>, <field>=<value>]` | Changes fields of one record. `null` clears a field; put text with spaces or commas in double quotes. |
 | `[restore <id>, <id>]` | Puts records back as they are in the fixture, and shows their children. |
 | `[apply edits]` | Saves what the viewer changed in the canvas. |
+| `[fact <key>=<value>, <key>=<value>]` | Changes facts of the dataset itself (what `{dataset.key}` shows in titles), such as a projected date. |
 | `[comment by <name> on "<exact passage>": <comment>]` | Marks a passage of the open document with a comment from that person. |
 | `[resolve comment on "<exact passage>"]` | Settles that comment. |
 | `[call <name>: <what they are asked>]` | Aviator calls a participant in. Their turns appear inside a block until they leave. |

@@ -219,3 +219,5 @@ input.pa-check { width: 15px; height: 15px; accent-color: var(--pa-you); margin:
 .pa-choice:hover { border-color: var(--pa-ink-3); }
 .pa-choice.on { border-color: var(--pa-you); background: var(--pa-you-soft); box-shadow: inset 3px 0 0 var(--pa-you); }
 .pa-choice[disabled] { cursor: default; opacity: .7; }
+
+.pa-short { white-space: nowrap; }

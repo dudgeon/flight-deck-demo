@@ -34,7 +34,7 @@ path, and `{note}` for what the user typed into an action's question.
 | `meter` | Five bars for a 1 to 5 value |
 | `count` | Number of child records |
 | `ref` | The title of the record whose id is in this field |
-| `who` | The participant whose id is in this field (a file in `participants/`), as a mark and name. Use it on a field such as `by` to show who made a record. |
+| `who` | The participant whose id is in this field (a file in `participants/`), as a mark and name. `aviator` is the session's agent and `you` is the user. Use it on a field such as `by` to show who made a record. |
 
 `only` limits a column to one record type. `edit` makes it editable in place:
 `true` for a checkbox or text, `{ "options": [...] }` for a menu,
@@ -80,7 +80,7 @@ with `"inline": true` shows on the tile itself.
 
 - `{ "kind": "tiles", "tiles": [ { "label": "...", "where": {...} } ] }`
 - `{ "kind": "bars", "label": "...", "count_by": "field", "records": {...} }`
-- `{ "kind": "list", "label": "...", "records": {...}, "field": "question", "empty": "..." }`
+- `{ "kind": "list", "label": "...", "records": {...}, "field": "question", "empty": "..." }` (with `field`, only records that have a value in it are listed)
 - `{ "kind": "text", "text": "..." }`
 
 ## form
