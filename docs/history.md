@@ -21,7 +21,8 @@ Code's permissions, no open internet and no package installs, so every
 dependency is vendored. It is an Apple silicon Mac that cannot clone
 repositories outside the company's GitHub namespace, so the repository
 arrives as a ZIP (D-100). Development happens on Geoff's Mac mini at home and
-in cloud agent sessions; the public repository is `dudgeon/omnigent-slim`.
+in cloud agent sessions; the public repository is `dudgeon/flight-deck-demo`
+(named `omnigent-slim` until 21 November, D-112).
 
 ## 20 November: a slim, offline fork
 

@@ -206,6 +206,17 @@ from a preview.
 repository, folders and code identifiers keep `omnigent-slim` unless Geoff
 says otherwise. *He liked the name when it came up for the design direction.*
 
+**D-112 · 2026-11-21 · Geoff.** The GitHub repository is renamed from
+`dudgeon/omnigent-slim` to `dudgeon/flight-deck-demo`. This refines D-35 for
+the repository only: local folders (the Mac mini checkout, `~/flight-deck` on
+the work Mac), the `~/.omnigent-slim` data folder, commands and code
+identifiers keep their names. The download ZIP and its folder are now
+`flight-deck-demo-main`; `setup.sh` finds downloads under either name.
+*Geoff wanted the repository to carry the product's name. Renaming a local
+checkout would break its Python environment and Dock launcher, which hold the
+folder's path, and would separate the folder from its Claude Code session
+history, so the folders stay put; GitHub redirects the old name.*
+
 **D-36 · 2026-11-21 · Geoff.** Anthropic's `frontend-design` skill is
 vendored into `skills/` (Apache 2.0, unchanged), so every session has it,
 including on the work Mac, which cannot download skills. *He asked for the

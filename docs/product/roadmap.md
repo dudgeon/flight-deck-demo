@@ -264,7 +264,7 @@ browser tab, with nothing pre-approved.
   with its emblem and name at the top left of the sidebar, the same emblem
   as the Dock icon, and no logo on the new-session screen. The navy look
   comes from the design tokens.
-- **Open.** Whether to rename the repository `dudgeon/omnigent-slim`.
+- **Done.** The repository is renamed `dudgeon/flight-deck-demo` (D-112).
   Folders, commands and code identifiers keep `omnigent-slim` until Geoff
   says otherwise (D-35).
 - **Read.** D-35, D-102; README.

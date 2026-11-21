@@ -2,7 +2,8 @@
 
 Flight Deck is a cut-down fork of [Omnigent](https://github.com/omnigent-ai/omnigent)
 for prototyping an agent workspace for product managers on a locked-down work
-Mac. Its user interface is **Product Aviator**. The repository, folders,
+Mac. Its user interface is **Product Aviator**. The repository is
+`dudgeon/flight-deck-demo` (D-112, renamed from `omnigent-slim`); folders,
 commands and code identifiers keep the name `omnigent-slim` (D-35). It drives
 Claude Code as a terminal program, runs offline, and is fully vendored.
 
@@ -209,5 +210,6 @@ writing down intent is part of every change.
   built web UI.
 - Don't write live roster, scenario or workflow files from code other than
   `pa publish` and the Hangar's publish routes; drafts go in `.hangar/`.
-- Don't rename the repository, folders or identifiers to Flight Deck until
-  Geoff says so (D-35).
+- Don't rename folders or code identifiers to Flight Deck until Geoff says
+  so (D-35). The repository itself is renamed (D-112). Don't rename a local
+  checkout's folder either: its `.venv` and the Dock launcher hold its path.
