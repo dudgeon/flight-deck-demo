@@ -25,5 +25,12 @@ hours later. We can count them and raise an event when a counter is passed.
 One sprint for the counter, one for the decline reason code, and a load test at
 twice peak before we would sign off on the 50 ms target.
 
+### Load test and environment status
+The performance test environment we had booked for 9 to 13 March was taken on
+Tuesday for an urgent fix on another programme. Our next slot is 18 March, so
+the earliest we finish the load test at twice peak is 22 March. Payments have
+an identical environment that is free from 11 to 13 March if their lead
+agrees to move one of their own runs.
+
 ### Anything else
 I have no scripted answer for that. Ask the Cards Platform team directly.
