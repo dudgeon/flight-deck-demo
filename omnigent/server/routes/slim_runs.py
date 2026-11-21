@@ -147,7 +147,7 @@ def create_slim_runs_router(
     conversation_store: ConversationStore | None = None,
     auth_provider: AuthProvider | None = None,
 ) -> APIRouter:
-    """Build the router for ``GET /v1/slim/runs?project=<name>``, ``GET /v1/slim/runs/{id}?session=`` and ``GET /v1/slim/threads/{session}``."""
+    """Build the router for ``GET /v1/slim/runs?project=<name>``, ``GET /v1/slim/runs/{id}?session=``, ``GET /v1/slim/threads/{session}`` and ``GET /v1/slim/directors/{session}``."""
     router = APIRouter()
 
     def _runs_for(project_name: str, user_id: str | None) -> dict[str, Any]:
@@ -283,6 +283,33 @@ def create_slim_runs_router(
                 "needs_you": sum(1 for r in others if r["state"] == "needs-you"),
             }
         }
+
+    def _direct_line(session_id: str, user_id: str | None) -> dict[str, Any]:
+        """The threads a director session started, and the one with the floor (D-116).
+
+        While a thread has the floor, the director's chat shows that thread's
+        turns and sends the person's messages straight to it. The floor goes
+        to a run this session directs that is in flight and not set aside: the
+        one that needs the person first, else the one touched most recently.
+        """
+        if conversation_store is None or project_store is None:
+            return {"line": None, "runs": []}
+        conversation = conversation_store.get_conversation(session_id)
+        project_id = getattr(conversation, "project_id", None) if conversation is not None else None
+        project = project_store.get(project_id, user_id=user_id) if project_id else None
+        if project is None:
+            return {"line": None, "runs": []}
+        runs = [
+            r for r in _runs_for(project.name, user_id)["runs"]
+            if r["director"] == session_id and r["session"] and r["session"] != session_id
+        ]
+        line = next((r for r in runs if r["state"] in ("needs-you", "waiting", "working")), None)
+        return {"line": line, "runs": runs}
+
+    @router.get("/slim/directors/{session_id}")
+    async def get_director(request: Request, session_id: str) -> dict[str, Any]:
+        user_id = require_user(request, auth_provider)
+        return await asyncio.to_thread(_direct_line, session_id.strip(), user_id)
 
     @router.get("/slim/threads/{session_id}")
     async def get_thread(request: Request, session_id: str) -> dict[str, Any]:

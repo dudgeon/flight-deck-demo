@@ -171,9 +171,9 @@ decided but nothing is built yet.
 | D | Decision | Who | Status |
 |---|---|---|---|
 | D-89 | Aviator is a project director; modes run in threads with agent-to-agent messages | Geoff | Partly built: director skill, briefs and the run card, opt-in; the direct line is not |
-| D-90 | A mode shows as a strip on the message box | Geoff | Decided, not built |
-| D-91 | A mode's replies are marked by a rail with start, pause and resume markers | Geoff | Decided, not built |
-| D-92 | Side questions are answered outside the rail; the mode stays on | Geoff | Decided, not built |
+| D-90 | A mode shows as a strip on the message box | Geoff | Built, not yet flown live |
+| D-91 | A mode's replies are marked by a rail with start, pause and resume markers | Geoff | Built in part (rail; markers to do) |
+| D-92 | Side questions are answered outside the rail; the mode stays on | Geoff | Built, not yet flown live |
 | D-93 | Leaving: pause, finish and stop are distinct; a where-we-left-off note; only stop confirms | Geoff | Partly built: pause, resume and stop with the note; the Pause button waits on D-90 |
 | D-94 | One mode has the floor at a time, with a way back | Geoff | Decided, not built |
 | D-95 | Any record can have its own thread | Geoff | Decided, not built |
@@ -181,7 +181,7 @@ decided but nothing is built yet.
 | D-97 | A project is one in-market goal inside a lasting area | Geoff | Decided, not built |
 | D-98 | The intent graph's detail is held until it blocks something | Geoff | Decided, not built |
 | D-99 | The smaller calls stand (every workflow makes a mode, no mode color, and so on) | Claude, accepted by Geoff | Decided, not built |
-| D-116 | The director shows a mode through a direct line to its thread; Aviator is not in the path | Geoff | Decided, not built |
+| D-116 | The director shows a mode through a direct line to its thread; Aviator is not in the path | Geoff | Built, not yet flown live |
 | D-117 | Stepping into a thread puts it in place of the chat, the director folded to a bar, the canvas kept | Geoff | Built |
 | D-118 | A thread reports milestones, progress, blockers and state, at its own discretion, never everything | Geoff | Built (`pa report`), not yet flown with a live agent |
 | D-119 | A project's connections: a chip on the linked item and a Connections card on the project page | Geoff | Decided, not built |

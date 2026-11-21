@@ -339,7 +339,9 @@ import {
   useSessionHarnessPickerProps,
 } from "@/components/composer/useSessionHarnessPickerProps";
 import { nextTranscriptBottomPin, type TranscriptBottomPin } from "./transcriptBottomPin";
+import { DirectLineStrip } from "@/components/chat/DirectLine";
 import { DirectorBar } from "@/components/chat/DirectorBar";
+import { routeLineMessage } from "@/lib/directLine";
 import { Transcript } from "@/components/chat/Transcript";
 
 /**
@@ -1011,10 +1013,21 @@ export function ChatPage() {
   const sendReconnectsArca = isUnreachable && liveness.kind === "host_offline" && reconnectsArca;
 
   const onSend = useCallback(
-    (text: string, files?: File[], replyDraft?: StoredReplyDraft) => {
+    (typedText: string, files?: File[], replyDraft?: StoredReplyDraft) => {
       if (!agentId) return;
       // No server session yet (still creating) — nothing to POST to.
       if (isTempConvId(urlConvId)) return;
+      // omnigent-slim: while a thread has the floor, the message goes straight
+      // to it (D-116); "@aviator" or the strip's switch keeps it here.
+      const lineRoute = routeLineMessage(urlConvId ?? null, typedText);
+      if (lineRoute.threadId) {
+        void useChatStore.getState().send(lineRoute.text, lineRoute.agentId ?? agentId, files, {
+          replyDraft,
+          pinnedConversationId: lineRoute.threadId,
+        });
+        return;
+      }
+      const text = lineRoute.text;
       // An unbound coding clone (fork-source label) needs a directory before
       // it can run: open the picker and stash this message to replay after
       // the bind. Pin the prompt to THIS session so it replays here, never
@@ -1970,6 +1983,8 @@ const MainAgentSurface = memo(function MainAgentSurfaceImpl({
             />
           )}
 
+          {/* omnigent-slim: who the message box is talking to (D-90, D-116). */}
+          <DirectLineStrip directorId={conversationId} />
           <Composer
             ref={composerRef}
             disabled={disabled}

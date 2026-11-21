@@ -202,13 +202,56 @@ has written its first step (it then shows only the way back). It never
 appears on the director itself. The list covers the whole project, not only
 this director's threads, so it matches In flight on the project page.
 
-**Not built yet.** The direct line: the strip, the rail and the thread's
-questions in the director's chat (D-90, D-91, D-116). Threads on items (D-95).
+**The direct line (D-116, with D-90 to D-92).** The person should be able to
+stay with Aviator and still do the work, without Aviator repeating every turn
+(which would double each wait and fill its context). So while a thread has
+the floor, the director's chat is a direct line to it:
+
+- **The thread's turns show in the director's chat, inside a rail** (D-91),
+  in the order things happened, next to Aviator's own turns. The rail is a
+  thin line in the "agent at work" color with the work's name where each run
+  of turns begins. It says which work a turn belongs to; who is speaking is
+  unchanged inside it. A question the thread asks is answered right there,
+  and the answer goes to the thread.
+- **A strip on the message box says who it is talking to** (D-90): the
+  workflow and subject, the step, the state, and Pause. It is always in view.
+  The name on it steps into the thread (D-117).
+- **What the person types goes straight to the thread.** Aviator is not in
+  the path. A message that starts with `@aviator`, or "Talk to Aviator" on
+  the strip, goes to Aviator instead, and its answer shows outside the rail
+  while the thread carries on (D-92). "Back to the thread" returns.
+- **Pause** asks the thread to stop and note where things are; the agent
+  writes the note, as with pausing in words (D-93).
+
+Which thread has the floor: of the runs this director started that are in
+flight and not set aside, the one that needs the person, else the one touched
+most recently. That keeps one obvious destination for a message (D-94). When
+a different thread takes the floor, the message box goes back to talking to
+it.
+
+Choices made while building, and what is still thin:
+
+- The agent-to-agent messages (the brief, the director's nudges) are kept
+  out of the rail using upstream's own marking of messages sent by another
+  session. Whether the very first brief is marked that way needs the live
+  flight to confirm.
+- D-91 also asks for markers where a mode starts, pauses and resumes. Today
+  the only marker is the work's name at the start of each run of turns.
+- An off-topic question typed without `@aviator` goes to the thread; nothing
+  yet guesses that it was meant for Aviator.
+- Not flown with a live agent, like the rest of directing.
+
+**Not built yet.** Start, pause and resume markers in the rail (D-91).
+Threads on items (D-95).
 
 **Where.** `skills/director/SKILL.md`; `pa brief`, `pa report` and
 `pa flow --director/--brief` in `skills/view-kit/scripts/pa.py`;
 `web/src/lib/runBlock.ts` (the ` ```run ` fence),
 `web/src/components/chat/RunCardBlock.tsx`, `web/src/projectHome/RunParts.tsx`;
+`web/src/lib/directLine.ts` (who has the floor, where a message goes, the
+merge by time) and `web/src/components/chat/DirectLine.tsx` (the rail and the
+strip), wired into `components/chat/Transcript.tsx` and `pages/ChatPage.tsx`
+with `omnigent-slim:` comments; `GET /v1/slim/directors/{session}`;
 `web/src/components/chat/DirectorBar.tsx` and `web/src/lib/threadContext.ts`
 (the folded director, mounted in `pages/ChatPage.tsx`, placed by
 `.pa-director-bar` in `index.css`);
