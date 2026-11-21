@@ -1,5 +1,5 @@
 /**
- * omnigent-slim: a workflow's widgets and views, edited in the Hangar (D-114).
+ * omnigent-slim: a workflow's widgets and views, edited in the Hangar (D-112).
  *
  * A widget is a view the agent puts in the chat (a question form, one record's
  * card, a summary); a view is one it opens in the canvas. Both are view-kit

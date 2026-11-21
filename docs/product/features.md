@@ -423,7 +423,7 @@ scenario|workflow`, which the scenario-builder skill now uses. *Why:* so a PM
 can make a new demo, or adjust a kind of work for their team, without editing
 files or breaking what others fly, in the same way they edit a person.
 
-**Widgets and views (D-114).** A workflow's page groups what people see into
+**Widgets and views (D-112).** A workflow's page groups what people see into
 "Widgets · in the chat" (forms, single-record cards, summaries the agent puts
 in the conversation) and "Views · in the canvas", each drawn over the
 scenario's sample data. "Edit widgets and views" on the workflow, or "Edit" on

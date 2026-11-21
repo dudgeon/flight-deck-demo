@@ -234,7 +234,7 @@ def _record_types(folder: Path, manifest: dict[str, Any]) -> list[dict[str, Any]
     return types
 
 
-# Where a view is shown (D-114). A workflow's instructions say it: a line like
+# Where a view is shown (D-112). A workflow's instructions say it: a line like
 # ``$PA render SKILL_DIR/views/card.json --host chat`` puts the card in the
 # chat as a widget. The scenario's script ([widget card]) says it too. A view
 # neither mentions goes by its layout: a form or one record's card in the chat,
