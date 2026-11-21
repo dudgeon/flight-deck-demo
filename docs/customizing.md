@@ -99,13 +99,29 @@ Rules that keep templates working in the viewer:
   box for the user to send. Always use `?.` so the file also works outside
   Omnigent.
 
-### A shared look across templates
+### One look everywhere: the design tokens
 
-Each template carries its own `<style>` block (one file per artifact is a hard
-rule). To restyle all of them, change the `:root` variables at the top of each
-`<style>` block the same way: `--bg`, `--fg`, `--muted`, `--line`, `--card`,
-`--accent`. A quick way: ask Claude in a session, "update the color variables in
-every template in templates/artifacts to these values: …".
+Every color, font and corner in Product Aviator comes from one file,
+`design/tokens.json`. The app, chat widgets and canvas views (the view kit),
+the scenario preview player and every artifact template read those values as
+`--pa-…` CSS variables, and the canvas viewer injects the current values and
+light or dark mode into each artifact as it opens it, so artifacts made before
+a change pick it up too.
+
+To change the look:
+
+1. Edit `design/tokens.json` (each token has a light and a dark value).
+2. Run `python3 design/build_tokens.py`. It rewrites the generated copies:
+   `web/src/designTokens.generated.css`, `web/src/lib/designTokens.generated.ts`,
+   the token block in `skills/view-kit/kit/pa-kit.css` and
+   `skills/view-kit/kit/harness.html`, and the block between
+   `pa-tokens:begin` and `pa-tokens:end` in each template.
+   `--check` lists anything out of date.
+3. Rebuild the web UI (`pnpm --filter web run build`, delete `*.map`).
+
+Templates still keep their own short names (`--bg`, `--accent` and so on), but
+those only point at tokens. The `product-aviator-design` skill tells Claude
+what each token means and to use nothing else.
 
 Remember to add new templates to the table in `workspace/CLAUDE.md` so Claude
 knows when to use them.
@@ -154,7 +170,8 @@ Useful places:
 
 | What | File |
 |---|---|
-| Global styles and design tokens | `web/src/index.css`, `web/src/themePalettes.generated.css` |
+| Design tokens (the one source) | `design/tokens.json`, then `design/build_tokens.py` |
+| Global styles | `web/src/index.css` (the Product Aviator chrome block is at the end), `web/src/lib/themePalette.ts` (the default palette points at the tokens) |
 | Sidebar (where the Library link is) | `web/src/shell/Sidebar.tsx` |
 | Library page | `web/src/pages/LibraryPage.tsx` |
 | Viewer for HTML artifacts | `web/src/shell/HtmlCommentViewer.tsx` |

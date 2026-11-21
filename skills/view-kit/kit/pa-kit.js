@@ -97,13 +97,13 @@
   /* ---------- status vocabulary ---------- */
   var STATUS = {
     queued: { label: "Queued", tone: "idle", icon: "ring" },
-    requested: { label: "Starting", tone: "warn", icon: "ring" },
-    working: { label: "Working", tone: "warn", icon: "half" },
+    requested: { label: "Starting", tone: "agent", icon: "ring" },
+    working: { label: "Working", tone: "agent", icon: "half" },
     "needs-you": { label: "Needs you", tone: "attn", icon: "bang" },
     ready: { label: "Ready for review", tone: "info", icon: "dot" },
     reviewed: { label: "Reviewed", tone: "ok", icon: "check" },
     returned: { label: "Returned", tone: "you", icon: "back" },
-    failed: { label: "Failed", tone: "attn", icon: "x" },
+    failed: { label: "Failed", tone: "fail", icon: "x" },
     draft: { label: "Draft", tone: "idle", icon: "ring" }
   };
   if (spec.statuses) for (var sk in spec.statuses) STATUS[sk] = Object.assign({ tone: "idle", icon: "ring" }, STATUS[sk], spec.statuses[sk]);

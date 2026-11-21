@@ -27,8 +27,10 @@ PA="python3 <this skill's folder>/scripts/pa.py"     # standard library only
   A view in chat is at most 720 px. Every layout here already adapts.
 - The viewer reloads the file when it changes. The kit keeps the user's open
   card, filters and unsent edits across a reload.
-- Views follow the system light or dark setting. Never set colors by hand.
-  Use the tokens in `references/tokens.md`.
+- Views follow the app's light or dark mode. Never set colors, fonts or
+  corners by hand: use the `--pa-…` tokens in `references/tokens.md`. The
+  viewer injects the current tokens, so a design change reaches every view.
+  See the `product-aviator-design` skill.
 
 ## The commands
 

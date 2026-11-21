@@ -91,5 +91,7 @@ same artifact rather than making a new one.
 | `question-form.html` | Asking the user several questions at once |
 
 New templates follow the same pattern: one HTML file, a JSON data block, inline
-CSS/JS, light and dark colors, a `<title>` and `<meta name="description">` (the
+CSS/JS, colors only from the `--pa-…` design tokens (copy the
+`pa-tokens:begin`…`pa-tokens:end` block from an existing template, then run
+`python3 design/build_tokens.py`; see the `product-aviator-design` skill), a `<title>` and `<meta name="description">` (the
 Library page lists them from those).

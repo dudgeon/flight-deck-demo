@@ -1,8 +1,10 @@
-# omnigent-slim
+# Flight Deck
 
-A cut-down fork of [Omnigent](https://github.com/omnigent-ai/omnigent), the
-open-source meta-harness from Databricks, for prototyping an agent workspace on
-a locked-down Mac.
+**Flight Deck** is a cut-down fork of
+[Omnigent](https://github.com/omnigent-ai/omnigent), the open-source
+meta-harness from Databricks, for prototyping an agent workspace on a
+locked-down Mac. Its user interface is branded **Product Aviator**. The
+repository, folders and commands keep the name `omnigent-slim`.
 
 - It drives **Claude Code as a terminal program** (your own `claude` login), so
   it needs no API key.

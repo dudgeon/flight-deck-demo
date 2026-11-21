@@ -63,13 +63,14 @@ import {
 
 const PARTICIPANTS_FOLDER = "participants";
 
-/** Colours for authors' suggestions, by kind; participants get one each, in roster order. */
-const AGENT_HUES = ["#2f6f9f", "#8a5a00", "#5b6b2e", "#7a3f8f", "#2e6b66"];
-const PERSON_HUES = ["#1d7a4f", "#a0462f", "#3d6b1d"];
+/** Colours for authors' suggestions, by kind; participants get one each, in roster order.
+ * omnigent-slim: design tokens from design/tokens.json, so they follow the design language. */
+const AGENT_HUES = [1, 2, 3, 4, 5].map((n) => `var(--pa-author-${n})`);
+const PERSON_HUES = [6, 7, 8].map((n) => `var(--pa-author-${n})`);
 
 function authorColor(author: Author, index: number): string {
-  if (author.kind === "you") return "#c2501f";
-  if (author.kind === "main") return "#6b4fbb";
+  if (author.kind === "you") return "var(--pa-you)";
+  if (author.kind === "main") return "var(--pa-agent)";
   const hues = author.kind === "person" ? PERSON_HUES : AGENT_HUES;
   return hues[index % hues.length];
 }
@@ -398,7 +399,7 @@ export function ReviewPanel({
     }
     return map;
   }, [authors]);
-  const colorOf = (id: string | null) => colors.get(id ?? "") ?? "#2f6f9f";
+  const colorOf = (id: string | null) => colors.get(id ?? "") ?? "var(--pa-author-1)";
 
   // The sidecar file. A missing file is an empty review.
   const reviewPath = sidecarPath(path);

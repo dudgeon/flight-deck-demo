@@ -33,8 +33,13 @@ reloads.
   no CDN scripts, web fonts, remote images or API calls. Inline all CSS and
   JavaScript; use inline SVG for charts and icons.
 - Relative links to other files don't resolve. One file per artifact.
-- Follow the system's light/dark preference with
-  `@media (prefers-color-scheme: dark)`.
+- Style it with Product Aviator's design tokens (`var(--pa-navy)`,
+  `var(--pa-ink)` and the rest; see `skills/product-aviator-design`). The
+  viewer injects the current tokens into every artifact and sets
+  `data-theme="light"` or `"dark"` on its root to match the app, so an
+  artifact that uses only tokens follows the app's mode and any later design
+  change. For a file that should also look right opened on its own, start
+  from a template, which carries a generated copy of the tokens.
 
 ## Talking back to the session
 

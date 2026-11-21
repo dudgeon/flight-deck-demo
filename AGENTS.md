@@ -21,6 +21,11 @@ runs offline. Read README.md first. These rules keep it usable on the work Mac:
 - Mark slim-specific changes to upstream files with a short `omnigent-slim:`
   comment so they're easy to find when pulling from upstream.
 
+- **Style only with the design tokens.** Colors, fonts and corners come from
+  `design/tokens.json` as `--pa-…` CSS variables, in the app, the view kit,
+  templates and artifacts alike (see the `product-aviator-design` skill). After
+  editing that file, run `python3 design/build_tokens.py` and rebuild the web
+  UI.
 - **Write down intent and decisions as you go.** When the product owner
   decides something, add an entry to `docs/product/decisions.md`. When you add
   or change a feature, update its section in `docs/product/features.md` with
