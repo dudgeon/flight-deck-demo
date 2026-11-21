@@ -250,6 +250,18 @@
       "about": "Five directions for avatars of people and agents",
       "decisions": "None yet (PR 25 held)",
       "status": "Paused by Geoff"
+    },
+    {
+      "id": "La4Qa5THk5JhwQBQGcVY7d",
+      "order": 21,
+      "url": "https://claude.ai/artifact/La4Qa5THk5JhwQBQGcVY7d",
+      "slug": "2026-11-21-aviator-coordination",
+      "date": "2026-11-21",
+      "title": "Aviator Coordination and Routing",
+      "kind": "Decision walkthrough",
+      "about": "Coordination patterns for the director, routing to hero skills, the feature lifecycle, persona strictness and how to test it (AV-1 to AV-6)",
+      "decisions": "D-120",
+      "status": "Open"
     }
   ]
 }

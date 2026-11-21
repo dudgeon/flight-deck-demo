@@ -631,6 +631,18 @@ and the card answers "what does this project touch" without drawing a tree
 that is not there. It does not build the intent graph, whose detail stays
 held (D-98). Answers M-8.*
 
+**D-120 · 2026-11-21 · Geoff asked, Claude chose.** Aviator's routing is
+modular: adding a hero or workflow skill never means editing Aviator. Geoff:
+"I don't want to have to update Aviator every time we add a new hero/workflow
+skill." Each workflow carries its own routing (when it fits, near misses,
+what it needs, its lifecycle stage, an offer line, eval examples) and its
+persona in its `workflow.json`; Aviator reads the catalog at run time with
+`pa workflows` and names no workflow; lifecycle stages are a data file;
+`pa check` fails a Library workflow without routing. *Workflows are built in
+the Hangar by people who should not have to touch the director, and the
+production team will add more; a hard-coded list would drift the first time
+one is added. See [director-coordination.md](director-coordination.md).*
+
 ## Backfilled
 
 Decisions Geoff made on 20 and 21 November that were acted on but never

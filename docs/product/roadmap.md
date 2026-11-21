@@ -31,6 +31,7 @@ in the same pull request.
 | [Dock launcher](#dock-launcher) | Done |
 | [Branding](#branding) | Done; repository renamed (D-114) |
 | [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | D-89 to D-99 and D-116 to D-119 decided; runs and In flight built (PR 24) |
+| [Aviator coordination and skill routing](#aviator-coordination-and-skill-routing) | Designed; six questions (AV-1 to AV-6) with Geoff; nothing built |
 
 ---
 
@@ -315,6 +316,31 @@ a project means something (a goal to ship) and knows its relatives.
 - **Read.** [modes-and-projects.md](modes-and-projects.md); D-89 to D-99, D-116 to D-119;
   walkthroughs at https://claude.ai/artifact/HRgpJURjcqasGSCmd3894d and
   https://claude.ai/artifact/YQcb4HDRGMnn6YW82uFNZd.
+
+---
+
+## Aviator coordination and skill routing
+
+Aviator, as the project's director, should coordinate the way a Claude Code
+project's coordinator does, steer people into the hero skills when they fit
+without boxing in open work and ideation, and hold each skill's persona as
+strictly as the moment needs, measured by evals rather than argued.
+
+- **Done.** Design and walkthrough (2026-11-21): twelve coordination
+  patterns checked against the `director` skill (four present, eight gaps),
+  a routing ladder, Geoff's "I'm working on a new feature" lifecycle skill,
+  three strictness levels with fixed honesty rules, and three eval suites.
+- **Constraint (Geoff).** Modular: adding a workflow never means editing
+  Aviator. Routing, lifecycle stage, persona and eval examples ship in each
+  workflow's `workflow.json`; Aviator reads them with `pa workflows`.
+- **Next.** Once answered: the eight gaps as director rules; the routing eval
+  suite and its runner on the Mac mini, before any tuning; then persona
+  blocks and strictness; then the lifecycle skill.
+- **Open.** AV-1 routing, AV-2 the lifecycle skill, AV-3 default strictness,
+  AV-4 who changes it, AV-5 news while the person is mid-conversation, AV-6
+  how to test. They take D-numbers when answered.
+- **Read.** [director-coordination.md](director-coordination.md); walkthrough
+  at https://claude.ai/artifact/La4Qa5THk5JhwQBQGcVY7d.
 
 ---
 

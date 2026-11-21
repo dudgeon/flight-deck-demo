@@ -185,6 +185,7 @@ decided but nothing is built yet.
 | D-117 | Stepping into a thread puts it in place of the chat, the director folded to a bar, the canvas kept | Geoff | Decided, not built |
 | D-118 | A thread reports milestones, progress, blockers and state, at its own discretion, never everything | Geoff | Built (`pa report`), not yet flown with a live agent |
 | D-119 | A project's connections: a chip on the linked item and a Connections card on the project page | Geoff | Decided, not built |
+| D-120 | Routing is modular: each workflow carries its own routing, stage and persona; Aviator reads them with `pa workflows` (PR 34) | Geoff asked, Claude chose | Decided, not built |
 
 
 ## Backfilled (decided earlier, logged on 21 Nov)
@@ -201,5 +202,8 @@ decided but nothing is built yet.
 
 ## Open questions not yet numbered
 
+- Aviator coordination, skill routing and persona strictness (AV-1 to
+  AV-6 in [director-coordination.md](director-coordination.md)): put to
+  Geoff 2026-11-21; numbered when answered.
 - Progressive complexity (D-54).
 - D-24 for production.
