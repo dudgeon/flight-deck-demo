@@ -177,3 +177,37 @@ field skips records that lack it.
 **Continuity between demos.** The invented plan delivers the top problem from
 the problem-discovery demo (held payments with no release date), so the two
 can be shown as one story, but neither depends on the other.
+
+## Intent shaping (a kind of work) and frameworks
+
+**What it is for.** Most ideas arrive as a solution in one sentence. Intent
+shaping walks an idea toward something a team could commit to, without the
+agent writing the PM's intent for them. The agent's job is to hold the idea
+against a framework honestly, ask for the one thing it is weakest on, and
+refuse to call anything deeper than what exists to support it. The failure it
+is built to prevent is a fluent, complete-looking brief with nothing under
+it.
+
+**Frameworks are files (D-34).** `workspace/frameworks/intent.md` is a
+notional framework: five depths (Spark, Framed, Shaped, Tested, Committable)
+and seven breadth areas (Customer, Problem, Outcome, Scope, Risks,
+Dependencies, Cost), each with one line per depth saying what must exist, and
+a "required from" depth. An idea is as deep as its shallowest required area.
+The file is markdown and meant to be replaced by a company's real framework
+with the same headings. The skill reads it; no code knows its contents.
+
+**What it does.** Skill `skills/intent-shaping`. One `area` record per
+breadth area (depth, what we can say now, what the next level asks for, the
+one question that would get there, what it rests on) and `gap` records under
+them. An intent map in the canvas, a card for the shallowest area in the
+chat, a target form, a summary. The loop is one area at a time, shallowest
+first. Where an area is about what others know (risks, dependencies, cost),
+the agent calls whoever would know instead of asking the PM to guess. The PM
+can mark an area not needed, with a reason, and can ask for a strict re-check
+of any depth. The end product is an intent brief that states its depth at the
+top.
+
+**The four kinds of work as one story.** The invented material chains:
+discovery finds the held-payment problem, intent shaping shapes the idea of
+showing a release date, decision review settles open questions, delivery
+status tracks it. Each demo also stands alone.

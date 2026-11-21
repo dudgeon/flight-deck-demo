@@ -209,3 +209,11 @@ by listing ids under `participants` in its `scenario.json`. `backing: session` p
 a background session from their brief, `backing: script` answers from text in
 the file. Their turns are drawn by `web/src/components/chat/ParticipantTurn.tsx`
 from a fenced block described in `web/src/lib/participantTurn.ts`.
+
+## Frameworks
+
+`workspace/frameworks/` holds markdown files that say how deep and how broad a
+piece of thinking must be. `intent.md` (notional) drives the `intent-shaping`
+skill. Edit it or replace it with a real framework, keeping the headings
+(`## Depth`, `## Breadth` with "Required from: N" and one line per depth,
+`## Rules`). See `workspace/frameworks/README.md`.

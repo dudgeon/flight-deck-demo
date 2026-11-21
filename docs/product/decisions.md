@@ -143,6 +143,12 @@ its reason. The decision-review kind of work is built to the same standard
 for any PM: question, context, options with consequences, recommendation,
 who raised it.
 
+**D-34 · 2026-11-21 · Geoff.** The intent-shaping framework is drafted by us
+as a notional one and kept swappable: a markdown file in
+`workspace/frameworks/` that the skill reads, so the real company framework
+can replace it later without changing the skill. He will correct the draft
+from a preview.
+
 ## Open
 
 - Whether views should also appear inside the chat, and in what form. Geoff

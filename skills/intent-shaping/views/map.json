@@ -1,0 +1,51 @@
+{
+ "view": "intent-map",
+ "layout": "tree-table",
+ "eyebrow": "Intent shaping · {dataset.framework}",
+ "title": "{dataset.title}",
+ "subtitle": "Now at depth {dataset.depth}, aiming for {dataset.target}. An idea is as deep as its shallowest required area. Open an area to see what the next level asks for.",
+ "records": { "type": ["area", "gap"] },
+ "summary": { "count_by": "status", "records": { "type": "area" } },
+ "statuses": {
+  "queued": { "label": "Not needed yet", "tone": "idle" },
+  "working": { "label": "Being worked on", "tone": "info" },
+  "needs-you": { "label": "Needs you", "tone": "attn" },
+  "ready": { "label": "Below target", "tone": "warn" },
+  "reviewed": { "label": "At target", "tone": "ok" },
+  "parked": { "label": "Not needed", "tone": "idle" },
+  "open": { "label": "Open gap", "tone": "warn" },
+  "closed": { "label": "Closed", "tone": "ok" }
+ },
+ "columns": [
+  { "field": "title", "label": "Area" },
+  { "field": "depth", "label": "Depth", "as": "meter", "only": "area", "narrow": "keep" },
+  { "field": "depth_name", "label": "Level", "only": "area" },
+  { "field": "by", "label": "Last added to by", "as": "who", "only": "area" },
+  { "field": "owner", "label": "Who could close it", "as": "who", "only": "gap" },
+  { "field": "status", "as": "status" }
+ ],
+ "details": {
+  "area": {
+   "title": "{title}",
+   "sections": [
+    { "kind": "callout", "field": "question", "label": "To go one level deeper", "tone": "attn" },
+    { "kind": "callout", "field": "skip_note", "label": "Why this is not needed", "tone": "idle" },
+    { "kind": "fields", "fields": [ { "field": "depth", "label": "Depth", "as": "meter" }, { "field": "depth_name", "label": "Level" }, { "field": "by", "label": "Last added to by", "as": "who" } ] },
+    { "kind": "text", "field": "statement", "label": "What we can say now", "edit": true },
+    { "kind": "text", "field": "next", "label": "What the next level asks for" },
+    { "kind": "children", "label": "Missing or assumed", "records": { "type": "gap" }, "columns": [ { "field": "title", "label": "Gap" }, { "field": "owner", "as": "who" }, { "field": "status", "as": "status" } ], "empty": "Nothing open." },
+    { "kind": "evidence", "field": "basis", "label": "What this rests on" }
+   ]
+  },
+  "gap": { "title": "{title}", "sections": [ { "kind": "fields", "fields": [ { "field": "owner", "as": "who" }, { "field": "status", "as": "status" } ] } ] }
+ },
+ "actions": [
+  { "id": "deepen", "label": "Work on this", "tone": "primary", "when": { "type": "area", "status": ["ready", "needs-you", "queued"] }, "prompt": "Let us take {title} one level deeper." },
+  { "id": "answer", "label": "Answer", "when": { "type": "area", "status": ["needs-you"] }, "prompt": "On {title}: " },
+  { "id": "ask-someone", "label": "Ask someone who would know", "when": { "type": "area", "status": ["ready", "needs-you"] }, "prompt": "Ask whoever would know about {title} what we are missing." },
+  { "id": "skip", "label": "Not needed", "when": { "type": "area", "status": ["ready", "needs-you", "queued"] }, "ask": { "label": "Why is it not needed?", "field": "skip_note" }, "set": { "status": "parked" }, "prompt": "{title} is not needed for this idea. Why: {note}" },
+  { "id": "challenge", "label": "Is this really that deep?", "when": { "type": "area", "status": ["reviewed", "ready"] }, "prompt": "Check the depth of {title} against the framework, strictly." },
+  { "id": "go-deeper", "label": "Aim one level deeper", "scope": "view", "prompt": "Raise the target for {dataset} by one level and show me what that takes." },
+  { "id": "brief", "label": "Write the intent brief", "scope": "view", "tone": "primary", "prompt": "Write the intent brief from {dataset} at its current depth." }
+ ]
+}
