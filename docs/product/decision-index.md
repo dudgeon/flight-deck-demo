@@ -31,6 +31,7 @@ feature notes of the time and marked *(reconstructed)*.
 | D-03 | Defaults: Auto permissions, Opus 5.5, medium effort | Geoff | Built | *(reconstructed)* Auto keeps demos flowing without prompts while staying inside Claude Code's own safety checks; Bypass and Don't ask stay removed (D-02). |
 | D-04 | A "product partner" for PMs: unstructured work plus templated flows | Geoff | Active | *(reconstructed)* His vision of PM work: context files and generated artifacts alternating with structured, repeatable flows. |
 | D-107 | Setup clears the download flag on its own folder after asking; curl stays as the other way | Geoff | Built (`setup.sh`) | A browser ZIP is the main way in; this is what "Open Anyway" does, and IT for every install would stall it. |
+| D-111 | App lives in `~/flight-deck`; updates from a newer ZIP never overwrite the person's files or edits | Geoff asked, Claude chose | Built (`setup.sh`, `scripts/install_sync.py`) | A re-download must keep his files, and Terminal navigation is hard: one fixed folder plus a manifest of what was shipped. |
 
 ## Structured work
 
@@ -89,7 +90,8 @@ feature notes of the time and marked *(reconstructed)*.
 
 | D | Decision | Who | Status | Why |
 |---|---|---|---|---|
-| D-35 | The fork is Flight Deck; the UI is Product Aviator; identifiers keep `omnigent-slim` | Geoff | Active; **repo rename open** | He liked the name. |
+| D-35 | The fork is Flight Deck; the UI is Product Aviator; identifiers keep `omnigent-slim` | Geoff | Active; repository renamed by D-114 | He liked the name. |
+| D-114 | Repository renamed `dudgeon/flight-deck-demo`; local folders, data folder and identifiers keep their names | Geoff | Built (README, `setup.sh` accepts both download names) | Repo should carry the product name; renaming checkouts breaks their venv, Dock launcher and session history. |
 | D-36 | Vendor Anthropic's `frontend-design` skill | Geoff | Built (`skills/frontend-design/`) | He asked for it; the work Mac cannot download skills. |
 | D-37 | One design language from shared tokens | Geoff | Built | Four color systems looked like four products. |
 | D-38 | How tokens are built and injected | Claude | Built (`design/`) | The same whichever colors are picked. |
@@ -198,5 +200,4 @@ decided but nothing is built yet.
   mode, where a thread opens, what a thread reports back, how a project's
   connections show. They take D-107 onward when Geoff answers.
 - Progressive complexity (D-54).
-- Whether to rename the repository (D-35).
 - D-24 for production.

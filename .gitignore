@@ -120,5 +120,7 @@ workspace/progress/*
 /preview*.html
 workspace/.hangar/
 
-# Written by setup.sh on every run.
+# Written by setup.sh: its report, the install manifest and saved versions (D-111).
 setup-report.txt
+.install-manifest.json
+/updates/
