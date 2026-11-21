@@ -1,12 +1,12 @@
 # Modes, runs, projects and the intent graph
 
-Status: **design exploration, nothing built, nine decisions open.** Raised by
+Status: **design exploration, nothing built, eleven decisions open.** Raised by
 Geoff on 2026-11-21. The walkthrough with drawings of each option, where he
 records his answers, is https://claude.ai/artifact/HRgpJURjcqasGSCmd3894d
 (answers in its database, collection `answers`). When an answer is locked
 there, it becomes a numbered entry in [decisions.md](decisions.md) and the
 matching "Open" line below is removed. The open questions are labelled M-1 to
-M-9 here so they cannot collide with decision numbers being added by other
+M-11 here so they cannot collide with decision numbers being added by other
 work.
 
 ## What was asked
@@ -39,6 +39,21 @@ Five words, deliberately different things.
 makes a mode depends on it being a workflow, not on being featured (proposed;
 see "Smaller calls").
 
+## What upstream Omnigent already has
+
+Geoff asked for this to be checked before he reviewed the design (2026-11-21).
+All of it is in the code this fork carries.
+
+| Upstream has | What it is | Where | What it means here |
+|---|---|---|---|
+| **Projects** | A name, an icon and an opaque `config` of default session settings. Flat, private to the owner, no access list. A session belongs to at most one (`project_id` on the conversation). No goal, parent or links. | `omnigent/entities/project.py`, `omnigent/stores/project_store/`, `omnigent/server/routes/projects.py` | What a project *is about* is ours to define. Keep it in a file beside the project, never in upstream's table, so the fork stays compatible. |
+| **Project board** | The project page: sessions as cards in lanes Draft, Needs attention, Working, Unread, Done. | `web/src/projectHome/` | The "In flight" view can be built on it. Run states map onto the lanes; Paused would be new. |
+| **Session families** | Related sessions grouped under one sidebar row and one board card (`family_id`). | `web/src/lib/sessionFamilies.ts` | A run resumed in a new session can stay one card. |
+| **Child sessions** | A session started by another (`kind: sub_agent`, `parent_conversation_id`, `root_conversation_id`), with a trail back to the parent and a panel and graph listing them. | `omnigent/entities/conversation.py`, `web/src/shell/Subagents*.tsx` | Already how participants run (D-19). Right for one agent per item. |
+| **Side chats** | `/side`, or "Ask in side chat" on selected text, forks the conversation into a child that opens as a tab in the right-hand rail. The main transcript is not touched. | `web/src/lib/sideChat.ts`, `web/src/components/chat/SideChatPane.tsx` | The ready-made thread. It shares the right-hand area with the canvas, so a thread and a canvas view are tabs of the same space. |
+| **Forks** | A copy of a session up to a chosen point (`POST /v1/sessions/{id}/fork`). Not available on a child or side chat. | `omnigent/server/API.md` | "Resume in a new session", "try another direction". |
+| **Saved workflows** | A different thing with the same name: a saved plan run as a session (`/workflows`). Not linked from the slim sidebar. | `web/src/pages/WorkflowsPage.tsx` | A naming clash to settle before production. |
+
 ## Why this needs designing
 
 - **A mode is invisible most of the time.** The workflow card is in the
@@ -65,6 +80,19 @@ see "Smaller calls").
 
 None of this is decided. It is written down so the production team can see
 the reasoning behind whichever answers are locked.
+
+**Where a mode's conversation lives.** In place: the main line of a mode
+stays in the chat where it was started. Things that branch off it get a
+thread (upstream's side chat): a long discussion of one item, a consult, a
+side question that grows. The whole mode is not put in a side tab, because a
+mode needs the chat and its canvas view at once and a side chat takes the
+canvas's place.
+
+**Threads on items.** A thread can hang off a record (a decision, a risk, a
+requirement), the way a comment thread hangs off text in a document. It opens
+from the item's row, the row carries a count, and participants can be brought
+in. Participants' own work and one-agent-per-item work keep their child
+sessions.
 
 **Modes.** A one-line strip on the message box names the mode and step and
 carries Pause. A thin rail runs beside every turn made in the mode, with a
@@ -110,6 +138,7 @@ D-52) and can later be replaced by a service.
 | Project home (`web/src/projectHome/`) | "In flight" section above the sessions board; trail and Related card. |
 | Projects | A folder per project (as demos have under `workspace/demos/`), with a small manifest naming its goal, level, parent and links. |
 | Server | A read-only endpoint listing runs per project, modelled on `slim_library.py`. |
+| Threads | Upstream's side chat, labelled with the record it is about; a count on the row in the view kit; `pa` reads and writes that label. |
 | Hangar | Workflow pages show how the mode looks; no new shelf. |
 
 ## Open decisions
@@ -125,13 +154,14 @@ Each is put to Geoff in the walkthrough with drawings of every option.
   or the mode speaking as its own character. *Has to coexist with participant
   marks.*
 - **M-3 · Side questions during a mode.** Answered outside the rail while the
-  mode stays on (recommended), everything counts as the mode until paused, or
-  the agent asks each time.
+  mode stays on (recommended), everything counts as the mode until paused,
+  the agent asks each time, or the question goes to a side chat.
 - **M-4 · Leaving a mode.** Say it or press it, three endings, a
   where-we-left-off note, only stop confirms (recommended); say it only, with
   no button or note; or confirm every exit.
 - **M-5 · A second mode in the same session.** One at a time with a way back
-  (recommended), nested inside each other, or several at once.
+  (recommended), nested inside each other, several at once, or the second
+  opens as a thread beside the first.
 - **M-6 · Finding what is in flight.** An "In flight" section on the project
   page plus a needs-you count in the sidebar (recommended), runs listed in
   the sidebar, or only by asking Aviator.
@@ -146,6 +176,14 @@ Each is put to Geoff in the walkthrough with drawings of every option.
   datasets (recommended); down to every requirement and decision; or only a
   parent line per project for now.
 
+- **M-10 · Where a mode's conversation lives.** In place with threads for
+  branches (recommended); every mode in its own session under the one it was
+  started from; or everything in one chat with no threads. *First in the
+  walkthrough, because M-2, M-3 and M-5 depend on it.*
+- **M-11 · Threads on single items.** Any record can have a thread
+  (recommended); item discussion stays in the main chat; or threads only for
+  agents' own work on an item.
+
 ### Smaller calls the agent will make unless Geoff objects
 
 Listed on the walkthrough's "Smaller calls" tab.
@@ -157,6 +195,8 @@ Listed on the walkthrough's "Smaller calls" tab.
 - Resume returns to the same session when it exists, else a new one; Resume
   also offers "in a new session".
 - A run belongs to one project; work that spans goals is a run in the area.
+- Threads reuse upstream's side chats and child sessions; nothing new is
+  invented for them.
 - Demo projects (D-76) stay as they are, and runs show in them the same way.
 
 ### Not yet explored

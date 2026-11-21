@@ -21,7 +21,7 @@ in the same pull request.
 | [Canvas tools across several tabs](#canvas-tools-across-several-tabs) | Done |
 | [Dock launcher](#dock-launcher) | Done |
 | [Branding](#branding) | Done; one naming question open |
-| [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | Design exploration; nine decisions open |
+| [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | Design exploration; eleven decisions open |
 
 ---
 
@@ -256,11 +256,12 @@ and a project means something (a goal to ship) and knows its relatives.
 - **Exists already and would be reused.** The workflow card and `pa flow`
   progress files (D-16), direct actions for state changes (D-11), views in
   the chat (D-53), amber for needs-you (D-50), a project per flown demo
-  (D-76).
+  (D-76). From upstream: the project board, session
+  families, child sessions and side chats.
 - **Next.** Geoff answers the walkthrough; the answers become decisions; then
   the smallest slice is the run state and the where-we-left-off note in
   `pa flow`, the strip and the rail.
-- **Open.** Nine decisions, M-1 to M-9, and a list of things not yet
+- **Open.** Eleven decisions, M-1 to M-11, and a list of things not yet
   explored (area pages, a project's life cycle, how upstream changes reach
   the person).
 - **Read.** [modes-and-projects.md](modes-and-projects.md); walkthrough at
