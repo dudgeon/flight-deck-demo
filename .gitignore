@@ -111,3 +111,5 @@ recordings/
 .runtime/
 workspace/artifacts/*
 !workspace/artifacts/.gitkeep
+workspace/data/*
+!workspace/data/.gitkeep

@@ -1,0 +1,18 @@
+{
+ "view": "catalog-summary",
+ "layout": "summary",
+ "eyebrow": "Catalog · where things stand",
+ "title": "{dataset.title}: requirements at a glance",
+ "records": { "type": "requirement" },
+ "blocks": [
+  { "kind": "tiles", "tiles": [
+    { "label": "Requirements", "where": { "type": "requirement" } },
+    { "label": "Must have", "where": { "type": "requirement", "priority": "Must" } },
+    { "label": "Reviewed", "where": { "type": "requirement", "status": "reviewed" } },
+    { "label": "Need your answer", "where": { "type": "requirement", "status": "needs-you" } }
+  ] },
+  { "kind": "bars", "label": "By status", "count_by": "status" },
+  { "kind": "bars", "label": "By capability", "count_by": "parent" },
+  { "kind": "list", "label": "Waiting on you", "records": { "type": "requirement", "status": "needs-you" }, "field": "question", "empty": "Nothing is waiting on you." }
+ ]
+}

@@ -1,0 +1,23 @@
+{
+ "title": "Requirements to dependencies",
+ "intro": "A scripted run with invented data. Twenty explorations, one board. Press Next, or use the board where the script waits for you.",
+ "start": { "set": { "where": { "type": "requirement" }, "fields": { "explore_status": "queued" } }, "hide": ["dependency", "option"] },
+ "steps": [
+  { "pm": "Map the platform dependencies for these requirements." },
+  { "agent": "I set up one exploration per requirement. Nothing has started yet. Start them one at a time, or all at once." },
+  { "canvas": "board", "title": "Dependency board", "await": "any", "hint": "Try it: press Start on a tile, or Start all queued." },
+  { "agent": "Started. Each one runs as its own sub-agent and reports to the board.", "task": "Exploring · 0 of 20 done" },
+  { "status": { "ids": ["R-01", "R-02", "R-03", "R-04", "R-05", "R-06", "R-07", "R-08"], "to": "working" } },
+  { "restore": ["R-01", "R-05", "R-04"], "task": "Exploring · 3 of 20 done" },
+  { "status": { "ids": ["R-09", "R-10", "R-11", "R-12", "R-13", "R-14", "R-15", "R-17", "R-18"], "to": "working" } },
+  { "restore": ["R-02", "R-03", "R-08", "R-06"], "task": "Exploring · 7 of 20 done" },
+  { "agent": "R-06 needs you. It is the one that counts charges which skip live approval." },
+  { "widget": "review", "record": "R-06" },
+  { "restore": ["R-07", "R-10", "R-11", "R-17", "R-18", "R-12", "R-15"], "task": "Exploring · 14 of 20 done" },
+  { "agent": "14 of 20 are back. Two need your answer and six are ready for review. Here is the picture so far." },
+  { "widget": "summary" },
+  { "agent": "Open any tile to read the finding, compare the capabilities, and approve it or send it back.", "await": "any", "hint": "Try it: open R-10, open a dependency, choose a different capability, approve." },
+  { "apply": "edits" },
+  { "agent": "Saved. One thing for the PRD: R-15 on the statement has a two-cycle lead time, so it may need to move out of the first release." }
+ ]
+}

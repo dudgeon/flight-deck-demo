@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__ · preview</title>
+<meta name="description" content="A scripted preview of a Product Aviator scenario. Invented data, no agent running.">
+<style>
+:root {
+  --bg: #e9edf2; --surface: #ffffff; --sunk: #f3f5f8; --ink: #0a223d; --ink-2: #44566c; --ink-3: #77879a; --line: #d3dae3;
+  --navy: #0a223d; --on-navy: #f3f5f8; --you: #c2501f; --you-soft: #fbe6dc; --warn: #8a6200;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #04101e; --surface: #0e2238; --sunk: #07172a; --ink: #e8eef5; --ink-2: #a9b8c9; --ink-3: #74879c; --line: #22384f; --navy: #0a1c30; --on-navy: #e8eef5; --you: #ff9166; --you-soft: #3a2118; --warn: #e6bd55; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--font); display: flex; flex-direction: column; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--you); outline-offset: 2px; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; padding: 8px 14px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.bar b { font-size: 13.5px; }
+.bar .tag { font: 500 10.5px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--you); border: 1px dashed var(--you); border-radius: 3px; padding: 2px 6px; }
+.bar .grow { flex: 1; min-width: 0; color: var(--ink-2); font-size: 12.5px; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 5px; padding: 5px 11px; font-size: 12.5px; font-weight: 550; }
+.btn.primary { background: var(--you); border-color: var(--you); color: #fff; }
+.btn[disabled] { opacity: .45; cursor: default; }
+.ws { flex: 1; min-height: 0; display: grid; grid-template-columns: 56px minmax(300px, 0.8fr) minmax(0, 1.5fr); }
+.side { background: var(--navy); color: var(--on-navy); display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 12px 0; }
+.side .logo { width: 30px; height: 30px; border-radius: 8px; background: var(--on-navy); color: var(--navy); display: grid; place-items: center; font-weight: 800; font-size: 13px; }
+.side i { width: 22px; height: 22px; border-radius: 5px; border: 1.5px solid currentColor; opacity: .45; }
+.chat { display: flex; flex-direction: column; min-height: 0; background: var(--sunk); border-right: 1px solid var(--line); }
+.chathead { padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--surface); display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.chathead span { color: var(--ink-3); font-size: 12px; }
+.task { padding: 6px 14px; border-bottom: 1px solid var(--line); background: var(--surface); font-size: 12.5px; color: var(--ink-2); display: flex; gap: 8px; align-items: center; }
+.task::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--warn); flex: none; }
+.log { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.bub { max-width: 88%; padding: 8px 11px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); white-space: pre-wrap; }
+.bub.pm { align-self: flex-end; background: var(--you-soft); border-color: var(--you); }
+.bub.chip { align-self: flex-end; font: 500 11.5px var(--mono); border-style: dashed; padding: 4px 8px; color: var(--ink-2); }
+.wid { align-self: stretch; }
+.wid iframe { width: 100%; border: 0; display: block; height: 120px; background: transparent; color-scheme: normal; }
+.hint { align-self: center; font-size: 12px; color: var(--you); border: 1px dashed var(--you); border-radius: 6px; padding: 5px 10px; text-align: center; background: var(--surface); }
+.composer { border-top: 1px solid var(--line); background: var(--surface); padding: 10px 12px; display: flex; gap: 8px; align-items: flex-end; }
+.composer textarea { flex: 1; resize: none; min-height: 40px; max-height: 150px; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font: inherit; color: inherit; background: var(--sunk); }
+.composer textarea.filled { border-color: var(--you); background: var(--you-soft); }
+.canvas { display: flex; flex-direction: column; min-height: 0; background: var(--surface); }
+.tabs { display: flex; gap: 2px; padding: 6px 8px 0; border-bottom: 1px solid var(--line); background: var(--sunk); overflow-x: auto; }
+.tabs button { border: 1px solid transparent; border-bottom: 0; background: none; padding: 6px 12px; border-radius: 6px 6px 0 0; font-size: 12.5px; color: var(--ink-2); white-space: nowrap; }
+.tabs button[aria-selected="true"] { background: var(--surface); border-color: var(--line); color: var(--ink); font-weight: 600; margin-bottom: -1px; }
+.stage { flex: 1; min-height: 0; position: relative; }
+.stage iframe, .stage .doc { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.stage .doc { overflow-y: auto; padding: 22px 28px; }
+.stage .doc h1 { font-size: 22px; margin: 0 0 8px; } .stage .doc h2 { font-size: 16px; margin: 20px 0 6px; } .stage .doc p { max-width: 68ch; margin: 0 0 10px; color: var(--ink-2); }
+.stage .empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--ink-3); text-align: center; padding: 20px; }
+@media (max-width: 860px) { .ws { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(260px, 45%) minmax(0, 1fr); } .side { display: none; } .chat { border-right: 0; border-bottom: 1px solid var(--line); } }
+</style>
+</head>
+<body>
+<div class="bar">
+  <span class="tag">Preview · invented data · no agent</span>
+  <b id="h-title"></b>
+  <span class="grow" id="h-intro"></span>
+  <span id="h-count" style="font:500 12px var(--mono);color:var(--ink-3)"></span>
+  <button class="btn" id="h-restart">Restart</button>
+  <button class="btn primary" id="h-next">Next</button>
+</div>
+<div class="ws">
+  <div class="side" aria-hidden="true"><div class="logo">PA</div><i></i><i></i><i></i></div>
+  <div class="chat">
+    <div class="chathead"><b id="c-title"></b><span>Product Aviator</span></div>
+    <div class="task" id="c-task" hidden></div>
+    <div class="log" id="c-log" aria-live="polite"></div>
+    <div class="composer"><textarea id="c-input" rows="1" placeholder="Message the agent" aria-label="Message the agent"></textarea><button class="btn primary" id="c-send">Send</button></div>
+  </div>
+  <div class="canvas">
+    <div class="tabs" id="v-tabs" role="tablist"></div>
+    <div class="stage" id="v-stage"><div class="empty">The canvas is empty until there is something to show.</div></div>
+  </div>
+</div>
+<script type="application/json" id="payload">/*__PAYLOAD__*/</script>
+<script>
+(function () {
+  "use strict";
+  var P = JSON.parse(document.getElementById("payload").textContent);
+  var script = P.script, steps = script.steps || [], specs = P.specs, manifest = P.manifest;
+  var SF = (manifest.dataset && manifest.dataset.status_field) || "status";
+  var $ = function (id) { return document.getElementById(id); };
+  var full, cur, hidden, pos, waiting, tabs, activeTab, frames, lastEdits;
+
+  function clone(x) { return JSON.parse(JSON.stringify(x)); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function visible() { var d = clone(cur); d.records = d.records.filter(function (r) { return !hidden[r.id]; }); return d; }
+  function byId(id) { return cur.records.filter(function (r) { return r.id === id; })[0]; }
+  function descendants(id) {
+    var out = [], queue = [id];
+    while (queue.length) { var p = queue.shift(); cur.records.forEach(function (r) { if (r.parent === p) { out.push(r.id); queue.push(r.id); } }); }
+    return out;
+  }
+  function frameDoc(spec, hostKind, record) {
+    var s = clone(spec);
+    if (record) s.record = record;
+    var safe = function (o) { return JSON.stringify(o).replace(/<\//g, "<\\/"); };
+    return '<!doctype html><html lang="en" data-host="' + hostKind + '" data-harness><head><meta charset="utf-8"><style>' + P.css + '</style></head><body><div id="pa-app"></div>' +
+      '<script type="application/json" id="pa-spec">' + safe(s) + '<\/script><script type="application/json" id="pa-data">' + safe(visible()) + '<\/script><script>' + P.js + '<\/script></body></html>';
+  }
+  function makeFrame(spec, hostKind, record) {
+    var f = document.createElement("iframe");
+    f.setAttribute("sandbox", "allow-scripts");
+    f.setAttribute("title", spec.title || spec.view);
+    f.srcdoc = frameDoc(spec, hostKind, record);
+    frames.push(f);
+    return f;
+  }
+  function pushData() {
+    var d = visible();
+    frames.forEach(function (f) { if (f.contentWindow) f.contentWindow.postMessage({ type: "pa:data", data: d }, "*"); });
+  }
+  function md(text) {
+    return text.split(/\n{2,}/).map(function (block) {
+      var b = esc(block.trim()).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+      if (/^# /.test(block)) return "<h1>" + b.slice(2) + "</h1>";
+      if (/^#{2,} /.test(block)) return "<h2>" + b.replace(/^#+ /, "") + "</h2>";
+      return b ? "<p>" + b.replace(/\n/g, "<br>") + "</p>" : "";
+    }).join("");
+  }
+
+  /* chat */
+  function scrollLog() { var log = $("c-log"); log.scrollTop = log.scrollHeight; }
+  function say(kind, text) { var d = document.createElement("div"); d.className = "bub " + kind; d.textContent = text; $("c-log").appendChild(d); scrollLog(); }
+  function hint(text) { var d = document.createElement("div"); d.className = "hint"; d.textContent = text; $("c-log").appendChild(d); scrollLog(); }
+  function widget(name, record) {
+    var wrap = document.createElement("div"); wrap.className = "wid";
+    var f = makeFrame(specs[name], "chat", record); f.dataset.view = specs[name].view;
+    wrap.appendChild(f); $("c-log").appendChild(wrap); scrollLog();
+  }
+  /* canvas */
+  function showTab(i) {
+    activeTab = i;
+    $("v-tabs").innerHTML = tabs.map(function (t, j) { return '<button role="tab" aria-selected="' + (j === i) + '" data-i="' + j + '">' + esc(t.title) + "</button>"; }).join("");
+    var stage = $("v-stage");
+    Array.prototype.forEach.call(stage.children, function (c) { c.hidden = true; });
+    tabs[i].el.hidden = false;
+  }
+  function openTab(title, el) {
+    var found = -1; tabs.forEach(function (t, j) { if (t.title === title) found = j; });
+    if (found !== -1) { $("v-stage").removeChild(tabs[found].el); tabs[found].el = el; } else { tabs.push({ title: title, el: el }); found = tabs.length - 1; }
+    if (tabs.length === 1) $("v-stage").innerHTML = "";
+    $("v-stage").appendChild(el); showTab(found);
+  }
+
+  /* steps */
+  function run(step) {
+    if (step.task !== undefined) { $("c-task").hidden = !step.task; $("c-task").textContent = step.task || ""; }
+    if (step.pm) say("pm", step.pm);
+    if (step.agent) say("", step.agent);
+    if (step.doc) { var d = document.createElement("div"); d.className = "doc"; d.innerHTML = md(P.docs[step.doc] || ""); openTab(step.title || step.doc, d); }
+    if (step.canvas) {
+      if (step.data === "empty") cur.records.forEach(function (r) { hidden[r.id] = true; });
+      openTab(step.title || specs[step.canvas].title, makeFrame(specs[step.canvas], "canvas"));
+    }
+    if (step.reveal) step.reveal.forEach(function (id) { delete hidden[id]; });
+    if (step.patch) step.patch.forEach(function (p) { var r = byId(p.id); if (!r) return; for (var k in p) { if (p[k] === null) delete r[k]; else r[k] = p[k]; } });
+    if (step.status) step.status.ids.forEach(function (id) { var r = byId(id); if (r) r[SF] = step.status.to; });
+    if (step.restore) step.restore.forEach(function (id) {
+      var orig = full.records.filter(function (r) { return r.id === id; })[0], i = cur.records.map(function (r) { return r.id; }).indexOf(id);
+      if (orig && i !== -1) cur.records[i] = clone(orig);
+      descendants(id).forEach(function (k) { delete hidden[k]; });
+    });
+    if (step.apply === "edits" && lastEdits) {
+      Object.keys(lastEdits).forEach(function (id) { var r = byId(id); if (r) for (var k in lastEdits[id]) r[k] = lastEdits[id][k]; });
+      lastEdits = null;
+    }
+    if (step.reveal || step.patch || step.status || step.restore || step.apply) pushData();
+    if (step.widget) widget(step.widget, step.record);
+    if (step.hint) hint(step.hint);
+    waiting = step.await || null;
+  }
+  function next() {
+    if (pos >= steps.length) return;
+    waiting = null;
+    run(steps[pos++]);
+    $("h-count").textContent = pos + " / " + steps.length;
+    $("h-next").disabled = pos >= steps.length;
+    $("h-next").textContent = pos >= steps.length ? "End" : waiting ? "Skip" : "Next";
+    /* Steps that only change data flow straight on, so the board moves like a live run. */
+    var s = steps[pos - 1];
+    if (!waiting && pos < steps.length && !s.pm && !s.agent && !s.widget && !s.doc && !(s.canvas && !s.data)) setTimeout(next, 900);
+  }
+  function restart() {
+    full = clone(P.data); cur = clone(P.data); hidden = {}; pos = 0; waiting = null; tabs = []; frames = []; lastEdits = null;
+    var st = script.start || {};
+    if (st.set) cur.records.forEach(function (r) { var ok = true; for (var k in st.set.where) if (r[k] !== st.set.where[k]) ok = false; if (ok) for (var f in st.set.fields) r[f] = st.set.fields[f]; });
+    if (st.hide) cur.records.forEach(function (r) { if (st.hide.indexOf(r.type) !== -1) hidden[r.id] = true; });
+    $("c-log").innerHTML = ""; $("v-tabs").innerHTML = ""; $("c-task").hidden = true; $("c-input").value = ""; $("c-input").className = "";
+    $("v-stage").innerHTML = '<div class="empty">The canvas is empty until there is something to show.</div>';
+    $("h-title").textContent = script.title || manifest.title; $("c-title").textContent = (P.data.title || manifest.title);
+    $("h-intro").textContent = script.intro || "";
+    next();
+  }
+  function sendComposer() {
+    var input = $("c-input"), text = input.value.trim();
+    if (!text) return;
+    say("pm", text); input.value = ""; input.className = "";
+    if (waiting) next();
+  }
+  window.addEventListener("message", function (ev) {
+    var m = ev.data;
+    if (!m || m.source !== "pa-kit") return;
+    if (m.type === "size") {
+      frames.forEach(function (f) { if (f.contentWindow === ev.source) f.style.height = Math.max(60, m.height + 4) + "px"; });
+      scrollLog();
+    } else if (m.type === "action") {
+      if (m.action && m.action.edits) lastEdits = m.action.edits;
+      /* As in Omnigent: the text lands in the chat box and the person presses Send. */
+      var input = $("c-input");
+      input.value = (input.value ? input.value + "\n" : "") + m.text; input.className = "filled"; input.focus();
+    }
+  });
+  $("h-next").addEventListener("click", next);
+  $("h-restart").addEventListener("click", restart);
+  $("c-send").addEventListener("click", sendComposer);
+  $("c-input").addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendComposer(); } });
+  $("v-tabs").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) showTab(Number(b.dataset.i)); });
+  restart();
+})();
+</script>
+</body>
+</html>

@@ -178,3 +178,21 @@ Python changes take effect after `./stop.sh && ./start.sh` (the package is
 installed in editable mode). New Python dependencies must be vendored: add them
 to `pyproject.toml`, run `uv lock` and `vendor/scripts/build_vendor.sh` on a Mac
 with internet, and commit `vendor/wheels/`.
+
+## Structured workflows (scenarios)
+
+A scenario is a skill folder that also carries a dataset shape, view specs,
+invented fixture data and a click-through script. See `skills/scenario-builder`
+for how to make one, `skills/view-kit` for the views and the `pa` command, and
+`skills/prd-to-requirements` for a worked example. To see one without starting
+the app:
+
+```bash
+python3 skills/view-kit/scripts/pa.py preview skills/prd-to-requirements --out preview.html
+open preview.html
+```
+
+The look of every view comes from `skills/view-kit/kit/pa-kit.css`. Change the
+tokens at the top of that file to restyle all of them.
+
+The Session panel (Outputs and Context) is `web/src/shell/SessionOverviewFiles.tsx`.

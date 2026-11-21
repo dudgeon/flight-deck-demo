@@ -1,0 +1,24 @@
+{
+ "view": "dependency-review-card",
+ "layout": "detail",
+ "eyebrow": "Ready for your review",
+ "title": "{dataset.title}",
+ "status_field": "explore_status",
+ "records": { "type": "requirement" },
+ "details": {
+  "requirement": {
+   "title": "{id} · {title}",
+   "sections": [
+    { "kind": "callout", "field": "explore_question", "label": "Needs your answer", "tone": "attn" },
+    { "kind": "text", "field": "explore_note", "label": "Finding" },
+    { "kind": "children", "label": "What it depends on", "records": { "type": "dependency" },
+      "columns": [ { "field": "title", "label": "Dependency" }, { "field": "selected_option", "label": "Recommended", "as": "ref" }, { "field": "effort", "as": "chip" }, { "field": "confidence", "as": "meter" } ] }
+   ]
+  }
+ },
+ "actions": [
+  { "id": "approve", "label": "Approve", "tone": "primary", "when": { "explore_status": ["ready"] }, "set": { "explore_status": "reviewed" }, "prompt": "Approve the dependency mapping for {id}." },
+  { "id": "return", "label": "Send back", "when": { "explore_status": ["ready", "reviewed"] }, "ask": { "label": "What should the explorer look at again?", "field": "explore_return_note" }, "prompt": "Explore {id} ({title}) again. My note: {note}" },
+  { "id": "answer", "label": "Answer in chat", "tone": "primary", "when": { "explore_status": "needs-you" }, "prompt": "My answer on {id} ({title}): " }
+ ]
+}

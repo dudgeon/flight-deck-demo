@@ -1,0 +1,355 @@
+{
+ "dataset": "allowances",
+ "title": "Allowances",
+ "subject": "Visigoth Bank, an invented retail bank",
+ "source": "context/allowances-prd.md",
+ "records": [
+  {
+   "id": "C-1",
+   "type": "capability",
+   "title": "Set an allowance"
+  },
+  {
+   "id": "C-2",
+   "type": "capability",
+   "title": "Enforce at purchase"
+  },
+  {
+   "id": "C-3",
+   "type": "capability",
+   "title": "Tell the card user"
+  },
+  {
+   "id": "C-4",
+   "type": "capability",
+   "title": "Tell the cardholder"
+  },
+  {
+   "id": "C-5",
+   "type": "capability",
+   "title": "Service and comply"
+  },
+  {
+   "id": "R-01",
+   "type": "requirement",
+   "parent": "C-1",
+   "title": "Cardholder sets a monthly amount per card user",
+   "kind": "Functional",
+   "priority": "Must",
+   "source": "PRD section 3.1",
+   "statement": "The cardholder can set one monthly spending amount for each authorized card user on the account.",
+   "acceptance": [
+    "Amount can be set from $10 to the card's credit limit",
+    "Each card user has their own amount",
+    "A card user with no amount set is unaffected"
+   ],
+   "confidence": 5,
+   "status": "reviewed",
+   "locked": true
+  },
+  {
+   "id": "R-02",
+   "type": "requirement",
+   "parent": "C-1",
+   "title": "Allowance resets on a day the cardholder picks",
+   "kind": "Functional",
+   "priority": "Must",
+   "source": "PRD section 3.2",
+   "statement": "The allowance returns to its full amount on a day of the month chosen by the cardholder.",
+   "acceptance": [
+    "Any day from the 1st to the 28th can be chosen",
+    "The reset happens at midnight in the account's time zone"
+   ],
+   "confidence": 4,
+   "status": "reviewed"
+  },
+  {
+   "id": "R-03",
+   "type": "requirement",
+   "parent": "C-1",
+   "title": "A changed amount takes effect right away",
+   "kind": "Functional",
+   "priority": "Should",
+   "source": "PRD section 3.3",
+   "statement": "When the cardholder raises or lowers the amount mid-cycle, the new amount applies to the next purchase.",
+   "acceptance": [
+    "A change applies within 5 minutes",
+    "Spend so far in the cycle still counts"
+   ],
+   "confidence": 3,
+   "status": "needs-you",
+   "question": "The PRD says 'right away' in 3.3 but 'from the next cycle' in the FAQ. Which is intended?"
+  },
+  {
+   "id": "R-04",
+   "type": "requirement",
+   "parent": "C-1",
+   "title": "One allowance per card user, not per merchant type",
+   "kind": "Constraint",
+   "priority": "Must",
+   "source": "PRD section 3.4",
+   "statement": "At launch there is a single allowance per card user. Category budgets are out of scope.",
+   "acceptance": [
+    "No category controls appear in the app"
+   ],
+   "confidence": 5,
+   "status": "reviewed",
+   "locked": true
+  },
+  {
+   "id": "R-05",
+   "type": "requirement",
+   "parent": "C-2",
+   "title": "Purchases approved live are declined past the limit",
+   "kind": "Functional",
+   "priority": "Must",
+   "source": "PRD section 4.1",
+   "statement": "A purchase that is approved in real time is declined when it would take the card user over the allowance.",
+   "acceptance": [
+    "A purchase equal to the remaining amount is approved",
+    "A purchase one cent over is declined"
+   ],
+   "confidence": 5,
+   "status": "reviewed",
+   "locked": true
+  },
+  {
+   "id": "R-06",
+   "type": "requirement",
+   "parent": "C-2",
+   "title": "Charges that skip live approval are counted, not blocked",
+   "kind": "Functional",
+   "priority": "Must",
+   "source": "PRD section 4.2",
+   "statement": "Charges that post without live approval, such as transit taps, count toward the allowance but are not stopped.",
+   "acceptance": [
+    "Such charges reduce the remaining amount when they post",
+    "The cardholder is told when they push spend past the allowance"
+   ],
+   "confidence": 4,
+   "status": "ready"
+  },
+  {
+   "id": "R-07",
+   "type": "requirement",
+   "parent": "C-2",
+   "title": "Refunds return to the allowance in the same cycle",
+   "kind": "Functional",
+   "priority": "Should",
+   "source": "PRD section 4.3",
+   "statement": "A refund received in the same cycle as the purchase adds back to the remaining allowance.",
+   "acceptance": [
+    "A refund in a later cycle does not change that cycle's allowance"
+   ],
+   "confidence": 3,
+   "status": "needs-you",
+   "question": "Should a refund from an earlier cycle ever raise the current cycle's allowance? The PRD is silent."
+  },
+  {
+   "id": "R-08",
+   "type": "requirement",
+   "parent": "C-2",
+   "title": "A limit decline carries its own reason code",
+   "kind": "Functional",
+   "priority": "Must",
+   "source": "PRD section 4.4",
+   "statement": "Declines caused by the allowance are distinguishable from every other kind of decline.",
+   "acceptance": [
+    "The app and the agent desktop can both read the reason"
+   ],
+   "confidence": 5,
+   "status": "reviewed"
+  },
+  {
+   "id": "R-09",
+   "type": "requirement",
+   "parent": "C-2",
+   "title": "The limit check adds under 50 ms to approval",
+   "kind": "Non-functional",
+   "priority": "Must",
+   "source": "PRD section 4.5",
+   "statement": "Checking the allowance must not noticeably slow a purchase.",
+   "acceptance": [
+    "Added time is under 50 ms at the 99th percentile",
+    "Measured at twice the expected peak volume"
+   ],
+   "confidence": 4,
+   "status": "ready"
+  },
+  {
+   "id": "R-10",
+   "type": "requirement",
+   "parent": "C-3",
+   "title": "Card user sees what is left before paying",
+   "kind": "Functional",
+   "priority": "Must",
+   "source": "PRD section 5.1",
+   "statement": "The card user can see the remaining allowance and the reset date in the app.",
+   "acceptance": [
+    "The amount shown is no more than 1 minute old",
+    "The reset date is shown beside it"
+   ],
+   "confidence": 5,
+   "status": "ready"
+  },
+  {
+   "id": "R-11",
+   "type": "requirement",
+   "parent": "C-3",
+   "title": "Card user is told why a purchase was declined",
+   "kind": "Functional",
+   "priority": "Must",
+   "source": "PRD section 5.2",
+   "statement": "After a limit decline the card user gets a message that names the allowance as the reason.",
+   "acceptance": [
+    "The message arrives within 10 seconds",
+    "It shows how far over the purchase was"
+   ],
+   "confidence": 4,
+   "status": "ready"
+  },
+  {
+   "id": "R-12",
+   "type": "requirement",
+   "parent": "C-3",
+   "title": "Card user can ask for a top-up",
+   "kind": "Functional",
+   "priority": "Should",
+   "source": "PRD section 5.3",
+   "statement": "The card user can request more allowance for the current cycle from the decline message or the app.",
+   "acceptance": [
+    "A request names an amount and an optional note",
+    "Only one request can be open at a time"
+   ],
+   "confidence": 4,
+   "status": "ready"
+  },
+  {
+   "id": "R-13",
+   "type": "requirement",
+   "parent": "C-3",
+   "title": "Running-low alert at a threshold the cardholder sets",
+   "kind": "Functional",
+   "priority": "Could",
+   "source": "PRD section 5.4",
+   "statement": "The card user is alerted when the remaining allowance falls below a threshold.",
+   "acceptance": [
+    "Threshold can be an amount or a percentage"
+   ],
+   "confidence": 3,
+   "status": "ready"
+  },
+  {
+   "id": "R-14",
+   "type": "requirement",
+   "parent": "C-4",
+   "title": "Cardholder approves or declines a top-up request",
+   "kind": "Functional",
+   "priority": "Should",
+   "source": "PRD section 6.1",
+   "statement": "The cardholder can answer a top-up request in one step from a notification.",
+   "acceptance": [
+    "Approval raises this cycle's allowance only",
+    "The card user is told the outcome"
+   ],
+   "confidence": 4,
+   "status": "ready"
+  },
+  {
+   "id": "R-15",
+   "type": "requirement",
+   "parent": "C-4",
+   "title": "Statement shows spend by card user",
+   "kind": "Functional",
+   "priority": "Must",
+   "source": "PRD section 6.2",
+   "statement": "The monthly statement groups spend by card user and shows each allowance.",
+   "acceptance": [
+    "Each card user has a subtotal",
+    "The allowance amount appears beside the subtotal"
+   ],
+   "confidence": 4,
+   "status": "ready"
+  },
+  {
+   "id": "R-16",
+   "type": "requirement",
+   "parent": "C-4",
+   "title": "Cardholder is alerted when counted charges exceed the allowance",
+   "kind": "Functional",
+   "priority": "Must",
+   "source": "PRD section 6.3",
+   "statement": "When charges that were counted but not blocked take a card user past the allowance, the cardholder is alerted.",
+   "acceptance": [
+    "One alert per cycle per card user",
+    "The alert names the merchant of the charge"
+   ],
+   "confidence": 4,
+   "status": "ready"
+  },
+  {
+   "id": "R-17",
+   "type": "requirement",
+   "parent": "C-5",
+   "title": "Agents can see a card user's allowance and recent declines",
+   "kind": "Functional",
+   "priority": "Must",
+   "source": "PRD section 7.1",
+   "statement": "Servicing agents can see the allowance, the remaining amount and limit declines for any card user.",
+   "acceptance": [
+    "Shown in the existing account view",
+    "Declines list covers 90 days"
+   ],
+   "confidence": 5,
+   "status": "ready"
+  },
+  {
+   "id": "R-18",
+   "type": "requirement",
+   "parent": "C-5",
+   "title": "A limit decline is never scored as fraud",
+   "kind": "Constraint",
+   "priority": "Must",
+   "source": "PRD section 7.2",
+   "statement": "Declines caused by the allowance must not raise the card's fraud score or trigger a block.",
+   "acceptance": [
+    "No fraud case is opened for a limit decline"
+   ],
+   "confidence": 5,
+   "status": "ready"
+  },
+  {
+   "id": "R-19",
+   "type": "requirement",
+   "parent": "C-5",
+   "title": "Disclosure explains what the limit covers",
+   "kind": "Constraint",
+   "priority": "Must",
+   "source": "PRD section 7.3",
+   "statement": "Cardholders are told, before turning the feature on, which charges are blocked and which are only counted.",
+   "acceptance": [
+    "Wording is approved by Compliance",
+    "Shown once at setup and available later"
+   ],
+   "confidence": 4,
+   "status": "ready"
+  },
+  {
+   "id": "R-20",
+   "type": "requirement",
+   "parent": "C-5",
+   "title": "Card users under 18 need recorded consent",
+   "kind": "Constraint",
+   "priority": "Must",
+   "source": "PRD section 7.4",
+   "statement": "An allowance for a card user under 18 requires the cardholder's recorded consent.",
+   "acceptance": [
+    "Consent is stored with a date",
+    "Feature cannot be turned on without it"
+   ],
+   "confidence": 2,
+   "status": "needs-you",
+   "question": "The PRD names consent for under-18s but not who gives it or how it is recorded. Is cardholder consent enough?"
+  }
+ ]
+}

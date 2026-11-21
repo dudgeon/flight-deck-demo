@@ -18,6 +18,30 @@ Most tools need the user's approval the first time in a session, except
 
 From inside an artifact: `window.omnigent.prompt(text)` fills the chat box.
 
+An artifact is reloaded whenever its file changes, and it has no storage of its
+own. `window.omnigent.saveState(key, value)` keeps a small JSON value for that
+file, and the next load gets it back as `window.omnigent.state[key]`. Use it
+for the reader's place: an open card, a filter, edits not yet sent.
+
+## Structured views and scenarios
+
+For work that is many similar items reviewed one at a time, do not hand-write
+HTML. The bundled `view-kit` skill draws tables, boards, cards, summaries and
+forms from a JSON dataset and a small spec, with the `pa` command
+(`skills/view-kit/scripts/pa.py`, standard library only), and redraws them when
+the data changes. `skills/prd-to-requirements` and
+`skills/requirements-to-dependencies` are complete examples, and the
+`scenario-builder` skill explains how to make another, including a standalone
+click-through built with `pa preview`.
+
+## The Session panel
+
+The Session button in a session's header opens a panel that lists the
+workspace's `artifacts/` folder as Outputs and its `context/` folder as
+Context. Ticking context files adds `@context/...` mentions to the message box.
+A skill should write what it makes to `artifacts/` and look for the user's
+documents in `context/`.
+
 ## This session
 
 | Tool | Use it to |

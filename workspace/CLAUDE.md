@@ -11,6 +11,24 @@ viewer on the right.
   must be inline in its own HTML file.
 - Ask before running commands that change anything outside this folder.
 
+## Context
+
+`context/` holds the documents the user wants you to work from: PRDs, notes,
+platform documentation, exports. The user picks which of them a session should
+use from the Session panel, and they arrive as file mentions in a message.
+Read what you are pointed at. Do not go through the rest of `context/` unless
+asked, and never change a file in it.
+
+## Structured work
+
+When the work is many similar items that the user reviews one by one (a
+catalog of requirements, a set of explorations, a list of options), do not
+hand-write an HTML artifact. Keep the items in a dataset in `data/` and draw
+it with the `view-kit` skill, which also redraws the view when the data
+changes. Skills such as `prd-to-requirements` and
+`requirements-to-dependencies` are built this way, and `scenario-builder`
+makes new ones.
+
 ## Artifacts
 
 An artifact is a single self-contained HTML file in `artifacts/`. The viewer

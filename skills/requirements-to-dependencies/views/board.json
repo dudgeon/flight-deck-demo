@@ -1,0 +1,52 @@
+{
+ "view": "dependency-board",
+ "layout": "board",
+ "eyebrow": "Template · Work board",
+ "title": "{dataset.title}: dependency mapping",
+ "subtitle": "One exploration per requirement. Start them, answer the ones that need you, and review what comes back.",
+ "status_field": "explore_status",
+ "records": { "type": "requirement" },
+ "summary": { "count_by": "explore_status" },
+ "lanes": { "field": "explore_status", "order": ["queued", "working", "needs-you", "ready", "returned", "reviewed", "failed"] },
+ "tile": { "fields": [ { "field": "priority", "as": "chip" } ] },
+ "details": {
+  "requirement": {
+   "title": "{title}",
+   "sections": [
+    { "kind": "callout", "field": "explore_question", "label": "Needs your answer", "tone": "attn" },
+    { "kind": "callout", "field": "explore_return_note", "label": "You sent this back", "tone": "you" },
+    { "kind": "text", "field": "statement", "label": "Requirement" },
+    { "kind": "text", "field": "explore_note", "label": "Finding" },
+    { "kind": "children", "label": "What it depends on", "records": { "type": "dependency" },
+      "columns": [ { "field": "title", "label": "Dependency" }, { "field": "selected_option", "label": "Recommended", "as": "ref" }, { "field": "effort", "as": "chip" }, { "field": "confidence", "as": "meter" } ],
+      "empty": "No dependencies recorded yet." }
+   ]
+  },
+  "dependency": {
+   "title": "{title}",
+   "sections": [
+    { "kind": "text", "field": "summary", "label": "Finding" },
+    { "kind": "fields", "fields": [ { "field": "effort", "edit": { "options": ["S", "M", "L"] } }, { "field": "confidence", "as": "meter" }, { "field": "owner_team", "label": "Owning team" } ] },
+    { "kind": "children", "as": "options", "label": "Capabilities that could meet it", "records": { "type": "option" }, "pick": { "field": "selected_option" },
+      "fields": [ { "field": "fit", "label": "Fit", "as": "meter" }, { "field": "effort", "as": "chip" }, { "field": "maturity", "as": "chip" }, { "field": "owner_team", "as": "chip" } ] },
+    { "kind": "evidence", "field": "evidence", "label": "Evidence" }
+   ]
+  },
+  "option": {
+   "title": "{title}",
+   "sections": [
+    { "kind": "text", "field": "summary", "label": "What it does" },
+    { "kind": "fields", "fields": [ { "field": "fit", "as": "meter" }, { "field": "effort", "as": "chip" }, { "field": "maturity", "as": "chip" }, { "field": "owner_team", "label": "Owning team" } ] },
+    { "kind": "text", "field": "gaps", "label": "Gaps" }
+   ]
+  }
+ },
+ "actions": [
+  { "id": "explore", "label": "Start", "inline": true, "tone": "primary", "when": { "type": "requirement", "explore_status": ["queued", "failed"] }, "prompt": "Start exploring dependencies for {id} ({title})." },
+  { "id": "approve", "label": "Approve", "tone": "primary", "when": { "type": "requirement", "explore_status": ["ready"] }, "set": { "explore_status": "reviewed" }, "next": true },
+  { "id": "return", "label": "Send back", "when": { "type": "requirement", "explore_status": ["ready", "reviewed"] }, "ask": { "label": "What should the explorer look at again?", "field": "explore_return_note" }, "set": { "explore_status": "returned" }, "prompt": "Explore {id} ({title}) again. My note: {note}" },
+  { "id": "answer", "label": "Answer in chat", "tone": "primary", "when": { "type": "requirement", "explore_status": "needs-you" }, "prompt": "My answer on {id} ({title}): " },
+  { "id": "explore-all", "label": "Start all queued", "scope": "view", "tone": "primary", "prompt": "Start exploring dependencies for every queued requirement in {dataset}." },
+  { "id": "summarize", "label": "Summarize", "scope": "view", "prompt": "Summarize the dependency mapping in {dataset} and tell me what it means for the PRD." }
+ ]
+}
