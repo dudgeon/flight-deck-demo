@@ -42,7 +42,7 @@ person in the conversation, from the roster in `workspace/participants/`.
 | `web/src/` | Web UI source (React, Vite). Slim areas: `hangar/`, `shell/review/` (collab editor), `shell/SessionOverview*.tsx`, `lib/artifactBridge.ts`, `lib/chatView.ts`, `lib/participantTurn.ts`, `pages/LibraryPage.tsx`, `pages/InboxPage.tsx` |
 | `skills/` | Bundled skills, in every session. `view-kit/scripts/pa.py` is the `pa` command |
 | `workspace/` | Where sessions run: `participants/`, `scenarios/`, `context/`, `data/`, `artifacts/`, `frameworks/`, `templates/`, `progress/`; `.hangar/` (drafts, gitignored); its own `CLAUDE.md`, which is for sessions, not contributors |
-| `design/` | `tokens.json` (the only source of colors, fonts and corners) and `build_tokens.py` |
+| `design/` | `tokens.json` (the only source of colors, fonts and corners) and `build_tokens.py`; `avatars/`, the picture library and its style and prompt guide (D-108, D-109) |
 | `docs/` | Architecture, history, product notes, customizing, skill-writer reference |
 | `tests/` | `test_slim_*.py` pytest suites |
 | `vendor/` | Python runtime, wheels, tmux, and `scripts/build_vendor.sh` |

@@ -3,6 +3,7 @@ name: Support Insights
 kind: agent
 role: Support ticket analysis
 initials: SI
+avatar: avatars/support-insights.png
 backing: script
 call_for: what customers contact support about, how often, and how that has changed
 ---

@@ -3,6 +3,7 @@ name: Risk Review
 kind: agent
 role: Risk and compliance
 initials: RR
+avatar: avatars/risk-review.png
 backing: session
 call_for: regulatory, conduct, privacy and fraud risk in a plan or document
 ---

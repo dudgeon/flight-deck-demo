@@ -4,6 +4,7 @@ kind: person
 role: Design lead, Cards
 initials: MO
 stand_in: true
+avatar: avatars/mara-okafor.png
 backing: session
 call_for: the customer's experience, wording, flows, accessibility, research evidence
 ---
