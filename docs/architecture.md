@@ -311,7 +311,7 @@ GitHub namespace.
 | Bootstrap, skills | `omnigent/slim_bootstrap.py`, `slim_skills.py` | | `skills/README.md` |
 | Library | `server/routes/slim_library.py` | `pages/LibraryPage.tsx` | |
 | Runs and In flight | `server/routes/slim_runs.py` | `projectHome/ProjectInFlight.tsx`, `projectHome/projectRuns.ts` | `view-kit` (`pa flow`, `pa runs`) |
-| Director, threads and the run card | `server/routes/slim_runs.py` (`/slim/runs/{id}`) | `lib/runBlock.ts`, `components/chat/RunCardBlock.tsx`, `projectHome/RunParts.tsx` | `director`, `view-kit` (`pa brief`, `pa report`) |
+| Director, threads and the run card | `server/routes/slim_runs.py` (`/slim/runs/{id}`, `/slim/threads/{session}`) | `lib/runBlock.ts`, `components/chat/RunCardBlock.tsx`, `components/chat/DirectorBar.tsx`, `lib/threadContext.ts`, `projectHome/RunParts.tsx` | `director`, `view-kit` (`pa brief`, `pa report`) |
 | Hangar | `server/routes/slim_hangar.py` | `hangar/` | `build-person`, `scenario-builder` |
 | Inbox participants | `server/routes/slim_participant_inbox.py`, `server/inbox_media.py` | `pages/InboxPage.tsx`, `lib/proactiveInbox.ts` | `participants` |
 | Views and actions | | `lib/artifactBridge.ts`, `lib/chatView.ts` | `view-kit` |

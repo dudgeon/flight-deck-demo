@@ -230,9 +230,11 @@ None. The intent graph's level of detail is held until something needs it
    in a thread, write the brief and read milestones; a live run card in the
    director's chat. **Built**, opt-in until flown with a live agent; see
    "Aviator as director" in [features.md](features.md).
-4. **The direct line**: strip, rail and the thread's turns in the director's
-   chat, and stepping into a thread in place of the chat. Unblocked by D-116
-   and D-117.
+4. **Stepping into a thread** (D-117): the thread in place of the chat, the
+   director folded to a bar that leads back and shows what else is in
+   flight. **Built.**
+   **The direct line**: strip, rail and the thread's turns in the director's
+   chat (D-90, D-91, D-116). Not built.
 5. **Threads on items** (D-95). After step 3.
 6. **Projects with a goal** (D-97): a project names its goal and area; an
    area page; connections. Unblocked by D-119.

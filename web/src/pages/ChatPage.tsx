@@ -339,6 +339,7 @@ import {
   useSessionHarnessPickerProps,
 } from "@/components/composer/useSessionHarnessPickerProps";
 import { nextTranscriptBottomPin, type TranscriptBottomPin } from "./transcriptBottomPin";
+import { DirectorBar } from "@/components/chat/DirectorBar";
 import { Transcript } from "@/components/chat/Transcript";
 
 /**
@@ -1935,6 +1936,8 @@ const MainAgentSurface = memo(function MainAgentSurfaceImpl({
           {/* The scrolling transcript column owns every streaming-hot store
           subscription and the bubble pipeline, so an SSE frame re-renders it
           alone — this surface's composer and chrome below bail out. */}
+          {/* omnigent-slim: on a thread's page the director folds to a bar on top (D-117). */}
+          <DirectorBar conversationId={conversationId} />
           <EditSentMessageContext.Provider value={composerReadOnly ? null : editSentMessage}>
             <Transcript
               hostId={hostId}
