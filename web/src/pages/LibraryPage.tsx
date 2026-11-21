@@ -280,7 +280,7 @@ function DemoCard({ demo }: { demo: LibraryDemo }) {
       <div className="lib-meta">
         <span className="lib-meter" aria-hidden="true">
           {demo.meter.map((on, i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: one tick per turn, in order
+            // oxlint-disable-next-line react/no-array-index-key -- one tick per turn, in order
             <i key={i} className={on && live ? "live" : undefined} />
           ))}
         </span>
