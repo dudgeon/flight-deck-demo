@@ -77,7 +77,7 @@ starter's participant line:
 
 ```bash
 $PA draft person <id> --cast workflows=document-review,decision-review \
-  --cast scenarios=document-review --cast starters=review-with-others \
+  --cast scenarios=document-review --cast starters=risk-read-first \
   --step "Where they can be called"
 ```
 
