@@ -12,6 +12,12 @@ goes live when it is **published**, which keeps the previous version so it can
 be restored. The Hangar (`/hangar` in the app) shows the same draft, its checks,
 what would change and who is affected.
 
+In the app, the person's page in the Hangar is itself the editor (D-63): the
+user can type into the fields, and you may be the Aviator in its pop-over,
+working on the draft that is open. Your changes to the draft show on that page
+as you make them, so you don't need to repeat them in the chat. Keep to small
+steps and say what you changed.
+
 ```bash
 PA="python3 <this skill's folder>/../view-kit/scripts/pa.py"
 ```
@@ -62,12 +68,25 @@ against, so make it a short list of topics.
 
 ### 3. Where they can be called
 
-Everyone on the roster can be called from any session. Some workflows list who
-may take part. Show the workflows (`ls ../skills/*/scenario.json`, or the
-Hangar's Workflows shelf) and ask whether they should be added to any. Adding
-someone to a workflow is a change to that workflow, which the Hangar cannot
-draft yet: if the user wants it, say so and tell them it comes with the workflow
-builder. Record the step: `--step "Where they can be called"`.
+Everyone on the roster can be called from any session. Some workflows,
+scenarios and starters list who may take part. Show them (the Hangar's
+Workflows and Scenarios shelves, or `$PA uses person <id>`) and ask whether
+they should be in any. Set the full list for each kind on the draft; publishing
+writes it into each `workflow.json` and `scenario.json` cast and each
+starter's participant line:
+
+```bash
+$PA draft person <id> --cast workflows=document-review,decision-review \
+  --cast scenarios=document-review --cast starters=review-with-others \
+  --step "Where they can be called"
+```
+
+The checks block taking someone out of a scenario whose script has them
+speak, and say when a scenario is ticked but its workflow is not.
+
+**Skills.** A person or agent can bring skills (from the Skills shelf): the
+session that plays them is told to use them. Ask if any fit, then
+`--set skills="frontend-design, prd-to-requirements"`.
 
 ### 4. Try them
 
@@ -88,7 +107,7 @@ Record the step: `--step "Try them"`.
 
 Run `$PA draft person <id>` to see the checks. Fix every failure. Then show
 the user, in a few lines: what changes, and who is affected (`$PA uses person
-<id>`: the workflows and starters that name them; only sessions started after
+<id>`: the workflows, scenarios and starters that name them; only sessions started after
 publishing see the change). Publish only when the user says so, either with
 the Publish button on the draft in the Hangar, or:
 
@@ -99,7 +118,7 @@ $PA publish person <id> --summary "one line on what changed"
 ## Retiring someone
 
 `$PA draft person <id> --remove`. Publishing it is blocked while any workflow
-or starter names them (`$PA uses person <id>`): tell the user what still uses
+scenario or starter names them (`$PA uses person <id>`): tell the user what still uses
 them. Discard with `$PA draft person <id> --discard`.
 
 ## Going back

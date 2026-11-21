@@ -157,10 +157,10 @@ def cmd_flow(args: argparse.Namespace) -> None:
         data = _load(path)
         flow = data.get("flow") or {}
         if args.scenario:
-            manifest = _read_json(Path(args.scenario) / "scenario.json")
+            manifest = resolve_run(Path(args.scenario))["manifest"]
             steps = manifest.get("steps") or []
             if not steps:
-                raise PaError(f"{args.scenario}/scenario.json has no steps")
+                raise PaError(f"{args.scenario}: the workflow has no steps")
             flow.update({
                 "workflow": manifest.get("title", ""), "scenario": manifest.get("scenario", ""),
                 "steps": steps, "count": manifest.get("progress"), "participants": manifest.get("participants"),
@@ -315,6 +315,8 @@ def _participant(path: Path) -> dict[str, Any]:
     if not meta.get("initials"):
         meta["initials"] = "".join(w[0] for w in str(meta["name"]).split()[:2]).upper()
     meta["stand_in"] = bool(meta.get("stand_in", meta["kind"] == "person"))
+    if isinstance(meta.get("skills"), str):
+        meta["skills"] = [s.strip() for s in meta["skills"].split(",") if s.strip()]
     meta["brief"] = body.strip()
     return meta
 
@@ -367,7 +369,7 @@ has called you in. Aviator passes your replies on word for word, shown under you
 ## Who you are
 
 {brief}
-
+{skills}
 ## How this works
 
 {conversation}- Stay in character as {name} for the whole session. Speak in the first person.
@@ -408,8 +410,14 @@ def opening_message(person: dict[str, Any], ask: str, conversation: str | None =
             f"  `sys_session_get_history` (conversation_id `{conversation}`), before anything else, and read it\n"
             "  again each time you are asked something new, because it will have moved on.\n"
         )
+    skills = ""
+    if person.get("skills"):
+        names = ", ".join(f"`{s}`" for s in person["skills"])
+        skills = (f"\n## Skills you bring\n\nUse these skills when they fit what you are asked: {names}. "
+                  "Read a skill's SKILL.md before you rely on it, and answer from what it says.\n")
     return OPENING.format(name=person["name"], role=person.get("role", ""), id=person["id"], brief=person["brief"],
-                          standin=standin, conversation=seen, ask=ask or "Introduce yourself in one sentence and wait.")
+                          standin=standin, conversation=seen, skills=skills,
+                          ask=ask or "Introduce yourself in one sentence and wait.")
 
 
 def cmd_who(args: argparse.Namespace) -> None:
@@ -418,7 +426,7 @@ def cmd_who(args: argparse.Namespace) -> None:
     if not roster:
         raise PaError(f"no participant files in {folder}/")
     if args.scenario:
-        roster, missing = _eligible(_read_json(Path(args.scenario) / "scenario.json"), roster, "scenario.json")
+        roster, missing = _eligible(resolve_run(Path(args.scenario))["manifest"], roster, "scenario.json")
         if missing:
             raise PaError("; ".join(missing))
         if not roster:
@@ -747,16 +755,196 @@ def _check_records(records: list[dict[str, Any]], schemas: dict[str, Any], where
     return problems
 
 
-def _scenario(folder: Path) -> tuple[dict[str, Any], list[str]]:
-    manifest_path = folder / "scenario.json"
-    manifest = _read_json(manifest_path)
+# ---------------------------------------------------------- workflows and scenarios
+#
+# A workflow (`skills/<id>/`, or `.claude/skills/<id>/` in the workspace for one
+# built in the Hangar) is a kind of work: SKILL.md, `workflow.json`, schemas
+# and views. A scenario (`<workspace>/scenarios/<id>/scenario.json`) is one
+# scripted run of a workflow: the cast, invented data and `script.md` (D-42).
+# Older workflow folders still hold everything in one `scenario.json`; those
+# are read as a workflow with a built-in scenario.
+
+WORKFLOW_FILE = "workflow.json"
+LEGACY_WORKFLOW_FILE = "scenario.json"
+SCENARIO_FILE = "scenario.json"
+SCENARIOS_DIR = "scenarios"
+SCENARIO_PARTS = ("participants", "fixtures", "script", "facts")
+
+
+def workflow_manifest_path(folder: Path) -> Path | None:
+    """The workflow manifest in a folder, or None when the folder is not a workflow."""
+    if (folder / WORKFLOW_FILE).is_file():
+        return folder / WORKFLOW_FILE
+    legacy = folder / LEGACY_WORKFLOW_FILE
+    if legacy.is_file() and (folder / "SKILL.md").is_file():
+        try:
+            if "workflow" not in _read_json(legacy):
+                return legacy
+        except PaError:
+            return legacy
+    return None
+
+
+def is_scenario_folder(folder: Path) -> bool:
+    path = folder / SCENARIO_FILE
+    if not path.is_file() or workflow_manifest_path(folder):
+        return False
+    try:
+        return bool(_read_json(path).get("workflow"))
+    except PaError:
+        return False
+
+
+def default_workspace() -> Path:
+    """The workspace pa works in: the current folder when it holds a roster, else the shipped one."""
+    return _roster_dir().parent
+
+
+def workflow_roots(workspace: Path | None = None) -> list[Path]:
+    """Where workflows live, first match wins: ones built in the Hangar, then the shipped ones."""
+    workspace = workspace or default_workspace()
+    roots = [workspace / ".claude" / "skills", KIT_DIR.parent.parent]
+    env = os.environ.get("OMNIGENT_SLIM_SKILLS_DIR", "").strip()
+    if env:
+        roots.insert(1, Path(env).expanduser())
+    seen: list[Path] = []
+    for root in roots:
+        if root.is_dir() and root.resolve() not in [s.resolve() for s in seen]:
+            seen.append(root)
+    return seen
+
+
+def find_workflow(wid: str, workspace: Path | None = None) -> Path | None:
+    for root in workflow_roots(workspace):
+        folder = root / wid
+        if workflow_manifest_path(folder):
+            return folder
+    return None
+
+
+def list_workflows(workspace: Path | None = None) -> dict[str, Path]:
+    """Every workflow by id; one built in the workspace hides a shipped one of the same id."""
+    found: dict[str, Path] = {}
+    for root in workflow_roots(workspace):
+        for folder in sorted(p for p in root.iterdir() if p.is_dir()):
+            if folder.name not in found and workflow_manifest_path(folder):
+                found[folder.name] = folder
+    return found
+
+
+def list_scenarios(workspace: Path | None = None) -> dict[str, Path]:
+    workspace = workspace or default_workspace()
+    root = workspace / SCENARIOS_DIR
+    if not root.is_dir():
+        return {}
+    return {p.name: p for p in sorted(root.iterdir()) if is_scenario_folder(p)}
+
+
+def scenarios_of(wid: str, workspace: Path | None = None) -> list[Path]:
+    """The scenarios that run a workflow, the one sharing its id first."""
+    out = []
+    for sid, folder in list_scenarios(workspace).items():
+        if _read_json(folder / SCENARIO_FILE).get("workflow") == wid:
+            out.append(folder)
+    return sorted(out, key=lambda f: (f.name != wid, f.name))
+
+
+def _workspace_of_scenario(folder: Path) -> Path:
+    return folder.resolve().parent.parent
+
+
+def resolve_run(folder: Path, workspace: Path | None = None) -> dict[str, Any]:
+    """Read a workflow or scenario folder as one run.
+
+    Returns the workflow folder and manifest, the scenario folder and manifest
+    (None when the workflow has no scenario), and `manifest`: the workflow
+    manifest with the scenario's cast, fixtures and script laid over it.
+    Paths in `views` and `schemas` are relative to `workflow_dir`; paths in
+    `fixtures` and `script` to `scenario_dir`.
+    """
+    folder = Path(folder)
     problems: list[str] = []
-    for key in ("scenario", "title", "summary", "views"):
-        if not manifest.get(key):
-            problems.append(f"scenario.json: missing {key}")
-    if not (folder / "SKILL.md").is_file():
+    if is_scenario_folder(folder):
+        scenario = _read_json(folder / SCENARIO_FILE)
+        ws = workspace or _workspace_of_scenario(folder)
+        wid = str(scenario.get("workflow"))
+        wdir = find_workflow(wid, ws)
+        if not wdir:
+            raise PaError(f"{folder.name}/scenario.json: runs the workflow {wid!r}, which does not exist")
+        sdir: Path | None = folder
+    else:
+        wdir = folder
+        if not workflow_manifest_path(wdir):
+            raise PaError(f"{folder} is neither a workflow folder (workflow.json) nor a scenario folder (scenario.json)")
+        scenario = None
+        sdir = None
+    wpath = workflow_manifest_path(wdir)
+    assert wpath is not None
+    workflow = _read_json(wpath)
+    wid = str(workflow.get("workflow") or workflow.get("scenario") or wdir.name)
+    if scenario is None:
+        if any(workflow.get(k) for k in ("fixtures", "script")):
+            scenario, sdir = workflow, wdir  # an older folder that holds its own scenario
+        else:
+            ws = workspace or default_workspace()
+            found = scenarios_of(wid, ws)
+            if found:
+                sdir = found[0]
+                scenario = _read_json(sdir / SCENARIO_FILE)
+    manifest = {k: v for k, v in workflow.items() if k not in ("fixtures", "script", "facts")}
+    manifest["scenario"] = wid
+    manifest["workflow"] = wid
+    if scenario is not None and scenario is not workflow:
+        for key in SCENARIO_PARTS:
+            if key in scenario:
+                manifest[key] = scenario[key]
+        allowed = workflow.get("participants")
+        if allowed:
+            for pid in scenario.get("participants") or []:
+                if pid not in allowed:
+                    problems.append(f"{sdir.name}/scenario.json: {pid!r} is in the cast but the workflow {wid} does not call on them")
+    elif scenario is workflow:
+        for key in ("fixtures", "script"):
+            if key in workflow:
+                manifest[key] = workflow[key]
+    return {
+        "workflow_id": wid,
+        "workflow_dir": wdir,
+        "workflow_file": wpath,
+        "workflow": workflow,
+        "scenario_id": (scenario or {}).get("scenario") if scenario is not workflow else wid,
+        "scenario_dir": sdir,
+        "scenario": scenario if scenario is not workflow else None,
+        "manifest": manifest,
+        "problems": problems,
+    }
+
+
+def _scenario(folder: Path) -> tuple[dict[str, Any], list[str]]:
+    """Kept for callers of the one-folder layout: the merged manifest and its problems."""
+    run = resolve_run(folder)
+    return run["manifest"], _workflow_problems(run) + run["problems"]
+
+
+def _workflow_problems(run: dict[str, Any]) -> list[str]:
+    workflow, wdir, name = run["workflow"], run["workflow_dir"], run["workflow_file"].name
+    problems = []
+    for key in ("title", "summary", "views"):
+        if not workflow.get(key):
+            problems.append(f"{name}: missing {key}")
+    if not (workflow.get("workflow") or workflow.get("scenario")):
+        problems.append(f"{name}: missing workflow (its id)")
+    if not (wdir / "SKILL.md").is_file():
         problems.append("SKILL.md is missing")
-    return manifest, problems
+    steps = workflow.get("steps") or []
+    if steps and not 2 <= len(steps) <= 8:
+        problems.append(f"{name}: a workflow has 2 to 8 steps, not {len(steps)}")
+    scenario = run["scenario"]
+    if scenario is not None:
+        for key in ("scenario", "title", "summary", "workflow"):
+            if not scenario.get(key):
+                problems.append(f"{run['scenario_dir'].name}/scenario.json: missing {key}")
+    return problems
 
 
 # ------------------------------------------------------------------ scripts
@@ -937,12 +1125,14 @@ def _read_script(path: Path, roster: dict[str, dict[str, Any]]) -> dict[str, Any
     return parse_script(path.read_text(encoding="utf-8"), roster, path.name)
 
 
-def cmd_check(args: argparse.Namespace) -> None:
-    folder = Path(args.scenario)
-    manifest, problems = _scenario(folder)
+def check_run(folder: Path, participants: str | None = None, workspace: Path | None = None) -> tuple[dict[str, Any], list[str], int]:
+    """Every problem with a workflow or scenario folder; (run, problems, number of actions)."""
+    run = resolve_run(folder, workspace)
+    manifest, wdir, sdir = run["manifest"], run["workflow_dir"], run["scenario_dir"]
+    problems = _workflow_problems(run) + run["problems"]
     actions: set[str] = set()
     for name, rel in (manifest.get("views") or {}).items():
-        path = folder / rel
+        path = wdir / rel
         if not path.is_file():
             problems.append(f"view {name}: {rel} does not exist")
             continue
@@ -951,63 +1141,87 @@ def cmd_check(args: argparse.Namespace) -> None:
         actions.update(a.get("id", "") for a in spec.get("actions", []) if a.get("prompt"))
     schemas: dict[str, Any] = {}
     if manifest.get("schemas"):
-        schemas = _read_json(folder / manifest["schemas"])
+        if (wdir / manifest["schemas"]).is_file():
+            schemas = _read_json(wdir / manifest["schemas"])
+        else:
+            problems.append(f"schemas: {manifest['schemas']} does not exist")
+    for name, rel in (manifest.get("fixtures") or {}).items():
+        if sdir is None or not (sdir / rel).is_file():
+            problems.append(f"fixture {name}: {rel} does not exist")
     fixture = (manifest.get("fixtures") or {}).get("dataset")
-    if fixture:
-        data = _load(folder / fixture)
+    if fixture and sdir is not None and (sdir / fixture).is_file():
+        data = _load(sdir / fixture)
         if schemas:
             problems += _check_records(data["records"], schemas, fixture)
-    skill_text = (folder / "SKILL.md").read_text(encoding="utf-8") if (folder / "SKILL.md").is_file() else ""
+    skill_text = (wdir / "SKILL.md").read_text(encoding="utf-8") if (wdir / "SKILL.md").is_file() else ""
     for action in sorted(actions):
         if action and action not in skill_text:
             problems.append(f"SKILL.md never mentions the action {action!r} that a view can send")
-    whole = _participants(_roster_dir(getattr(args, "participants", None)))
+    whole = _participants(_roster_dir(participants))
+    _, missing_live = _eligible(run["workflow"], whole, run["workflow_file"].name)
     eligible, missing = _eligible(manifest, whole, "scenario.json")
-    problems += missing + _check_participants(eligible)
+    problems += sorted(set(missing_live + missing)) + _check_participants(eligible)
     script_rel = manifest.get("script")
-    if script_rel and (folder / script_rel).is_file():
-        try:
-            script = _read_script(folder / script_rel, eligible)
-        except PaError as err:
-            problems.append(str(err))
+    if script_rel and sdir is not None:
+        if not (sdir / script_rel).is_file():
+            problems.append(f"script: {script_rel} does not exist")
         else:
-            views = manifest.get("views") or {}
-            for number, step in enumerate(script.get("steps", []), 1):
-                for key in ("canvas", "widget"):
-                    if step.get(key) and step[key] not in views:
-                        problems.append(f"{script_rel}: step {number} shows the view {step[key]!r}, which scenario.json does not list")
-    for path in folder.rglob("*"):
-        if path.suffix in {".json", ".html"} and path.is_file() and re.search(r"https?://", path.read_text(encoding="utf-8")):
-            problems.append(f"{path.relative_to(folder)}: contains a web address; scenarios must work offline")
+            try:
+                script = _read_script(sdir / script_rel, eligible)
+            except PaError as err:
+                problems.append(str(err))
+            else:
+                views = manifest.get("views") or {}
+                if not script.get("steps"):
+                    problems.append(f"{script_rel}: has no steps to play")
+                for number, step in enumerate(script.get("steps", []), 1):
+                    for key in ("canvas", "widget"):
+                        if step.get(key) and step[key] not in views:
+                            problems.append(f"{script_rel}: step {number} shows the view {step[key]!r}, which the workflow does not list")
+    for base in {wdir, sdir} - {None}:
+        for path in base.rglob("*"):
+            if path.suffix in {".json", ".html"} and path.is_file() and re.search(r"https?://", path.read_text(encoding="utf-8")):
+                problems.append(f"{path.relative_to(base)}: contains a web address; scenarios must work offline")
+    return run, problems, len(actions)
+
+
+def cmd_check(args: argparse.Namespace) -> None:
+    folder = Path(args.scenario)
+    run, problems, actions = check_run(folder, getattr(args, "participants", None))
     if problems:
         print(f"{len(problems)} problem{'s' if len(problems) != 1 else ''} in {folder}:")
         for problem in problems:
             print(f"  - {problem}")
         raise SystemExit(1)
-    print(f"{folder.name}: ok ({len(manifest.get('views') or {})} views, {len(actions)} actions)")
+    played = f", plays {run['scenario_dir'].name}" if run["scenario_dir"] is not None and run["manifest"].get("script") else ""
+    print(f"{folder.name}: ok ({len(run['manifest'].get('views') or {})} views, {actions} actions{played})")
 
 
-def cmd_preview(args: argparse.Namespace) -> None:
-    folder = Path(args.scenario)
-    manifest, problems = _scenario(folder)
+def preview_html(folder: Path, participants: str | None = None, workspace: Path | None = None) -> str:
+    """The standalone player for a scenario (or a workflow's first scenario)."""
+    run = resolve_run(Path(folder), workspace)
+    manifest, wdir, sdir = run["manifest"], run["workflow_dir"], run["scenario_dir"]
+    problems = _workflow_problems(run)
     if problems:
         raise PaError("; ".join(problems))
-    whole = _participants(_roster_dir(args.participants))
+    if sdir is None:
+        raise PaError(f"the workflow {run['workflow_id']} has no scenario to play yet")
+    whole = _participants(_roster_dir(participants))
     eligible, missing = _eligible(manifest, whole, "scenario.json")
     if missing:
         raise PaError("; ".join(missing))
     script_rel = manifest.get("script") or "script.md"
-    script = _read_script(folder / script_rel, eligible)
-    specs = {name: _read_json(folder / rel) for name, rel in (manifest.get("views") or {}).items()}
+    script = _read_script(sdir / script_rel, eligible)
+    specs = {name: _read_json(wdir / rel) for name, rel in (manifest.get("views") or {}).items()}
     fixture = (manifest.get("fixtures") or {}).get("dataset")
-    data = _public(_load(folder / fixture)) if fixture else {"records": []}
+    data = _public(_load(sdir / fixture)) if fixture else {"records": []}
     roster = {k: _card(v) for k, v in eligible.items()}
     if roster:
         data["participants"] = roster
     docs = {}
     for name, rel in (manifest.get("fixtures") or {}).items():
         if str(rel).endswith(".md"):
-            docs[name] = (folder / rel).read_text(encoding="utf-8")
+            docs[name] = (sdir / rel).read_text(encoding="utf-8")
     template = (KIT_DIR / "harness.html").read_text(encoding="utf-8")
     payload = {
         "manifest": manifest,
@@ -1019,8 +1233,12 @@ def cmd_preview(args: argparse.Namespace) -> None:
         "css": (KIT_DIR / "pa-kit.css").read_text(encoding="utf-8"),
         "js": (KIT_DIR / "pa-kit.js").read_text(encoding="utf-8"),
     }
-    html = template.replace("/*__PAYLOAD__*/", _embed(payload)).replace("__TITLE__", _escape(str(manifest.get("title", folder.name))))
-    _write_atomic(Path(args.out), html)
+    title = (run["scenario"] or {}).get("title") or manifest.get("title", Path(folder).name)
+    return template.replace("/*__PAYLOAD__*/", _embed(payload)).replace("__TITLE__", _escape(str(title)))
+
+
+def cmd_preview(args: argparse.Namespace) -> None:
+    _write_atomic(Path(args.out), preview_html(Path(args.scenario), args.participants))
     print(f"wrote {args.out}")
 
 
@@ -1092,23 +1310,36 @@ def _read_meta(path: Path) -> dict[str, Any]:
 
 
 def person_uses(workspace: Path, pid: str, skills: Path | None = None) -> dict[str, list[str]]:
-    """What depends on a participant: workflows that list them, starters that cast them."""
-    skills = skills or KIT_DIR.parent.parent
+    """What depends on a participant: workflows that call on them, scenarios and starters that cast them."""
     workflows = []
-    for manifest in sorted(skills.glob("*/scenario.json")):
+    folders = list_workflows(workspace)
+    if skills is not None:
+        for folder in sorted(skills.iterdir()):
+            if folder.name not in folders and workflow_manifest_path(folder):
+                folders[folder.name] = folder
+    for wid, folder in sorted(folders.items()):
+        path = workflow_manifest_path(folder)
         try:
-            data = json.loads(manifest.read_text(encoding="utf-8"))
+            data = json.loads(path.read_text(encoding="utf-8")) if path else {}
         except (OSError, json.JSONDecodeError):
             continue
         if pid in (data.get("participants") or []):
-            workflows.append(manifest.parent.name)
+            workflows.append(wid)
+    scenarios = []
+    for sid, folder in list_scenarios(workspace).items():
+        try:
+            data = _read_json(folder / SCENARIO_FILE)
+        except PaError:
+            continue
+        if pid in (data.get("participants") or []):
+            scenarios.append(sid)
     starters = []
     cast = re.compile(r"participants for this session:\s*([^\n]+)", re.I)
     for path in sorted((workspace / "templates" / "sessions").glob("*.md")):
         found = cast.search(path.read_text(encoding="utf-8"))
         if found and pid in [p.strip().rstrip(".") for p in found.group(1).split(",")]:
             starters.append(path.stem)
-    return {"workflows": workflows, "starters": starters}
+    return {"workflows": workflows, "scenarios": scenarios, "starters": starters}
 
 
 def draft_info(workspace: Path, pid: str, skills: Path | None = None) -> dict[str, Any]:
@@ -1130,6 +1361,8 @@ def draft_info(workspace: Path, pid: str, skills: Path | None = None) -> dict[st
             problems.append(f"{pid} is not live, so there is nothing to remove")
         for wid in uses["workflows"]:
             problems.append(f"the workflow {wid} names {pid}; take them out of it first")
+        for sid in uses.get("scenarios", []):
+            problems.append(f"the scenario {sid} casts {pid}; take them out of it first")
         for sid in uses["starters"]:
             problems.append(f"the starter {sid} casts {pid}; take them out of it first")
     else:
@@ -1141,7 +1374,29 @@ def draft_info(workspace: Path, pid: str, skills: Path | None = None) -> dict[st
                 problems.append(f"this draft: missing {key.replace('_', ' ')}")
         if action == "new" and live is not None:
             problems.append(f"someone called {pid} is already on the roster; pick another name")
-        unchanged = live is not None and live.strip() == text.strip()
+    cast_changes = _cast_changes(workspace, pid, meta, uses) if action != "remove" else []
+    if action != "remove":
+        name = (person or {}).get("name") or pid
+        for change in cast_changes:
+            if change["kind"] == "scenarios" and change["change"] == "remove" and _speaks_in(workspace, change["id"], name):
+                problems.append(f"{name} speaks in the scenario {change['id']}'s script; change the script before taking them out")
+        for change in cast_changes:
+            if change["kind"] == "workflows" and change["change"] == "remove":
+                for sid, folder in list_scenarios(workspace).items():
+                    data = _read_json(folder / SCENARIO_FILE)
+                    if data.get("workflow") == change["id"] and pid in (data.get("participants") or []) \
+                            and not any(c == {"kind": "scenarios", "id": sid, "change": "remove"} for c in cast_changes):
+                        problems.append(f"the scenario {sid} of {change['id']} casts {name}; take them out of it too")
+        workflows = list_workflows(workspace)
+        added_wf = {c["id"] for c in cast_changes if c["kind"] == "workflows" and c["change"] == "add"}
+        for change in cast_changes:
+            if change["kind"] == "scenarios" and change["change"] == "add":
+                wid = _read_json(list_scenarios(workspace)[change["id"]] / SCENARIO_FILE).get("workflow")
+                folder = workflows.get(str(wid))
+                allowed = _read_json(workflow_manifest_path(folder)).get("participants") if folder else None
+                if allowed and pid not in allowed and wid not in added_wf:
+                    problems.append(f"the scenario {change['id']} runs {wid}, which does not call on {name}; tick {wid} too")
+        unchanged = live is not None and live.strip() == (text or "").strip() and not cast_changes
         if unchanged:
             problems.append("nothing has changed yet")
     return {
@@ -1158,6 +1413,10 @@ def draft_info(workspace: Path, pid: str, skills: Path | None = None) -> dict[st
         "live": live,
         "problems": problems,
         "uses": uses,
+        "cast": {k: sorted(set(uses.get(k, [])) - {c["id"] for c in cast_changes if c["kind"] == k and c["change"] == "remove"}
+                          | {c["id"] for c in cast_changes if c["kind"] == k and c["change"] == "add"}) for k in CAST_KINDS},
+        "cast_changes": cast_changes,
+        "aviator": meta.get("aviator"),
         "path": f"{HANGAR_DIR}/drafts/people/{pid}.md",
         "target": f"{PARTICIPANTS_DIR}/{pid}.md",
     }
@@ -1212,8 +1471,17 @@ def start_draft(workspace: Path, *, pid: str | None = None, name: str | None = N
     return new_id
 
 
-def edit_draft(workspace: Path, pid: str, fields: dict[str, Any], brief: str | None = None, step: str | None = None) -> None:
-    """Change fields of a draft. A person is always a stand-in; the id never changes."""
+CAST_KINDS = ("workflows", "scenarios", "starters")
+
+
+def edit_draft(workspace: Path, pid: str, fields: dict[str, Any], brief: str | None = None, step: str | None = None,
+               cast: dict[str, list[str]] | None = None, aviator: str | None = None) -> None:
+    """Change fields of a draft. A person is always a stand-in; the id never changes.
+
+    `cast` is where they should be called once published: the full list of
+    workflows, scenarios and starters for each kind given. `aviator` remembers
+    the builder session working on this draft.
+    """
     text_path, meta_path = _draft_paths(workspace, _checked_id(pid))
     info = _read_meta(meta_path)
     if not info:
@@ -1227,14 +1495,78 @@ def edit_draft(workspace: Path, pid: str, fields: dict[str, Any], brief: str | N
         raise PaError(f"kind must be one of {', '.join(PARTICIPANT_KINDS)}")
     if fields.get("backing") not in (None, *PARTICIPANT_BACKINGS):
         raise PaError(f"backing must be one of {', '.join(PARTICIPANT_BACKINGS)}")
+    if cast is not None:
+        known = {"workflows": set(list_workflows(workspace)), "scenarios": set(list_scenarios(workspace)),
+                 "starters": {p.stem for p in (workspace / "templates" / "sessions").glob("*.md")}}
+        wanted = dict(info.get("cast") or {})
+        for kind, ids in cast.items():
+            if kind not in CAST_KINDS:
+                raise PaError(f"cast is by {', '.join(CAST_KINDS)}, not {kind}")
+            bad = sorted(set(ids) - known[kind])
+            if bad:
+                raise PaError(f"there is no {kind[:-1]} {', '.join(bad)}")
+            wanted[kind] = sorted(set(ids))
+        info["cast"] = wanted
+    if aviator is not None:
+        info["aviator"] = aviator
     person = _participant(text_path)
     meta = {**_meta_of(person), **fields}
     if meta.get("kind") == "person":
         meta["stand_in"] = True
     if "name" in fields and "initials" not in fields:
         meta["initials"] = "".join(w[0] for w in str(meta["name"]).split()[:2]).upper()
+    if isinstance(meta.get("skills"), str):
+        meta["skills"] = [s.strip() for s in meta["skills"].split(",") if s.strip()]
     _write_draft(workspace, pid, meta, person_text(meta, person["brief"] if brief is None else brief),
                  {**info, **({"step": step} if step else {})})
+
+
+def _cast_changes(workspace: Path, pid: str, info: dict[str, Any], uses: dict[str, list[str]]) -> list[dict[str, str]]:
+    changes = []
+    for kind, ids in (info.get("cast") or {}).items():
+        now = set(uses.get(kind, []))
+        changes += [{"kind": kind, "id": i, "change": "add"} for i in sorted(set(ids) - now)]
+        changes += [{"kind": kind, "id": i, "change": "remove"} for i in sorted(now - set(ids))]
+    return changes
+
+
+def _speaks_in(workspace: Path, sid: str, name: str) -> bool:
+    folder = list_scenarios(workspace).get(sid)
+    if not folder:
+        return False
+    rel = _read_json(folder / SCENARIO_FILE).get("script") or "script.md"
+    path = folder / rel
+    return path.is_file() and re.search(rf"^\*\*{re.escape(name)}:\*\*", path.read_text(encoding="utf-8"), re.M) is not None
+
+
+def _apply_cast(workspace: Path, pid: str, changes: list[dict[str, str]]) -> None:
+    """Add or take someone out of workflows, scenarios and starters, as the draft asks."""
+    workflows, scenarios = list_workflows(workspace), list_scenarios(workspace)
+    for change in changes:
+        kind, cid, add = change["kind"], change["id"], change["change"] == "add"
+        if kind in ("workflows", "scenarios"):
+            path = workflow_manifest_path(workflows[cid]) if kind == "workflows" else scenarios[cid] / SCENARIO_FILE
+            data = _read_json(path)
+            ids = [i for i in data.get("participants") or [] if i != pid]
+            if add:
+                ids.append(pid)
+            data["participants"] = ids
+            _write_atomic(path, json.dumps(data, indent=1, ensure_ascii=False) + "\n")
+        else:
+            path = workspace / "templates" / "sessions" / f"{cid}.md"
+            text = path.read_text(encoding="utf-8")
+            line = re.compile(r"(participants for this session:\s*)([^\n]*)", re.I)
+            found = line.search(text)
+            ids = [i.strip().rstrip(".") for i in found.group(2).split(",") if i.strip()] if found else []
+            ids = [i for i in ids if i != pid] + ([pid] if add else [])
+            new = ", ".join(ids) + "." if ids else ""
+            if found:
+                text = text[:found.start(2)] + new + text[found.end(2):]
+                if not ids:
+                    text = line.sub("", text, count=1).rstrip() + "\n"
+            elif ids:
+                text = text.rstrip() + f"\n\nParticipants for this session: {new}\n"
+            _write_atomic(path, text)
 
 
 def discard_draft(workspace: Path, pid: str) -> None:
@@ -1270,6 +1602,7 @@ def publish_draft(workspace: Path, pid: str, summary: str = "", skills: Path | N
     else:
         live_path.parent.mkdir(parents=True, exist_ok=True)
         _write_atomic(live_path, info["text"])
+        _apply_cast(workspace, pid, info["cast_changes"])
     discard_draft(workspace, pid)
     return {"id": pid, "action": info["action"], "kept": kept}
 
@@ -1318,8 +1651,13 @@ def cmd_draft(args: argparse.Namespace) -> None:
         if isinstance(fields.get(key), str):
             fields[key] = fields[key].lower() in ("true", "yes", "1")
     brief = Path(args.brief_file).read_text(encoding="utf-8") if args.brief_file else args.brief
-    if fields or brief is not None or args.step:
-        edit_draft(workspace, pid, fields, brief, args.step)
+    cast = None
+    for item in args.cast:
+        kind, _, ids = item.partition("=")
+        cast = cast or {}
+        cast[kind.strip()] = [i.strip() for i in ids.split(",") if i.strip()]
+    if fields or brief is not None or args.step or cast is not None:
+        edit_draft(workspace, pid, fields, brief, args.step, cast)
     info = draft_info(workspace, pid)
     if args.json:
         print(json.dumps({k: v for k, v in info.items() if k not in ("live",)}, indent=1, ensure_ascii=False))
@@ -1365,7 +1703,7 @@ def main(argv: list[str] | None = None) -> int:
 
     p = sub.add_parser("flow", help="record which step of a workflow the work is at, for the Session panel")
     p.add_argument("data")
-    p.add_argument("--scenario", help="the scenario folder, the first time, to take its steps")
+    p.add_argument("--scenario", help="the workflow (or scenario) folder, the first time, to take its steps")
     p.add_argument("--step", help="a step number, or part of its name")
     p.add_argument("--done", action="store_true", help="the workflow is finished")
     p.add_argument("--note", help="one line on what is happening in this step")
@@ -1374,7 +1712,7 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("who", help="list the participants the agent can call, or show one")
     p.add_argument("id", nargs="?", help="an id, or part of a name or role")
     p.add_argument("--dir", help="the roster folder; default participants/ in the workspace")
-    p.add_argument("--scenario", help="list only the participants this scenario folder names as eligible")
+    p.add_argument("--scenario", help="list only the participants this workflow or scenario folder names")
     p.add_argument("--json", action="store_true")
     p.add_argument("--header", action="store_true", help="print the opening lines of a participant block")
     p.add_argument("--session", help="with --header: the id of the session speaking for them")
@@ -1431,12 +1769,12 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("data")
     p.set_defaults(run=cmd_refresh)
 
-    p = sub.add_parser("check", help="validate a scenario folder")
+    p = sub.add_parser("check", help="validate a workflow or scenario folder")
     p.add_argument("scenario")
     p.add_argument("--participants", help="the roster folder; default participants/ in the workspace")
     p.set_defaults(run=cmd_check)
 
-    p = sub.add_parser("preview", help="build a standalone demo of a scenario")
+    p = sub.add_parser("preview", help="build a standalone demo of a scenario (or a workflow's first one)")
     p.add_argument("scenario")
     p.add_argument("--out", required=True)
     p.add_argument("--participants", help="the roster folder; default participants/ in the workspace")
@@ -1453,6 +1791,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--brief", help="replace the brief or script")
     p.add_argument("--brief-file", help="replace the brief or script with this file")
     p.add_argument("--step", help="which step of the guided build the draft is at, for the Hangar")
+    p.add_argument("--cast", action="append", default=[],
+                   help="where they are called once published: workflows=a,b or scenarios=a or starters=a (the full list)")
     p.add_argument("--discard", action="store_true")
     p.add_argument("--list", action="store_true", help="list every draft as JSON")
     p.add_argument("--json", action="store_true")

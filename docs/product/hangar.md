@@ -111,11 +111,16 @@ existing workflows. "Try" asks the draft a real question. Publish shows the
 checks, the files that change (the new roster file, each workflow's
 `scenario.json`), and who is affected.
 
+**Since D-63:** the build happens on the person's own page rather than in a
+flying session. The steps above are still the order Aviator follows when you
+ask it in the pop-over, and the build-person skill still works from any
+session. Casting (D-65) and skills (D-66) are fields on the page.
+
 ## Workflows and scenarios split (D-42)
 
 A workflow folder (`skills/<name>/`) keeps `SKILL.md`, `schemas/`, `views/`
-and the manifest. A scenario is its own folder (proposed:
-`workspace/scenarios/<name>/`) with a manifest naming the workflow or
+and the manifest. A scenario is its own folder
+(`workspace/scenarios/<name>/`, built in D-67) with a manifest naming the workflow or
 workflows it runs, the cast (roster ids), invented data and `script.md`. The
 seven existing demos move there as each workflow's first scenario. Places
 this touches: `pa check` and `pa preview` (they read fixtures and script
@@ -135,7 +140,7 @@ files are keyed by scenario id).
 
 1. Look-around Hangar: switch, frame, shelves, inspect pages. Read-only. **Built.**
 2. Person builder: drafts, checks, trial, publish, history, used-by guard.
-   **Built** (trial runs in a builder session, D-58).
+   **Built**; editing in place with the Aviator pop-over (D-63 to D-66).
 3. Scenario and workflow builders, with the D-42 split.
 
 ## Left for later

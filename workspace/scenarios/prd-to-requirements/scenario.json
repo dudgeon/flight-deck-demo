@@ -1,0 +1,11 @@
+{
+ "scenario": "prd-to-requirements",
+ "title": "Allowances PRD to requirements",
+ "summary": "The PRD to requirements workflow played with the invented Allowances PRD.",
+ "workflow": "prd-to-requirements",
+ "fixtures": {
+  "dataset": "fixtures/allowances.json",
+  "document": "fixtures/allowances-prd.md"
+ },
+ "script": "script.md"
+}

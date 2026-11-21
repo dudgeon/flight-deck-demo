@@ -24,7 +24,7 @@ session's workspace folder. `SKILL_DIR` means this skill's folder.
 
 Use the file the user named. Otherwise look in `context/` for a PRD. If there
 is none and the user wants a demo, copy the invented one:
-`mkdir -p context && cp SKILL_DIR/fixtures/allowances-prd.md context/`.
+`mkdir -p context && cp scenarios/prd-to-requirements/fixtures/allowances-prd.md context/`.
 Pick a short kebab-case slug for the initiative, e.g. `allowances`.
 
 ## 2. Ask how to catalog it (skip if the user already said)

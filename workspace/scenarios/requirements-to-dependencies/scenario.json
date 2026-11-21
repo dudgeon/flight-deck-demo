@@ -1,0 +1,11 @@
+{
+ "scenario": "requirements-to-dependencies",
+ "title": "Allowances dependencies",
+ "summary": "The Requirements to dependencies workflow played with the invented Allowances requirements and a platform map.",
+ "workflow": "requirements-to-dependencies",
+ "fixtures": {
+  "dataset": "fixtures/allowances.json",
+  "platform": "fixtures/platform-map.md"
+ },
+ "script": "script.md"
+}

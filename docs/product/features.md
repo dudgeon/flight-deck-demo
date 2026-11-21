@@ -340,20 +340,25 @@ workflow card and Library cards jumps to the same thing in the Hangar (D-51).
 
 **Person builder (slice 2).** People and agents are the first thing you can
 build. "New person or agent", Edit, Duplicate and Remove each start a draft
-(a copy under `workspace/.hangar/`, D-56) and, for building, open a session in
-the Hangar project with the build-person skill, which walks five steps: who
-they are, how they answer, where they can be called, try them, publish. The
-draft page shows the turn as people will see it, every check, who is affected
-and a line diff against the live file. Publish stays disabled while a check
-fails, asks for one line on what changed, and keeps the replaced version.
-Removing someone is blocked while any workflow or starter still uses them.
-History lists every kept version with its note and a diff, and Restore goes
-back through the same gate (D-57). The same moves exist for agents and scripts
-as `pa draft`, `pa publish`, `pa history` and `pa uses`. *Why:* PMs can shape
-the cast without editing files and without breaking a workflow someone else is
-flying. Not yet: a separate trial strip (trying uses a builder session, D-58),
-and adding a person to a workflow's cast from the builder (the skill says
-which `scenario.json` to change; workflow building is slice 3).
+(a copy under `workspace/.hangar/`, D-56). Publish stays disabled while a
+check fails, asks for one line on what changed, and keeps the replaced
+version. Removing someone is blocked while any workflow, scenario or starter
+still uses them. History lists every kept version with its note and a diff,
+and Restore goes back through the same gate (D-57). The same moves exist for
+agents and scripts as `pa draft`, `pa publish`, `pa history` and `pa uses`.
+
+**Editing in place (D-63 to D-66).** Edit no longer leaves the Hangar. The
+person's page turns into a form: who they are, the brief (the text the
+session playing them is told), the skills they bring, and tick boxes for the
+workflows, scenarios and starters they can be called in. Every change saves
+to the draft as you type; beside the form are the turn as people will see it,
+the checks, a diff and the cast changes. A fixed bar at the bottom holds the
+note, Publish and Discard. "Ask Aviator" opens a pop-over (pin it to make it a
+column) with a real Aviator session on this draft, and a "Try them" tab that
+asks the draft a real question. *Why:* Geoff found leaving for a new flying
+session to change a role or a brief clunky and opaque, and could not see how
+to give someone skills or put them in a workflow. Direct edits handle the
+simple changes; Aviator is there for rewrites, without leaving the page.
 
 **Where.** Design in `hangar.md`. Server: `omnigent/server/routes/slim_hangar.py`
 (`GET /v1/slim/hangar`, rendered views, templates and scenario players, and the

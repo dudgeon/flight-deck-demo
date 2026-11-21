@@ -5,11 +5,12 @@ D-47). This first slice only looks: it lists the things other people fly and
 how they refer to each other, all read from files that already exist:
 
 - People and agents: ``<workspace>/participants/*.md`` (the roster).
-- Workflows: each ``skills/<name>/`` folder with a ``scenario.json``.
+- Workflows: each ``skills/<name>/`` folder with a ``workflow.json`` (shipped,
+  locked), and ones built in the Hangar under ``<workspace>/.claude/skills/``.
 - Views: every view spec a workflow lists, plus the standalone artifact
   templates in ``<library>/artifacts/*.html``.
-- Scenarios: a workflow's scripted demo (``script.md`` and its fixtures). Until
-  D-42 moves them into their own folders there is one per workflow.
+- Scenarios: ``<workspace>/scenarios/<name>/``, a scripted run of a workflow
+  with its cast, invented data and ``script.md`` (D-42).
 - Skills: every ``skills/<name>/SKILL.md``.
 - Starters: the Library's canned sessions, ``<library>/sessions/*.md``.
 - Frameworks: ``<workspace>/frameworks/*.md``.
@@ -23,16 +24,13 @@ drafts, publish and restore of people (slice 2), all done by ``pa`` under
 
 from __future__ import annotations
 
-import argparse
 import contextlib
 import importlib.util
-import io
 import json
 import logging
 import os
 import re
 import sys
-import tempfile
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -155,31 +153,22 @@ def _person_entry(pa: ModuleType, person: dict[str, Any]) -> dict[str, Any]:
 # --------------------------------------------------------------- workflows
 
 
-def _check_workflow(pa: ModuleType, folder: Path) -> list[str]:
-    """Run ``pa check`` on one workflow folder and return its problems."""
-    out = io.StringIO()
-    args = argparse.Namespace(
-        scenario=str(folder), participants=str(workspace_dir() / "participants")
-    )
+def _check(pa: ModuleType, folder: Path) -> list[str]:
+    """``pa check`` on a workflow or scenario folder: its problems, in pa's words."""
     try:
-        with contextlib.redirect_stdout(out):
-            pa.cmd_check(args)
-    except SystemExit:
-        return [
-            line.strip()[2:]
-            for line in out.getvalue().splitlines()
-            if line.strip().startswith("- ")
-        ]
+        _, problems, _ = pa.check_run(
+            folder, str(workspace_dir() / "participants"), workspace_dir()
+        )
     except Exception as err:  # noqa: BLE001 -- PaError and friends: one problem, in its own words
         return [str(err) or type(err).__name__]
-    return []
+    return list(problems)
 
 
 def _script(
-    pa: ModuleType, folder: Path, manifest: dict[str, Any], roster: dict[str, Any]
+    pa: ModuleType, folder: Path | None, manifest: dict[str, Any], roster: dict[str, Any]
 ) -> dict[str, Any] | None:
     rel = manifest.get("script")
-    if not rel or not (folder / rel).is_file():
+    if folder is None or not rel or not (folder / rel).is_file():
         return None
     text = _read_text(folder / rel) or ""
     eligible = {pid: roster[pid] for pid in (manifest.get("participants") or []) if pid in roster}
@@ -204,6 +193,14 @@ def _script(
         "error": error,
         "hosts": hosts,
     }
+
+
+def _shown(path: Path) -> str:
+    """A path as the Hangar shows it: from the repo or the workspace."""
+    for base, label in ((workspace_dir(), "workspace"), (slim_skills_dir(), "skills")):
+        with contextlib.suppress(ValueError):
+            return f"{label}/{path.resolve().relative_to(base.resolve()).as_posix()}"
+    return path.as_posix()
 
 
 def _record_types(folder: Path, manifest: dict[str, Any]) -> list[dict[str, Any]]:
@@ -231,13 +228,15 @@ def _record_types(folder: Path, manifest: dict[str, Any]) -> list[dict[str, Any]
 
 
 def _workflow(pa: ModuleType, folder: Path, roster: dict[str, Any]) -> dict[str, Any] | None:
-    manifest = _json(folder / "scenario.json")
-    if not isinstance(manifest, dict):
+    try:
+        run = pa.resolve_run(folder, workspace_dir())
+    except Exception:  # noqa: BLE001 -- an unreadable workflow is left off the shelf
         return None
+    manifest, wid, sdir = run["manifest"], run["workflow_id"], run["scenario_dir"]
     wid = folder.name
-    script = _script(pa, folder, manifest, roster)
+    script = _script(pa, sdir, manifest, roster)
     fixture = (manifest.get("fixtures") or {}).get("dataset")
-    sample = _json(folder / fixture) if fixture else None
+    sample = _json(sdir / fixture) if fixture and sdir is not None else None
     sample = sample if isinstance(sample, dict) else {}
     hosts = script["hosts"] if script else {}
     views = []
@@ -260,10 +259,11 @@ def _workflow(pa: ModuleType, folder: Path, roster: dict[str, Any]) -> dict[str,
                 "host": hosts.get(name)
                 or ("chat" if spec.get("layout") in ("form", "detail") else "canvas"),
                 "actions": len(spec.get("actions", [])) + (1 if spec.get("submit") else 0),
-                "path": f"skills/{wid}/{rel}",
+                "path": _shown(folder / rel),
             }
         )
     skill_meta, _ = _front_matter(_read_text(folder / "SKILL.md") or "")
+    builtin = not folder.resolve().is_relative_to(workspace_dir().resolve())
     return {
         "id": wid,
         "title": str(manifest.get("title") or wid),
@@ -274,15 +274,54 @@ def _workflow(pa: ModuleType, folder: Path, roster: dict[str, Any]) -> dict[str,
         "inputs": manifest.get("inputs") or [],
         "launchers": manifest.get("launchers") or [],
         "work_products": manifest.get("work_products") or [],
-        "participants": [p for p in manifest.get("participants") or [] if isinstance(p, str)],
+        "participants": [
+            p for p in run["workflow"].get("participants") or [] if isinstance(p, str)
+        ],
         "records": _record_types(folder, manifest),
         "views": views,
         "script": script,
-        "fixtures": manifest.get("fixtures") or {},
-        "builtin": True,
-        "path": f"skills/{wid}/",
-        "problems": _check_workflow(pa, folder),
+        "scenarios": [s.name for s in pa.scenarios_of(wid, workspace_dir())],
+        "builtin": builtin,
+        "path": _shown(folder) + "/",
+        "problems": _check(pa, folder),
         "starters": [],
+    }
+
+
+def _scenario_entry(pa: ModuleType, folder: Path, roster: dict[str, Any]) -> dict[str, Any]:
+    entry: dict[str, Any] = {"id": folder.name, "path": _shown(folder) + "/"}
+    try:
+        run = pa.resolve_run(folder, workspace_dir())
+    except Exception as err:  # noqa: BLE001 -- a broken scenario is listed with its problem
+        raw = _json(folder / "scenario.json") or {}
+        return {
+            **entry,
+            "workflow": str(raw.get("workflow") or ""),
+            "title": str(raw.get("title") or folder.name),
+            "summary": str(raw.get("summary") or ""),
+            "steps": 0,
+            "error": None,
+            "text": "",
+            "cast": [],
+            "fixtures": [],
+            "problems": [str(err)],
+        }
+    scenario, manifest = run["scenario"] or {}, run["manifest"]
+    script = _script(pa, folder, manifest, roster)
+    return {
+        **entry,
+        "workflow": run["workflow_id"],
+        "title": str(scenario.get("title") or (script or {}).get("title") or folder.name),
+        "summary": str(scenario.get("summary") or ""),
+        "steps": (script or {}).get("steps", 0),
+        "error": (script or {}).get("error"),
+        "script_path": _shown(folder / str(manifest.get("script") or "script.md")),
+        "text": (script or {}).get("text", ""),
+        "cast": [p for p in manifest.get("participants") or [] if isinstance(p, str)],
+        "fixtures": [
+            _shown(folder / str(rel)) for rel in (manifest.get("fixtures") or {}).values()
+        ],
+        "problems": _check(pa, folder),
     }
 
 
@@ -301,7 +340,8 @@ def _skills(root: Path) -> list[dict[str, Any]]:
                 "id": folder.name,
                 "name": str(meta.get("name") or folder.name),
                 "description": str(meta.get("description") or ""),
-                "workflow": (folder / "scenario.json").is_file(),
+                "workflow": (folder / "workflow.json").is_file()
+                or (folder / "scenario.json").is_file(),
                 "files": sorted(
                     p.relative_to(folder).as_posix()
                     for p in folder.rglob("*")
@@ -355,13 +395,15 @@ def load_hangar() -> dict[str, Any]:
     by_person = {p["id"]: p for p in people}
     skills_root = slim_skills_dir()
     workflows = []
-    if skills_root.is_dir():
-        for folder in sorted(skills_root.iterdir()):
-            if folder.is_dir() and (folder / "scenario.json").is_file():
-                entry = _workflow(pa, folder, roster)
-                if entry is not None:
-                    workflows.append(entry)
+    for folder in pa.list_workflows(workspace_dir()).values():
+        entry = _workflow(pa, folder, roster)
+        if entry is not None:
+            workflows.append(entry)
     by_workflow = {w["id"]: w for w in workflows}
+    scenarios = [
+        _scenario_entry(pa, folder, roster)
+        for folder in pa.list_scenarios(workspace_dir()).values()
+    ]
 
     templates_root = _templates_dir()
     starters: list[dict[str, Any]] = []
@@ -396,6 +438,10 @@ def load_hangar() -> dict[str, Any]:
         for pid in workflow["participants"]:
             if pid in by_person:
                 by_person[pid]["used_in"]["workflows"].append(workflow["id"])
+    for scenario in scenarios:
+        for pid in scenario["cast"]:
+            if pid in by_person:
+                by_person[pid]["used_in"].setdefault("scenarios", []).append(scenario["id"])
     for starter in starters:
         for wid in starter["workflows"]:
             by_workflow[wid]["starters"].append(starter["id"])
@@ -410,22 +456,6 @@ def load_hangar() -> dict[str, Any]:
         needle = f"frameworks/{framework['id']}.md"
         framework["used_by"] = [s["id"] for s in skills if needle in s["text"]]
 
-    scenarios = [
-        {
-            "id": w["id"],
-            "workflow": w["id"],
-            "title": w["script"]["title"],
-            "steps": w["script"]["steps"],
-            "error": w["script"]["error"],
-            "path": f"skills/{w['id']}/{w['script']['path']}",
-            "text": w["script"]["text"],
-            "cast": w["participants"],
-            "fixtures": [f"skills/{w['id']}/{rel}" for rel in w["fixtures"].values()],
-            "problems": w["problems"],
-        }
-        for w in workflows
-        if w["script"]
-    ]
     # A real line each person speaks in a scenario, for "how they appear when flying".
     for person in people:
         speech = re.compile(rf"^\*\*{re.escape(person['name'])}:\*\*\s*(.+)$", re.MULTILINE)
@@ -492,6 +522,42 @@ def start_person_draft(pid: str, remove: bool = False) -> dict[str, Any]:
     return draft_detail(pid)
 
 
+_EDITABLE = ("name", "kind", "role", "initials", "backing", "call_for", "skills")
+
+
+def edit_person_draft(pid: str, body: dict[str, Any]) -> dict[str, Any]:
+    """Save edits made on the Hangar page into the draft (fields, brief, cast)."""
+    pa = _pa()
+    fields = {k: body["fields"][k] for k in _EDITABLE if k in (body.get("fields") or {})}
+    brief = body.get("brief")
+    cast = body.get("cast")
+    if brief is not None and not isinstance(brief, str):
+        raise HTTPException(status_code=422, detail="brief must be text")
+    if cast is not None and not (
+        isinstance(cast, dict)
+        and all(isinstance(v, list) and all(isinstance(i, str) for i in v) for v in cast.values())
+    ):
+        raise HTTPException(status_code=422, detail="cast must map a kind to a list of ids")
+    aviator = body.get("aviator")
+    _pa_call(
+        pa.edit_draft,
+        workspace_dir(),
+        pid,
+        fields,
+        brief,
+        None,
+        cast,
+        str(aviator) if aviator else None,
+    )
+    return draft_detail(pid)
+
+
+def new_person_draft(name: str, duplicate_of: str | None = None) -> dict[str, Any]:
+    pa = _pa()
+    pid = _pa_call(pa.start_draft, workspace_dir(), name=name, duplicate_of=duplicate_of)
+    return draft_detail(pid)
+
+
 def publish_person(pid: str, summary: str) -> dict[str, Any]:
     pa = _pa()
     return _pa_call(pa.publish_draft, workspace_dir(), pid, summary, slim_skills_dir())
@@ -519,20 +585,24 @@ def person_version(pid: str, version: str) -> dict[str, Any]:
 # --------------------------------------------------------------- rendering
 
 
+_NAME = re.compile(r"[a-z0-9][a-z0-9-]{0,80}")
+
+
 def _workflow_folder(workflow: str) -> Path:
-    if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,80}", workflow):
+    if not _NAME.fullmatch(workflow):
         raise HTTPException(status_code=404, detail="no such workflow")
-    folder = slim_skills_dir() / workflow
-    if not (folder / "scenario.json").is_file():
+    folder = _pa().find_workflow(workflow, workspace_dir())
+    if folder is None:
         raise HTTPException(status_code=404, detail="no such workflow")
     return folder
 
 
 def render_view(workflow: str, view: str) -> str:
-    """One view of a workflow drawn over its scenario's sample data, as ``pa render`` would."""
+    """One view of a workflow over its first scenario's sample data, as ``pa render`` draws it."""
     pa = _pa()
     folder = _workflow_folder(workflow)
-    manifest = _json(folder / "scenario.json") or {}
+    run = pa.resolve_run(folder, workspace_dir())
+    manifest, sdir = run["manifest"], run["scenario_dir"]
     rel = (manifest.get("views") or {}).get(view)
     if not rel:
         raise HTTPException(status_code=404, detail="no such view")
@@ -542,36 +612,32 @@ def render_view(workflow: str, view: str) -> str:
     roster = _roster(pa)
     fixture = (manifest.get("fixtures") or {}).get("dataset")
     data: dict[str, Any] = {"records": []}
-    if fixture and (folder / fixture).is_file():
-        loaded = _json(folder / fixture)
+    if fixture and sdir is not None and (sdir / fixture).is_file():
+        loaded = _json(sdir / fixture)
         if isinstance(loaded, dict):
             data = {k: v for k, v in loaded.items() if k not in ("views", "flow")}
     data["participants"] = {k: pa._card(v) for k, v in roster.items()}
-    script = _script(pa, folder, manifest, roster)
+    script = _script(pa, sdir, manifest, roster)
     host = (script or {}).get("hosts", {}).get(view) or (
         "chat" if spec.get("layout") in ("form", "detail") else "canvas"
     )
     return pa.page(spec, data, host)
 
 
-def render_preview(workflow: str) -> str:
-    """The scenario's standalone player, as ``pa preview`` builds it."""
+def render_preview(name: str) -> str:
+    """A scenario's player (or a workflow's first scenario's), as ``pa preview`` builds it."""
     pa = _pa()
-    folder = _workflow_folder(workflow)
-    out = io.StringIO()
-    with tempfile.TemporaryDirectory() as tmp:
-        target = Path(tmp) / "preview.html"
-        args = argparse.Namespace(
-            scenario=str(folder),
-            out=str(target),
-            participants=str(workspace_dir() / "participants"),
-        )
-        try:
-            with contextlib.redirect_stdout(out):
-                pa.cmd_preview(args)
-        except Exception as err:
-            raise HTTPException(status_code=422, detail=str(err)) from err
-        return target.read_text(encoding="utf-8")
+    if not _NAME.fullmatch(name):
+        raise HTTPException(status_code=404, detail="no such scenario")
+    folder = pa.list_scenarios(workspace_dir()).get(name) or pa.find_workflow(
+        name, workspace_dir()
+    )
+    if folder is None:
+        raise HTTPException(status_code=404, detail="no such scenario")
+    try:
+        return pa.preview_html(folder, str(workspace_dir() / "participants"), workspace_dir())
+    except Exception as err:
+        raise HTTPException(status_code=422, detail=str(err)) from err
 
 
 def read_template(template: str) -> str:
@@ -619,6 +685,20 @@ def create_slim_hangar_router(*, auth_provider: AuthProvider | None = None) -> A
     ) -> dict[str, Any]:
         require_user(request, auth_provider)
         return start_person_draft(pid, remove=bool((body or {}).get("remove")))
+
+    @router.patch("/slim/hangar/drafts/person/{pid}")
+    async def patch_draft(request: Request, pid: str, body: dict[str, Any]) -> dict[str, Any]:
+        require_user(request, auth_provider)
+        return edit_person_draft(pid, body)
+
+    @router.post("/slim/hangar/drafts/person")
+    async def post_new_draft(request: Request, body: dict[str, Any]) -> dict[str, Any]:
+        require_user(request, auth_provider)
+        name = str(body.get("name") or "").strip()
+        if not name:
+            raise HTTPException(status_code=422, detail="a new person needs a name")
+        duplicate = body.get("duplicate_of")
+        return new_person_draft(name[:80], str(duplicate) if duplicate else None)
 
     @router.delete("/slim/hangar/drafts/person/{pid}")
     async def delete_draft(request: Request, pid: str) -> dict[str, Any]:

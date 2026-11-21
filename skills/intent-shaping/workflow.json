@@ -1,0 +1,69 @@
+{
+ "workflow": "intent-shaping",
+ "title": "Intent shaping",
+ "summary": "Take an idea from a sentence to something a team could commit to, one step at a time, against a framework that says how deep and how broad the thinking has to be.",
+ "inputs": [
+  {
+   "name": "idea",
+   "kind": "any",
+   "hint": "The idea: a sentence in the chat, a note, or a problem from a discovery."
+  }
+ ],
+ "dataset": {
+  "path": "data/{slug}-intent.json",
+  "adds": [
+   "area",
+   "gap"
+  ],
+  "status_field": "status"
+ },
+ "steps": [
+  "Capture the idea",
+  "Frame it",
+  "Shape it",
+  "Test it",
+  "Make it committable"
+ ],
+ "progress": {
+  "records": {
+   "type": "area"
+  },
+  "field": "status",
+  "done": [
+   "reviewed"
+  ],
+  "noun": "areas",
+  "label": "at the target depth"
+ },
+ "schemas": "schemas/records.json",
+ "views": {
+  "map": "views/map.json",
+  "target": "views/target.json",
+  "area": "views/area.json",
+  "summary": "views/summary.json"
+ },
+ "work_products": [
+  {
+   "name": "Intent map",
+   "view": "map",
+   "out": "artifacts/{slug}-intent.html"
+  },
+  {
+   "name": "Intent brief",
+   "out": "artifacts/{slug}-intent-brief.md"
+  }
+ ],
+ "participants": [
+  "risk-review",
+  "cards-platform",
+  "mara-okafor",
+  "support-insights"
+ ],
+ "launchers": [
+  {
+   "label": "Shape this idea",
+   "on": "any",
+   "prompt": "Shape this into an intent: {path}"
+  }
+ ]
+}

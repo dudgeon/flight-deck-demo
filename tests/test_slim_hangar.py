@@ -159,3 +159,44 @@ def test_new_person_needs_every_required_line(
     assert (workspace / "participants" / "fraud-ops.md").is_file()
     with pytest.raises(pa.PaError):
         pa.start_draft(workspace, name="Fraud Ops")
+
+
+def test_edit_on_the_page_casts_and_gives_skills(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = _scratch_workspace(tmp_path, monkeypatch)
+    shutil.copytree(REPO / "workspace" / "scenarios", workspace / "scenarios")
+    skills = tmp_path / "skills"
+    shutil.copytree(REPO / "skills", skills, ignore=shutil.ignore_patterns("node_modules"))
+    monkeypatch.setenv("OMNIGENT_SLIM_SKILLS_DIR", str(skills))
+    slim_hangar.start_person_draft("mara-okafor")
+    # Taking Mara out of a scenario whose script she speaks in is blocked.
+    draft = slim_hangar.edit_person_draft(
+        "mara-okafor", {"cast": {"scenarios": ["decision-review", "delivery-status"]}}
+    )
+    assert any("speaks in the scenario" in p for p in draft["problems"])
+    everything = sorted(slim_hangar.load_hangar()["people"][0]["used_in"].get("scenarios", []))
+    assert everything
+    draft = slim_hangar.edit_person_draft(
+        "mara-okafor",
+        {
+            "fields": {"role": "Design director, Cards", "skills": ["intent"]},
+            "cast": {
+                "scenarios": draft["uses"]["scenarios"],
+                "workflows": [*draft["uses"]["workflows"], "prd-to-requirements"],
+            },
+        },
+    )
+    assert draft["problems"] == [], draft["problems"]
+    assert {"kind": "workflows", "id": "prd-to-requirements", "change": "add"} in draft[
+        "cast_changes"
+    ]
+    slim_hangar.publish_person("mara-okafor", "director, and on requirements")
+    import json
+
+    wf = json.loads((skills / "prd-to-requirements" / "workflow.json").read_text())
+    assert "mara-okafor" in wf["participants"]
+    pa = slim_hangar._pa()
+    person = pa._participants(workspace / "participants")["mara-okafor"]
+    assert person["skills"] == ["intent"]
+    assert "`intent`" in pa.opening_message(person, "hello")

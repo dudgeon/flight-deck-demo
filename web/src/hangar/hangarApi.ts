@@ -24,7 +24,7 @@ export interface HangarPerson {
   brief: string;
   path: string;
   problems: string[];
-  used_in: { workflows: string[]; starters: string[] };
+  used_in: { workflows: string[]; starters: string[]; scenarios?: string[] };
   sample: { text: string; scenario: string } | null;
   history: HangarVersion[];
   /** The live file, word for word. */
@@ -55,9 +55,27 @@ export interface HangarDraft {
   text: string | null;
   live: string | null;
   problems: string[];
-  uses: { workflows: string[]; starters: string[] };
+  uses: { workflows: string[]; starters: string[]; scenarios: string[] };
+  /** Where they will be called once published. */
+  cast: CastSet;
+  cast_changes: { kind: CastKind; id: string; change: "add" | "remove" }[];
+  /** The Aviator session helping with this draft, if one was started. */
+  aviator: string | null;
   path: string;
   target: string;
+}
+
+export type CastKind = "workflows" | "scenarios" | "starters";
+export type CastSet = Record<CastKind, string[]>;
+
+/** What the page edits directly; saved into the draft as you type. */
+export interface PersonEdit {
+  fields?: Partial<
+    Pick<HangarPerson, "name" | "kind" | "role" | "backing" | "call_for"> & { skills: string[] }
+  >;
+  brief?: string;
+  cast?: Partial<CastSet>;
+  aviator?: string;
 }
 
 export interface HangarView {
@@ -114,6 +132,8 @@ export interface HangarScenario {
   steps: number;
   error: string | null;
   path: string;
+  summary?: string;
+  script_path?: string;
   text: string;
   cast: string[];
   fixtures: string[];
@@ -245,6 +265,19 @@ export function useHangarActions() {
         send(draftApi(id), "POST", { remove: Boolean(remove) }),
       onSuccess: done,
     }),
+    edit: useMutation({
+      mutationFn: ({ id, edit }: { id: string; edit: PersonEdit }) =>
+        send(draftApi(id), "PATCH", edit) as Promise<HangarDraft>,
+      onSuccess: done,
+    }),
+    create: useMutation({
+      mutationFn: ({ name, duplicateOf }: { name: string; duplicateOf?: string }) =>
+        send("/v1/slim/hangar/drafts/person", "POST", {
+          name,
+          duplicate_of: duplicateOf ?? null,
+        }) as Promise<HangarDraft>,
+      onSuccess: done,
+    }),
     discard: useMutation({
       mutationFn: (id: string) => send(draftApi(id), "DELETE"),
       onSuccess: done,
@@ -293,6 +326,26 @@ export const BUILD_STEPS = [
   "Try them",
   "Publish",
 ] as const;
+
+/** The first message of the Aviator session that sits beside a draft in the Hangar. */
+export function aviatorPrompt(draft: Pick<HangarDraft, "id" | "action">, name: string): string {
+  return [
+    `I'm editing ${draft.action === "new" ? "a new person" : name} in the Hangar, with the build-person skill.`,
+    `The draft is .hangar/drafts/people/${draft.id}.md. I can see the page and edit fields there myself,`,
+    "so keep each change small, make it with `pa draft person` (never edit participants/ yourself),",
+    "and tell me in one line what you changed. Nothing is published until I press Publish.",
+    "Read the draft now and say in two lines what it says. Then wait for me.",
+  ].join(" ");
+}
+
+/** A test question for the draft, asked in the same Aviator session. */
+export function trialPrompt(draftId: string, name: string, question: string): string {
+  return [
+    `Try them (step 4 of build-person): call the unpublished draft ${name} in a background session`,
+    `with \`pa who ${draftId} --dir .hangar/drafts/people --opening --ask\`, ask them exactly this,`,
+    `and show their answer as their participant turn. Nothing is published. The question: ${question}`,
+  ].join(" ");
+}
 
 export const buildPrompts = {
   create: () =>
