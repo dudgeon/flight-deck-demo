@@ -315,7 +315,9 @@ for what the person did.
 **For the production team.** The tokens file is plain JSON with a light and a
 dark value per token, so it can feed any styling system. The contract that
 matters is the set of token names and what each means (in the skill), not the
-values.
+values. When a corporate palette replaces ours, swap the values but keep the
+meanings, in particular one hue reserved for the person's own marks and red
+only for failures (decisions D-48 to D-50).
 
 ## The Hangar (builder mode): designed, not yet built
 

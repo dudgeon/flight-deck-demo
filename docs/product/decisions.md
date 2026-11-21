@@ -233,13 +233,32 @@ folders work from a ZIP download, where git may not exist.*
 `skills` line naming the skills their session gets, so the Hangar can show
 and narrow it. Without it they get every bundled skill, as today.
 
+**D-48 · 2026-11-21 · Geoff.** Navy lives in the app's frame: the sidebar is
+navy, and content areas stay light (dark in dark mode). Navy also marks the
+one primary action on a card. *A solid frame makes the app recognizable at a
+glance and keeps the brand color out of the content, where color has to mean
+something.* Options were a navy sidebar, navy accents only, or a navy header
+band. Proposal and visuals: https://claude.ai/artifact/7YzXdsPux416J5qdkVuAea.
+
+**D-49 · 2026-11-21 · Geoff.** The person's own marks get one color of their
+own, today magenta (`--pa-you`). It is used only for what the person did:
+their edits, ticks, notes and things they sent back, and never for status or
+decoration. *In a workspace full of agent output, the person must be able to
+spot their own hand instantly. Magenta was chosen because it is far from
+every status color (green, blue, amber, red) and from the agent and author
+hues, so it can't be misread as a state.* Geoff expects a corporate design
+system to replace the exact hue later. What must survive is the rule, not
+the color: whatever palette comes in, keep one hue reserved for the person,
+distinct from all status, agent and author colors, and change only the
+`you` values in `design/tokens.json`. Rust was the alternative; it sat too
+close to amber and red.
+
+**D-50 · 2026-11-21 · Geoff.** "Needs you" is amber (`--pa-attn`), and red
+(`--pa-fail`) is kept only for real failures. *If waiting on the person were
+red, red would be everywhere and real failures would stop standing out;
+amber reads as "your turn" without alarm.* The alternative was red for both.
+
 ## Open
 
 - Whether views should also appear inside the chat, and in what form. Geoff
   asked for the options to be laid out and mocked before deciding.
-- The colors of the design language, proposed in
-  https://claude.ai/artifact/7YzXdsPux416J5qdkVuAea and shipped as the
-  recommended defaults until decided: where navy lives (navy sidebar,
-  recommended; navy accents; navy header band), the color for the person's
-  own edits (magenta, recommended; rust), and the color for "needs you"
-  (amber, recommended, with red kept for failures; red).
