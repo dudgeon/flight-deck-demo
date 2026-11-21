@@ -77,6 +77,7 @@ import {
   FolderHistory,
   NewScenarioButton,
 } from "./FolderEditor";
+import { FlyButton, demoNote } from "./FlyButton";
 import "./hangar.css";
 
 // ---------------------------------------------------------------- the frame
@@ -496,7 +497,7 @@ function Overview({ hangar }: { hangar: Hangar }) {
               "starters",
               "Starters",
               hangar.starters.length,
-              "The Library's canned sessions: how people start work.",
+              "Extra ways into a featured skill on the Library.",
             ],
             [
               "frameworks",
@@ -1239,6 +1240,15 @@ function ScenarioPage({ hangar }: { hangar: Hangar }) {
         )}
       </div>
       {scenario.summary && <p className="sub">{scenario.summary}</p>}
+      <div className="row flyrow">
+        <FlyButton scenarioId={scenario.id} demo={scenario.demo} disabled={broken} />
+        <span className="lab">{demoNote(scenario.demo)}</span>
+      </div>
+      {scenario.opening && (
+        <p className="lab">
+          Opening line: <q>{scenario.opening}</q>
+        </p>
+      )}
       <FolderActions hangar={hangar} kind="scenario" id={scenario.id} builtin={false} />
       <FolderHistory kind="scenario" id={scenario.id} versions={scenario.history ?? []} />
       <Section title="The player, as it runs in a demo">
@@ -1247,7 +1257,10 @@ function ScenarioPage({ hangar }: { hangar: Hangar }) {
           title={`${scenario.title} preview`}
           height={760}
         />
-        <p className="lab">Press Next to step through. Nothing reaches an agent.</p>
+        <p className="lab">
+          Press Next to step through. Nothing reaches an agent here; turns marked live are answered
+          for real when you fly it.
+        </p>
       </Section>
       <div className="halves" style={{ gridTemplateColumns: "minmax(0, 3fr) minmax(0, 2fr)" }}>
         <Section title="Screenplay · plain text">
@@ -1390,8 +1403,8 @@ function StarterShelf({ hangar }: { hangar: Hangar }) {
       <div>
         <h1>Starters</h1>
         <p className="sub">
-          The canned sessions in the Library. Each opens the composer with its prompt filled in;
-          nothing is sent by itself.
+          Extra ways into a featured skill: each shows on that skill's Library card and opens the
+          composer with its prompt filled in. Nothing is sent by itself.
         </p>
       </div>
       <div className="grid2">

@@ -44,6 +44,8 @@ the record shapes and view specs. A scenario is its own folder in
 `workspace/scenarios/<id>/` with invented fixture data, the cast and a
 markdown screenplay (D-21, D-42, D-67); many scenarios can run one workflow. `pa preview` turns it into one HTML file that plays the screenplay
 over the fixtures with the real views. `pa check` validates the package.
+Since D-42 the story lives in `workspace/scenarios/<id>/`, with `context/`
+documents and `cast/` notes beside the fixtures (D-79); flying it is below.
 
 **Where.** Workflows in `skills/<id>/` (for example `skills/document-review/`),
 scenarios in `workspace/scenarios/<id>/`; how to make one in `skills/scenario-builder/`; the
@@ -66,6 +68,38 @@ from the header otherwise.
 **Where.** `web/src/shell/SessionOverview.tsx`,
 `web/src/shell/SessionOverviewFiles.tsx`; `pa flow` writes the workflow card's
 data to `progress/`.
+
+## Flying a scenario as a demo
+
+**Intent.** "Scenario you build, demo you fly" (D-76). A demo should feel like
+the real product, because it is the real product: a real session in a project
+of its own, with the story's documents, data and people in place. The
+screenplay keeps it on rails where that matters, and hands over to a real
+agent on the turns that should show real reasoning (D-77). Demos are what the
+Library lists for people who want to see a kind of work, so launching one is
+one click and the same everywhere (D-78).
+
+**Behaviour.** "Fly this" on a scenario's Hangar page calls
+`POST /v1/slim/scenarios/{id}/fly`. That makes `workspace/demos/<id>/`
+(`pa.fly_demo`): the scenario's `context/` documents, a `data/` file started
+from the fixture with the records the script reveals held back, the roster
+with each cast member's `cast/<id>.md` notes appended under "In this story", a
+copy of a workflow built in the workspace, a `CLAUDE.md` that tells the agent
+how to run the demo, and `.demo/` with a snapshot of the scenario and a
+cursor. It creates or reuses the project "◆ Demo · <title>" (settings copied
+from the Workspace project, folder set to the demo's) and opens a new session
+there with the opening line in the composer. After each message the agent runs
+`pa demo next`, which prints the next turn: canned lines to say or pass on word
+for word (participant blocks included), the commands for documents, comments
+and views, and LIVE turns to answer for real; data changes are done for it. If
+the demo exists already, the button offers "Reset to the start" or "Keep
+going" (D-81).
+
+**Where.** `skills/view-kit/scripts/pa.py` (demos section, `pa demo
+next|status|fly`); `omnigent/server/routes/slim_hangar.py` (`fly_scenario`,
+the route); `web/src/hangar/FlyButton.tsx` and `useFlyScenario` /
+`demoSessionLink` in `web/src/hangar/hangarApi.ts`, which the Library reuses;
+the `[live]` direction in `skills/view-kit/references/script.md`.
 
 ## Runs and the "In flight" section
 
@@ -258,6 +292,44 @@ with `omnigent-slim:` comments; `GET /v1/slim/directors/{session}`;
 `GET /v1/slim/runs/{id}?session=` and `GET /v1/slim/threads/{session}` in
 `omnigent/server/routes/slim_runs.py`;
 the rule in `workspace/CLAUDE.md` ("Threads").
+
+## Routing to workflows, and what the director remembers
+
+**Intent.** Aviator should reach for the right workflow when an ask fits one,
+and stay out of the way when the person is thinking out loud (D-128). Adding
+a workflow must never mean editing Aviator (D-120), so every workflow carries
+its own routing, and the director reads the catalog at run time. A director
+also runs for days, across compactions and new sessions, so what it must not
+lose is written down where the person can see and correct it (D-134).
+
+**Behaviour.**
+
+- Each `workflow.json` has a `routing` block: when it fits, when it does
+  not, what it needs, its lifecycle stage, the one-line offer, example prompts
+  (start, offer, open; the routing evals use them) and its persona (default
+  strictness and the rules that never relax). The stages are
+  `workspace/frameworks/lifecycle.json`.
+- `pa workflows` lists every workflow by stage with that block (`--json` adds
+  the examples); `pa check` fails a Library or shipped workflow without one
+  (D-136).
+- The director skill routes by the ladder: named means start; a clear fit
+  gets one offer as a "Start it in a thread" / "Not now" question; open work
+  is done directly; quick questions are answered. It holds other threads'
+  news while the person is mid-exchange, except failures and blockers
+  (D-132), and changes strictness only when the person says so (D-131).
+- Director memory: a short charter beside the skill, `director/state.md`
+  (rewritten at checkpoints) and `director/memory.md` (`pa remember`), all
+  printed by `pa recap`, which `workspace/CLAUDE.md` tells a director to run
+  after a compaction (D-135).
+- **Director's notes** on the project page show both files, folded, once a
+  director has written; the person edits either in place, and a save that
+  would overwrite the director's newer text is refused (D-137).
+
+**Where.** `skills/*/workflow.json`, `skills/director/` (`SKILL.md`,
+`charter.md`), `skills/view-kit/scripts/pa.py` (`workflows`, `recap`,
+`remember`), `omnigent/server/routes/slim_director.py`,
+`web/src/projectHome/DirectorNotes.tsx`. Spec:
+[director-coordination.md](director-coordination.md).
 
 ## Projects with a goal, and their connections
 
@@ -510,21 +582,37 @@ latest" on a clash), and a comment loses its anchor when its text is deleted.
 `MarkdownRichTextViewer.tsx`; `skills/view-kit/scripts/docreview.py`
 (`pa review`); `skills/document-collaboration/`.
 
-## The Library and canned sessions
+## The Library
 
-**Intent.** A demo, or a PM new to the tool, should start from a good prompt
-rather than a blank box, and those prompts should be plain files anyone can
-edit.
+**Intent.** The Library is where work starts, both real work on the person's
+own material and demos of how the work goes (D-82). Productive work starts from
+the few product skills a PM uses across the lifecycle, so they get the top
+half; utility skills stay out of sight (D-83). Demos sit below, so the same
+page that starts a PRD review can show someone what one looks like. Nothing is
+typed into the Library: a card is only as good as the workflow's or scenario's
+own metadata, which keeps one source of truth as skills and scenarios change.
 
-**Behaviour.** The Library page lists artifact templates and canned
-sessions (prompts with fill-in fields). "Open in composer" opens a new
-session in the Workspace project with the prompt filled in; nothing is sent
-until the person presses Send. Each kind of work has a canned session that
-starts it.
+**Behaviour.** "Start with a skill" shows one spotlight card and a grid of the
+featured workflows, in lifecycle order. Each card has the title, a summary,
+the steps as an unnumbered list (D-84), a short form made from its inputs, and
+Start, which opens a new session in the Workspace project with the prompt
+filled in; nothing is sent until the person presses Send. A Hangar starter
+that names the workflow shows as "Other ways in", and the scenarios that run
+it as "See it flown". "Scenarios and demos" shows an "In flight" strip of
+demos already flown (Continue offers Reset to the start or Keep going), then a
+card per published scenario: kind (Scripted or Mixed), title, summary, the
+workflow it shows, the cast, a meter of live turns, about how long it takes,
+Fly and, when the script has live turns, a "Live turns" switch (D-85). Fly
+uses the same route and button as the Hangar's "Fly this". Templates are not
+listed here (D-88).
 
-**Where.** `workspace/templates/`, `web/src/pages/LibraryPage.tsx`,
-`omnigent/server/routes/slim_library.py`. How to add one:
-`docs/customizing.md`.
+**Where.** `omnigent/server/routes/slim_library.py` (`GET /v1/slim/library`),
+`web/src/pages/LibraryPage.tsx` and `library.css`; the `library` block in
+`skills/<id>/workflow.json` (`show`, `order`, `spotlight`, `summary`,
+`prompt`); `title`, `summary`, `length_minutes` and optional
+`"library": {"show": false, "order": N}` in `scenario.json`; extra starters in
+`workspace/templates/sessions/`; `live_turns` in `pa.fly_demo`. How to add
+one: `docs/customizing.md`.
 
 ## Canvas tools
 
@@ -574,6 +662,29 @@ Hangar projects follow the app out of a download folder
 **Where.** `setup.sh`, `scripts/install_sync.py`, `start.sh`,
 `omnigent/slim_bootstrap.py`, `tests/setup_sim/`, `tests/test_slim_install_sync.py`,
 README "Quick start" and "Updating to a newer version".
+
+## Usage log
+
+**Intent.** Know how the whole platform is used (which pages, workflows,
+skills and tools, what fails, what it costs), mostly while testing, without
+any work content leaving the work or reaching the log (D-122 to D-127).
+
+**Behaviour.** Every part of the app writes one JSON line per event to
+`logs/usage/<day>.jsonl` in the app folder: page views and clicks from the
+web app, sessions, turns and tokens from the server, Hangar actions, each
+tool and skill an agent uses, and every `pa` command with its exit code. A
+line holds ids, numbers and status words; any text with spaces becomes
+`<text N>`. Nothing is shown in flying. `pa usage summary` prints the counts;
+`pa usage pack` writes one file to the Desktop to carry elsewhere, optionally
+with names hashed; `pa usage eval start` tags an eval trial's lines and keeps
+them apart. Off with `OMNIGENT_SLIM_USAGE=0`.
+
+**Where.** `skills/view-kit/scripts/usagelog.py` (the writer, reader and
+packs), `pa.py` (`pa log`, `pa usage`, the per-command line),
+`omnigent/slim_usage.py` (server feeds), `omnigent/server/routes/slim_usage.py`
+(`POST /v1/slim/usage/events`, `GET /v1/slim/usage/summary`),
+`web/src/lib/slimUsage.ts` (the web sink), `tests/test_slim_usage.py`. Spec:
+[usage-logging.md](usage-logging.md).
 
 ## Dock launcher
 

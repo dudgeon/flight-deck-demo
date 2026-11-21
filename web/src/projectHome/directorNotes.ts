@@ -1,4 +1,4 @@
-// omnigent-slim: the director's notes on a project's page (D-128).
+// omnigent-slim: the director's notes on a project's page (D-134).
 //
 // A director runs for days, across compactions and new sessions, so what it
 // must not lose lives in two files it writes at checkpoints: where the

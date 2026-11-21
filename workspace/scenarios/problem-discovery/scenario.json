@@ -1,7 +1,8 @@
 {
  "scenario": "problem-discovery",
- "title": "Business onboarding problems",
- "summary": "The Problem discovery workflow played with invented evidence about business account onboarding.",
+ "title": "Why new businesses go quiet",
+ "summary": "Interviews and support data on business accounts that stall in their first two months. Which problems are worth solving?",
+ "length_minutes": 4,
  "workflow": "problem-discovery",
  "participants": [
   "mara-okafor",
@@ -10,5 +11,6 @@
  "fixtures": {
   "dataset": "fixtures/business-onboarding-problems.json"
  },
- "script": "script.md"
+ "script": "script.md",
+ "opening": "I have a folder of interviews and support data on new business accounts. A lot of them go quiet in the first two months. Find me the problems worth solving."
 }

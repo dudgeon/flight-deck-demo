@@ -123,7 +123,14 @@ workspace/director/
 /preview*.html
 workspace/.hangar/
 
+# omnigent-slim: flown demos are made from scenarios and never committed.
+workspace/demos/
+
 # Written by setup.sh: its report, the install manifest and saved versions (D-111).
 setup-report.txt
 .install-manifest.json
 /updates/
+
+# The usage log (D-122): local to each machine, never committed or shipped.
+# `pa usage pack` makes the one file that leaves a machine.
+/logs/

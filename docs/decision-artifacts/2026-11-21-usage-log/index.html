@@ -1,0 +1,275 @@
+<!-- decision-archive:start -->
+<div style="font:13px/1.45 system-ui,sans-serif;background:Canvas;color:CanvasText;border-bottom:1px solid GrayText;padding:8px 16px">Archived copy of <b>Flight Deck Usage Log</b>, a decision artifact from 2026-11-21. Nothing on this page is saved. The index of all of them is in <a href="../index.html">docs/decision-artifacts</a>.</div>
+<script>
+(function(){
+  var A={};
+  function snap(){var docs=Object.keys(A).map(function(k){return {id:k,data:function(){return A[k]},exists:true}});return {docs:docs,empty:!docs.length,size:docs.length,forEach:function(f){docs.forEach(f)}}}
+  function doc(id){return {id:id,get:async function(){return {id:id,exists:id in A,data:function(){return A[id]}}},set:async function(){},update:async function(){},delete:async function(){}}}
+  var db={collection:function(){return {get:async function(){return snap()},doc:doc,onSnapshot:function(f){setTimeout(function(){f(snap())},0);return function(){}},add:async function(){}}},doc:function(p){return doc(String(p).split("/").pop())}};
+  window.claude={use:async function(name){return name==="db"?db:null}};
+})();
+</script>
+<!-- decision-archive:end -->
+<title>Flight Deck Usage Log</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one reading column; each open question is a band with its visual, options and a recommendation. Product Aviator tokens. */
+:root{
+  --bg:#f4f6f9;--surface:#ffffff;--sunk:#eaeef3;--ink:#0f1e30;--ink-2:#475a70;--ink-3:#71829a;
+  --line:#d6dde6;--line-strong:#b4c0ce;--navy:#0a223d;--on-navy:#f2f6fa;--ok:#17794a;--ok-soft:#ddf1e6;
+  --attn:#8d5a00;--attn-soft:#f9ebcf;--fail:#b3261e;--agent:#4f46b8;--agent-soft:#e8e6f8;
+  --info:#1e6aa6;--info-soft:#ddebf7;--build:#0d6e78;--build-soft:#d9f0f1;--hangar-bg:#edf4f6;--hangar-grid:#d3e3e7;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--r:6px;--r-panel:10px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#071526;--surface:#0c1e33;--sunk:#091a2d;--ink:#e6edf5;--ink-2:#a6b6c8;--ink-3:#71849a;
+  --line:#1e3550;--line-strong:#3a5676;--navy:#2f64a0;--ok:#5bcb93;--ok-soft:#0f3123;--attn:#e9b44c;--attn-soft:#362808;
+  --fail:#ff8a80;--agent:#a59cff;--agent-soft:#211d47;--info:#7db7ea;--info-soft:#12304d;--build:#58c9d3;--build-soft:#0c3237;
+  --hangar-bg:#081d24;--hangar-grid:#12333b;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#071526;--surface:#0c1e33;--sunk:#091a2d;--ink:#e6edf5;--ink-2:#a6b6c8;--ink-3:#71849a;
+  --line:#1e3550;--line-strong:#3a5676;--navy:#2f64a0;--ok:#5bcb93;--ok-soft:#0f3123;--attn:#e9b44c;--attn-soft:#362808;
+  --fail:#ff8a80;--agent:#a59cff;--agent-soft:#211d47;--info:#7db7ea;--info-soft:#12304d;--build:#58c9d3;--build-soft:#0c3237;
+  --hangar-bg:#081d24;--hangar-grid:#12333b;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.55}
+.wrap{max-width:880px;margin:0 auto;padding-block:32px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:28px}
+h1{font-size:28px;letter-spacing:-.02em;margin:0;text-wrap:balance}
+h2{font-size:20px;letter-spacing:-.015em;margin:0 0 6px;text-wrap:balance}
+h3{font-size:15px;margin:0}
+p{margin:0;max-width:68ch}
+.lede{color:var(--ink-2);font-size:16px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-panel);padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.tag{display:inline-block;font-size:12.5px;font-weight:600;padding:2px 8px;border-radius:99px}
+.t-done{background:var(--ok-soft);color:var(--ok)}
+.t-open{background:var(--attn-soft);color:var(--attn)}
+.t-agent{background:var(--agent-soft);color:var(--agent)}
+.meta{color:var(--ink-3);font-size:13px}
+code,pre{font-family:var(--mono);font-size:12.5px}
+code{background:var(--sunk);padding:1px 5px;border-radius:4px}
+pre{background:var(--sunk);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin:0;overflow-x:auto;line-height:1.5}
+.flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:10px;align-items:center}
+.feeds,.outs{display:flex;flex-direction:column;gap:8px}
+.box{border:1px solid var(--line-strong);border-radius:var(--r);padding:8px 10px;background:var(--surface);font-size:13px;min-width:0}
+.box b{display:block;font-size:13.5px}
+.box span{color:var(--ink-2)}
+.writer{background:var(--navy);color:var(--on-navy);border:0;text-align:center;padding:16px 12px}
+.writer span{color:var(--on-navy);opacity:.8}
+.arrow{color:var(--ink-3);font-size:20px}
+@media (max-width:640px){.flow{grid-template-columns:1fr}.arrow{transform:rotate(90deg);justify-self:center}}
+.redact{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.redact{grid-template-columns:1fr}}
+.redact>*,.tree>*,.flow>*,.opts>*{min-width:0}
+.cap{font-size:12.5px;color:var(--ink-3);margin-bottom:4px}
+.strike{color:var(--fail)}
+.keep{color:var(--ok)}
+.q{border-left:4px solid var(--attn)}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.opt{border:1px solid var(--line);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:6px;background:var(--bg)}
+.opt.rec{border-color:var(--navy);box-shadow:inset 0 0 0 1px var(--navy)}
+.opt h3{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.opt p{font-size:13.5px;color:var(--ink-2)}
+.rec-line{background:var(--sunk);border-radius:var(--r);padding:10px 12px;font-size:14px}
+.tree{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.tree{grid-template-columns:1fr}}
+.mock{border:1px solid var(--line-strong);border-radius:var(--r-panel);overflow:hidden;background:var(--hangar-bg);background-image:linear-gradient(var(--hangar-grid) 1px,transparent 1px),linear-gradient(90deg,var(--hangar-grid) 1px,transparent 1px);background-size:18px 18px}
+.band{background:var(--build);color:var(--on-navy);padding:8px 14px;font-size:13px;font-weight:600}
+.mockbody{padding:14px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media (max-width:640px){.mockbody{grid-template-columns:1fr 1fr}}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px;min-width:0}
+.tile .n{font-size:22px;font-weight:650;font-variant-numeric:tabular-nums}
+.tile .l{font-size:12.5px;color:var(--ink-2)}
+.wide{grid-column:span 2}
+.bar{display:flex;align-items:center;gap:8px;font-size:12.5px;margin-top:5px}
+.bar i{display:block;height:8px;border-radius:4px;background:var(--build)}
+.bar em{font-style:normal;color:var(--ink-3);font-variant-numeric:tabular-nums;margin-left:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+td,th{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--ink-3);font-weight:600;font-size:12.5px}
+.tablewrap{overflow-x:auto}
+a{color:var(--info)}
+</style>
+
+<div class="wrap">
+  <header class="stack">
+    <span class="meta">Flight Deck · usage logging · 21 November 2026 · PR 39</span>
+    <h1>Usage log: how the whole platform is used</h1>
+    <p class="lede">You asked for logs as files, kept locally, that can later be put together, analysed and one day sent to a server. That is built. Three choices remain that are yours, below. Each was built to the recommendation, so nothing waits on you.</p>
+  </header>
+
+  <section class="panel">
+    <div><span class="tag t-done">Built</span></div>
+    <h2>Four feeds, one log</h2>
+    <p>Upstream Omnigent already records most of what we need. Its telemetry events and web analytics are switched off here because they would send data to the internet. We catch those events before they would leave and write them to a local file instead. We added two small feeds of our own: every <code>pa</code> command, and every tool or skill an agent uses.</p>
+    <div class="flow" role="img" aria-label="Web app, server, runner and pa feed one writer, which writes daily files in logs/usage">
+      <div class="feeds">
+        <div class="box"><b>Web app</b><span>pages, clicks, how long things take</span></div>
+        <div class="box"><b>Server</b><span>sessions, turns, tokens, cost, Hangar actions</span></div>
+        <div class="box"><b>Runner</b><span>each tool used, each skill loaded</span></div>
+        <div class="box"><b>pa</b><span>every command, plus skills' own events</span></div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box writer"><b>One writer</b><span>ids and words, never sentences</span></div>
+      <div class="arrow">→</div>
+      <div class="outs">
+        <div class="box"><b>logs/usage/2026-11-21.jsonl</b><span>one line per event, one file per day</span></div>
+        <div class="box"><b>logs/usage/eval/routing/…</b><span>eval trials, kept apart</span></div>
+        <div class="box"><b>Desktop pack</b><span><code>pa usage pack</code>: one file to carry elsewhere</span></div>
+      </div>
+    </div>
+    <p class="meta">The log lives in the app folder (<code>~/flight-deck/logs/</code> on the work Mac). Updates never touch it. Nothing changes on screen, so it never shows in a demo recording.</p>
+  </section>
+
+  <section class="panel">
+    <div><span class="tag t-done">Built</span></div>
+    <h2>What a line can hold</h2>
+    <p>The rule is enforced in one place, the writer, so no caller can forget it. A line may hold numbers, yes or no, and short words with no spaces, such as ids, status words and file names. Anything with spaces, such as a prompt, a title or a document's text, keeps only its length.</p>
+    <div class="redact">
+      <div>
+        <div class="cap">The agent runs</div>
+        <pre>pa init data/plan.json --title "<span class="strike">Acquire Northwind before March</span>"</pre>
+      </div>
+      <div>
+        <div class="cap">The log keeps</div>
+        <pre>pa.init  data=<span class="keep">plan.json</span>  title=<span class="keep">&lt;text 30&gt;</span>  exit=0</pre>
+      </div>
+    </div>
+    <p class="meta">File and record names do get through, for example <code>plan.json</code>. That is the subject of question UL-2.</p>
+  </section>
+
+  <section class="panel">
+    <div><span class="tag t-done">Built</span></div>
+    <h2>What you can read today</h2>
+    <p><code>pa usage summary</code> in a terminal, with <code>--since 7d</code> or <code>--json</code> for a notebook. Below is what a day with one long session might look like. The numbers are illustrative.</p>
+<pre>164 events, 2026-11-21 09:02 to 17:48
+2 sessions; turns: 11 completed, 1 failed; tokens in 412,800, out 38,120, about $4.87
+
+Pages            library 14 · chat 9 · hangar 5 · inbox 3
+Skills loaded    intent-shaping 2 · director 1 · problem-discovery 1
+Tools used       Bash 41 · Read 23 · Edit 9 · Skill 4 · Write 4
+pa commands      set 12 · get 8 · render 7 · flow 5 · report 3 · brief 2
+  that failed    render 1
+Hangar           draft_save 1 · publish 1</pre>
+  </section>
+
+  <section class="panel">
+    <div><span class="tag t-agent">For testing</span></div>
+    <h2>How it feeds the evals</h2>
+    <p>The routing tests in the Aviator design (AV-6) grade what the agent did. Which skill did it load? Did it brief a thread? Did a turn fail? Today the only record of that is the transcript. With the log, the eval runner marks the start of each trial, and the grader reads that trial's lines directly.</p>
+<pre>pa usage eval start routing r-07 2     # every line now tagged routing / r-07 / trial 2
+  … the trial runs …
+pa usage eval stop
+pa usage summary --suite routing       # trials stay out of your real numbers unless asked</pre>
+    <p class="meta">One next step goes in with the routing suite. When Aviator offers a hero skill, the director skill would write <code>pa log offer.made</code>. That makes "did it offer?" something code can check, instead of a judge's call.</p>
+  </section>
+
+  <section class="panel q" id="ul-1">
+    <div><span class="tag t-open">Question UL-1</span></div>
+    <h2>Should usage logs go into the repo's git history?</h2>
+    <p>You said "files in the repo". They are in the repo folder, but git ignores them. The question is whether any of them should be committed, which would make them travel with Send to repo the way the people and scenarios you publish do.</p>
+    <div class="tree">
+      <div>
+        <div class="cap">Recommended: logs stay out of git</div>
+<pre>flight-deck/
+├─ workspace/      committed (D-75)
+├─ skills/         committed
+└─ logs/usage/     <span class="keep">ignored by git</span>
+   ├─ 2026-11-21.jsonl
+   └─ eval/routing/…
+Desktop/
+└─ flight-deck-usage-9ba3…-2026-11-21.jsonl.gz
+                   ← you carry this</pre>
+      </div>
+      <div>
+        <div class="cap">Alternative: the Mac mini commits packs</div>
+<pre>flight-deck/
+├─ workspace/
+├─ usage-packs/    <span class="strike">committed by Send to repo</span>
+│  └─ mac-mini-2026-11-21.jsonl.gz
+└─ logs/usage/     ignored
+
+Every test day adds a file to git history,
+which can never be fully removed.</pre>
+      </div>
+    </div>
+    <div class="opts">
+      <div class="opt rec"><h3>Keep them out of git <span class="tag t-done">Recommended</span></h3><p>Logs stay on each machine. To combine them, run <code>pa usage pack</code> and move the file. Git history stays clean, and nothing from the work Mac can be pushed by accident.</p></div>
+      <div class="opt"><h3>Mac mini packs go in with Send to repo</h3><p>Test-day numbers travel with the code, so the production team sees real usage beside it. It is only safe because the Mac mini runs invented data. The work Mac has no git.</p></div>
+      <div class="opt"><h3>Commit the raw logs</h3><p>Everything is versioned automatically. Every session adds noise to every pull request, and history grows by megabytes a week.</p></div>
+      <div class="opt"><h3>Something else</h3><p>Tell me in the thread.</p></div>
+    </div>
+    <p class="rec-line"><b>Why the recommendation:</b> git history is permanent and public for this repo. Packs give you the same data when you want it, by a step you take on purpose.</p>
+  </section>
+
+  <section class="panel q" id="ul-2">
+    <div><span class="tag t-open">Question UL-2</span></div>
+    <h2>What may a pack from the work Mac hold?</h2>
+    <p>No sentences ever reach the log. Names do, though, and at work a file name can say something on its own. A fingerprint replaces each name with a short code that stays the same every time, so you can still count "the same dataset, edited 12 times" without knowing what it is called. Tools, skills, workflows, pages and status words always stay readable.</p>
+    <div class="redact">
+      <div>
+        <div class="cap">Names as written</div>
+        <pre>pa.set  data=<span class="strike">falcon-acquisition.json</span>
+        status=ready  workflow=intent-shaping</pre>
+      </div>
+      <div>
+        <div class="cap">Fingerprinted</div>
+        <pre>pa.set  data=<span class="keep">#3f9a02c1d4</span>
+        status=ready  workflow=intent-shaping</pre>
+      </div>
+    </div>
+    <div class="opts">
+      <div class="opt rec"><h3>Fingerprint work Mac packs <span class="tag t-done">Recommended</span></h3><p>The work Mac's own log keeps names, so you can read it there. Any pack made there is run with <code>--fingerprint</code>. The Mac mini keeps names, since its data is invented.</p></div>
+      <div class="opt"><h3>Names as written everywhere</h3><p>Everything is easiest to read. This relies on nobody giving a work file a revealing name.</p></div>
+      <div class="opt"><h3>Fingerprint everywhere</h3><p>The safest choice, but even your own test logs on the Mac mini become harder to read.</p></div>
+      <div class="opt"><h3>Something else</h3><p>For example, nothing leaves the work Mac at all for now.</p></div>
+    </div>
+    <p class="rec-line"><b>Why the recommendation:</b> it keeps the place where names matter (off the work Mac) safe, without making your day-to-day testing logs cryptic.</p>
+  </section>
+
+  <section class="panel q" id="ul-3">
+    <div><span class="tag t-open">Question UL-3</span></div>
+    <h2>Where should you see the numbers?</h2>
+    <p>Today the only way is the terminal. The server already answers <code>GET /v1/slim/usage/summary</code>, so a page is a small step. The rule that nothing about the Hangar shows while flying (D-51) argues for keeping it in the Hangar.</p>
+    <div class="mock" role="img" aria-label="Sketch of a Usage page in the Hangar: tiles for sessions, turns, failed turns and cost, then bars for skills loaded">
+      <div class="band">Hangar · Usage · last 7 days</div>
+      <div class="mockbody">
+        <div class="tile"><div class="n">23</div><div class="l">sessions</div></div>
+        <div class="tile"><div class="n">186</div><div class="l">turns</div></div>
+        <div class="tile"><div class="n">4</div><div class="l">failed turns</div></div>
+        <div class="tile"><div class="n">$61</div><div class="l">about, in tokens</div></div>
+        <div class="tile wide"><div class="l">Skills loaded</div>
+          <div class="bar"><span>intent-shaping</span><i style="width:42%"></i><em>17</em></div>
+          <div class="bar"><span>problem-discovery</span><i style="width:24%"></i><em>10</em></div>
+          <div class="bar"><span>decision-review</span><i style="width:12%"></i><em>5</em></div>
+        </div>
+        <div class="tile wide"><div class="l">Never reached this week</div>
+          <div style="font-size:13px;margin-top:5px">delivery-status · Inbox People tab · Fly this</div>
+        </div>
+      </div>
+    </div>
+    <p class="meta">This is a sketch, not built, and the numbers are made up.</p>
+    <div class="opts">
+      <div class="opt rec"><h3>A Usage page in the Hangar <span class="tag t-done">Recommended</span></h3><p>It sits beside what you build: which skills and pages get used, what fails, and what costs. It never shows while flying.</p></div>
+      <div class="opt"><h3>A report you ask Aviator for</h3><p><code>pa usage report</code> draws the same thing as an artifact in the canvas, on request. There is nothing to maintain in the app, but you have to ask for it every time.</p></div>
+      <div class="opt"><h3>Terminal only, for now</h3><p>No more building until the testing is underway and you know which questions you keep asking.</p></div>
+      <div class="opt"><h3>Something else</h3><p>Tell me in the thread.</p></div>
+    </div>
+    <p class="rec-line"><b>Why the recommendation:</b> you want to understand the platform while you test it. A page you can glance at in the builder's own space does that, without risking a demo recording.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Decided while building (D-122 to D-127)</h2>
+    <div class="tablewrap"><table>
+      <tr><th>D</th><th>Decision</th></tr>
+      <tr><td>D-122</td><td>One local log: a JSON line per event, a file per day in <code>logs/usage/</code>. On by default, with an off switch. Updates skip it.</td></tr>
+      <tr><td>D-123</td><td>Fed from upstream's own instrumentation and in upstream's field names, so the production team's pipeline can read it.</td></tr>
+      <tr><td>D-124</td><td>The writer enforces "ids and words, never sentences". Packs are re-checked.</td></tr>
+      <tr><td>D-125</td><td>Every <code>pa</code> command and every change in the Hangar logs itself. Reads are not logged. Skills use <code>pa log</code> only for moments <code>pa</code> cannot see.</td></tr>
+      <tr><td>D-126</td><td>Eval trials are tagged and kept apart, and the routing graders read them.</td></tr>
+      <tr><td>D-127</td><td>Until there is a server, a log leaves a machine only as a pack a person carries. Sending to a future server is a defined interface, and a person has to switch it on.</td></tr>
+    </table></div>
+    <p class="meta">Not yet verified: a live Claude Code session on the Mac mini (the tool and session feeds have been tested only with recorded examples), and the work Mac. Spec: <code>docs/product/usage-logging.md</code>.</p>
+  </section>
+</div>

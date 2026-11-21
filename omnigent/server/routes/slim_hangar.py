@@ -24,6 +24,7 @@ drafts, publish and restore of people (slice 2), all done by ``pa`` under
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import importlib.util
 import json
@@ -380,9 +381,100 @@ def _scenario_entry(pa: ModuleType, folder: Path, roster: dict[str, Any]) -> dic
         "fixtures": [
             _shown(folder / str(rel)) for rel in (manifest.get("fixtures") or {}).values()
         ],
-        "opening": str(scenario.get("opening") or ""),
+        "opening": pa.scenario_opening(folder, scenario),
+        "demo": demo_of(pa, folder.name),
         "history": pa.folder_history(workspace_dir(), "scenario", folder.name),
         "problems": _check(pa, folder),
+    }
+
+
+# ------------------------------------------------------------------- demos
+#
+# "Scenario you build, demo you fly" (D-76). Flying a scenario makes a folder
+# under <workspace>/demos/<id>/ (pa.fly_demo) and a project for it named
+# "◆ Demo · <title>", so the demo's sessions are listed together and run there.
+
+DEMO_PREFIX = "◆ Demo · "
+DEMO_ICON = "✈️"
+
+
+def demo_project_name(title: str) -> str:
+    return f"{DEMO_PREFIX}{title}"
+
+
+def demo_of(pa: ModuleType, sid: str) -> dict[str, Any] | None:
+    """Where the demo of a scenario is, if it has been flown: turn, turns, project name."""
+    folder = pa.demo_dir(workspace_dir(), sid)
+    state = pa.demo_state(folder)
+    if state is None:
+        return None
+    return {
+        **pa._demo_summary(folder, state),
+        "project": demo_project_name(str(state.get("title") or sid)),
+    }
+
+
+def _ensure_demo_project(
+    project_store: Any, user_id: str | None, name: str, folder: Path
+) -> str | None:
+    """Create the demo's project, or point an existing one at its folder; its id.
+
+    Its settings (host, agent) follow the Workspace project.
+    """
+    if project_store is None:
+        return None
+    projects = project_store.list(user_id=user_id)
+    base = next(
+        (p for p in projects if p.name == os.environ.get("OMNIGENT_SLIM_PROJECT", "Workspace")),
+        None,
+    )
+    config: dict[str, Any] = dict((base.config if base is not None else None) or {})
+    config.update({"workspace": str(folder), "use_worktree": False, "icon": DEMO_ICON})
+    existing = next((p for p in projects if p.name == name), None)
+    if existing is not None:
+        if (existing.config or {}).get("workspace") != str(folder):
+            project_store.update(
+                existing.id, user_id=user_id, config={**(existing.config or {}), **config}
+            )
+        return str(existing.id)
+    import uuid
+
+    return str(project_store.create(uuid.uuid4().hex, name, user_id, config).id)
+
+
+def fly_scenario(
+    sid: str,
+    mode: str | None,
+    project_store: Any = None,
+    user_id: str | None = None,
+    live_turns: bool | None = None,
+) -> dict[str, Any]:
+    """Fly a scenario as a demo. ``mode`` is None (ask if one exists), "reset" or "keep".
+
+    ``live_turns`` False plays every turn canned (the Library's switch, D-85).
+    """
+    pa = _pa()
+    folder = pa.list_scenarios(workspace_dir()).get(sid)
+    if folder is None:
+        raise HTTPException(status_code=404, detail=f"no published scenario {sid!r}")
+    if mode not in (None, "reset", "keep"):
+        raise HTTPException(status_code=400, detail="mode is reset or keep")
+    existing = demo_of(pa, sid)
+    if existing and mode is None:
+        return {"state": "exists", "demo": existing}
+    info = _pa_call(
+        pa.fly_demo, folder, workspace_dir(), reset=mode != "keep", live_turns=live_turns
+    )
+    title = str(info.get("title") or sid)
+    name = demo_project_name(title)
+    project_id = _ensure_demo_project(project_store, user_id, name, Path(info["folder"]))
+    fresh = bool(info.get("created")) or not info.get("turn")
+    return {
+        "state": "created" if info.get("created") else "kept",
+        "demo": {**info, "project": name},
+        "project": {"id": project_id, "name": name},
+        # The composer starts with the opening line only at the start of the story.
+        "prompt": info.get("opening", "") if fresh else "",
     }
 
 
@@ -1090,9 +1182,40 @@ def read_template(template: str) -> str:
     return text
 
 
-def create_slim_hangar_router(*, auth_provider: AuthProvider | None = None) -> APIRouter:
+def create_slim_hangar_router(
+    *, auth_provider: AuthProvider | None = None, project_store: Any = None
+) -> APIRouter:
     """Build the Hangar routes under ``/v1/slim/hangar``: the catalog, and drafts of people."""
     router = APIRouter()
+
+    @router.post("/slim/scenarios/{sid}/fly")
+    async def post_fly(request: Request, sid: str) -> dict[str, Any]:
+        """Fly a scenario as a demo: make its folder and its "◆ Demo" project.
+
+        Body (optional): ``{"mode": "reset" | "keep", "live_turns": bool}``.
+        ``live_turns`` false plays every turn canned. Without a mode, an
+        existing demo is reported (``state: "exists"``) so the caller can offer
+        "Reset to the start" or "Keep going". Otherwise returns ``state``
+        ("created" or "kept"), ``project`` ({id, name}) and ``prompt``, the
+        opening line for the new session's composer.
+        """
+        user_id = require_user(request, auth_provider)
+        body: dict[str, Any] = {}
+        with contextlib.suppress(Exception):
+            body = await request.json() or {}
+        if not isinstance(body, dict):
+            body = {}
+        mode = body.get("mode")
+        live = body.get("live_turns")
+        live_turns = live if isinstance(live, bool) else None
+        result = await asyncio.to_thread(
+            fly_scenario, sid, mode, project_store, user_id, live_turns
+        )
+        if result.get("project"):
+            from omnigent.server.routes.sessions import announce_projects_changed
+
+            announce_projects_changed(user_id)  # other open tabs list the new project
+        return result
 
     @router.get("/slim/hangar")
     async def get_hangar(request: Request) -> dict[str, Any]:

@@ -146,19 +146,19 @@ feature notes of the time and marked *(reconstructed)*.
 
 | D | Decision | Who | Status |
 |---|---|---|---|
-| D-76 | Scenario you build, demo you fly; one "◆ Demo" project per demo | Geoff | Pending, PR 17 |
-| D-77 | Canned or live is set per turn (`[live]`); `pa demo next` | Geoff | Pending, PR 17 |
-| D-78 | One fly route and `FlyButton`, from the Hangar and the Library | Geoff | Pending, PR 17 |
-| D-79 | Scenario folder adds `context/`, `cast/`, `opening` | Geoff | Pending, PR 17 |
-| D-80 | Workflow skills never copy demo material themselves | Geoff | Pending, PR 17 |
-| D-81 | Flying again: Reset to the start or Keep going | Geoff | Pending, PR 17 |
-| D-82 | Keep the Library; every card generated from metadata | Geoff | Pending, PR 19 |
-| D-83 | Top half: four to six featured skills (`library` block) | Geoff | Pending, PR 19 |
-| D-84 | Skill card: unnumbered steps, a short form, Start | Geoff | Pending, PR 19 |
-| D-85 | Demo card: Fly and a Live turns switch | Geoff | Pending, PR 19 |
-| D-86 | One project per demo; an In flight strip | Geoff | Pending, PR 19 |
-| D-87 | Demo card text comes from `scenario.json` | Not recorded in the entry | Pending, PR 19 |
-| D-88 | Artifact templates leave the Library | Geoff | Pending, PR 19 |
+| D-76 | Scenario you build, demo you fly; one "◆ Demo" project per demo | Geoff | Built (PR 17) |
+| D-77 | Canned or live is set per turn (`[live]`); `pa demo next` | Geoff | Built (PR 17) |
+| D-78 | One fly route and `FlyButton`, from the Hangar and the Library | Geoff | Built (PR 17) |
+| D-79 | Scenario folder adds `context/`, `cast/`, `opening` | Geoff | Built (PR 17) |
+| D-80 | Workflow skills never copy demo material themselves | Geoff | Built (PR 17) |
+| D-81 | Flying again: Reset to the start or Keep going | Geoff | Built (PR 17) |
+| D-82 | Keep the Library; every card generated from metadata | Geoff | Built (PR 19) |
+| D-83 | Top half: four to six featured skills (`library` block) | Geoff | Built (PR 19) |
+| D-84 | Skill card: unnumbered steps, a short form, Start | Geoff | Built (PR 19) |
+| D-85 | Demo card: Fly and a Live turns switch | Geoff | Built (PR 19) |
+| D-86 | One project per demo; an In flight strip | Geoff | Built (PR 19) |
+| D-87 | Demo card text comes from `scenario.json` | Not recorded in the entry | Built (PR 19) |
+| D-88 | Artifact templates leave the Library | Geoff | Built (PR 19) |
 
 When pull requests 17 and 19 merge, change these rows to their real status
 and add a reason to each.
@@ -187,14 +187,30 @@ decided but nothing is built yet.
 | D-119 | A project's connections: a chip on the linked item and a Connections card on the project page | Geoff | Built |
 | D-120 | Routing is modular: each workflow carries its own routing, stage and persona; Aviator reads them with `pa workflows` (PR 34) | Geoff asked, Claude chose | Decided, not built |
 | D-121 | A project is a file (`projects/<slug>.json`); a link is one line on its record, read both ways | Claude | Built |
-| D-122 | Routing ladder: start when named, offer once on a clear fit, otherwise work openly; quick asks answered (AV-1) | Geoff | Decided, not built |
-| D-123 | "I'm working on a new feature": a lifecycle skill (not a hero skill) that finds or creates and links the project, then offers the next stage (AV-2) | Geoff | Decided, not built |
-| D-124 | Persona strictness: honesty rules fixed; light touch, guide, by the book; guide by default (AV-3) | Geoff | Decided, not built |
-| D-125 | The person changes strictness per run in words, shown and recorded; the Hangar sets the default (AV-4) | Geoff | Decided, not built |
-| D-126 | Other threads' news is held while the person is mid-exchange, except failures and blockers (AV-5) | Geoff | Decided, not built |
-| D-127 | Three eval suites on the Mac mini, on light models (Sonnet under test, Haiku as person and judge) (AV-6) | Geoff asked, Claude chose | Decided, not built |
-| D-128 | Director memory: charter, reloaded skill, state files; Director's notes on the project page, editable (AV-7) | Geoff | Decided, not built |
+| D-128 | Routing ladder: start when named, offer once on a clear fit, otherwise work openly; quick asks answered (AV-1) | Geoff | Decided, not built |
+| D-129 | "I'm working on a new feature": a lifecycle skill (not a hero skill) that finds or creates and links the project, then offers the next stage (AV-2) | Geoff | Decided, not built |
+| D-130 | Persona strictness: honesty rules fixed; light touch, guide, by the book; guide by default (AV-3) | Geoff | Decided, not built |
+| D-131 | The person changes strictness per run in words, shown and recorded; the Hangar sets the default (AV-4) | Geoff | Decided, not built |
+| D-132 | Other threads' news is held while the person is mid-exchange, except failures and blockers (AV-5) | Geoff | Decided, not built |
+| D-133 | Three eval suites on the Mac mini, on light models (Sonnet under test, Haiku as person and judge) (AV-6) | Geoff asked, Claude chose | Decided, not built |
+| D-134 | Director memory: charter, reloaded skill, state files; Director's notes on the project page, editable (AV-7) | Geoff | Decided, not built |
+| D-135 | The charter reaches a director through `workspace/CLAUDE.md` (re-read after compaction) and `pa recap`, not per-session startup instructions; refines D-134 | Claude | Built |
+| D-136 | `pa check` requires routing on a Library or shipped workflow; a Hangar one without it is listed "start only when named"; offers are a one-press question | Claude | Built |
+| D-137 | Director's notes live in `workspace/director/` (gitignored); a save is refused if the director wrote meanwhile; folded until opened | Claude | Built |
 
+
+## Usage logging
+
+Spec: [usage-logging.md](usage-logging.md).
+
+| D | Decision | Who | Status |
+|---|---|---|---|
+| D-122 | One local usage log: JSON lines per day in `logs/usage/`, one shared writer, on by default, skipped by updates | Geoff asked, Claude chose | Built |
+| D-123 | Fed from upstream's own instrumentation (telemetry emit, web analytics sink, tool observer), in upstream's field names | Claude | Built |
+| D-124 | The writer enforces "ids and words, never sentences"; `<text N>`; fingerprint level; packs re-check | Claude | Built |
+| D-125 | `area.action` names; every `pa` command and slim route write logs itself; reads are not logged; `pa log` for skills | Claude | Built |
+| D-126 | Eval trials are tagged and kept in `eval/<suite>/`; routing graders read them | Claude | Built; no suite uses it yet |
+| D-127 | Logs leave a machine only as a pack a person carries; an `Exporter` interface for a later server | Claude | Built (packs); no remote exporter |
 
 ## Backfilled (decided earlier, logged on 21 Nov)
 
@@ -210,5 +226,7 @@ decided but nothing is built yet.
 
 ## Open questions not yet numbered
 
+- Usage logging (UL-1 to UL-3 in [usage-logging.md](usage-logging.md)):
+  put to Geoff 2026-11-21; built to the recommendations meanwhile.
 - Progressive complexity (D-54).
 - D-24 for production.

@@ -1,7 +1,8 @@
 {
  "scenario": "decision-review",
- "title": "Allowances: open decisions",
- "summary": "The Decision review workflow played with invented open decisions on the Allowances launch.",
+ "title": "Steering prep",
+ "summary": "Seven decisions stand between Allowances and the steering group, and Risk Review won't sign off on one of them until you decide.",
+ "length_minutes": 4,
  "workflow": "decision-review",
  "participants": [
   "risk-review",
@@ -11,5 +12,6 @@
  "fixtures": {
   "dataset": "fixtures/allowances-decisions.json"
  },
- "script": "script.md"
+ "script": "script.md",
+ "opening": "Before we take this to the steering group, walk me through what is still open on Allowances."
 }

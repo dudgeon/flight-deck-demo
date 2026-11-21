@@ -1,16 +1,25 @@
-"""omnigent-slim library: canned sessions and artifact templates (``/v1/slim/library``).
+"""omnigent-slim Library (``/v1/slim/library``): where work and demos start (D-82 to D-88).
 
-Both live as plain files in one folder, ``OMNIGENT_SLIM_LIBRARY_DIR``
-(``workspace/templates`` when started with ``./start.sh``):
+The Library is built from what is published in the Hangar, never typed into it:
 
-- ``sessions/*.md`` -- a canned session. YAML front matter gives ``title``,
-  ``description`` and optional ``template`` (an artifact template id); the body
-  is the prompt. ``{{name}}`` or ``{{name: hint}}`` in the body becomes an input
-  field the user fills in before the prompt goes to the composer.
-- ``artifacts/*.html`` -- an artifact template. Its ``<title>`` and
-  ``<meta name="description">`` describe it in the library.
+- **Skills.** A workflow whose ``workflow.json`` has ``"library": {"show": true}``
+  is a featured product skill. ``order`` places it in rough product-lifecycle
+  order; the first one (or the one with ``"spotlight": true``) is the spotlight.
+  Its title, summary, steps and inputs come from the same file. ``library.prompt``
+  is what Start puts in the composer (``{{name: hint}}`` becomes a field);
+  without one, a prompt is made from the inputs. Utility skills (person and
+  scenario builders and the like) have no flag and never show.
+- **Extra starters.** ``<library>/sessions/*.md`` files still work: a starter
+  that names a featured workflow shows as an extra way in on that skill's card.
+- **Demos.** Every published scenario, unless its ``scenario.json`` says
+  ``"library": {"show": false}``. Title, summary, cast and the workflow it runs
+  come from ``scenario.json``; how many turns are live comes from its script.
 
-The files are read on every request, so edits show up on the next page load.
+Artifact templates are no longer listed here (D-88): they are managed in the
+Hangar and the agent finds them when asked. ``parse_artifact_template`` stays
+for the Hangar.
+
+Everything is read on every request, so edits show up on the next page load.
 """
 
 from __future__ import annotations
@@ -105,24 +114,175 @@ def parse_artifact_template(item_id: str, text: str) -> dict[str, Any]:
     }
 
 
+def _starters(root: Path | None) -> list[dict[str, Any]]:
+    """Extra starters: ``sessions/*.md`` files, each a prompt with fields."""
+    found: list[dict[str, Any]] = []
+    if root is None:
+        return found
+    for path in sorted((root / "sessions").glob("*.md")):
+        text = _read_text(path)
+        if text is not None:
+            found.append(parse_canned_session(path.stem, text))
+    return found
+
+
+def _fields(prompt: str) -> list[dict[str, str]]:
+    fields: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for field in _FIELD.finditer(prompt):
+        name = field.group(1)
+        if name not in seen:
+            seen.add(name)
+            fields.append({"name": name, "hint": (field.group(2) or "").strip()})
+    return fields
+
+
+def skill_prompt(wid: str, manifest: dict[str, Any], participants: list[str]) -> str:
+    """What Start puts in the composer: ``library.prompt``, or one made from the inputs."""
+    lib = manifest.get("library") or {}
+    prompt = str(lib.get("prompt") or "").strip()
+    if not prompt:
+        title = str(manifest.get("title") or wid)
+        parts = []
+        for item in manifest.get("inputs") or []:
+            name = re.sub(r"[^\w-]+", "-", str(item.get("name") or "input")).strip("-") or "input"
+            hint = str(item.get("hint") or "").replace("}", ")")
+            parts.append(f"{{{{{name}: {hint}}}}}" if hint else f"{{{{{name}}}}}")
+        on = " on " + ", ".join(parts) if parts else ""
+        prompt = f"{title}{on}, using the {wid} skill."
+    if participants and "Participants for this session" not in prompt:
+        prompt += "\n\nParticipants for this session: " + ", ".join(participants) + "."
+    return prompt
+
+
+def _live_meter(steps: list[dict[str, Any]], turns: int) -> list[bool]:
+    """One flag per turn: does any step in it hand over to a real agent? A turn starts at each "You" line or wait."""
+    meter: list[bool] = []
+    for step in steps:
+        if "pm" in step or step.get("await") or not meter:
+            meter.append(False)
+        if step.get("live"):
+            meter[-1] = True
+    if len(meter) > turns and not meter[0]:
+        meter = meter[1:]  # steps before the first turn belong to it
+    return (meter + [False] * turns)[:turns]
+
+
+def _order(lib: dict[str, Any], fallback: str) -> tuple[float, str]:
+    try:
+        return (float(lib.get("order")), fallback)
+    except (TypeError, ValueError):
+        return (float("inf"), fallback)
+
+
 def load_library(root: Path | None) -> dict[str, Any]:
-    """Read every canned session and artifact template under ``root``."""
-    sessions: list[dict[str, Any]] = []
-    templates: list[dict[str, Any]] = []
-    if root is not None:
-        for path in sorted((root / "sessions").glob("*.md")):
-            text = _read_text(path)
-            if text is not None:
-                sessions.append(parse_canned_session(path.stem, text))
-        for path in sorted((root / "artifacts").glob("*.html")):
-            text = _read_text(path)
-            if text is not None:
-                templates.append(parse_artifact_template(path.stem, text))
+    """Featured skills and demos, built from published workflows and scenarios."""
+    # Imported here: slim_hangar imports this module for its parsers.
+    from omnigent.server.routes import slim_hangar
+
+    pa = slim_hangar._pa()
+    ws = slim_hangar.workspace_dir()
+    roster = slim_hangar._roster(pa)
+    starters = _starters(root)
+
+    skills: list[dict[str, Any]] = []
+    titles: dict[str, str] = {}
+    for wid, folder in pa.list_workflows(ws).items():
+        path = pa.workflow_manifest_path(folder)
+        manifest = slim_hangar._json(path) if path else None
+        if not isinstance(manifest, dict):
+            continue
+        titles[wid] = str(manifest.get("title") or wid)
+        lib = manifest.get("library") or {}
+        if not isinstance(lib, dict) or not lib.get("show"):
+            continue
+        participants = [p for p in manifest.get("participants") or [] if isinstance(p, str)]
+        prompt = skill_prompt(wid, manifest, participants)
+        skills.append(
+            {
+                "id": wid,
+                "title": titles[wid],
+                "summary": str(lib.get("summary") or manifest.get("summary") or ""),
+                "steps": [s for s in manifest.get("steps") or [] if isinstance(s, str)],
+                "prompt": prompt,
+                "fields": _fields(prompt),
+                "spotlight": bool(lib.get("spotlight")),
+                "sort": _order(lib, titles[wid]),
+                "starters": [],
+                "demos": [],
+            }
+        )
+    skills.sort(key=lambda s: s.pop("sort"))
+    if skills and not any(s["spotlight"] for s in skills):
+        skills[0]["spotlight"] = True
+    elif skills:
+        first = next(s for s in skills if s["spotlight"])
+        for other in skills:
+            other["spotlight"] = other is first
+    by_skill = {s["id"]: s for s in skills}
+    for starter in starters:
+        for wid in by_skill:
+            if re.search(rf"(?<![\w-]){re.escape(wid)}(?![\w-])", starter["prompt"]):
+                by_skill[wid]["starters"].append(starter)
+                break
+
+    demos: list[dict[str, Any]] = []
+    for sid, folder in pa.list_scenarios(ws).items():
+        raw = slim_hangar._json(folder / "scenario.json") or {}
+        lib = raw.get("library") or {}
+        if isinstance(lib, dict) and lib.get("show") is False:
+            continue
+        try:
+            run = pa.resolve_run(folder, ws)
+            manifest = run["manifest"]
+            script = pa._read_script(folder / str(manifest.get("script") or "script.md"), roster)
+            steps = script["steps"]
+            turns = pa._turn_count(steps)
+            meter = _live_meter(steps, turns)
+            live = sum(meter)
+            wid = run["workflow_id"]
+        except Exception:  # noqa: BLE001 -- a broken scenario can't be flown, so it isn't listed
+            _logger.warning("skipping scenario %s", sid, exc_info=True)
+            continue
+        cast = []
+        for pid in manifest.get("participants") or []:
+            person = roster.get(pid) or {}
+            cast.append(
+                {
+                    "id": pid,
+                    "name": str(person.get("name") or pid),
+                    "initials": str(person.get("initials") or pid[:2].upper()),
+                    "avatar": slim_hangar._avatar_url(pa, pid),
+                }
+            )
+        minutes = raw.get("length_minutes")
+        demo = {
+            "id": sid,
+            "title": str(raw.get("title") or sid),
+            "summary": str(raw.get("summary") or ""),
+            "workflow": wid,
+            "workflow_title": titles.get(wid, wid),
+            "cast": cast,
+            "turns": turns,
+            "live_turns": live,
+            "meter": meter,
+            "kind": "Scripted" if live == 0 else "Mixed",
+            "length_minutes": minutes if isinstance(minutes, (int, float)) else None,
+            "demo": slim_hangar.demo_of(pa, sid),
+            "sort": _order(lib if isinstance(lib, dict) else {}, str(raw.get("title") or sid)),
+        }
+        demos.append(demo)
+        if wid in by_skill:
+            by_skill[wid]["demos"].append({"id": sid, "title": demo["title"]})
+    # Demos follow the skills they show, in the same lifecycle order; the rest after.
+    rank = {s["id"]: i for i, s in enumerate(skills)}
+    demos.sort(key=lambda d: (rank.get(d["workflow"], len(rank)), d.pop("sort")))
+
     return {
         "library_dir": str(root) if root is not None else None,
         "project": os.environ.get(PROJECT_ENV, "").strip() or None,
-        "sessions": sessions,
-        "templates": templates,
+        "skills": skills,
+        "demos": demos,
     }
 
 

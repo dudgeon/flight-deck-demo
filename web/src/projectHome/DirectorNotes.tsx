@@ -1,4 +1,4 @@
-// omnigent-slim: "Director's notes" on a project's page (D-128).
+// omnigent-slim: "Director's notes" on a project's page (D-134).
 //
 // What the director keeps so it can pick up after a compaction or in a new
 // session: where the project stands and what to remember. It is here so the

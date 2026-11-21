@@ -1,0 +1,275 @@
+/* omnigent-slim: the Library (D-82 to D-88). Flying mode, so navy, never the Hangar's build colour. */
+
+.pa-library {
+  height: 100%;
+  overflow-y: auto;
+  background: var(--pa-bg);
+  color: var(--pa-ink);
+  font: var(--pa-text) / 1.5 var(--pa-font);
+}
+.pa-library .lib-wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 32px 32px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+@media (max-width: 720px) {
+  .pa-library .lib-wrap { padding: 64px 16px 40px; }
+}
+.pa-library h1 {
+  margin: 0;
+  font-size: var(--pa-text-title);
+  font-weight: var(--pa-weight-title);
+  letter-spacing: var(--pa-tracking-title);
+}
+.pa-library h2 {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.pa-library h2 small {
+  margin-left: 8px;
+  font-size: var(--pa-text-sm);
+  font-weight: 400;
+  color: var(--pa-ink-3);
+}
+.pa-library h3 { margin: 0; font-size: 15px; font-weight: 600; }
+.pa-library .lib-sum { margin: 4px 0 0; color: var(--pa-ink-2); }
+.pa-library .lib-empty { color: var(--pa-ink-3); font-size: var(--pa-text-sm); }
+.pa-library .lib-error { color: var(--pa-fail); font-size: var(--pa-text-sm); }
+.pa-library code { font-family: var(--pa-mono); font-size: 12px; }
+
+.pa-library .lib-section { display: flex; flex-direction: column; gap: 14px; }
+.pa-library .lib-lower { border-top: 1px solid var(--pa-line); padding-top: 24px; }
+.pa-library .lib-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+
+.pa-library .lib-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--pa-line);
+  border-radius: var(--pa-r-panel);
+  background: var(--pa-surface);
+}
+.pa-library .lib-card .lib-sum { margin: 0; }
+.pa-library .lib-head { display: flex; align-items: center; gap: 8px; }
+.pa-library .lib-head h3 { flex: 1; min-width: 0; }
+.pa-library .lib-demo .lib-head .lib-kind { flex: 1; }
+
+/* The spotlight: the first featured skill, larger, its steps beside the start box. */
+.pa-library .lib-skill.spot {
+  padding: 22px 24px;
+  border-color: var(--pa-line-strong);
+  box-shadow: var(--pa-shadow);
+}
+.pa-library .lib-skill.spot h3 { font-size: 19px; }
+.pa-library .lib-eyebrow,
+.pa-library .lib-kind {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pa-ink-3);
+}
+.pa-library .lib-skill.spot .lib-head { flex-wrap: wrap; }
+.pa-library .lib-skill.spot .lib-eyebrow { flex-basis: 100%; color: var(--pa-navy); }
+.pa-library .lib-body { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+.pa-library .lib-body.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 24px;
+  margin-top: 6px;
+}
+@media (max-width: 720px) {
+  .pa-library .lib-body.split { grid-template-columns: minmax(0, 1fr); }
+}
+.pa-library .lib-start { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
+.pa-library .lib-body.split .lib-start { margin-top: 0; }
+
+/* Steps are tasks and outcomes more than a sequence, so they aren't numbered. */
+.pa-library .lib-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: var(--pa-text-sm);
+  color: var(--pa-ink-2);
+}
+.pa-library .lib-steps li { position: relative; padding-left: 14px; }
+.pa-library .lib-steps li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 0.6em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--pa-line-strong);
+}
+.pa-library .lib-skill.spot .lib-steps { font-size: var(--pa-text); gap: 6px; }
+
+.pa-library .lib-form { display: flex; flex-direction: column; gap: 8px; }
+.pa-library .lib-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: var(--pa-text-sm);
+  color: var(--pa-ink-2);
+}
+.pa-library .lib-input {
+  border: 1px solid var(--pa-line-strong);
+  border-radius: var(--pa-r);
+  background: var(--pa-surface);
+  color: var(--pa-ink);
+  padding: 6px 10px;
+  font: var(--pa-text) var(--pa-font);
+}
+.pa-library .lib-input::placeholder { color: var(--pa-ink-3); }
+.pa-library .lib-input:focus-visible { outline: 2px solid var(--pa-navy); outline-offset: -1px; }
+.pa-library .lib-acts { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pa-library .lib-note { font-size: 11.5px; color: var(--pa-ink-3); }
+.pa-library .lib-more { font-size: var(--pa-text-sm); color: var(--pa-ink-3); }
+.pa-library .lib-starter-head { display: flex; gap: 8px; align-items: baseline; font-size: var(--pa-text-sm); }
+.pa-library .lib-link {
+  margin-right: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--pa-navy);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+/* Buttons: the Library's own, and FlyButton's (shared with the Hangar). */
+.pa-library .lib-btn,
+.pa-library .hangar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--pa-line-strong);
+  background: var(--pa-surface);
+  color: var(--pa-ink);
+  border-radius: var(--pa-r);
+  padding: 5px 14px;
+  font: 500 13px var(--pa-font);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.pa-library .lib-btn:hover,
+.pa-library .hangar-btn:hover { border-color: var(--pa-navy); }
+.pa-library .lib-btn.pri,
+.pa-library .hangar-btn.pri {
+  background: var(--pa-navy);
+  border-color: var(--pa-navy);
+  color: var(--pa-on-navy);
+}
+.pa-library .lib-btn.pri:hover,
+.pa-library .hangar-btn.pri:hover { background: var(--pa-navy-hover); }
+.pa-library .hangar-btn.quiet { background: transparent; border-color: transparent; color: var(--pa-ink-3); }
+.pa-library .hangar-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.pa-library .flybox { display: flex; flex-direction: column; gap: 6px; }
+.pa-library .flychoice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid var(--pa-line);
+  border-radius: var(--pa-r);
+  background: var(--pa-sunk);
+}
+.pa-library .flychoice .lab { flex-basis: 100%; font-size: var(--pa-text-sm); color: var(--pa-ink-2); }
+.pa-library .chip.fail {
+  margin: 0;
+  padding: 3px 8px;
+  border-radius: var(--pa-r);
+  background: var(--pa-fail-soft);
+  color: var(--pa-fail);
+  font-size: var(--pa-text-sm);
+}
+
+/* Demo cards. */
+.pa-library .lib-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: var(--pa-text-sm);
+  color: var(--pa-ink-3);
+}
+.pa-library .lib-chip {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--pa-sunk);
+  color: var(--pa-ink-2);
+  font-size: 12px;
+}
+.pa-library .lib-marks { display: inline-flex; }
+.pa-library .lib-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-left: -3px;
+  border: 2px solid var(--pa-surface);
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--pa-agent-soft);
+  color: var(--pa-agent);
+  font-size: 9.5px;
+  font-weight: 600;
+}
+.pa-library .lib-mark:first-child { margin-left: 0; }
+.pa-library .lib-mark img { width: 100%; height: 100%; object-fit: cover; }
+.pa-library .lib-meter { display: inline-flex; gap: 2px; }
+.pa-library .lib-meter i {
+  width: 10px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--pa-line-strong);
+}
+.pa-library .lib-meter i.live { background: var(--pa-agent); }
+.pa-library .lib-fly {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 6px;
+}
+.pa-library .lib-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 5px;
+  font-size: var(--pa-text-sm);
+  color: var(--pa-ink-2);
+  cursor: pointer;
+}
+.pa-library .lib-switch input { accent-color: var(--pa-agent); }
+
+/* In flight: demos already flown, to pick up again. */
+.pa-library .lib-inflight { display: flex; flex-direction: column; gap: 8px; }
+.pa-library .lib-inflight h3 { font-size: 13px; color: var(--pa-ink-2); }
+.pa-library .lib-flight {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--pa-line);
+  border-radius: var(--pa-r-panel);
+  background: var(--pa-surface);
+}
+.pa-library .lib-diamond { color: var(--pa-navy); padding-top: 2px; }
+.pa-library .lib-flight-text { flex: 1; display: flex; flex-direction: column; font-size: var(--pa-text-sm); color: var(--pa-ink-3); }
+.pa-library .lib-flight-text b { color: var(--pa-ink); font-size: var(--pa-text); }

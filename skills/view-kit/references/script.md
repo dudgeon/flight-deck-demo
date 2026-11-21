@@ -73,6 +73,7 @@ These attach to the step above them:
 | `[hint: <text>]` | Shows the viewer what to try. |
 | `[wait]` | Waits until the viewer sends a message. |
 | `[wait for submit]` | Waits for the viewer to submit the widget and send. |
+| `[live]`, `[live: <what the turn is about>]` | After an Aviator or participant line: when the scenario is flown as a demo, a real agent answers here instead of saying the line. The written line stays as a guide, and the preview marks it as live. |
 
 Once, before the first step:
 
@@ -84,3 +85,24 @@ Once, before the first step:
 Lines that start with `>` or `##` are notes for whoever edits the script and
 are not shown. `pa check <scenario folder>` reports a line it cannot read, a
 view that does not exist, or a speaker who is not in the scenario.
+
+## Canned and live turns
+
+A scenario plays two ways. `pa preview` (the Hangar's "Play it") is a
+click-through: every line is shown as written. Flying the scenario as a demo
+(the Hangar's "Fly this") opens a real session in a "◆ Demo" project, where the
+agent plays the script one turn at a time with `pa demo next`:
+
+- A **canned** turn, the default, is said word for word, and its directions
+  are carried out for real (documents opened, comments added, views drawn,
+  records revealed).
+- A **live** turn, marked `[live]` under its line, is answered by a real agent:
+  Aviator itself, or a participant called for real with their story notes from
+  `cast/<id>.md`. Use it where the user is invited to type their own reply, or
+  wherever the demo should show real reasoning.
+
+```
+**Mara Okafor:** That works. I would cut 5.4 from launch then.
+[live: Mara answers what the user actually said about the two alerts]
+```
+

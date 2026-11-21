@@ -1,4 +1,4 @@
-"""Workflow routing (D-120, D-122) and the director's memory (D-128)."""
+"""Workflow routing (D-120, D-128) and the director's memory (D-134)."""
 
 from __future__ import annotations
 
@@ -69,12 +69,15 @@ def test_check_fails_a_shipped_workflow_without_routing(tmp_path: Path, monkeypa
     folder = tmp_path / "skills" / "intent-shaping"
     shutil.copytree(ROOT / "skills" / "intent-shaping", folder)
     manifest = json.loads((folder / "workflow.json").read_text())
+    manifest.pop("library", None)  # not shown in the Library
     manifest["routing"]["stage"] = "nowhere"
     (folder / "workflow.json").write_text(json.dumps(manifest))
     run = {"workflow": manifest, "workflow_dir": folder, "workflow_file": folder / "workflow.json", "scenario": None, "scenario_dir": None}
     assert any("not a lifecycle stage" in p for p in pa._workflow_problems(run))
     del manifest["routing"]
     assert not any("routing" in p for p in pa._workflow_problems(run))
+    assert pa._routing_required({"library": {"show": True}}, folder)
+    assert pa._routing_required({}, ROOT / "skills" / "intent-shaping")
     monkeypatch.setattr(pa, "_routing_required", lambda workflow, wdir: True)
     assert any("missing routing" in p for p in pa._workflow_problems(run))
 

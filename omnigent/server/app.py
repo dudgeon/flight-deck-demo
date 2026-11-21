@@ -145,6 +145,8 @@ from omnigent.server.routes.slim_hangar import create_slim_hangar_router  # omni
 from omnigent.server.routes.slim_runs import create_slim_runs_router  # omnigent-slim
 from omnigent.server.routes.slim_projects import create_slim_projects_router  # omnigent-slim
 from omnigent.server.routes.slim_director import create_slim_director_router  # omnigent-slim
+from omnigent.server.routes.slim_usage import create_slim_usage_router  # omnigent-slim
+from omnigent.slim_usage import route_event as _slim_route_event  # omnigent-slim
 from omnigent.server.routes.slim_participant_inbox import (  # omnigent-slim
     create_slim_participant_inbox_router,
 )
@@ -4425,7 +4427,7 @@ def create_app(
     )
     # omnigent-slim: the read-only Hangar catalog (builder mode, slice 1).
     app.include_router(
-        create_slim_hangar_router(auth_provider=auth_provider),
+        create_slim_hangar_router(auth_provider=auth_provider, project_store=project_store),
         prefix="/v1",
         tags=["slim"],
     )
@@ -4435,12 +4437,32 @@ def create_app(
         prefix="/v1",
         tags=["slim"],
     )
-    # omnigent-slim: the director's notes on a project's page (D-128).
+    # omnigent-slim: the director's notes on a project's page (D-134).
     app.include_router(
         create_slim_director_router(project_store=project_store, auth_provider=auth_provider),
         prefix="/v1",
         tags=["slim"],
     )
+    # omnigent-slim: the usage log's web feed and summary (D-122 to D-127).
+    app.include_router(
+        create_slim_usage_router(auth_provider=auth_provider),
+        prefix="/v1",
+        tags=["slim"],
+    )
+
+    # omnigent-slim: one usage-log line per change made through a slim route (D-125).
+    @app.middleware("http")
+    async def _slim_usage_writes(request: Request, call_next: _FastAPICallNext) -> Response:
+        started = time.monotonic()
+        response = await call_next(request)
+        if request.method not in ("GET", "HEAD", "OPTIONS") and "/v1/slim/" in request.url.path:
+            path = request.url.path[request.url.path.index("/v1/slim/") :]
+            elapsed = int((time.monotonic() - started) * 1000)
+            await asyncio.to_thread(
+                _slim_route_event, request.method, path, response.status_code, elapsed
+            )
+        return response
+
     # omnigent-slim: the runs in flight in a project, for its "In flight" section (D-96).
     app.include_router(
         create_slim_runs_router(

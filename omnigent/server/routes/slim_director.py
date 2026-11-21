@@ -1,6 +1,6 @@
 """omnigent-slim: the director's notes, readable and editable (``/v1/slim/director/notes``).
 
-A director runs for days, across compactions and new sessions (D-128). What
+A director runs for days, across compactions and new sessions (D-134). What
 it must not lose it writes to two files in the workspace, ``director/state.md``
 (where the project stands, rewritten at checkpoints) and ``director/memory.md``
 (lasting facts, one dated line each); ``pa recap`` reads them back after a

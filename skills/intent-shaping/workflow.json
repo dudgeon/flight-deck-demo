@@ -2,6 +2,13 @@
  "workflow": "intent-shaping",
  "title": "Intent shaping",
  "summary": "Take an idea from a sentence to something a team could commit to, one step at a time, against a framework that says how deep and how broad the thinking has to be.",
+ "library": {
+  "show": true,
+  "order": 2,
+  "spotlight": true,
+  "summary": "Take an idea from a sentence to something a team could commit to, one step at a time, against a framework that says how deep and how broad the thinking has to be.",
+  "prompt": "Shape this into an intent using the intent-shaping skill: {{idea: your idea in a sentence or two}}"
+ },
  "inputs": [
   {
    "name": "idea",

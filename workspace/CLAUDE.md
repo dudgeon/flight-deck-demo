@@ -19,6 +19,10 @@ use from the Session panel, and they arrive as file mentions in a message.
 Read what you are pointed at. Do not go through the rest of `context/` unless
 asked, and never change a file in it.
 
+`scenarios/` holds invented stories for demos. Never copy anything out of it
+yourself; a demo is flown from the Hangar into `demos/<id>/`, which has its own
+`CLAUDE.md` saying how to run it.
+
 ## Structured work
 
 When the work is many similar items that the user reviews one by one (a

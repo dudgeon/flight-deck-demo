@@ -67,6 +67,7 @@ text; then name the file and ask the question in words.
 | `$PA who [id]` | List the participants in `participants/` (other agents and people), or show one. See the `participants` skill. |
 | `$PA check <scenario folder>` | Validate a scenario's specs, schemas and fixtures. |
 | `$PA preview <scenario folder> --out demo.html` | Build a standalone click-through of a scenario from its fixtures. |
+| `$PA demo next` | In a flown demo's folder: the next turn of the script, with its data changes done. The demo's `CLAUDE.md` says when to call it. |
 
 After `render`, show the file with `ui_open_file`. You do not need to open it
 again after later changes.

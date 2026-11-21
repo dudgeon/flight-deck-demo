@@ -31,7 +31,7 @@ in the same pull request.
 | [Dock launcher](#dock-launcher) | Done |
 | [Branding](#branding) | Done; repository renamed (D-114) |
 | [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | D-89 to D-99 and D-116 to D-119 decided; runs and In flight built (PR 24) |
-| [Aviator coordination and skill routing](#aviator-coordination-and-skill-routing) | Decided (D-120, D-122 to D-128); nothing built |
+| [Aviator coordination and skill routing](#aviator-coordination-and-skill-routing) | Routing, director rules and director memory built (D-120, D-128 to D-137); evals, strictness on the strip and lifecycle skill next |
 
 ---
 
@@ -337,16 +337,47 @@ strictly as the moment needs, measured by evals rather than argued.
 - **Constraint (Geoff).** Modular: adding a workflow never means editing
   Aviator. Routing, lifecycle stage, persona and eval examples ship in each
   workflow's `workflow.json`; Aviator reads them with `pa workflows`.
-- **Next.** The eight gaps as director rules; the routing eval
-  suite and its runner on the Mac mini, before any tuning; then persona
-  blocks and strictness; then the lifecycle skill.
+- **Built (PR 37).** A `routing` block in every shipped workflow's
+  manifest (when, not when, needs, stage, offer, examples, persona), the
+  lifecycle stages in `frameworks/lifecycle.json`, `pa workflows`, and
+  `pa check` failing an unroutable Library or shipped workflow (D-136). The
+  director skill gained the ladder, the coordination rules and strictness by
+  words, still naming no workflow. Director memory: `charter.md`,
+  `director/state.md` and `memory.md`, `pa recap`, `pa remember`, a pointer in
+  `workspace/CLAUDE.md` (D-135), and Director's notes on the project page,
+  editable (D-137). Not yet run in a live director session on the Mac mini.
+- **Next.** The routing eval suite and its runner on the Mac mini, before
+  any tuning; then strictness on the strip and in the run; then the
+  lifecycle skill.
 - **Decided.** Geoff answered all seven on 2026-11-21, as recommended:
-  D-122 routing ladder, D-123 lifecycle skill with project retrieval (not a
-  hero skill), D-124 guide by default, D-125 strictness changed in words,
-  D-126 hold news while the person is mid-exchange, D-127 evals on light
-  models, D-128 director memory with editable Director's notes. Nothing open.
+  D-128 routing ladder, D-129 lifecycle skill with project retrieval (not a
+  hero skill), D-130 guide by default, D-131 strictness changed in words,
+  D-132 hold news while the person is mid-exchange, D-133 evals on light
+  models, D-134 director memory with editable Director's notes. Nothing open.
 - **Read.** [director-coordination.md](director-coordination.md); walkthrough
   at https://claude.ai/artifact/La4Qa5THk5JhwQBQGcVY7d.
+
+## Usage logging
+
+Geoff wants to understand how the whole platform is used, mostly while
+testing, with logs as files that can be aggregated later and one day sent to
+a server.
+
+- **Done (D-122 to D-127).** One local log in `logs/usage/`, one JSON line
+  per event, fed by the web app (upstream's analytics events), the server
+  (upstream's telemetry events, slim route writes), the runner (every tool
+  and skill used) and `pa` (every command, plus `pa log`). The writer allows
+  ids and words, never sentences. `pa usage summary|tail|check|pack|eval`.
+  Eval trials are tagged and kept apart. Packs can be fingerprinted or written
+  in upstream's gateway shape.
+- **Next.** A Usage page in the Hangar (UL-3); `pa log offer.made` in the
+  director skill with the routing suite; run it on the Mac mini with a live
+  session to see the tool and upstream feeds for real.
+- **Open.** UL-1 committing logs, UL-2 what a work Mac pack holds, UL-3 where
+  the numbers are seen.
+- **Read.** [usage-logging.md](usage-logging.md);
+  [../skill-writers/usage-log.md](../skill-writers/usage-log.md); walkthrough
+  at https://claude.ai/artifact/7tXLiAF95CZpCp81UKVVMB.
 
 ---
 
@@ -379,6 +410,10 @@ Checked 2026-11-21, 20:30 UTC.
   `workspace/.claude/skills/<id>`) hides later shipped improvements to that
   workflow. Known, not yet handled.
 - **Lint** has one error that was already on `main` (noted in PR 24).
+- **The usage log (PR for D-122 to D-127)** has run in the cloud app (web
+  and Hangar lines) and in tests. Its tool and upstream feeds have only seen
+  recorded payloads, never a live Claude Code session, and it has never run
+  on the work Mac.
 
 Outside the repository, for contributors' image work: the image-generation
 skill's Gemini key is out of credit, and its OpenAI call names

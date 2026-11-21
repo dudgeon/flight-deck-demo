@@ -10,6 +10,7 @@ into `SKILL.md`.
 | [`detect.md`](detect.md) | How to tell, in one step, whether Claude is running inside Omnigent (and inside omnigent-slim) |
 | [`interfaces.md`](interfaces.md) | Every interface a Claude session in Omnigent can use: the viewer, artifacts, sessions, projects, comments, inbox, reminders, schedules, terminals |
 | [`artifacts.md`](artifacts.md) | How to make, show and update artifacts, and how artifacts talk back |
+| [`usage-log.md`](usage-log.md) | When and how a skill writes to Flight Deck's usage log with `pa log` (usually it need not) |
 | [`example-skill/SKILL.md`](example-skill/SKILL.md) | A small, complete skill that uses all of the above, to copy from |
 
 To ship a skill with omnigent-slim, drop its folder in the repo's
@@ -35,7 +36,9 @@ Use these words in skills so they match what Omnigent and its users say.
 - **Artifact**: a self-contained HTML file in the workspace, shown in the
   viewer. omnigent-slim keeps them in `artifacts/`.
 - **Template**: an artifact to copy and fill in, from the library folder.
-- **Canned session**: a prompt with fill-in fields, listed on the Library page.
+- **Library**: the page where work and demos start. A workflow shows there
+  when its `workflow.json` has `"library": {"show": true}`; every published
+  scenario shows as a demo. See `docs/customizing.md`.
 
 ## The two rules every Omnigent skill should follow
 

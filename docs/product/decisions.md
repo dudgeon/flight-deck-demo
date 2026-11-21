@@ -468,6 +468,83 @@ overview lists published files not yet committed. *Geoff: "config, like
 personas, harness skills, workflows, scenarios should all travel with the repo.
 user sessions don't need to but can."*
 
+**D-76 · 2026-11-21 · Geoff.** "Scenario you build, demo you fly." The Hangar
+shelf stays "Scenarios": a scenario is the thing you build (story, cast, data,
+screenplay). Flying one makes a demo: a project named "◆ Demo · <title>" with
+its own folder (`workspace/demos/<id>/`, not committed) and real sessions in
+it. Most demos are projects, so their sessions are listed together.
+
+**D-77 · 2026-11-21 · Geoff.** Scripting is set per turn, not per scenario. A
+flown demo plays each turn of the screenplay either canned (said word for word,
+the default) or live, where a real agent answers. A live turn is marked with
+`[live]` or `[live: what the turn is about]` under its Aviator or participant
+line; the written line stays as a guide, and "Play it" shows it as live. The
+agent in the demo steps through the script with `pa demo next`, which also does
+the data changes (revealing records, setting statuses) itself.
+
+**D-78 · 2026-11-21 · Geoff.** A demo is launched with "Fly this" on the
+scenario's Hangar page, and from the Library. Both call one route,
+`POST /v1/slim/scenarios/{id}/fly`, and the web UI's `FlyButton`. The Library
+lists demos from `scenario.json` and `workflow.json` (title, summary, cast,
+workflow), so those stay tidy. The Library's own design belongs to the Library
+redesign, not to this work.
+
+**D-79 · 2026-11-21 · Geoff.** A scenario folder holds `scenario.json` (with
+`opening`, the line the demo starts with), `fixtures/` (the dataset, and
+documents the work produces), `script.md`, `context/` (invented documents the
+story starts from, such as the Allowances PRD and the platform map, which moved
+out of `workspace/context/`) and `cast/<person>.md` (what each person knows in
+this story). Flying copies `context/` in, starts the dataset from the fixture
+with the records the script reveals held back, and appends each `cast/` note to
+that person's roster file in the demo under "In this story".
+
+**D-80 · 2026-11-21 · Geoff.** Workflow skills never copy demo material out of
+`scenarios/` themselves. A demo's documents and data are put in place by
+flying it; outside a demo the agent asks for what it needs.
+
+**D-81 · 2026-11-21 · Geoff.** Flying a scenario whose demo already exists
+offers "Reset to the start" (the folder is made again from the scenario as it
+is now) or "Keep going" (a new session in the same folder, the story where it
+was). A fresh demo's first session opens with the opening line in the
+composer, ready to send.
+
+**D-82 · 2026-11-21 · Geoff.** Keep the Library. It is where real work and
+demos start, and nothing on it is typed into it: every card is generated from
+the metadata of the workflow or scenario it starts. The old contents (13 canned
+sessions, the template list) were temporary and are gone. Design round:
+https://claude.ai/artifact/5XhbdjSKp7i2t1ChoxqS6Z.
+
+**D-83 · 2026-11-21 · Geoff.** The top half is the featured product skills,
+expected to be four to six (intent shaping, problem discovery and the like).
+The many utility skills (person builder, scenario builder) are never shown. A
+workflow is featured by `"library": {"show": true, "order": N}` in its
+`workflow.json`; `order` puts them in rough product-lifecycle order. One
+spotlight card (`"spotlight": true`, else the first), then a grid.
+
+**D-84 · 2026-11-21 · Geoff.** A skill card shows its steps, without a
+picture. Steps are as much tasks and outcomes as a sequence, so they are an
+unnumbered list. Imagery may come later. The workflow's `inputs` (or the
+fields in `library.prompt`) become a short form; Start opens the composer with
+the prompt filled in. A Hangar starter that names the workflow is an extra way
+in on the same card.
+
+**D-85 · 2026-11-21 · Geoff.** A demo card has Fly and, when the script has
+live turns, a "Live turns" switch. Off plays every turn canned, for a demo
+that must not vary.
+
+**D-86 · 2026-11-21 · Geoff.** One project per demo. A demo already flown shows
+in an "In flight" strip; flying it again offers "Reset to the start" or "Keep
+going" (D-81).
+
+**D-87 · 2026-11-21.** A demo card reads `scenario.json`: the title names the
+situation and the summary states the tension in at most 25 words;
+`length_minutes` is optional. Scripted or Mixed and "N of M turns live" are
+worked out from `script.md`. Demos are listed in the order of the skills they
+show. The seven shipped scenarios were retitled to match.
+
+**D-88 · 2026-11-21 · Geoff.** Artifact templates leave the Library. They are
+managed in the Hangar, and the agent finds them when asked.
+
 **D-112 · 2026-11-21 · Geoff asked, Claude chose.** A workflow's widgets and
 views are shown and edited in the Hangar. The workflow page splits them into
 "Widgets · in the chat" and "Views · in the canvas"; a view's page and the
@@ -661,7 +738,7 @@ Geoff's answers to the Aviator coordination walkthrough
 (https://claude.ai/artifact/La4Qa5THk5JhwQBQGcVY7d, questions AV-1 to AV-7 in
 [director-coordination.md](director-coordination.md)), locked 2026-11-21.
 
-**D-122 · 2026-11-21 · Geoff.** Aviator routes to workflows by a ladder:
+**D-128 · 2026-11-21 · Geoff.** Aviator routes to workflows by a ladder:
 start one when the person names it or presses Start in the Library; when a
 request clearly fits one and there is material to work on, offer it once, in
 one line with a button, and carry on openly if declined; otherwise work
@@ -670,7 +747,7 @@ directly. Never start a workflow silently. *An offer costs one line; a false
 start imposes a method on someone thinking out loud and costs a thread. It
 also gives the routing evals four clear outcomes to grade.*
 
-**D-123 · 2026-11-21 · Geoff.** "I'm working on a new feature" invokes a
+**D-129 · 2026-11-21 · Geoff.** "I'm working on a new feature" invokes a
 feature lifecycle skill. It is not a hero skill (not featured in the Library;
 it is part of how Aviator directs). It first looks for an existing project
 that fits and uses it; if the work is truly new, it creates the project and,
@@ -684,27 +761,27 @@ cross links) if the thing is truly new but related." *It makes the project the
 spine routing works from, and avoids a new project every time someone
 mentions a feature that already has one.*
 
-**D-124 · 2026-11-21 · Geoff.** A workflow's persona has rules that never
+**D-130 · 2026-11-21 · Geoff.** A workflow's persona has rules that never
 relax (honesty and the person's agency) and a style whose strictness is a
 setting: light touch, guide or by the book. The default is guide: a missing
 piece becomes a gap with who could close it, the score stays true, and the
 work moves on. *Guide is the only level that is both honest and never blocks
 the person; the evals decide whether any workflow needs another default.*
 
-**D-125 · 2026-11-21 · Geoff.** The person changes strictness for a run in
+**D-131 · 2026-11-21 · Geoff.** The person changes strictness for a run in
 words ("be tough on this one", "go easier"); the change is said in one line,
 shown on the mode strip (D-90) and recorded in the run. The Hangar sets each
 workflow's default. The agent may suggest a change but never makes one
 silently. *The person stays in control and the change is visible; a brief
 can say how strictly it was shaped.*
 
-**D-126 · 2026-11-21 · Geoff.** While the person is in an exchange with one
+**D-132 · 2026-11-21 · Geoff.** While the person is in an exchange with one
 thread, news from other threads is held until the exchange pauses, then given
 as one line and the run card. Failures and blockers that affect the person
 come through at once. *It protects the focus that stepping into a mode is for
 (D-94, D-117) and keeps red for failures (D-50).*
 
-**D-127 · 2026-11-21 · Geoff asked, Claude chose.** Aviator is tested in
+**D-133 · 2026-11-21 · Geoff asked, Claude chose.** Aviator is tested in
 three suites (routing, personas, coordination including long-haul stories
 with a forced compaction) through the real app on the Mac mini, with a fresh
 workspace per trial, code graders, a Claude judge per rubric line, and Geoff
@@ -718,7 +795,7 @@ development. Sonnet still behaves enough like the flown model for routing and
 coordination to be meaningful, which Haiku may not; the judge's agreement with
 Geoff's blind choices shows whether Haiku is good enough to grade.*
 
-**D-128 · 2026-11-21 · Geoff.** The director remembers across sessions and
+**D-134 · 2026-11-21 · Geoff.** The director remembers across sessions and
 compactions in three layers: a short charter in the director session's
 startup instructions (it survives compaction), the director skill reloaded
 after a compaction or in a new session, and state in files written as the
@@ -726,6 +803,112 @@ work goes (`state.md`, `memory.md`) added back as one recap. What it holds and
 remembers shows on the project page as "Director's notes", readable and
 editable. *A memory the person cannot see cannot be trusted, and a wrong one
 does damage for weeks; editing in place is the quickest fix.*
+
+Choices made while building D-120 and D-128 to D-134:
+
+**D-135 · 2026-11-21 · Claude.** The director's charter
+(`skills/director/charter.md`) reaches a director through a short paragraph in
+`workspace/CLAUDE.md` that tells a session that has been directing to run
+`pa recap` after a compaction or in a new session; `pa recap` prints the
+charter, `director/state.md`, `director/memory.md` and the runs. This refines
+D-134, which put the charter in the director session's startup instructions.
+*The app has no server-side record of which session is directing, so the
+bridge cannot pick the right session; Claude Code re-reads the root
+`CLAUDE.md` after every compaction, so the pointer survives without any change
+to upstream's bridge. If the evals show directors skipping the recap, the
+bridge route is the next step.*
+
+**D-136 · 2026-11-21 · Claude.** `pa check` fails a workflow shown in the
+Library (`library.show`) or shipped in `skills/` that has no routing `when`,
+`stage` or examples, and checks the shape of any routing block. A Hangar
+workflow without one still passes, and `pa workflows` lists it as "start only
+when named". The lifecycle stages are `workspace/frameworks/lifecycle.json`;
+document review sits on Specify beside PRD to requirements. Strictness levels
+are defined once, in `pa.py`, and printed by `pa workflows`. A clear-fit offer
+is one `AskUserQuestion` with "Start it in a thread" and "Not now". *Shipped
+workflows must stay routable even when hidden from the Library
+(requirements-to-dependencies), while a half-built Hangar workflow should not
+be blocked; a question card is the one-press answer Claude Code already
+draws.*
+
+**D-137 · 2026-11-21 · Claude.** Director's notes live in
+`workspace/director/` (one director per workspace, gitignored like runs). The
+files start as headings only; what to write and when is in the skill, so the
+person reads the project, not instructions. A save from the project page
+names the version it edited and is refused if the director rewrote the file
+meanwhile, with the newest text shown. The section appears only once a
+director has written something, folded. *The notes are for checking and
+correcting, not for every visit, and nobody's words should be lost to a
+silent overwrite.*
+
+## Usage logging
+
+Spec: [usage-logging.md](usage-logging.md). Open questions UL-1 to UL-3 are
+there; the build follows each one's recommendation until Geoff answers.
+
+**D-122 · 2026-11-21 · Geoff asked, Claude chose.** Flight Deck keeps one
+usage log: local files, one JSON line per event, one file per day, in
+`logs/usage/` in the app folder. Every part of the platform writes to it
+through one standard-library module (`skills/view-kit/scripts/usagelog.py`)
+shared by the server and `pa`. It is on by default, and
+`OMNIGENT_SLIM_USAGE=0` turns it off. `logs/` is gitignored and setup's
+updates skip it. *Geoff wants to understand how the whole platform is used,
+mostly while testing, with no remote storage available. Plain files work
+offline, from a ZIP, with no service, and can be aggregated or sent anywhere
+later. One writer means one set of rules, whoever writes. Skipping the folder
+in updates (D-111) is what lets the log outlive every update.*
+
+**D-123 · 2026-11-21 · Claude.** The log is fed from what upstream already
+instruments, not from new instrumentation: upstream's telemetry `emit()` is
+teed into it (before upstream's own opt-out, which stays off), the web app's
+upstream analytics events reach it through a host sink of ours, and the
+runner's existing `PostToolUse` observer adds one line per tool call. A line
+uses upstream's telemetry field names, and `pa usage pack --shape upstream`
+writes upstream's gateway records. *The production team will run upstream
+Omnigent, whose telemetry already has an event set and a wire format;
+matching them means our logs and theirs can be read by the same pipeline, and
+when upstream adds an event we get it free. The web app was already
+instrumented for a host sink that upstream never installs standalone.*
+
+**D-124 · 2026-11-21 · Claude.** What a line may hold is enforced by the
+writer, not left to each caller: numbers, yes or no, and short strings with no
+spaces (ids, status words, file names). Anything else becomes `<text N>`,
+keeping only its length. Paths are made relative to the app or home folder.
+A fingerprint level hashes names too, except a fixed vocabulary. `pa usage
+check` re-reads every line by the same rules, and a pack leaves out any line
+that fails. *Work data must not leak through a log, and a rule each caller
+has to remember will be forgotten once. "Ids and words, never sentences" is
+the rule the app already uses for direct actions (D-11, D-12), and it keeps
+the log useful for counting while making content structurally impossible.*
+
+**D-125 · 2026-11-21 · Claude.** Event names are `area.action` in lower case,
+from a fixed set of sources (`server`, `web`, `pa`, `skill`, `tool`, `eval`).
+Every `pa` command logs itself (`pa.<command>` with its ids, exit code and
+time), every change through a slim route logs itself (Hangar actions by name,
+others as `api.slim_write`), and reads are not logged. Skills write their own
+events with `pa log` only for moments `pa` cannot see. *Skills already do
+their work through `pa`, so logging `pa` covers every workflow without
+touching a skill; logging reads would bury the signal under the app's
+polling.*
+
+**D-126 · 2026-11-21 · Claude.** An eval trial is tagged (`pa usage eval
+start <suite> <task> <trial>`, or `OMNIGENT_SLIM_EVAL`), and its lines go to
+`logs/usage/eval/<suite>/`, left out of summaries unless asked for. The
+routing suite's code graders read a trial's lines: the skill loaded, whether a
+thread was briefed, whether a run started, failed turns. *The testing plan
+(AV-6) grades routing by what the agent did; the log records exactly that, so
+graders need not parse transcripts. Keeping trials apart keeps real use
+readable and lets eval output be deleted on its own.*
+
+**D-127 · 2026-11-21 · Claude.** Until there is a server, a log leaves a
+machine only as a pack a person makes and carries: `pa usage pack` writes one
+dated, compressed file to the Desktop, re-checking every line, optionally
+fingerprinted. A future remote exporter implements the same interface
+(`Exporter.send(batch)`) in upstream's gateway shape, and must be switched on
+by a person; the offline guard is unchanged until then. *Nothing reaches the
+internet at runtime (CLAUDE.md); a file a person moves is the only way out
+that keeps that true, and an exporter interface fixed now means the server
+can come later without changing the log.*
 
 ## Backfilled
 
@@ -774,6 +957,8 @@ canvas reload work; reviewed and locked are the person's judgment.*
 
 ## Open
 
+- Usage logging (UL-1 to UL-3 in [usage-logging.md](usage-logging.md)):
+  committing logs, what a work Mac pack holds, where the numbers are seen.
 - Progressive complexity (from D-54): how a workflow shows less at first and
   more on demand, to the person and to the agent. Not designed yet.
 - The intent graph's level of detail is deliberately held (D-98).

@@ -1,7 +1,8 @@
 {
  "scenario": "document-review",
- "title": "Allowances PRD review",
- "summary": "The Review a document with others workflow played with the invented Allowances PRD.",
+ "title": "Second opinions on a PRD",
+ "summary": "The Allowances PRD is done. Risk Review and a stand-in for the designer read it, comment, and list what they find.",
+ "length_minutes": 6,
  "workflow": "document-review",
  "participants": [
   "risk-review",
@@ -9,7 +10,8 @@
  ],
  "fixtures": {
   "dataset": "fixtures/allowances-review.json",
-  "document": "fixtures/allowances-prd.md"
+  "document": "context/allowances-prd.md"
  },
- "script": "script.md"
+ "script": "script.md",
+ "opening": "I have finished the Allowances PRD. Help me review it."
 }
