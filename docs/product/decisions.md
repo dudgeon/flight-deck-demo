@@ -473,6 +473,22 @@ in the hangar." Placing by `SKILL.md` makes the label match what the agent will
 really do, and editing inside the workflow draft keeps the publish gate,
 history and "travels with the repo" (D-75) for free.*
 
+**D-113 · 2026-11-21 · Geoff.** On a git copy of the app (the Mac mini), the
+Hangar's Overview has "Send to repo": it commits the published configuration
+(the D-75 folders) to a new `hangar/<date-time>` branch, pushes it, and opens a
+pull request with `gh` when it is installed, or links GitHub's page to open
+one. The commit is built in a throwaway index from HEAD, so the folder's
+branch and working tree are untouched; pulling main after the merge brings the
+same files back. It runs only when pressed, and the same changes are not sent
+twice. A ZIP copy (the work Mac) has no git and shows no button: there, what
+matters is that published files survive updates, which setup does (D-111).
+*Geoff: "I'm less concerned about the work Mac changes making their way to
+GitHub for now; primary concern is them surviving updates. Later, we may
+likely re-commit the repo to a company repo, treating this as a fork." The
+button pushes to whatever remote the copy came from, so it keeps working in a
+company fork. This is the one place the app reaches the network on purpose,
+and only on a person's press.*
+
 Geoff confirmed the person-editing choices on 21 Nov (combined walkthrough
 https://claude.ai/artifact/7gbkDmURSuwhWGWVzyBtU6): the page as the editor with
 autosave (D-63), the pinnable Aviator pop-over with "Try them" (D-64), casting

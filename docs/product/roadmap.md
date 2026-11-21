@@ -56,12 +56,10 @@ back.
   the person's page (PR 13, D-63 to D-66). The scenario folder split (D-42,
   D-67). Slice 3, scenario and workflow builders (PR 14, D-71 to D-73).
   Pictures for people and agents, and configuration that travels with the
-  repo (PR 15, D-74, D-75). `pa draft|publish|history|uses`.
+  repo (PR 15, D-74, D-75). `pa draft|publish|history|uses`. Widgets and views shown, edited and added
+  in the Hangar (PR 27, D-112).
 - **In an open PR.** "◆ Fly this" on a scenario page (PR 17, see below).
-  Widgets and views shown, edited and added in the Hangar (D-112).
-- **Open.** How Hangar edits get back into the repo: nothing commits or
-  pushes them today, and a ZIP install on the work Mac has no git. Asked
-  Geoff (a "Send to repo" button, git copies only, or warn only).
+  "Send to repo" for Hangar edits on a git copy (D-113).
 - **Next.** Builder skills for workflows and skills (`build-workflow`,
   `build-skill`) beyond `build-person` and `scenario-builder`.
 - **Open.** Left for later by design: sharing a workflow or scenario with

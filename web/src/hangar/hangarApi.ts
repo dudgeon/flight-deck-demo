@@ -255,7 +255,30 @@ export interface Hangar {
   /** Drafts of scenarios and workflows. */
   folder_drafts: FolderDraft[];
   /** Published files not yet committed to the repo (D-75). */
-  repo?: { git: boolean; uncommitted: string[]; count?: number };
+  repo?: { git: boolean; uncommitted: string[]; count?: number; sent?: RepoSend | null };
+}
+
+/** The last "Send to repo" from this copy (D-113). */
+export interface RepoSend {
+  branch: string;
+  commit: string;
+  files: number;
+  at: string;
+  /** The pull request `gh` opened, when it is installed. */
+  pull_request: string | null;
+  /** Otherwise, GitHub's page to open one. */
+  open_pr: string | null;
+  summary: string;
+}
+
+/** Commit the published configuration to a new branch and push it (D-113). */
+export function useSendToRepo() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (summary: string) =>
+      send("/v1/slim/hangar/repo/send", "POST", { summary }) as Promise<RepoSend>,
+    onSuccess: () => client.invalidateQueries({ queryKey: ["slim-hangar"] }),
+  });
 }
 
 async function fetchHangar(): Promise<Hangar> {

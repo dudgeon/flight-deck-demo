@@ -485,6 +485,16 @@ built in the Hangar is meant to travel with the repo. *Why:* Geoff wants
 recognisable faces for the cast, and wants the cast, workflows and scenarios
 to move with the repo to the work machine.
 
+**Send to repo (D-113).** On a git copy of the app, the Overview's "Not in
+the repo yet" list has a Send to repo button and a line for what changed. It
+commits just those files to a new `hangar/<date-time>` branch without touching
+the folder's own branch, pushes it, and opens a pull request (with `gh`) or
+links GitHub's page to open one; the last send is shown under the list. *Why:*
+publishing wrote the files but nothing put them in the repo, so edits made on
+the Mac mini never reached the ZIP everyone downloads. On the work Mac (a ZIP,
+no git) the button does not show; there setup keeps published files across
+updates (D-111).
+
 **Scenario and workflow builders (slice 3, D-71 to D-73).** Every scenario
 and workflow page has Edit, Duplicate and Remove (for a shipped workflow, "Edit
 a copy"), and the Scenarios shelf has "New scenario". The draft opens as an
@@ -516,7 +526,7 @@ what a person sees of a workflow, and Geoff wants to shape them where he
 shapes everything else, without hand-editing files.
 
 **Where.** Design in `hangar.md`. Server: `omnigent/server/routes/slim_hangar.py`
-(`GET /v1/slim/hangar`, rendered views, templates and scenario players, and the
+(`GET /v1/slim/hangar`, `POST /v1/slim/hangar/repo/send`, rendered views, templates and scenario players, and the
 draft, publish, history and restore routes for people, scenarios and
 workflows, and `GET /v1/slim/hangar/drafts/workflow/<id>/views/<view>` for a
 draft's widget). Widget editor: `web/src/hangar/WidgetsCard.tsx`. Folder drafts: the "workflows and scenarios" builder section of
