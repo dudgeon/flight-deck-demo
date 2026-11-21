@@ -657,6 +657,75 @@ assembled on request work from a ZIP and are easy to replace with a service
 when the intent graph is designed (D-98). Another team's project has to be
 describable, because that is exactly Geoff's example in D-97.*
 
+## Usage logging
+
+Spec: [usage-logging.md](usage-logging.md). Open questions UL-1 to UL-3 are
+there; the build follows each one's recommendation until Geoff answers.
+
+**D-122 · 2026-11-21 · Geoff asked, Claude chose.** Flight Deck keeps one
+usage log: local files, one JSON line per event, one file per day, in
+`logs/usage/` in the app folder. Every part of the platform writes to it
+through one standard-library module (`skills/view-kit/scripts/usagelog.py`)
+shared by the server and `pa`. It is on by default, and
+`OMNIGENT_SLIM_USAGE=0` turns it off. `logs/` is gitignored and setup's
+updates skip it. *Geoff wants to understand how the whole platform is used,
+mostly while testing, with no remote storage available. Plain files work
+offline, from a ZIP, with no service, and can be aggregated or sent anywhere
+later. One writer means one set of rules, whoever writes. Skipping the folder
+in updates (D-111) is what lets the log outlive every update.*
+
+**D-123 · 2026-11-21 · Claude.** The log is fed from what upstream already
+instruments, not from new instrumentation: upstream's telemetry `emit()` is
+teed into it (before upstream's own opt-out, which stays off), the web app's
+upstream analytics events reach it through a host sink of ours, and the
+runner's existing `PostToolUse` observer adds one line per tool call. A line
+uses upstream's telemetry field names, and `pa usage pack --shape upstream`
+writes upstream's gateway records. *The production team will run upstream
+Omnigent, whose telemetry already has an event set and a wire format;
+matching them means our logs and theirs can be read by the same pipeline, and
+when upstream adds an event we get it free. The web app was already
+instrumented for a host sink that upstream never installs standalone.*
+
+**D-124 · 2026-11-21 · Claude.** What a line may hold is enforced by the
+writer, not left to each caller: numbers, yes or no, and short strings with no
+spaces (ids, status words, file names). Anything else becomes `<text N>`,
+keeping only its length. Paths are made relative to the app or home folder.
+A fingerprint level hashes names too, except a fixed vocabulary. `pa usage
+check` re-reads every line by the same rules, and a pack leaves out any line
+that fails. *Work data must not leak through a log, and a rule each caller
+has to remember will be forgotten once. "Ids and words, never sentences" is
+the rule the app already uses for direct actions (D-11, D-12), and it keeps
+the log useful for counting while making content structurally impossible.*
+
+**D-125 · 2026-11-21 · Claude.** Event names are `area.action` in lower case,
+from a fixed set of sources (`server`, `web`, `pa`, `skill`, `tool`, `eval`).
+Every `pa` command logs itself (`pa.<command>` with its ids, exit code and
+time), every change through a slim route logs itself (Hangar actions by name,
+others as `api.slim_write`), and reads are not logged. Skills write their own
+events with `pa log` only for moments `pa` cannot see. *Skills already do
+their work through `pa`, so logging `pa` covers every workflow without
+touching a skill; logging reads would bury the signal under the app's
+polling.*
+
+**D-126 · 2026-11-21 · Claude.** An eval trial is tagged (`pa usage eval
+start <suite> <task> <trial>`, or `OMNIGENT_SLIM_EVAL`), and its lines go to
+`logs/usage/eval/<suite>/`, left out of summaries unless asked for. The
+routing suite's code graders read a trial's lines: the skill loaded, whether a
+thread was briefed, whether a run started, failed turns. *The testing plan
+(AV-6) grades routing by what the agent did; the log records exactly that, so
+graders need not parse transcripts. Keeping trials apart keeps real use
+readable and lets eval output be deleted on its own.*
+
+**D-127 · 2026-11-21 · Claude.** Until there is a server, a log leaves a
+machine only as a pack a person makes and carries: `pa usage pack` writes one
+dated, compressed file to the Desktop, re-checking every line, optionally
+fingerprinted. A future remote exporter implements the same interface
+(`Exporter.send(batch)`) in upstream's gateway shape, and must be switched on
+by a person; the offline guard is unchanged until then. *Nothing reaches the
+internet at runtime (CLAUDE.md); a file a person moves is the only way out
+that keeps that true, and an exporter interface fixed now means the server
+can come later without changing the log.*
+
 ## Backfilled
 
 Decisions Geoff made on 20 and 21 November that were acted on but never
@@ -704,6 +773,8 @@ canvas reload work; reviewed and locked are the person's judgment.*
 
 ## Open
 
+- Usage logging (UL-1 to UL-3 in [usage-logging.md](usage-logging.md)):
+  committing logs, what a work Mac pack holds, where the numbers are seen.
 - Progressive complexity (from D-54): how a workflow shows less at first and
   more on demand, to the person and to the agent. Not designed yet.
 - The intent graph's level of detail is deliberately held (D-98).

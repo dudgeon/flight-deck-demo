@@ -575,6 +575,29 @@ Hangar projects follow the app out of a download folder
 `omnigent/slim_bootstrap.py`, `tests/setup_sim/`, `tests/test_slim_install_sync.py`,
 README "Quick start" and "Updating to a newer version".
 
+## Usage log
+
+**Intent.** Know how the whole platform is used (which pages, workflows,
+skills and tools, what fails, what it costs), mostly while testing, without
+any work content leaving the work or reaching the log (D-122 to D-127).
+
+**Behaviour.** Every part of the app writes one JSON line per event to
+`logs/usage/<day>.jsonl` in the app folder: page views and clicks from the
+web app, sessions, turns and tokens from the server, Hangar actions, each
+tool and skill an agent uses, and every `pa` command with its exit code. A
+line holds ids, numbers and status words; any text with spaces becomes
+`<text N>`. Nothing is shown in flying. `pa usage summary` prints the counts;
+`pa usage pack` writes one file to the Desktop to carry elsewhere, optionally
+with names hashed; `pa usage eval start` tags an eval trial's lines and keeps
+them apart. Off with `OMNIGENT_SLIM_USAGE=0`.
+
+**Where.** `skills/view-kit/scripts/usagelog.py` (the writer, reader and
+packs), `pa.py` (`pa log`, `pa usage`, the per-command line),
+`omnigent/slim_usage.py` (server feeds), `omnigent/server/routes/slim_usage.py`
+(`POST /v1/slim/usage/events`, `GET /v1/slim/usage/summary`),
+`web/src/lib/slimUsage.ts` (the web sink), `tests/test_slim_usage.py`. Spec:
+[usage-logging.md](usage-logging.md).
+
 ## Dock launcher
 
 **Intent.** On the work Mac, starting the demo should be one click, not a

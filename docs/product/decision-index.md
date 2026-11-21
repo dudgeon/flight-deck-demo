@@ -189,6 +189,19 @@ decided but nothing is built yet.
 | D-121 | A project is a file (`projects/<slug>.json`); a link is one line on its record, read both ways | Claude | Built |
 
 
+## Usage logging
+
+Spec: [usage-logging.md](usage-logging.md).
+
+| D | Decision | Who | Status |
+|---|---|---|---|
+| D-122 | One local usage log: JSON lines per day in `logs/usage/`, one shared writer, on by default, skipped by updates | Geoff asked, Claude chose | Built |
+| D-123 | Fed from upstream's own instrumentation (telemetry emit, web analytics sink, tool observer), in upstream's field names | Claude | Built |
+| D-124 | The writer enforces "ids and words, never sentences"; `<text N>`; fingerprint level; packs re-check | Claude | Built |
+| D-125 | `area.action` names; every `pa` command and slim route write logs itself; reads are not logged; `pa log` for skills | Claude | Built |
+| D-126 | Eval trials are tagged and kept in `eval/<suite>/`; routing graders read them | Claude | Built; no suite uses it yet |
+| D-127 | Logs leave a machine only as a pack a person carries; an `Exporter` interface for a later server | Claude | Built (packs); no remote exporter |
+
 ## Backfilled (decided earlier, logged on 21 Nov)
 
 | D | Decision | Who | Status |
@@ -203,6 +216,8 @@ decided but nothing is built yet.
 
 ## Open questions not yet numbered
 
+- Usage logging (UL-1 to UL-3 in [usage-logging.md](usage-logging.md)):
+  put to Geoff 2026-11-21; built to the recommendations meanwhile.
 - Aviator coordination, skill routing and persona strictness (AV-1 to
   AV-6 in [director-coordination.md](director-coordination.md)): put to
   Geoff 2026-11-21; numbered when answered.

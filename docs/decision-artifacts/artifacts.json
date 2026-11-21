@@ -262,6 +262,18 @@
       "about": "Coordination patterns for the director, routing to hero skills, the feature lifecycle, persona strictness and how to test it (AV-1 to AV-6)",
       "decisions": "D-120",
       "status": "Open"
+    },
+    {
+      "id": "7tXLiAF95CZpCp81UKVVMB",
+      "order": 22,
+      "url": "https://claude.ai/artifact/7tXLiAF95CZpCp81UKVVMB",
+      "slug": "2026-11-21-usage-log",
+      "date": "2026-11-21",
+      "title": "Flight Deck Usage Log",
+      "kind": "Decision walkthrough",
+      "about": "How the local usage log works, and whether logs are committed, what a work Mac pack holds, where the numbers are seen (UL-1 to UL-3)",
+      "decisions": "D-122 to D-127",
+      "status": "Open"
     }
   ]
 }

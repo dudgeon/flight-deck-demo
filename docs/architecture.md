@@ -278,6 +278,28 @@ A design, not yet built. Spec and open questions:
   child sessions and side chats. Project meaning goes in our own file beside
   upstream's project, so the fork stays compatible.
 
+## The usage log
+
+One local record of how the platform is used (D-122 to D-127; spec
+[product/usage-logging.md](product/usage-logging.md)).
+
+- **One writer.** `skills/view-kit/scripts/usagelog.py`, standard library
+  only, shared by `pa` and the server (which loads it by path,
+  `omnigent/slim_usage.py`). Lines go to `<app folder>/logs/usage/<day>.jsonl`
+  (eval trials to `eval/<suite>/`). `logs/` is gitignored and skipped by
+  `scripts/install_sync.py`.
+- **Four feeds, all upstream hooks.** The web app's upstream analytics events
+  through our host sink (`web/src/lib/slimUsage.ts`, installed in `main.tsx`)
+  to `POST /v1/slim/usage/events`; upstream's telemetry `emit()` teed before
+  its opt-out (`omnigent/telemetry/client.py`); a middleware for slim route
+  writes (`omnigent/server/app.py`); the runner's `PostToolUse` observer
+  (`omnigent/runner/app.py`). `pa` logs each command in `main()`.
+- **Rules in the writer.** Event names `area.action`; parameters are numbers,
+  yes/no or short strings without spaces, anything else `<text N>`; paths
+  relative. Never raises.
+- **Out.** `pa usage pack` (re-checked, optionally fingerprinted, optionally
+  in upstream's gateway shape); `usagelog.Exporter` for a later server.
+
 ## Setup on the work Mac
 
 The target is an Apple silicon Mac with Claude Code installed and signed in,
@@ -320,3 +342,4 @@ GitHub namespace.
 | Collab editor | | `shell/review/` | `document-collaboration` |
 | Session panel | | `shell/SessionOverview*.tsx` | |
 | Design tokens | `design/build_tokens.py` | `designTokens.generated.css` | `product-aviator-design` |
+| Usage log | `slim_usage.py`, `server/routes/slim_usage.py`, the tees in `telemetry/client.py` and `runner/app.py` | `lib/slimUsage.ts` | `view-kit` (`usagelog.py`, `pa log`, `pa usage`) |

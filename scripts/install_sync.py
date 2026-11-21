@@ -41,10 +41,10 @@ import time
 from pathlib import Path
 
 MANIFEST = ".install-manifest.json"
-# Never copied, compared or removed: runtime state, the person's drafts and
+# Never copied, compared or removed: runtime state, the usage log (D-122), the person's drafts and
 # demos, and setup's own output.
 SKIP_DIRS = {".git", ".runtime", "__pycache__", "node_modules"}
-SKIP_PREFIXES = ("updates/", "workspace/.hangar/", "workspace/demos/")
+SKIP_PREFIXES = ("updates/", "logs/", "workspace/.hangar/", "workspace/demos/")
 SKIP_FILES = {MANIFEST, "setup-report.txt", ".DS_Store"}
 PERSON_AREA = "workspace/"
 

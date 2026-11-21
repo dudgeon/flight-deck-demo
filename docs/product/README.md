@@ -17,6 +17,8 @@ for, and what was tried, without asking the people who were there.
 - `modes-and-projects.md`: a design exploration, not yet decided: modes that
   workflows put a session into, pausing and resuming runs, what a project is,
   and the intent graph. Lists the open decisions.
+- `usage-logging.md`: the usage log: what it records, the line's schema,
+  privacy rules, where files live, evals, and how logs leave a machine.
 
 Outside this folder: `../history.md` tells the story from the first import
 to now, `../architecture.md` explains how each part is built, and

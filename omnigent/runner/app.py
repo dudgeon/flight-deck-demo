@@ -5958,6 +5958,10 @@ def create_runner_app(
                     )
                     return None
 
+            # omnigent-slim: one usage-log line per tool call, names only (D-123).
+            from omnigent.slim_usage import observe_tool as _slim_observe_tool
+
+            _slim_observe_tool(payload, _captured_session_id)
             try:
                 changes = native_file_changes(payload)
                 if not changes:

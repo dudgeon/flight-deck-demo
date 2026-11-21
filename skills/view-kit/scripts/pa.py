@@ -16,6 +16,8 @@ Standard library only; nothing here touches the network.
   pa publish person ID                            check it, keep the old version, make it live
   pa history person ID [--restore VERSION]        earlier versions; restore one
   pa uses    person ID                            what depends on them
+  pa log     EVENT k=v ...                        write one event to the usage log
+  pa usage   summary|tail|check|pack|eval|where   read the usage log
 
 A dataset is one JSON file: {"dataset", "title", "updated", "records": [...]}.
 Every record has "id" and "type"; "parent" nests it; "status", "stage",
@@ -35,6 +37,7 @@ import os
 import re
 import sys
 import tempfile
+import time
 from pathlib import Path
 from typing import Any, Iterator
 
@@ -2641,6 +2644,269 @@ def cmd_uses(args: argparse.Namespace) -> None:
             print(f"{kind[:-1]}: {item}")
 
 
+# ---------------------------------------------------------------- usage log (D-122 to D-127)
+
+def _load_usagelog() -> Any:
+    """``usagelog.py`` beside this file, also when pa is loaded as a module
+    (the server's Hangar routes do) and this folder is not on sys.path."""
+    import importlib.util
+
+    try:
+        import usagelog as module  # type: ignore[import-not-found]
+
+        return module
+    except ImportError:
+        path = Path(__file__).resolve().parent / "usagelog.py"
+        spec = importlib.util.spec_from_file_location("usagelog", path)
+        assert spec and spec.loader
+        module = importlib.util.module_from_spec(spec)
+        sys.modules.setdefault("usagelog", module)
+        spec.loader.exec_module(module)
+        return module
+
+
+usagelog = _load_usagelog()
+
+#: Arguments never worth a column: how the command was called, not what it did.
+_UNLOGGED_ARGS = {"run", "command", "json", "url", "dir", "out"}
+
+
+def _command_context(args: argparse.Namespace) -> dict[str, Any]:
+    context: dict[str, Any] = {}
+    scenario = getattr(args, "scenario", None)
+    if isinstance(scenario, str) and scenario:
+        name = Path(scenario).name
+        folder = Path(scenario)
+        if (folder / "workflow.json").is_file():
+            context["workflow"] = name
+        elif (folder / "scenario.json").is_file():
+            context["scenario"] = name
+            try:
+                context["workflow"] = json.loads((folder / "scenario.json").read_text()).get("workflow")
+            except (OSError, ValueError, AttributeError):
+                pass
+        else:
+            context["workflow"] = name
+    cwd = Path.cwd().as_posix()
+    if "/workspace/demos/" in cwd + "/":
+        context["mode"] = "demo"
+        context.setdefault("scenario", cwd.split("/workspace/demos/", 1)[1].split("/")[0] or None)
+    elif "/.hangar/" in cwd + "/":
+        context["mode"] = "hangar"
+    return context
+
+
+def _log_command(args: argparse.Namespace, code: int, started: float) -> None:
+    """Every pa command is one line in the usage log: what ran, not what it said."""
+    try:
+        command = getattr(args, "command", None)
+        if not command or command in ("usage", "log"):
+            return
+        params: dict[str, Any] = {"exit": code, "duration_ms": int((time.monotonic() - started) * 1000)}
+        for key, value in vars(args).items():
+            if key in _UNLOGGED_ARGS or key.endswith("_command") and key != "review_command":
+                continue
+            if key == "review_command":
+                params["subcommand"] = value
+                continue
+            if value is False or value is None:
+                continue
+            if isinstance(value, str) and key in ("data", "spec", "doc", "folder", "scenario"):
+                value = Path(value).name
+            params[key] = value
+        usagelog.log(
+            f"pa.{command.replace('-', '_')}",
+            source="pa",
+            params=params,
+            context=_command_context(args),
+            session_id=getattr(args, "session", None),
+        )
+    except Exception:
+        pass
+
+
+def cmd_log(args: argparse.Namespace) -> None:
+    params: dict[str, Any] = {}
+    for pair in args.pairs:
+        if "=" not in pair:
+            raise PaError(f"write fields as key=value: {pair!r}")
+        key, value = pair.split("=", 1)
+        params[key] = _parse_value(value)
+    context = {k: getattr(args, k) for k in ("project", "workflow", "run", "scenario", "mode") if getattr(args, k)}
+    try:
+        record = usagelog.make_record(
+            args.event, source="skill", params=params, context=context, session_id=args.session
+        )
+    except ValueError as err:
+        raise PaError(str(err)) from err
+    if not usagelog.enabled():
+        return
+    usagelog.write(record)
+    if args.show:
+        print(json.dumps(record, indent=2))
+
+
+def _parse_value(text: str) -> Any:
+    lowered = text.lower()
+    if lowered in ("true", "yes"):
+        return True
+    if lowered in ("false", "no"):
+        return False
+    try:
+        return int(text)
+    except ValueError:
+        pass
+    try:
+        return float(text)
+    except ValueError:
+        return text
+
+
+def _usage_files(args: argparse.Namespace) -> list[Path]:
+    return usagelog.log_files(include_eval=getattr(args, "eval", False), suite=getattr(args, "suite", None))
+
+
+def _since(args: argparse.Namespace) -> int | None:
+    try:
+        return usagelog.parse_since(getattr(args, "since", None))
+    except ValueError as err:
+        raise PaError(str(err)) from err
+
+
+def cmd_usage_summary(args: argparse.Namespace) -> None:
+    summary = usagelog.summarize(usagelog.read(_usage_files(args), _since(args)))
+    if args.json:
+        print(json.dumps(summary, indent=2))
+    else:
+        print(usagelog.format_summary(summary))
+
+
+def cmd_usage_tail(args: argparse.Namespace) -> None:
+    records = list(usagelog.read(_usage_files(args), _since(args)))[-args.n :]
+    for rec in records:
+        if args.json:
+            print(json.dumps(rec, separators=(",", ":")))
+            continue
+        params = " ".join(f"{k}={v}" for k, v in (rec.get("params") or {}).items())
+        ctx = " ".join(f"{k}={v}" for k, v in (rec.get("context") or {}).items() if k != "eval")
+        print(f"{rec.get('timestamp', '')[:19]}  {rec.get('source', ''):6}  {rec.get('event_name')}  {ctx}  {params}".rstrip())
+
+
+def cmd_usage_check(args: argparse.Namespace) -> None:
+    bad = 0
+    lines = 0
+    for path in usagelog.log_files(include_eval=True):
+        with open(path, encoding="utf-8") as handle:
+            for number, line in enumerate(handle, 1):
+                if not line.strip():
+                    continue
+                lines += 1
+                try:
+                    problems = usagelog.check_record(json.loads(line))
+                except ValueError:
+                    problems = ["not JSON"]
+                if problems:
+                    bad += 1
+                    if bad <= 20:
+                        print(f"{path.name}:{number}: {'; '.join(problems)}")
+    print(f"{lines} lines checked, {bad} with problems")
+    if bad:
+        raise PaError("the usage log has lines that do not match the schema")
+
+
+def _default_pack_path(shape: str) -> Path:
+    desktop = Path.home() / "Desktop"
+    folder = desktop if desktop.is_dir() else usagelog.usage_dir() / "packs"
+    stamp = _dt.datetime.now().strftime("%Y-%m-%d-%H%M")
+    suffix = "-upstream" if shape == "upstream" else ""
+    return folder / f"flight-deck-usage-{usagelog.installation_id()[:8]}-{stamp}{suffix}.jsonl.gz"
+
+
+def cmd_usage_pack(args: argparse.Namespace) -> None:
+    out = Path(args.out).expanduser() if args.out else _default_pack_path(args.shape)
+    result = usagelog.pack(out, _usage_files(args), _since(args), shape=args.shape, fingerprint=args.fingerprint)
+    print(f"packed {result['lines']} lines into {result['path']}")
+    if result["left_out"]:
+        print(f"left out {result['left_out']} lines that failed the privacy check")
+
+
+def cmd_usage_eval(args: argparse.Namespace) -> None:
+    if args.action == "start":
+        if not args.suite:
+            raise PaError("pa usage eval start SUITE [TASK] [TRIAL]")
+        path = usagelog.set_eval_tag(args.suite, args.task or "", args.trial or "")
+        print(f"tagging events as eval {args.suite}/{args.task or ''}/{args.trial or ''} ({path})")
+    elif args.action == "stop":
+        usagelog.clear_eval_tag()
+        print("eval tag cleared")
+    else:
+        tag = usagelog.eval_tag()
+        print(json.dumps(tag) if tag else "no eval in progress")
+
+
+def cmd_usage_where(args: argparse.Namespace) -> None:
+    root = usagelog.usage_dir()
+    state = "on" if usagelog.enabled() else "off"
+    print(f"{root}  (logging {state}, level {usagelog.level()})")
+    for path in usagelog.log_files(include_eval=True)[-10:]:
+        print(f"  {path.relative_to(root)}  {path.stat().st_size:,} bytes")
+
+
+def register_usage(sub: Any) -> None:
+    p = sub.add_parser("log", help="write one event to the usage log (for skills: a step, an offer, an outcome)")
+    p.add_argument("event", help="area.action, lower case, e.g. skill.step or offer.made")
+    p.add_argument("pairs", nargs="*", help="key=value fields: ids, status words and numbers only, never sentences")
+    p.add_argument("--session")
+    p.add_argument("--project")
+    p.add_argument("--workflow")
+    p.add_argument("--run")
+    p.add_argument("--scenario")
+    p.add_argument("--mode", choices=usagelog.MODES)
+    p.add_argument("--show", action="store_true", help="print the line as written")
+    p.set_defaults(run=cmd_log)
+
+    usage = sub.add_parser("usage", help="read the usage log: summary, tail, check, pack, eval tags")
+    usub = usage.add_subparsers(dest="usage_command", required=True)
+
+    def common(q: Any) -> None:
+        q.add_argument("--since", help="7d, 12h, 30m or a date like 2026-11-20")
+        q.add_argument("--eval", action="store_true", help="include eval trials")
+        q.add_argument("--suite", help="only this eval suite")
+
+    q = usub.add_parser("summary", help="counts: sessions, pages, workflows, skills, tools, pa commands")
+    common(q)
+    q.add_argument("--json", action="store_true")
+    q.set_defaults(run=cmd_usage_summary)
+
+    q = usub.add_parser("tail", help="the latest lines")
+    common(q)
+    q.add_argument("-n", type=int, default=20)
+    q.add_argument("--json", action="store_true")
+    q.set_defaults(run=cmd_usage_tail)
+
+    q = usub.add_parser("check", help="every line matches the schema and holds no sentences")
+    q.set_defaults(run=cmd_usage_check)
+
+    q = usub.add_parser("pack", help="copy the log into one file to carry off this machine")
+    common(q)
+    q.add_argument("--out", help="default: a dated file on the Desktop")
+    q.add_argument("--shape", choices=("slim", "upstream"), default="slim",
+                   help="upstream: Omnigent's telemetry gateway records")
+    q.add_argument("--fingerprint", action="store_true",
+                   help="hash every name (files, records, projects) on the way out; counts stay")
+    q.set_defaults(run=cmd_usage_pack)
+
+    q = usub.add_parser("eval", help="tag every event as part of an eval trial, until stopped")
+    q.add_argument("action", choices=("start", "stop", "show"))
+    q.add_argument("suite", nargs="?")
+    q.add_argument("task", nargs="?")
+    q.add_argument("trial", nargs="?")
+    q.set_defaults(run=cmd_usage_eval)
+
+    q = usub.add_parser("where", help="where the log is, and its latest files")
+    q.set_defaults(run=cmd_usage_where)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="pa", description="Product Aviator data and view command")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -2836,13 +3102,25 @@ def main(argv: list[str] | None = None) -> int:
 
     register_review(sub)
 
+    register_usage(sub)
+
     args = parser.parse_args(argv)
+    started = time.monotonic()
+    code = 0
     try:
         args.run(args)
     except (PaError, ReviewError) as err:
         print(f"pa: {err}", file=sys.stderr)
-        return 2
-    return 0
+        code = 2
+    except SystemExit as err:
+        code = err.code if isinstance(err.code, int) else 1
+        raise
+    except BaseException:
+        code = 1
+        raise
+    finally:
+        _log_command(args, code, started)
+    return code
 
 
 if __name__ == "__main__":
