@@ -126,9 +126,9 @@ inside the app (D-30), the work-Mac ZIP install (D-100).
 - **PRs 18 and 20** (18:49, 18:54): the modes, runs, projects and intent graph
   exploration, with eleven questions and a survey of what upstream
   Omnigent already has (`docs/product/modes-and-projects.md`).
-- **PR 17** (open): fly a scenario as a demo, with canned and live turns
+- **PR 17** (merged later, 22:35): fly a scenario as a demo, with canned and live turns
   (D-76 to D-81).
-- **PR 19** (open, stacked on 17): the Library redesign, featured skills on top
+- **PR 19** (merged later, 22:37): the Library redesign, featured skills on top
   and demos below, all generated from their own files (D-82 to D-88).
 - **PR 21** (merged): Geoff's answers to the modes walkthrough, D-89 to D-99.
   The headline: the main Aviator session acts as a project director, and
@@ -188,12 +188,17 @@ After that:
   `docs/decision-artifacts/`, with the answers recorded on them; one, a
   Claude Doc, has no page to copy and is listed with a note.
 
+Later that evening:
+
+- **PRs 17 and 19** (22:35, 22:37 UTC): out of draft and merged. Demos you fly
+  from a scenario (D-76 to D-81) and the new Library (D-82 to D-88) are on
+  `main`.
+
 ## Still waiting
 
 - Geoff's first install on the work Mac with `setup.sh` (D-100, D-107,
   D-111).
-- PRs 17 and 19 out of draft, and the Mac mini pulled and restarted (it was
-  still at PR 11).
+- The Mac mini pulled and restarted (it was still at PR 11).
 - Live runs of decision review and problem discovery.
 - Progressive complexity (D-54) and the remaining modes questions (M-8,
   M-12 to M-14).
