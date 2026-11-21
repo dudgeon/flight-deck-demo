@@ -236,3 +236,14 @@ for what the person did.
 dark value per token, so it can feed any styling system. The contract that
 matters is the set of token names and what each means (in the skill), not the
 values.
+
+## The Hangar (builder mode): designed, not yet built
+
+**Intent.** Defining people, workflows, views and scenarios should happen in
+the app, by product managers, without being able to break what others use.
+The app therefore has two modes that cannot be mistaken for each other:
+flying (using it) and the Hangar (defining what others fly). Building is
+itself a guided workflow, drafts are the only thing ever edited, and Publish
+is a strict gate with a way back (D-39 to D-47).
+
+**Where.** The full design is in `hangar.md`.
