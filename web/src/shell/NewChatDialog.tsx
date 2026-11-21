@@ -4888,7 +4888,8 @@ function NewChatLandingContent({
           stored.effort != null &&
           CLAUDE_NATIVE_EFFORTS.some((e) => e.value === stored.effort)
           ? stored.effort
-          : "",
+          : // omnigent-slim: show the launch default (omnigent/slim_policy.py).
+            "medium",
       );
     } else if (supportsApprovalMode) {
       setBypassSandbox(

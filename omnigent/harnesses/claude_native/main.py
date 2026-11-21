@@ -1473,7 +1473,15 @@ def claude_catalog_fingerprint(claude_config: ClaudeNativeUcodeConfig | None) ->
         binary_identity("claude"),
         ambient_transport,
         claude_managed_model_picker() if uses_cli_settings else None,
+        # omnigent-slim: the catalog's default row depends on this.
+        _slim_default_model(),
     )
+
+
+def _slim_default_model() -> str:
+    from omnigent.slim_policy import DEFAULT_CLAUDE_MODEL
+
+    return DEFAULT_CLAUDE_MODEL
 
 
 async def claude_model_catalog(
@@ -1515,7 +1523,10 @@ async def claude_model_catalog(
         ]
 
     configured_pin = claude_config.model if claude_config is not None else None
-    default_model = configured_pin or probe.default_model
+    # omnigent-slim: a Default launch runs the slim default model, so mark it.
+    from omnigent.slim_policy import DEFAULT_CLAUDE_MODEL
+
+    default_model = configured_pin or DEFAULT_CLAUDE_MODEL or probe.default_model
     marked = False
     out: list[dict[str, object]] = []
     for row in rows:

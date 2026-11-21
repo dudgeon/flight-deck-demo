@@ -7,7 +7,9 @@ import { AUTO_NATIVE_HARNESS_ID } from "./agentLabels";
 import type { HarnessOptions } from "./modePreferences";
 import type { ProjectConfig } from "./projectsApi";
 
-const STORAGE_KEY = "omnigent:project-launch-defaults";
+// omnigent-slim: "-slim2" forgets picks remembered before Auto / Opus 5.5 /
+// medium became the defaults, so those defaults show on first load.
+const STORAGE_KEY = "omnigent:project-launch-defaults-slim2";
 
 const entrySchema = z.object({
   agentId: z.string().optional(),

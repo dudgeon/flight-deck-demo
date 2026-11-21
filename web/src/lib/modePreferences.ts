@@ -18,7 +18,9 @@
 // read — a bare string value `v` becomes `{ mode: v }` — so a returning user's
 // remembered mode survives the generalization without a reset.
 
-const STORAGE_KEY = "omnigent:last-mode-by-harness";
+// omnigent-slim: "-slim2" forgets picks remembered before Auto / Opus 5.5 /
+// medium became the defaults, so those defaults show on first load.
+const STORAGE_KEY = "omnigent:last-mode-by-harness-slim2";
 
 /** A harness's remembered option knobs (e.g. `{ mode, model, effort }`). */
 export type HarnessOptions = Record<string, string>;
