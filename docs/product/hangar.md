@@ -1,6 +1,7 @@
 # The Hangar: builder mode
 
-Status: designed and decided (D-39 to D-47), not yet built. Clickable mockup
+Status: designed and decided (D-39 to D-47, D-51, D-52). Slice 1, the read-only
+look-around Hangar, is built; slices 2 and 3 are not. Clickable mockup
 and the decision walkthrough: https://claude.ai/artifact/9M4JGs5WuxigJz1jiJ9QVr
 
 ## What it is for
@@ -131,7 +132,7 @@ files are keyed by scenario id).
 
 ## Build order (D-45)
 
-1. Look-around Hangar: switch, frame, shelves, inspect pages. Read-only.
+1. Look-around Hangar: switch, frame, shelves, inspect pages. Read-only. **Built.**
 2. Person builder: drafts, checks, trial, publish, history, used-by guard.
 3. Scenario and workflow builders, with the D-42 split.
 

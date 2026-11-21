@@ -24,6 +24,9 @@ import { parseRosterEntry, type RosterEntry } from "@/lib/participantTurn";
 import type { ListedEntry } from "@/lib/workspaceApi";
 import { fileContentText, workspaceSidebarSource } from "@/lib/workspaceSidebarSource";
 import { useSession } from "@/hooks/useSession";
+import { HANGAR_WRENCH_GROUP, HangarWrench } from "@/hangar/HangarWrench";
+import { hangarPath } from "@/hangar/hangarApi";
+import { cn } from "@/lib/utils";
 import { useFileViewer } from "./FileViewerContext";
 
 /** Workspace folders the panel reads. */
@@ -245,6 +248,8 @@ function Context({ sessionId }: { sessionId: string }) {
 export interface WorkflowProgress {
   path: string;
   workflow: string;
+  /** omnigent-slim: the workflow's folder id (`scenario` in the file), for the Hangar link. */
+  scenario: string;
   subject: string;
   steps: string[];
   /** 1-based; past the last step means the workflow is finished. */
@@ -285,6 +290,7 @@ export function parseWorkflowProgress(path: string, text: string): WorkflowProgr
   return {
     path,
     workflow: label(data.workflow) || "Workflow",
+    scenario: /^[a-z0-9][a-z0-9-]{0,80}$/.test(label(data.scenario)) ? label(data.scenario) : "",
     subject: label(data.subject),
     steps,
     current: Math.min(steps.length + 1, Math.max(1, count(data.current) || 1)),
@@ -341,10 +347,18 @@ function WorkflowCard({ flow }: { flow: WorkflowProgress }) {
   const finished = flow.current > flow.steps.length;
   const counts = flow.counts;
   return (
-    <div className="flex flex-col gap-1.5" data-testid="session-workflow">
-      <p className="leading-tight">
-        <span className="font-medium">{flow.workflow}</span>
-        {flow.subject && <span className="text-muted-foreground"> · {flow.subject}</span>}
+    <div className={cn("flex flex-col gap-1.5", HANGAR_WRENCH_GROUP)} data-testid="session-workflow">
+      <p className="flex items-start gap-1 leading-tight">
+        <span className="min-w-0 flex-1">
+          <span className="font-medium">{flow.workflow}</span>
+          {flow.subject && <span className="text-muted-foreground"> · {flow.subject}</span>}
+        </span>
+        {flow.scenario && (
+          <HangarWrench
+            to={hangarPath.workflow(flow.scenario)}
+            label={`Open ${flow.workflow} in the Hangar`}
+          />
+        )}
       </p>
       <ol className="flex flex-col gap-0.5">
         {flow.steps.map((step, index) => {

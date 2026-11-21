@@ -258,6 +258,19 @@ close to amber and red.
 red, red would be everywhere and real failures would stop standing out;
 amber reads as "your turn" without alarm.* The alternative was red for both.
 
+**D-51 · 2026-11-21 · Geoff.** The "Open in Hangar" link on things met while
+flying (a participant's turn, the Session panel's workflow card, Library cards)
+is a small wrench icon with no words, invisible until the pointer is over the
+thing or the wrench has keyboard focus. *Refines D-41: it must never show in a
+screen recording of a demo.*
+
+**D-52 · 2026-11-21 · Claude.** The Hangar is its own full-screen route
+(`/hangar`) outside the flying shell, not a variant of the flying sidebar. Its
+catalog is read by the server from the existing files on every request, and
+its checks and rendered views come from the view kit's own `pa` code, so the
+Hangar can never disagree with `pa check`. *Keeps builder mode separable from
+upstream Omnigent's shell and adds no new data store.*
+
 ## Open
 
 - Whether views should also appear inside the chat, and in what form. Geoff
