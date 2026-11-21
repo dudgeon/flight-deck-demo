@@ -10,7 +10,8 @@ runs offline. Read README.md first. These rules keep it usable on the work Mac:
   `vendor/scripts/build_vendor.sh` and commit `vendor/wheels/` and the web UI.
 - **Never bypass Claude Code permissions.** All launches go through
   `omnigent/slim_policy.py`. Don't add `--dangerously-skip-permissions`,
-  `bypassPermissions`, `dontAsk` or `auto`, and don't pre-approve tools beyond
+  `bypassPermissions` or `dontAsk` (Auto is allowed and the default), and
+  don't pre-approve tools beyond
   `ui_open_file` (allowed in `omnigent/harnesses/claude_native/bridge.py`; a
   project `.claude/settings.json` allow list makes Claude Code re-ask for
   folder trust, which a web-driven session cannot answer).

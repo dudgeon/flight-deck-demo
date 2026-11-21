@@ -80,8 +80,8 @@ your browser opens the **Library** page.
 3. Click **Open in composer**. A new-session screen opens with the prompt
    filled in, in the **Workspace** project.
 4. Press **Enter** (or the arrow button) to send it.
-5. Claude asks permission before running commands or writing files. An
-   approval card appears in the chat; click **Allow**.
+5. Sessions start in Auto mode, so Claude runs most steps itself. When it
+   does ask permission, an approval card appears in the chat; click **Allow**.
 6. In about half a minute a question form opens in the viewer on the right.
 7. Answer a few questions and click **Put my answers in the chat**. Your
    answers appear in the chat box. Press **Enter** to send them.
@@ -171,9 +171,12 @@ Logs are in `~/.omnigent-slim/logs/`.
   yourself, and omnigent-slim asks it to skip its non-essential traffic
   (`CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1`).
 - **No permission bypass.** Every Claude Code launch gets an explicit
-  `--permission-mode`, limited to Manual, Accept edits or Plan
-  (`omnigent/slim_policy.py`). `--dangerously-skip-permissions`,
-  `bypassPermissions`, Auto and Don't ask are removed. Tool approvals appear in
+  `--permission-mode`, limited to Auto (the default), Manual, Accept edits or
+  Plan (`omnigent/slim_policy.py`). `--dangerously-skip-permissions`,
+  `bypassPermissions` and Don't ask are removed. New sessions default to
+  Opus 5.5 at medium effort; set `OMNIGENT_SLIM_CLAUDE_MODEL`,
+  `OMNIGENT_SLIM_CLAUDE_EFFORT` or `OMNIGENT_SLIM_CLAUDE_PERMISSION_MODE`
+  before `./start.sh` to change that. Tool approvals appear in
   the web UI. The only pre-allowed tool is `ui_open_file` (shows a file in the
   viewer); Claude may also read, but not change, the templates folder.
 - **Project MCP servers are not auto-approved.** If a workspace has a

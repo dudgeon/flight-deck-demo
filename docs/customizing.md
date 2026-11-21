@@ -170,7 +170,7 @@ upstream syncs (see the README).
 |---|---|
 | Library API (`GET /v1/slim/library`) | `omnigent/server/routes/slim_library.py` |
 | Offline guard | `omnigent/_offline_guard.py` |
-| Allowed permission modes | `omnigent/slim_policy.py` |
+| Allowed permission modes; default mode, model and effort | `omnigent/slim_policy.py` |
 | Workspace project created at start | `omnigent/slim_bootstrap.py` |
 | Start and stop | `start.sh`, `stop.sh` |
 

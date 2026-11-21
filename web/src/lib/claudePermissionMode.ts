@@ -23,18 +23,25 @@ export interface ClaudePermissionModeOption {
   description: string;
 }
 
-export const CLAUDE_NATIVE_DEFAULT_PERMISSION_MODE = "default";
+// omnigent-slim: new sessions start in Auto (the server adds the same default,
+// omnigent/slim_policy.py), so picking Manual sends an explicit flag.
+export const CLAUDE_NATIVE_DEFAULT_PERMISSION_MODE = "auto";
 
 // Claude Code's `claude --permission-mode` choices (v2.1). Keep in sync
 // with `claude --help`. The prompting mode is spelled `default` on the
 // wire and labelled "Manual" in Claude's own UI, which this mirrors.
-// omnigent-slim offers only modes that keep the user's approval step; the
-// server enforces the same list (omnigent/slim_policy.py).
+// omnigent-slim offers no Don't ask or Bypass; the server enforces the same
+// list (omnigent/slim_policy.py).
 export const CLAUDE_NATIVE_PERMISSION_MODES: ClaudePermissionModeOption[] = [
   {
     value: "default",
     label: "Manual",
     description: "Prompts before edits and commands",
+  },
+  {
+    value: "auto",
+    label: "Auto",
+    description: "Auto-runs; a classifier blocks risky actions",
   },
   {
     value: "acceptEdits",
@@ -51,7 +58,7 @@ export const CLAUDE_NATIVE_PERMISSION_MODES: ClaudePermissionModeOption[] = [
 /** Modes a running session can be switched to (shift+tab-reachable). */
 export const CLAUDE_NATIVE_SWITCHABLE_PERMISSION_MODES: ClaudePermissionModeOption[] =
   CLAUDE_NATIVE_PERMISSION_MODES.filter((mode) =>
-    ["default", "acceptEdits", "plan"].includes(mode.value),
+    ["default", "acceptEdits", "plan", "auto"].includes(mode.value),
   );
 
 export function isSwitchableClaudePermissionMode(mode: string | null | undefined): boolean {
