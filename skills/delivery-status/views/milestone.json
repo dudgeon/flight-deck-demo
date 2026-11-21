@@ -1,0 +1,20 @@
+{
+ "view": "delivery-milestone",
+ "layout": "detail",
+ "eyebrow": "A milestone has moved",
+ "title": "{dataset.title}",
+ "records": { "type": "milestone" },
+ "statuses": { "on-track": { "label": "On track", "tone": "info" }, "at-risk": { "label": "At risk", "tone": "warn" }, "late": { "label": "Late", "tone": "attn" }, "done": { "label": "Done", "tone": "ok" }, "working": { "label": "Being checked", "tone": "idle" } },
+ "details": {
+  "milestone": {
+   "title": "{title}",
+   "sections": [
+    { "kind": "callout", "field": "change", "label": "What changed", "tone": "warn" },
+    { "kind": "fields", "fields": [ { "field": "planned", "label": "Plan" }, { "field": "projected", "label": "Now expected" }, { "field": "slip", "as": "chip" } ] },
+    { "kind": "children", "as": "options", "label": "Ways to recover", "records": { "type": "alternative" }, "pick": { "field": "selected_option" }, "fields": [ { "field": "effect", "label": "Effect on the date" }, { "field": "cost", "label": "Cost" }, { "field": "needs", "label": "Needs" } ] }
+   ]
+  },
+  "alternative": { "title": "{title}", "sections": [ { "kind": "text", "field": "summary", "label": "What it means" } ] }
+ },
+ "actions": [ { "id": "accept", "label": "Accept the new date", "when": { "status": ["at-risk", "late"] }, "prompt": "I accept the projected date for milestone {id} ({title}). Make it the plan." } ]
+}

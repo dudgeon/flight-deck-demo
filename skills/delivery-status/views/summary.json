@@ -1,0 +1,17 @@
+{
+ "view": "delivery-summary",
+ "layout": "summary",
+ "eyebrow": "Delivery status · {dataset.as_of}",
+ "title": "{dataset.title}: planned {dataset.planned}, projected {dataset.projected}",
+ "records": { "type": "milestone" },
+ "blocks": [
+  { "kind": "tiles", "tiles": [
+    { "label": "Done", "where": { "type": "milestone", "status": "done" } },
+    { "label": "On track", "where": { "type": "milestone", "status": "on-track" } },
+    { "label": "At risk", "where": { "type": "milestone", "status": "at-risk" } },
+    { "label": "Late", "where": { "type": "milestone", "status": "late" } }
+  ] },
+  { "kind": "list", "label": "What changed since the last update", "records": { "type": "milestone" }, "field": "change", "empty": "Nothing moved." },
+  { "kind": "bars", "label": "Dependencies on others", "count_by": "status", "records": { "type": "dependency" } }
+ ]
+}

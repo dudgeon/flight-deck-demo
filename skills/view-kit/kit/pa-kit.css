@@ -210,3 +210,14 @@ input.pa-check { width: 15px; height: 15px; accent-color: var(--pa-you); margin:
 .pa-mark.person { border-radius: 50%; background: var(--pa-ok-soft); color: var(--pa-ok); }
 .pa-mark.standin { border: 1px dashed currentColor; }
 .pa-mark.host { background: var(--pa-navy); color: var(--pa-on-navy); }
+
+/* Choices: a record's own options, one to pick. */
+.pa-choices { display: flex; flex-direction: column; gap: 6px; }
+.pa-choice { text-align: left; display: flex; flex-direction: column; gap: 2px; padding: 8px 11px; border: 1px solid var(--pa-line); border-radius: var(--pa-r); background: var(--pa-surface); color: var(--pa-ink); font: inherit; cursor: pointer; }
+.pa-choice span { color: var(--pa-ink-2); font-size: 12.5px; }
+.pa-choice b .pa-chip { font-weight: 500; margin-left: 4px; }
+.pa-choice:hover { border-color: var(--pa-ink-3); }
+.pa-choice.on { border-color: var(--pa-you); background: var(--pa-you-soft); box-shadow: inset 3px 0 0 var(--pa-you); }
+.pa-choice[disabled] { cursor: default; opacity: .7; }
+
+.pa-short { white-space: nowrap; }

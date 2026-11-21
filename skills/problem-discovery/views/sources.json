@@ -1,0 +1,19 @@
+{
+ "view": "problem-sources",
+ "layout": "tree-table",
+ "eyebrow": "Problem discovery · what was read",
+ "title": "{dataset.title}: sources",
+ "subtitle": "Everything the problems are drawn from. Nothing outside this list was used.",
+ "records": { "type": "source" },
+ "summary": { "count_by": "status" },
+ "statuses": { "queued": { "label": "Not read yet", "tone": "idle" }, "working": { "label": "Reading", "tone": "info" }, "reviewed": { "label": "Read", "tone": "ok" } },
+ "columns": [
+  { "field": "title", "label": "Source" },
+  { "field": "kind", "as": "chip", "narrow": "keep" },
+  { "field": "who", "label": "Who" },
+  { "field": "size", "label": "Size" },
+  { "field": "status", "as": "status" }
+ ],
+ "details": { "source": { "title": "{title}", "sections": [ { "kind": "text", "field": "takeaway", "label": "The main thing in it" }, { "kind": "fields", "fields": [ { "field": "kind", "as": "chip" }, { "field": "who" }, { "field": "size" }, { "field": "path", "label": "File" } ] } ] } },
+ "actions": [ { "id": "open-source", "label": "Open the file", "when": { "status": ["reviewed", "working"] }, "prompt": "Open {path} beside this." } ]
+}

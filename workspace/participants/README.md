@@ -60,6 +60,15 @@ I have no answer for that. Ask the team directly.
 Each `###` heading is a kind of question. The agent picks the entry that fits
 and passes the answer on word for word. Keep a last entry for everything else.
 
+## Talking to them
+
+Ask your agent ("check in with Mara and the risk agent"), or address someone
+directly by starting a message with `@` and their id or name: `@mara-okafor
+which alert would you keep?`. They answer under their own name. A message
+without an `@`, or with `@aviator`, goes to your agent. Your agent may also
+bring someone in on its own when the work calls for it, and says so when it
+does. Everyone called can read the whole conversation.
+
 ## Who can be called where
 
 Everyone here can be called from any session, unless something narrows it:

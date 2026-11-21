@@ -1,0 +1,29 @@
+{
+ "decision": {
+  "required": ["id", "type", "title", "context", "options", "by", "status"],
+  "fields": {
+   "title": { "type": "string", "note": "The question, verb first, about twelve words, in the person's own terms" },
+   "context": { "type": "string", "note": "What they need to know to decide, in three sentences or fewer" },
+   "options": { "type": "array", "note": "Two to four of {label, consequence}. Label under 40 characters. Consequence: one sentence on what happens if picked" },
+   "recommended": { "type": "string", "note": "The label of the option you would pick" },
+   "reason": { "type": "string", "note": "Why, in one or two sentences" },
+   "by": { "type": "string", "note": "Participant id of whoever raised the question, or aviator" },
+   "area": { "type": "string" },
+   "impact": { "enum": ["High", "Medium", "Low"] },
+   "source": { "type": "string", "note": "Where the question came from: a file and section, a record id, or the conversation" },
+   "choice": { "type": "string", "note": "The label the person picked. Only they set this" },
+   "note": { "type": "string", "note": "What the person added" },
+   "return_note": { "type": "string" },
+   "status": { "enum": ["working", "ready", "reviewed", "returned"] },
+   "locked": { "type": "boolean" }
+  }
+ },
+ "follow-up": {
+  "required": ["id", "type", "parent", "title", "status"],
+  "fields": {
+   "title": { "type": "string", "note": "One action that the decision causes" },
+   "owner": { "type": "string", "note": "Participant id, aviator or you" },
+   "status": { "enum": ["queued", "working", "reviewed"] }
+  }
+ }
+}

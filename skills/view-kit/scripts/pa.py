@@ -366,7 +366,7 @@ has called you in. Aviator passes your replies on word for word, shown under you
 
 ## How this works
 
-- Stay in character as {name} for the whole session. Speak in the first person.
+{conversation}- Stay in character as {name} for the whole session. Speak in the first person.
 - Each reply is one turn in someone else's chat: a few short paragraphs at most, plain
   text, no headings, no code fences.
 - Work in this folder. Read what you are pointed at. Never change files in `context/`.
@@ -390,15 +390,22 @@ has called you in. Aviator passes your replies on word for word, shown under you
 """
 
 
-def opening_message(person: dict[str, Any], ask: str) -> str:
+def opening_message(person: dict[str, Any], ask: str, conversation: str | None = None) -> str:
     standin = ""
     if person["stand_in"]:
         standin = (
             f"\nYou are standing in for a real person. Answer as {person['name']} would, from the notes below. "
             "Never claim to have spoken to them or to commit them to anything; say \"I would\" rather than \"we will\".\n"
         )
+    seen = ""
+    if conversation:
+        seen = (
+            f"- You can see the whole conversation. It is session `{conversation}`: read it now with\n"
+            f"  `sys_session_get_history` (conversation_id `{conversation}`), before anything else, and read it\n"
+            "  again each time you are asked something new, because it will have moved on.\n"
+        )
     return OPENING.format(name=person["name"], role=person.get("role", ""), id=person["id"], brief=person["brief"],
-                          standin=standin, ask=ask or "Introduce yourself in one sentence and wait.")
+                          standin=standin, conversation=seen, ask=ask or "Introduce yourself in one sentence and wait.")
 
 
 def cmd_who(args: argparse.Namespace) -> None:
@@ -439,7 +446,7 @@ def cmd_who(args: argparse.Namespace) -> None:
         print(turn_header(person, args.session))
         return
     if args.opening:
-        print(opening_message(person, args.ask or ""))
+        print(opening_message(person, args.ask or "", args.conversation))
         return
     print(json.dumps(person, indent=1, ensure_ascii=False))
 
@@ -614,14 +621,18 @@ def cmd_set(args: argparse.Namespace) -> None:
         if not isinstance(extra, dict):
             raise PaError("--json must be an object of fields")
         changes.update(extra)
-    if not changes:
+    facts = _pairs(args.meta)
+    if "records" in facts or "views" in facts:
+        raise PaError("--meta cannot replace records or views")
+    if not changes and not facts:
         raise PaError("nothing to set (give key=value pairs)")
-    if not ids and not args.where:
+    if changes and not ids and not args.where:
         raise PaError("say which records: ids like R-01,R-02 or --where type=requirement")
     path = Path(args.data)
     with _locked(path):
         data = _load(path)
-        records = _select(data, ids, args.where)
+        data.update(facts)  # dataset facts such as projected="2 Apr"
+        records = _select(data, ids, args.where) if changes else []
         content_changed: set[str] = set()
         for record in records:
             for key, value in changes.items():
@@ -808,6 +819,8 @@ def _directive(text: str, roster: dict[str, dict[str, Any]], where: str, state: 
         return "step", {"restore": _ids(tail("restore "))}
     if low == "apply edits":
         return "step", {"apply": "edits"}
+    if low.startswith("fact "):  # dataset facts such as projected="2 Apr"
+        return "step", {"fact": _fields(tail("fact "))}
     m = re.fullmatch(rf"tab {_QUOTED}", text, re.I)
     if m:
         return "step", {"tab": m.group(1)}
@@ -1008,6 +1021,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--check", action="store_true", help="check every participant file")
     p.add_argument("--opening", action="store_true", help="print the first message for the background session that plays them")
     p.add_argument("--ask", help="with --opening: what they are asked to do")
+    p.add_argument("--conversation", help="with --opening: the id of the user's session, so they can read the whole conversation")
     p.set_defaults(run=cmd_who)
 
     p = sub.add_parser("init", help="create a dataset file")
@@ -1040,6 +1054,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--where", action="append", default=[])
     p.add_argument("--json")
     p.add_argument("--no-stale", action="store_true", help="do not flag derived records")
+    p.add_argument("--meta", action="append", default=[], help="dataset fact to change, key=value")
     p.set_defaults(run=cmd_set)
 
     p = sub.add_parser("render", help="draw a view as one HTML file")

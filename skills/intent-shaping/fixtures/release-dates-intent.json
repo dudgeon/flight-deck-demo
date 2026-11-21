@@ -1,0 +1,28 @@
+{
+ "dataset": "release-dates-intent",
+ "title": "Tell customers when a held payment will be released",
+ "subject": "Visigoth Bank, an invented retail bank",
+ "framework": "Intent framework (notional)",
+ "depth": "0", "target": "3 · Shaped",
+ "source": "the idea as typed, then the problem brief from the discovery on new business accounts",
+ "records": [
+  { "id": "AR-1", "type": "area", "title": "Customer", "required_from": 1, "depth": 1, "depth_name": "Spark", "status": "ready", "by": "you",
+    "statement": "Customers whose payment is held.",
+    "next": "A specific group, and the situation they are in when this matters.",
+    "question": "Which customers, and when does it happen to them?",
+    "basis": [ { "source": "Your message", "quote": "we should just show people the release date when a payment is held" } ] },
+  { "id": "AR-2", "type": "area", "title": "Problem", "required_from": 1, "depth": 0, "depth_name": "Empty", "status": "needs-you", "by": "aviator",
+    "statement": "Not stated yet. The idea names a solution (show a date), not the problem it solves.",
+    "next": "A problem is stated, not only a solution.",
+    "question": "What goes wrong for the customer today that a release date would fix?" },
+  { "id": "AR-3", "type": "area", "title": "Outcome", "required_from": 2, "depth": 0, "depth_name": "Empty", "status": "queued", "next": "What would be different for the customer if this worked." },
+  { "id": "AR-4", "type": "area", "title": "Scope", "required_from": 3, "depth": 0, "depth_name": "Empty", "status": "queued", "next": "What is in, and at least two things that are deliberately out." },
+  { "id": "AR-5", "type": "area", "title": "Risks", "required_from": 3, "depth": 0, "depth_name": "Empty", "status": "queued", "next": "The three things most likely to sink it, each with who would know." },
+  { "id": "AR-6", "type": "area", "title": "Dependencies", "required_from": 3, "depth": 0, "depth_name": "Empty", "status": "queued", "next": "Which other teams or systems it needs, by name." },
+  { "id": "AR-7", "type": "area", "title": "Cost", "required_from": 4, "depth": 0, "depth_name": "Empty", "status": "queued", "next": "A rough size from the people who would build it." },
+  { "id": "G-1", "type": "gap", "parent": "AR-5", "title": "Could a customer use the date to time a fraud?", "owner": "risk-review", "status": "closed" },
+  { "id": "G-2", "type": "gap", "parent": "AR-5", "title": "What do we show when the release date slips?", "owner": "mara-okafor", "status": "open" },
+  { "id": "G-3", "type": "gap", "parent": "AR-6", "title": "Can the risk rules produce a date for every kind of hold?", "owner": "risk-review", "status": "open" },
+  { "id": "G-4", "type": "gap", "parent": "AR-3", "title": "What level of the measure counts as success?", "owner": "you", "status": "open" }
+ ]
+}

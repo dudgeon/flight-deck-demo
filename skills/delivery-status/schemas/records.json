@@ -1,0 +1,40 @@
+{
+ "milestone": {
+  "required": ["id", "type", "title", "owner", "planned", "projected", "status"],
+  "fields": {
+   "title": { "type": "string", "note": "An outcome that is either true or not, not an activity" },
+   "owner": { "type": "string", "note": "Participant id, aviator or you" },
+   "planned": { "type": "string", "note": "The date in the plan, as '24 Mar'" },
+   "projected": { "type": "string", "note": "The date you now expect, same form. Equal to planned when nothing moved" },
+   "slip": { "type": "string", "note": "'+9 days', '-2 days', or empty when on plan" },
+   "confidence": { "type": "integer", "note": "1 to 5 in the projected date" },
+   "change": { "type": "string", "note": "What changed since the last update, one sentence. Empty when nothing did" },
+   "basis": { "type": "string", "note": "How you know: who said it and when, or what you checked" },
+   "note": { "type": "string" },
+   "selected_option": { "type": "string", "note": "Id of the alternative the person chose. Only they set this" },
+   "critical": { "type": "boolean", "note": "True when a slip here moves the final date" },
+   "status": { "enum": ["working", "on-track", "at-risk", "late", "done"] }
+  }
+ },
+ "dependency": {
+  "required": ["id", "type", "parent", "title", "status"],
+  "fields": {
+   "title": { "type": "string", "note": "What the milestone is waiting for, from someone else" },
+   "owner": { "type": "string" },
+   "due": { "type": "string" },
+   "note": { "type": "string" },
+   "status": { "enum": ["working", "on-track", "at-risk", "late", "done"] }
+  }
+ },
+ "alternative": {
+  "required": ["id", "type", "parent", "title", "effect", "cost"],
+  "fields": {
+   "title": { "type": "string", "note": "A way to recover, as an action" },
+   "effect": { "type": "string", "note": "What it does to the date, as 'Launch 26 Mar (recovers 7 of 9 days)'" },
+   "cost": { "type": "string", "note": "What is given up or risked" },
+   "needs": { "type": "string", "note": "Who has to agree" },
+   "fit": { "type": "integer", "note": "1 to 5: how well it recovers the date for what it costs" },
+   "summary": { "type": "string" }
+  }
+ }
+}

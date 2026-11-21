@@ -461,7 +461,8 @@ function useRoster(sessionId: string): RosterEntry[] {
 
 /** The composer text that asks the agent to bring a participant in. */
 export function callMessage(entry: RosterEntry): string {
-  return `Check in with ${entry.name} (${entry.id}) about `;
+  // "@id" addresses the participant directly: they answer, not the session's agent.
+  return `@${entry.id} `;
 }
 
 /** Other agents and people the agent can call into this conversation. */

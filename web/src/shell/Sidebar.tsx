@@ -1403,7 +1403,7 @@ function SidebarImpl({
                   </span>
                 ) : (
                   // omnigent-slim: Product Aviator logo in place of the Omnigent wordmark.
-                  <ProductAviatorLogo className="h-8 shrink-0" />
+                  <ProductAviatorLogo className="shrink-0" />
                 )}
               </Link>
               {isMacElectronShell() && (

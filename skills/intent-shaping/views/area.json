@@ -1,0 +1,23 @@
+{
+ "view": "intent-area",
+ "layout": "detail",
+ "eyebrow": "The shallowest area",
+ "title": "{dataset.title}",
+ "records": { "type": "area" },
+ "statuses": { "needs-you": { "label": "Needs you", "tone": "attn" }, "ready": { "label": "Below target", "tone": "warn" }, "reviewed": { "label": "At target", "tone": "ok" }, "working": { "label": "Being worked on", "tone": "info" }, "queued": { "label": "Not needed yet", "tone": "idle" }, "parked": { "label": "Not needed", "tone": "idle" } },
+ "details": {
+  "area": {
+   "title": "{title}",
+   "sections": [
+    { "kind": "callout", "field": "question", "label": "To go one level deeper", "tone": "attn" },
+    { "kind": "fields", "fields": [ { "field": "depth", "label": "Depth now", "as": "meter" }, { "field": "depth_name", "label": "Level" } ] },
+    { "kind": "text", "field": "statement", "label": "What we can say now", "edit": true },
+    { "kind": "text", "field": "next", "label": "What the next level asks for" }
+   ]
+  }
+ },
+ "actions": [
+  { "id": "answer", "label": "Answer in the chat", "tone": "primary", "prompt": "On {title}: " },
+  { "id": "ask-someone", "label": "Ask someone who would know", "prompt": "Ask whoever would know about {title} what we are missing." }
+ ]
+}

@@ -1,0 +1,58 @@
+{
+ "dataset": "allowances-decisions",
+ "title": "Allowances launch",
+ "subject": "Visigoth Bank, an invented retail bank",
+ "source": "the PRD review, the dependency map and this conversation",
+ "records": [
+  { "id": "D-1", "type": "decision", "by": "risk-review", "area": "Compliance", "impact": "High", "status": "ready", "source": "Review finding RR-03, PRD section 7.4",
+    "title": "Decide whose consent an under-18 allowance needs",
+    "context": "Section 7.4 asks for recorded consent but does not say whose. The cardholder's consent and the minor's are different records with different retention rules. Risk will not sign off until this is named.",
+    "options": [
+     { "label": "The cardholder only", "consequence": "Matches how authorized users are added today. No new step for families." },
+     { "label": "Cardholder and card user", "consequence": "Adds a consent screen for 16 and 17 year olds. About one more sprint for design and build." },
+     { "label": "Ask Legal first", "consequence": "Keeps the finding open. Sign-off waits about two weeks." } ],
+    "recommended": "The cardholder only", "reason": "It is the existing legal basis for authorized users, and Risk has said it would accept it with the record kept seven years." },
+  { "id": "D-2", "type": "decision", "by": "mara-okafor", "area": "Experience", "impact": "High", "status": "ready", "source": "Review finding MO-01, PRD section 5.2",
+    "title": "Choose how fast a decline must be explained",
+    "context": "The PRD promises a message within 10 seconds. In the spring interviews, five of eight teenagers said they would have walked away from the till by then. Platform says 3 seconds needs a push sent from the authorization path.",
+    "options": [
+     { "label": "Within 3 seconds", "consequence": "Needs the push sent from the authorization path. Platform estimates one extra sprint." },
+     { "label": "Within 10 seconds, as written", "consequence": "No extra platform work. The explanation often arrives after the moment has passed." },
+     { "label": "3 seconds as a target, 10 as the promise", "consequence": "Platform builds toward 3 but the customer promise stays at 10 until it is proven under load." } ],
+    "recommended": "3 seconds as a target, 10 as the promise", "reason": "It gets the experience Mara is asking for without making a customer promise Operations has not agreed to." },
+  { "id": "D-3", "type": "decision", "by": "cards-platform", "area": "Platform", "impact": "Medium", "status": "ready", "source": "Dependency map, R-06",
+    "title": "Decide what happens to charges that skip live approval",
+    "context": "Transit taps and in-flight purchases arrive hours later and cannot be declined. They can be counted against the allowance, and an event can be raised when the allowance is passed.",
+    "options": [
+     { "label": "Count them and alert the cardholder", "consequence": "The allowance can be exceeded. The cardholder is told the same day, once per month." },
+     { "label": "Count them silently", "consequence": "Simplest build. Parents discover the overspend on the statement." },
+     { "label": "Exclude them from the allowance", "consequence": "The allowance is never exceeded, but transit and in-flight spend is uncapped and invisible in it." } ],
+    "recommended": "Count them and alert the cardholder", "reason": "It keeps the allowance honest and tells the parent promptly, which is what Risk asked for in RR-01." },
+  { "id": "D-4", "type": "decision", "by": "mara-okafor", "area": "Experience", "impact": "Low", "status": "ready", "source": "Review finding MO-03, PRD sections 5.4 and 6.3",
+    "title": "Pick which of the two low-balance alerts to keep at launch",
+    "context": "The card user's low-allowance alert (5.4) and the cardholder's over-allowance alert (6.3) can arrive within minutes of each other.",
+    "options": [
+     { "label": "Keep the cardholder alert (6.3)", "consequence": "5.4 moves to a later release. One fewer notification type to build and test." },
+     { "label": "Keep the card user alert (5.4)", "consequence": "The teenager gets warning before a decline. The parent learns of overspend only from the app." },
+     { "label": "Keep both", "consequence": "Nothing is cut. Families may get two alerts about one event." } ],
+    "recommended": "Keep the cardholder alert (6.3)", "reason": "The remaining amount is always visible to the card user, so their alert adds least." },
+  { "id": "D-5", "type": "decision", "by": "aviator", "area": "Scope", "impact": "Medium", "status": "returned", "source": "This conversation",
+    "title": "Decide whether couples are in the first release",
+    "context": "Section 2 says parents of teenagers first, couples later. Two requirements (R-11 and R-14) only matter for couples.",
+    "return_note": "I need to know how many accounts have an adult authorized user before I can call this.",
+    "options": [
+     { "label": "Teenagers only", "consequence": "R-11 and R-14 leave the first release." },
+     { "label": "Teenagers and couples", "consequence": "Two more requirements stay in. Consent rules for adults differ and need their own review." } ],
+    "recommended": "Teenagers only", "reason": "It matches section 2 and removes two requirements from the critical path." },
+  { "id": "D-6", "type": "decision", "by": "aviator", "area": "Clarity", "impact": "Low", "status": "reviewed", "locked": true, "source": "Review finding F-08, PRD section 3.3 and FAQ",
+    "title": "Settle when a changed allowance amount applies",
+    "context": "Section 3.3 says right away. The FAQ says from the next cycle.",
+    "options": [ { "label": "Right away", "consequence": "The FAQ is corrected." }, { "label": "From the next cycle", "consequence": "Section 3.3 and requirement R-03 change." } ],
+    "recommended": "Right away", "reason": "3.3 is the specification; the FAQ is older.", "choice": "Right away", "note": "The FAQ is out of date." },
+  { "id": "FU-1", "type": "follow-up", "parent": "D-6", "title": "Correct the FAQ entry on changed amounts", "owner": "aviator", "status": "reviewed" },
+  { "id": "D-7", "type": "decision", "by": "risk-review", "area": "Compliance", "impact": "Medium", "status": "working", "source": "Review finding RR-02, PRD section 7.2",
+    "title": "Choose who owns keeping limit declines out of fraud scoring",
+    "context": "Risk Review is checking which teams could own this control.",
+    "options": [ { "label": "Fraud Strategy", "consequence": "To be confirmed." }, { "label": "Cards Platform", "consequence": "To be confirmed." } ] }
+ ]
+}
