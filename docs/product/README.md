@@ -12,5 +12,8 @@ for, and what was tried, without asking the people who were there.
 - `roadmap.md`: where each workstream stands: done, partial, next, open
   decisions and source docs. Update it when a workstream moves.
 - `hangar.md`: the spec for the Hangar (builder mode).
+- `modes-and-projects.md`: a design exploration, not yet decided: modes that
+  workflows put a session into, pausing and resuming runs, what a project is,
+  and the intent graph. Lists the open decisions.
 
 Rules for keeping these current are in the repository's `CLAUDE.md`.

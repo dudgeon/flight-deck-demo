@@ -21,6 +21,7 @@ in the same pull request.
 | [Canvas tools across several tabs](#canvas-tools-across-several-tabs) | Done |
 | [Dock launcher](#dock-launcher) | Done |
 | [Branding](#branding) | Done; one naming question open |
+| [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | Design exploration; nine decisions open |
 
 ---
 
@@ -242,6 +243,28 @@ browser tab, with nothing pre-approved.
   Folders, commands and code identifiers keep `omnigent-slim` until Geoff
   says otherwise (D-35).
 - **Read.** D-35; README.
+
+## Modes, projects and the intent graph
+
+Starting a workflow such as intent shaping should put the session into that
+workflow's mode, visibly; replies made in the mode are marked as its own; the
+person can pause in plain language and come back later from the project;
+and a project means something (a goal to ship) and knows its relatives.
+
+- **Done.** A design exploration with drawings of every option (2026-11-21).
+  Nothing is built.
+- **Exists already and would be reused.** The workflow card and `pa flow`
+  progress files (D-16), direct actions for state changes (D-11), views in
+  the chat (D-53), amber for needs-you (D-50), a project per flown demo
+  (D-76).
+- **Next.** Geoff answers the walkthrough; the answers become decisions; then
+  the smallest slice is the run state and the where-we-left-off note in
+  `pa flow`, the strip and the rail.
+- **Open.** Nine decisions, M-1 to M-9, and a list of things not yet
+  explored (area pages, a project's life cycle, how upstream changes reach
+  the person).
+- **Read.** [modes-and-projects.md](modes-and-projects.md); walkthrough at
+  https://claude.ai/artifact/HRgpJURjcqasGSCmd3894d.
 
 ---
 
