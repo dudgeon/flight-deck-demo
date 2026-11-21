@@ -183,16 +183,37 @@ This is the third slice of [modes and projects](modes-and-projects.md).
   the project page and the director all read the same thing and nothing is
   lost if a message is missed.
 
+**Stepping into a thread (D-117).** Opening a thread, from its run card or
+from In flight, puts the thread where the chat was. The canvas keeps its
+room: Geoff turned down a side tab because it takes space from the canvas,
+and because stepping in is a choice to focus. The director does not vanish.
+It folds to one line above the thread's chat, and that line does three jobs:
+
+- **Leads back.** The director's name with a back arrow returns to its chat.
+- **Says where this thread is.** Its subject, step and state, so the person
+  knows what they stepped into without reading the transcript.
+- **Shows what else is in flight.** A count of the project's other runs, and
+  an amber "needs you" count only when one of them is waiting on the person.
+  Opening it lists them, each a link straight into its own thread, so the
+  person can move between threads without going back through the director.
+
+The bar appears on any session a director started, even before the thread
+has written its first step (it then shows only the way back). It never
+appears on the director itself. The list covers the whole project, not only
+this director's threads, so it matches In flight on the project page.
+
 **Not built yet.** The direct line: the strip, the rail and the thread's
-questions in the director's chat (D-90, D-91, D-116). Stepping into a thread
-in place of the chat with the director folded to a bar (D-117); today the
-card opens the thread as its own session page. Threads on items (D-95).
+questions in the director's chat (D-90, D-91, D-116). Threads on items (D-95).
 
 **Where.** `skills/director/SKILL.md`; `pa brief`, `pa report` and
 `pa flow --director/--brief` in `skills/view-kit/scripts/pa.py`;
 `web/src/lib/runBlock.ts` (the ` ```run ` fence),
 `web/src/components/chat/RunCardBlock.tsx`, `web/src/projectHome/RunParts.tsx`;
-`GET /v1/slim/runs/{id}?session=` in `omnigent/server/routes/slim_runs.py`;
+`web/src/components/chat/DirectorBar.tsx` and `web/src/lib/threadContext.ts`
+(the folded director, mounted in `pages/ChatPage.tsx`, placed by
+`.pa-director-bar` in `index.css`);
+`GET /v1/slim/runs/{id}?session=` and `GET /v1/slim/threads/{session}` in
+`omnigent/server/routes/slim_runs.py`;
 the rule in `workspace/CLAUDE.md` ("Threads").
 
 ## Participants

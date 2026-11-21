@@ -147,7 +147,7 @@ def create_slim_runs_router(
     conversation_store: ConversationStore | None = None,
     auth_provider: AuthProvider | None = None,
 ) -> APIRouter:
-    """Build the router for ``GET /v1/slim/runs?project=<name>`` and ``GET /v1/slim/runs/{id}?session=``."""
+    """Build the router for ``GET /v1/slim/runs?project=<name>``, ``GET /v1/slim/runs/{id}?session=`` and ``GET /v1/slim/threads/{session}``."""
     router = APIRouter()
 
     def _runs_for(project_name: str, user_id: str | None) -> dict[str, Any]:
@@ -242,5 +242,51 @@ def create_slim_runs_router(
     async def get_run(request: Request, run_id: str, session: str = "") -> dict[str, Any]:
         user_id = require_user(request, auth_provider)
         return await asyncio.to_thread(_run_for_session, run_id, session.strip(), user_id)
+
+    def _thread_context(session_id: str, user_id: str | None) -> dict[str, Any]:
+        """What a thread's page shows above its chat (D-117).
+
+        A thread is a child session. Its page puts the thread in place of the
+        chat and folds the director to a bar: the way back, this thread's run,
+        and what else is in flight in the project.
+        """
+        if conversation_store is None or project_store is None:
+            return {"thread": None}
+        conversation = conversation_store.get_conversation(session_id)
+        parent_id = getattr(conversation, "parent_conversation_id", None) if conversation is not None else None
+        director = conversation_store.get_conversation(parent_id) if parent_id else None
+        if director is None:
+            return {"thread": None}
+        top = director
+        for _ in range(4):
+            if getattr(top, "project_id", None):
+                break
+            above = getattr(top, "parent_conversation_id", None)
+            above_conversation = conversation_store.get_conversation(above) if above else None
+            if above_conversation is None:
+                break
+            top = above_conversation
+        project_id = getattr(top, "project_id", None)
+        project = project_store.get(project_id, user_id=user_id) if project_id else None
+        runs = _runs_for(project.name, user_id)["runs"] if project is not None else []
+        run = next((r for r in runs if r["session"] == session_id), None)
+        others = [
+            r for r in runs
+            if r is not run and r["state"] not in ("finished", "stopped")
+        ]
+        return {
+            "thread": {
+                "director": {"id": parent_id, "title": _text(getattr(director, "title", None))},
+                "project": project.name if project is not None else None,
+                "run": run,
+                "others": others,
+                "needs_you": sum(1 for r in others if r["state"] == "needs-you"),
+            }
+        }
+
+    @router.get("/slim/threads/{session_id}")
+    async def get_thread(request: Request, session_id: str) -> dict[str, Any]:
+        user_id = require_user(request, auth_provider)
+        return await asyncio.to_thread(_thread_context, session_id.strip(), user_id)
 
     return router

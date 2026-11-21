@@ -281,3 +281,40 @@ def test_a_run_card_reads_its_run_through_the_session_that_shows_it(tmp_path: Pa
     assert client.get("/v1/slim/runs/missing", params={"session": SESSION}).json() == {"run": None}
     assert client.get("/v1/slim/runs/a--b", params={"session": "nope"}).json() == {"run": None}
     assert client.get("/v1/slim/runs/..%2Fa--b", params={"session": SESSION}).json().get("run") is None
+
+
+def test_a_threads_page_knows_its_director_and_what_else_is_in_flight(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setitem(os.environ, "OMNIGENT_SLIM_PROJECT", "Workspace")
+    folder = tmp_path / "progress"
+    folder.mkdir()
+    thread, sibling = "a" * 32, "b" * 32
+    (folder / "mine.json").write_text(json.dumps({"steps": ["One", "Two"], "current": 2, "session": thread}))
+    (folder / "other.json").write_text(json.dumps({"steps": ["One"], "current": 1, "session": sibling, "state": "needs-you"}))
+    (folder / "over.json").write_text(json.dumps({"steps": ["One"], "current": 2, "session": sibling, "state": "finished"}))
+
+    class _Family(_Conversations):
+        def get_conversation(self, conversation_id: str) -> Any:
+            if conversation_id in (thread, sibling):
+                return SimpleNamespace(project_id=None, parent_conversation_id=SESSION, title="A thread")
+            return super().get_conversation(conversation_id)
+
+    projects = _Projects(tmp_path)
+    projects.get = lambda project_id, user_id=None: next((p for p in projects._projects if p.id == project_id), None)  # type: ignore[attr-defined]
+    app = FastAPI()
+    app.include_router(
+        create_slim_runs_router(project_store=projects, conversation_store=_Family()),  # type: ignore[arg-type]
+        prefix="/v1",
+    )
+    client = TestClient(app)
+    context = client.get(f"/v1/slim/threads/{thread}").json()["thread"]
+    assert context["director"] == {"id": SESSION, "title": "Build a person"}
+    assert context["project"] == "Hangar"
+    assert context["run"]["id"] == "mine"
+    # Finished work is not in flight; this thread's own run is not "else".
+    assert [run["id"] for run in context["others"]] == ["other"]
+    assert context["needs_you"] == 1
+    # The director itself, and a session nobody knows, are not threads.
+    assert client.get(f"/v1/slim/threads/{SESSION}").json() == {"thread": None}
+    assert client.get("/v1/slim/threads/nope").json() == {"thread": None}
