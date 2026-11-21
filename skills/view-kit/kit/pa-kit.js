@@ -411,6 +411,15 @@
       case "text":
         if (s.edit) return '<div class="pa-sec">' + h + '<textarea class="pa-input' + (isEdited(rec, s.field) ? " changed" : "") + '" rows="3" data-edit="' + esc(s.field) + '" data-id="' + esc(rec.id) + '">' + esc(v || "") + "</textarea></div>";
         return v ? '<div class="pa-sec">' + h + '<div class="pa-text">' + esc(v) + "</div></div>" : "";
+      case "choices":
+        /* The record's own options, one to pick. The pick is an edit: it waits with the others for Send. */
+        if (!v || !v.length) return "";
+        var pickField = s.pick || "choice", picked = val(rec, pickField), rec0 = val(rec, s.recommended || "recommended"), shut = val(rec, "locked");
+        return '<div class="pa-sec">' + h + '<div class="pa-choices" role="radiogroup">' + v.map(function (o) {
+          if (typeof o === "string") o = { label: o };
+          var on = picked === o.label;
+          return '<button type="button" role="radio" aria-checked="' + on + '" class="pa-choice' + (on ? " on" : "") + '"' + (shut ? " disabled" : "") + ' data-act="choose" data-id="' + esc(rec.id) + '" data-field="' + esc(pickField) + '" data-v="' + esc(o.label) + '"><b>' + esc(o.label) + (rec0 === o.label ? ' <span class="pa-chip">Recommended</span>' : "") + "</b>" + (o.consequence ? "<span>" + esc(o.consequence) + "</span>" : "") + "</button>";
+        }).join("") + "</div></div>";
       case "list":
         return v && v.length ? '<div class="pa-sec">' + h + '<ul class="pa-list">' + v.map(function (x) { return "<li>" + esc(typeof x === "string" ? x : x.text) + "</li>"; }).join("") + "</ul></div>" : "";
       case "evidence":
@@ -618,6 +627,7 @@
     else if (act === "twist") { if (state.collapsed[id]) delete state.collapsed[id]; else state.collapsed[id] = true; }
     else if (act === "filter") { var v = el.getAttribute("data-v"); state.filter = !v || state.filter === v ? null : v; }
     else if (act === "pick") setEdit(el.getAttribute("data-parent"), el.getAttribute("data-field"), id);
+    else if (act === "choose") setEdit(id, el.getAttribute("data-field"), el.getAttribute("data-v"));
     else if (act === "send-edits") sendEdits();
     else if (act === "discard") { state.edits = {}; state.sent = false; }
     else if (act === "ask-cancel") state.asking = null;

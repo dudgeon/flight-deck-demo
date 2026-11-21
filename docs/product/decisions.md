@@ -136,6 +136,13 @@ projections).
 **D-32 · 2026-11-21 · Geoff.** Questions to Geoff, when there is more than
 one, are asked as decision cards, one at a time, never as a list in prose.
 
+**D-33 · 2026-11-21 · Geoff.** He is never to be asked to decide blind. Each
+decision put to him carries its context, the real options with what each
+leads to, the actual visuals where there are any, and a recommendation with
+its reason. The decision-review kind of work is built to the same standard
+for any PM: question, context, options with consequences, recommendation,
+who raised it.
+
 ## Open
 
 - Whether views should also appear inside the chat, and in what form. Geoff

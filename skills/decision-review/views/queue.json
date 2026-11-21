@@ -1,0 +1,45 @@
+{
+ "view": "decision-queue",
+ "layout": "tree-table",
+ "eyebrow": "Decision review",
+ "title": "{dataset.title}: decisions",
+ "subtitle": "Open one, pick an option, add a note if you like. Your picks collect as unsent changes: send them together when you are done.",
+ "records": { "type": ["decision", "follow-up"] },
+ "summary": { "count_by": "status", "records": { "type": "decision" } },
+ "statuses": {
+  "working": { "label": "Being prepared", "tone": "idle" },
+  "ready": { "label": "Open", "tone": "attn" },
+  "reviewed": { "label": "Decided", "tone": "ok" },
+  "returned": { "label": "Needs more", "tone": "you" },
+  "queued": { "label": "To do", "tone": "idle" }
+ },
+ "columns": [
+  { "field": "title", "label": "Decision" },
+  { "field": "by", "label": "Raised by", "as": "who", "only": "decision" },
+  { "field": "impact", "as": "chip", "only": "decision" },
+  { "field": "choice", "label": "Your pick", "only": "decision", "narrow": "keep" },
+  { "field": "owner", "label": "Owner", "as": "who", "only": "follow-up" },
+  { "field": "status", "as": "status" }
+ ],
+ "details": {
+  "decision": {
+   "title": "{title}",
+   "sections": [
+    { "kind": "callout", "field": "return_note", "label": "You asked for more", "tone": "you" },
+    { "kind": "text", "field": "context", "label": "What you need to know" },
+    { "kind": "choices", "field": "options", "pick": "choice", "recommended": "recommended", "label": "Options" },
+    { "kind": "text", "field": "reason", "label": "Why that one is recommended" },
+    { "kind": "text", "field": "note", "label": "Your note", "edit": true },
+    { "kind": "fields", "fields": [ { "field": "by", "label": "Raised by", "as": "who" }, { "field": "impact", "as": "chip" }, { "field": "area", "as": "chip" }, { "field": "source", "label": "From" } ] }
+   ]
+  },
+  "follow-up": { "title": "{title}", "sections": [ { "kind": "fields", "fields": [ { "field": "owner", "as": "who" }, { "field": "status", "as": "status" } ] } ] }
+ },
+ "actions": [
+  { "id": "more", "label": "I need more first", "when": { "type": "decision", "status": ["ready", "reviewed"] }, "ask": { "label": "What is missing?", "field": "return_note" }, "set": { "status": "returned" }, "prompt": "I cannot decide {id} ({title}) yet. What is missing: {note}" },
+  { "id": "ask", "label": "Ask who raised it", "when": { "type": "decision", "status": ["ready", "returned"] }, "prompt": "@{by} about decision {id} ({title}): " },
+  { "id": "reopen", "label": "Reopen", "when": { "type": "decision", "status": "reviewed" }, "prompt": "Reopen decision {id} ({title}). I want to change it because: " },
+  { "id": "take-recommended", "label": "Take the recommendations", "scope": "view", "prompt": "For every open decision in {dataset} that I have not picked, take the recommended option." },
+  { "id": "log", "label": "Write the decision log", "scope": "view", "tone": "primary", "prompt": "Write up the decisions in {dataset} as a decision log." }
+ ]
+}

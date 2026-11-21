@@ -1,0 +1,17 @@
+{
+ "view": "decision-summary",
+ "layout": "summary",
+ "eyebrow": "Decision review · where things stand",
+ "title": "{dataset.title}: decisions at a glance",
+ "records": { "type": "decision" },
+ "blocks": [
+  { "kind": "tiles", "tiles": [
+    { "label": "Decisions", "where": { "type": "decision" } },
+    { "label": "Decided", "where": { "type": "decision", "status": "reviewed" } },
+    { "label": "Still open", "where": { "type": "decision", "status": "ready" } },
+    { "label": "Follow-ups", "where": { "type": "follow-up" } }
+  ] },
+  { "kind": "bars", "label": "By area", "count_by": "area" },
+  { "kind": "list", "label": "Needs more before you can decide", "records": { "type": "decision", "status": "returned" }, "field": "return_note", "empty": "Nothing is blocked." }
+ ]
+}

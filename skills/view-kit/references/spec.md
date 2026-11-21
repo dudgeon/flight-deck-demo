@@ -69,6 +69,7 @@ with `"inline": true` shows on the tile itself.
 | `list` | `field`, `label` | A bulleted list from an array |
 | `evidence` | `field`, `label` | Quotes with their source, from `[{source, quote}]` |
 | `callout` | `field`, `label`, `tone` | A highlighted box, shown only when the field has a value |
+| `choices` | `field`, `pick`, `recommended`, `label` | A pick-one list. `field` names a list of `{label, consequence}` on the record; pressing one stores its label in the `pick` field (default `choice`) as an unsent edit. The option whose label equals the `recommended` field is marked. Locked records show the pick but cannot change it |
 | `note` | `text` | Fixed helper text |
 | `children` | `records`, `columns`, `label`, `empty` | A table of child records. Rows open that child's own card. |
 | `children` with `"as": "options"` | `records`, `fields`, `pick: { "field": "selected_option" }` | Cards to compare, with a Choose button that sets `pick.field` on the parent |

@@ -1,0 +1,16 @@
+{
+ "scenario": "decision-review",
+ "title": "Decision review",
+ "summary": "Gather the open decisions on a piece of work, prepare each with options and a recommendation, and walk the person through them one at a time. What they decide is recorded with who raised it and why.",
+ "inputs": [ { "name": "source", "kind": "any", "hint": "Where the open questions are: documents, datasets with items waiting on the person, or this conversation." } ],
+ "dataset": { "path": "data/{slug}-decisions.json", "adds": ["decision", "follow-up"], "status_field": "status" },
+ "steps": ["Gather what is open", "Prepare each decision", "Your decisions", "Record and follow up"],
+ "progress": { "records": { "type": "decision" }, "field": "status", "done": ["reviewed"], "noun": "decisions", "label": "made" },
+ "schemas": "schemas/records.json",
+ "views": { "queue": "views/queue.json", "card": "views/card.json", "summary": "views/summary.json" },
+ "work_products": [ { "name": "Decisions", "view": "queue", "out": "artifacts/{slug}-decisions.html" }, { "name": "Decision log", "out": "artifacts/{slug}-decision-log.md" } ],
+ "participants": ["risk-review", "mara-okafor", "cards-platform"],
+ "fixtures": { "dataset": "fixtures/allowances-decisions.json" },
+ "script": "script.md",
+ "launchers": [ { "label": "Review open decisions", "on": "any", "prompt": "Walk me through the open decisions on {path}." } ]
+}

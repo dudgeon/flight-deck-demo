@@ -86,3 +86,32 @@ their id and shows in views.
 **Where.** `workspace/participants/` (and its README), `skills/participants/`,
 `web/src/lib/participantTurn.ts`, `web/src/components/chat/ParticipantTurn.tsx`,
 `pa who`.
+
+## Decision review (a kind of work)
+
+**What it is for.** A PM's work stalls on questions nobody has put to them
+cleanly. Decision review gathers what is waiting on the person (from reviews,
+dependency maps, documents, the conversation), turns each into a decision that
+can be made in seconds, and records the outcome with who raised it and why.
+It is deliberately modelled on how the product owner himself wants to be
+asked: never blind, one at a time, with context, real options, consequences
+and a recommendation (D-33).
+
+**What it does.** Skill `skills/decision-review`. One dataset of `decision`
+records (question, context, two to four options with consequences,
+recommended option and reason, who raised it, impact, source) and `follow-up`
+records under them. Three views: the queue in the canvas, a single-decision
+card for the chat, and a summary. The person picks in the view; picks collect
+as unsent edits and are sent together. Only the person sets a pick, except
+through the explicit "Take the recommendations" button. After a decision the
+agent tells whoever raised it and adds follow-ups. "I need more first" sends a
+decision back with what is missing. The end product is a decision log in
+markdown.
+
+**New building block.** The `choices` section in view details (pick one of
+several, recommended one marked). It is generic: any record with a list of
+options can use it.
+
+**Why it is the first of the four.** It reuses the most (one list, cards,
+participants, the workflow card) and it proves the kit is not shaped around
+requirements documents.
