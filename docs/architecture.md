@@ -278,6 +278,23 @@ A design, not yet built. Spec and open questions:
   child sessions and side chats. Project meaning goes in our own file beside
   upstream's project, so the fork stays compatible.
 
+## Initiatives, artifacts and templates
+
+Spec: [product/initiatives-and-templates.md](product/initiatives-and-templates.md).
+
+- **Initiative** = a project with a goal: `projects/<key>.json` with a fixed
+  `id` (`ini_` + UUID) and `key` (D-138), and a folder `projects/<key>/` for
+  its intent document and registers.
+- **Stamps** (D-140): every artifact names its initiative, template, stages,
+  status and sources inside itself (markdown frontmatter, a JSON `artifact`
+  block, an HTML `pa-artifact` script). `pa artifacts` assembles the
+  registry from the files; there is no store.
+- **Templates** (D-139): a folder with `template.json`, kind `markdown`,
+  `records` or `page`, in `templates/` or a workflow's `templates/`.
+- **Registers**: a view-kit dataset of evidence, questions, decisions and
+  ready checks per initiative (`pa register`); `pa set` refuses to edit a
+  decision.
+
 ## The usage log
 
 One local record of how the platform is used (D-122 to D-127; spec
@@ -342,4 +359,5 @@ GitHub namespace.
 | Collab editor | | `shell/review/` | `document-collaboration` |
 | Session panel | | `shell/SessionOverview*.tsx` | |
 | Design tokens | `design/build_tokens.py` | `designTokens.generated.css` | `product-aviator-design` |
+| Initiatives, stamps, templates | | | `view-kit` (`pa stamp`, `pa artifacts`, `pa template`, `pa register`); `workspace/templates/initiative-*` |
 | Usage log | `slim_usage.py`, `server/routes/slim_usage.py`, the tees in `telemetry/client.py` and `runner/app.py` | `lib/slimUsage.ts` | `view-kit` (`usagelog.py`, `pa log`, `pa usage`) |

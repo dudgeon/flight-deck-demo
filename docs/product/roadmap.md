@@ -322,6 +322,26 @@ a project means something (a goal to ship) and knows its relatives.
 
 ---
 
+## Initiatives, artifacts and templates
+
+One data model for what an initiative is, what it has produced and what
+templates its artifacts follow, so the lifecycle skill can set it up and
+every hero skill can read and extend it.
+
+- **Done.** The model and the commands: fixed ids, stamps, `pa artifacts`,
+  `pa template`, `pa register`, two shipped templates (intent document,
+  registers) (D-138 to D-142).
+- **Next.** Make each hero skill follow the contract (stamp its work, name a
+  template per work product, use the registers); write the lifecycle skill
+  (D-129) on top of it; show the registry and registers on the project page;
+  a Templates shelf in the Hangar.
+- **Open.** IN-1 (is an initiative the same as a goal project) and IN-3 (the
+  shared representation of intent), with Geoff. The stage list may change
+  with the lifecycle research.
+- **Read.** [initiatives-and-templates.md](initiatives-and-templates.md).
+
+---
+
 ## Aviator coordination and skill routing
 
 Aviator, as the project's director, should coordinate the way a Claude Code

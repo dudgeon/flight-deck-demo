@@ -87,6 +87,37 @@ other project and how it stands.
   the item it is about. The other project reads it the other way: what was
   handed to it is where it came from.
 
+## Initiatives, stamps, templates and registers
+
+An initiative is a project with a goal; `pa project` gives it a fixed `id`
+(`ini_…`) and `key` (its file name). Whatever you make for one carries a
+**stamp** naming it. Full model: `docs/product/initiatives-and-templates.md`.
+
+1. **Find the initiative first**: from your brief, else `pa project` to list
+   them. Never create one yourself unless you are the lifecycle skill. If
+   there is none, stamp your work without `--initiative`; it is adopted later.
+2. **Read before writing**: `pa artifacts --initiative <key>` lists what
+   exists; `projects/<key>/intent.md` is the shared intent;
+   `projects/<key>/registers.json` holds evidence, open questions, decisions
+   and ready checks. Do not re-ask what a decision already settled.
+3. **Start documents from templates**: `pa template list [--stage shape]`,
+   then `pa template new <id> --initiative <key> [--title "…"]`. It writes the
+   file where the template says and stamps it.
+4. **Stamp what you make another way**: `pa stamp <file> --initiative <key>
+   [--template <id>] [--stage <stage>]... [--from art_…] [--by <your workflow id>]
+   [--status draft|in-review|final|superseded]`. Files in `context/` are the
+   person's: the same command lists them on the initiative and leaves them
+   untouched. `pa project <name> --data <dataset>` stamps a dataset.
+5. **Put checkable things in the registers**: `pa register <key> evidence
+   "<what it shows>" --source <path or person>`; `question "…" --owner <who>
+   [--blocking]`; `decision "…" [--supersedes D-01]`; `check "…" --status
+   pass|fail|unknown`. A decision is never edited: supersede it.
+6. **Write only your stage's sections** of `intent.md` (each section names its
+   owner in the template); suggest changes to the others as tracked changes
+   (`document-collaboration`).
+7. **Extend in your own space**: new fields go in your own records and
+   templates, never on the initiative's card or as new register types.
+
 ## Runs: pausing, resuming and stopping
 
 One workflow working on one subject is a **run**. It outlives the session: its

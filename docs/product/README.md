@@ -17,6 +17,9 @@ for, and what was tried, without asking the people who were there.
 - `modes-and-projects.md`: a design exploration, not yet decided: modes that
   workflows put a session into, pausing and resuming runs, what a project is,
   and the intent graph. Lists the open decisions.
+- `initiatives-and-templates.md`: the data model for initiatives (projects
+  with a goal and a fixed id), the stamps that tie artifacts to them,
+  templates (markdown, records, page) and the shared registers.
 - `usage-logging.md`: the usage log: what it records, the line's schema,
   privacy rules, where files live, evals, and how logs leave a machine.
 
