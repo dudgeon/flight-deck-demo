@@ -1,0 +1,72 @@
+{
+  "inb-how": {
+    "at": "2026-11-21T17:07:40.899Z",
+    "choice": "Both, scripted first",
+    "note": ""
+  },
+  "inb-reply": {
+    "at": "2026-11-21T17:07:57.649Z",
+    "choice": "No inline reply",
+    "note": ""
+  },
+  "inb-which": {
+    "at": "2026-11-21T17:07:35.046Z",
+    "choice": "Messages meant for you",
+    "note": "imagine this: just as we can send messages to others, imagine the other person receiving such a message; the inbox is where they would see our message. and we will have scenarios where our demo user is pulled into sessions -- not just ones where we pull others into our sessions. I can explain further if that does not make sense."
+  },
+  "lib-live": {
+    "at": "2026-11-21T17:02:42.671Z",
+    "choice": "Open a demo project",
+    "note": "optional: add some prefix or icon so it is obvious that a given project/session is a demo. unclear the distinction between a project and a session, but my sense is that most demos should be projects. I also think that demos and scenarios are actually the same thing -- we've just used different wording. and a demo/scenario could be an initial setup, where the user interacts with it, or a fully scripted scenario -- perhaps that's the distinction. but they are two types of the same thing."
+  },
+  "lib-name": {
+    "at": "2026-11-21T17:03:10.403Z",
+    "choice": "Something else",
+    "note": "read my answers to questions 1, 2 and let me know if this is still an open question."
+  },
+  "lib-where": {
+    "at": "2026-11-21T17:00:25.806Z",
+    "choice": "Something else",
+    "note": "Demos should feel like you are flying -- there is a decision about where you should go to invoke them, the hangar or the library section -- but. the whole point of a demo is to demonstrate flying in a given scenario."
+  },
+  "per-casting": {
+    "at": "2026-11-21T17:06:18.982Z",
+    "choice": "Yes, tick workflows, demos and starters here",
+    "note": ""
+  },
+  "per-chat": {
+    "at": "2026-11-21T17:05:37.434Z",
+    "choice": "Pop-over, can be pinned",
+    "note": ""
+  },
+  "per-entry": {
+    "at": "2026-11-21T17:05:01.822Z",
+    "choice": "The page itself becomes the editor",
+    "note": "we also need to be able to select icons/avatars for each participant (person/agent); when selected (e.g. from a file in my desktop), they should be added to the repo. config, like personas, harness skills, workflows, scenarios should all travel with the repo. user sessions don't need to but can."
+  },
+  "per-save": {
+    "at": "2026-11-21T17:05:09.467Z",
+    "choice": "Every edit saves to the draft at once",
+    "note": ""
+  },
+  "per-skills": {
+    "at": "2026-11-21T17:06:07.660Z",
+    "choice": "Skills they bring to their answers",
+    "note": ""
+  },
+  "per-try": {
+    "at": "2026-11-21T17:05:49.032Z",
+    "choice": "A Try them tab in the Aviator pop-over",
+    "note": ""
+  },
+  "r2-launch": {
+    "at": "2026-11-21T17:43:01.784Z",
+    "choice": "Both",
+    "note": ""
+  },
+  "r2-name": {
+    "at": "2026-11-21T17:45:03.649Z",
+    "choice": "Scenario you build, demo you fly",
+    "note": "yes and a demo can be fully scripted or not very scripted, with each turn either triggering the next canned turn or handing it over to a real agent call"
+  }
+}

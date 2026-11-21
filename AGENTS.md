@@ -168,6 +168,11 @@ writing down intent is part of every change.
 - **When you add or change a feature,** update its section in
   `docs/product/features.md` with what it is for, not only what it does, and
   move its workstream in `docs/product/roadmap.md`, in the same pull request.
+- **Decision artifacts.** Every walkthrough, design round or proposal page
+  put to Geoff gets an offline copy in `docs/decision-artifacts/` (D-115).
+  The `docs-refresh` skill (`.claude/skills/docs-refresh/`) fetches, archives
+  and indexes them, and runs the docs pass; use it when docs need bringing
+  up to date.
 - **Asking Geoff.** One question at a time as a decision card, never a list in
   prose (D-32); always with a "Something else" option (D-105); never blind:
   context, real options with consequences, the actual visuals, and a

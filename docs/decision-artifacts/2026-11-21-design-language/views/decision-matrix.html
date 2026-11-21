@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Decision matrix</title>
+<meta name="description" content="Options scored against weighted criteria. Drag the weights to see the ranking change, then send your pick back to Claude.">
+<style>
+  :root { --bg:#fff; --fg:#1d1d1f; --muted:#6e6e73; --line:#e5e5ea; --card:#f7f7f8; --accent:#2f6feb; --win:#e8f0fe; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#141414; --fg:#f2f2f2; --muted:#a1a1a6; --line:#2c2c2e; --card:#1d1d1f; --accent:#6ea0ff; --win:#1c2a44; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.5 -apple-system, system-ui, "Segoe UI", sans-serif; }
+  main { max-width:960px; margin:0 auto; padding:32px 24px 64px; }
+  h1 { font-size:24px; margin:0 0 4px; } .meta { color:var(--muted); font-size:13px; margin-bottom:20px; }
+  .scroll { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; min-width:560px; } th, td { padding:9px 8px; border-bottom:1px solid var(--line); text-align:center; }
+  th:first-child, td:first-child { text-align:left; }
+  th { font-size:12px; color:var(--muted); font-weight:600; vertical-align:bottom; }
+  input[type=range] { width:90px; accent-color:var(--accent); }
+  tr.total td { font-weight:700; border-top:2px solid var(--line); }
+  td.best { background:var(--win); }
+  .note { color:var(--muted); font-size:13px; margin-top:4px; }
+  .actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:20px; }
+  button { font:inherit; font-size:13px; border:1px solid var(--line); background:var(--bg); color:var(--fg); border-radius:7px; padding:6px 12px; cursor:pointer; }
+  button:hover { border-color:var(--accent); color:var(--accent); }
+</style>
+</head>
+<body>
+<!--
+  Template: Decision matrix.
+  Claude: copy into artifacts/ and change ONLY the JSON in #artifact-data.
+  Scores are 1-5 per option per criterion; weights are 0-10.
+-->
+<script type="application/json" id="artifact-data">
+{
+  "title": "Which option should we pick?",
+  "context": "One line on the decision and its deadline.",
+  "options": ["Option A", "Option B", "Option C"],
+  "criteria": [
+    { "name": "Customer impact", "weight": 8, "scores": [4, 3, 5], "why": "" },
+    { "name": "Effort (5 = least)", "weight": 6, "scores": [3, 5, 2], "why": "" },
+    { "name": "Risk (5 = lowest)", "weight": 5, "scores": [4, 4, 2], "why": "" }
+  ]
+}
+</script>
+<main id="app"></main>
+<script>
+  const data = JSON.parse(document.getElementById("artifact-data").textContent);
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+  const totals = () => data.options.map((_, o) => data.criteria.reduce((sum, c) => sum + c.weight * (c.scores[o] ?? 0), 0));
+  function render() {
+    const sums = totals();
+    const best = Math.max(...sums);
+    document.getElementById("app").innerHTML = `
+      <h1>${esc(data.title)}</h1><div class="meta">${esc(data.context)}</div>
+      <div class="scroll"><table>
+        <thead><tr><th>Criterion</th><th>Weight</th>${data.options.map((o) => `<th>${esc(o)}</th>`).join("")}</tr></thead>
+        <tbody>
+          ${data.criteria.map((c, i) => `<tr>
+            <td>${esc(c.name)}${c.why ? `<div class="note">${esc(c.why)}</div>` : ""}</td>
+            <td><input type="range" min="0" max="10" value="${c.weight}" data-i="${i}"> <span>${c.weight}</span></td>
+            ${c.scores.map((s) => `<td>${s}</td>`).join("")}
+          </tr>`).join("")}
+          <tr class="total"><td>Weighted total</td><td></td>${sums.map((s) => `<td class="${s === best ? "best" : ""}">${s}</td>`).join("")}</tr>
+        </tbody>
+      </table></div>
+      <div class="actions">
+        ${data.options.map((o, i) => `<button data-pick="${i}">I pick ${esc(o)}</button>`).join("")}
+        <button data-weights>Send my weights to Claude</button>
+      </div>`;
+    document.querySelectorAll("input[type=range]").forEach((input) => input.addEventListener("input", () => {
+      data.criteria[input.dataset.i].weight = Number(input.value);
+      render();
+    }));
+    const weights = () => data.criteria.map((c) => `${c.name}: ${c.weight}`).join(", ");
+    document.querySelectorAll("button[data-pick]").forEach((b) => b.addEventListener("click", () =>
+      window.omnigent?.prompt(`Decision "${data.title}": I pick ${data.options[b.dataset.pick]}. My weights were ${weights()}. Write up the rationale and next steps.`)));
+    document.querySelector("button[data-weights]").addEventListener("click", () =>
+      window.omnigent?.prompt(`For "${data.title}" I changed the weights to: ${weights()}. Update the matrix artifact with these weights and tell me if the recommendation changes.`));
+  }
+  render();
+</script>
+</body>
+</html>

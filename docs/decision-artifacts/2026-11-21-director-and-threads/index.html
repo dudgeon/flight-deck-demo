@@ -1,0 +1,243 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!-- decision-archive:start -->
+<div style="font:13px/1.45 system-ui,sans-serif;background:Canvas;color:CanvasText;border-bottom:1px solid GrayText;padding:8px 16px">Archived copy of <b>Director and Threads</b>, a decision artifact from 2026-11-21. Nothing on this page is saved. The index of all of them is in <a href="../index.html">docs/decision-artifacts</a>.</div>
+<script>
+(function(){
+  var A={};
+  function snap(){var docs=Object.keys(A).map(function(k){return {id:k,data:function(){return A[k]},exists:true}});return {docs:docs,empty:!docs.length,size:docs.length,forEach:function(f){docs.forEach(f)}}}
+  function doc(id){return {id:id,get:async function(){return {id:id,exists:id in A,data:function(){return A[id]}}},set:async function(){},update:async function(){},delete:async function(){}}}
+  var db={collection:function(){return {get:async function(){return snap()},doc:doc,onSnapshot:function(f){setTimeout(function(){f(snap())},0);return function(){}},add:async function(){}}},doc:function(p){return doc(String(p).split("/").pop())}};
+  window.claude={use:async function(name){return name==="db"?db:null}};
+})();
+</script>
+<!-- decision-archive:end -->
+
+<title>Director and Threads</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one decision at a time; a live mock of the app on top, the options beneath it. Colors are the Flight Deck tokens. */
+:root{--bg:#f4f6f9;--sf:#fff;--sunk:#eaeef3;--ink:#0f1e30;--ink2:#475a70;--ink3:#71829a;--line:#d6dde6;--line2:#b4c0ce;--navy:#0a223d;--onnavy:#f2f6fa;--chrome:#0a223d;--chrome2:#9fb4cc;--chromeact:#2a5486;--you:#b0237a;--yousoft:#f8e1ef;--ok:#17794a;--oksoft:#ddf1e6;--info:#1e6aa6;--infosoft:#ddebf7;--attn:#8d5a00;--attnsoft:#f9ebcf;--agent:#4f46b8;--agentsoft:#e8e6f8;--build:#0d6e78;--font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#071526;--sf:#0c1e33;--sunk:#091a2d;--ink:#e6edf5;--ink2:#a6b6c8;--ink3:#71849a;--line:#1e3550;--line2:#3a5676;--navy:#2f64a0;--onnavy:#f2f6fa;--chrome:#0d2138;--chrome2:#8ea6c2;--chromeact:#1f4470;--you:#f26dc3;--yousoft:#3a1530;--ok:#5bcb93;--oksoft:#0f3123;--info:#7db7ea;--infosoft:#12304d;--attn:#e9b44c;--attnsoft:#362808;--agent:#a59cff;--agentsoft:#211d47;--build:#58c9d3;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#071526;--sf:#0c1e33;--sunk:#091a2d;--ink:#e6edf5;--ink2:#a6b6c8;--ink3:#71849a;--line:#1e3550;--line2:#3a5676;--navy:#2f64a0;--onnavy:#f2f6fa;--chrome:#0d2138;--chrome2:#8ea6c2;--chromeact:#1f4470;--you:#f26dc3;--yousoft:#3a1530;--ok:#5bcb93;--oksoft:#0f3123;--info:#7db7ea;--infosoft:#12304d;--attn:#e9b44c;--attnsoft:#362808;--agent:#a59cff;--agentsoft:#211d47;--build:#58c9d3;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--font);padding-block:28px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.eb{font-size:12.5px;font-weight:600;color:var(--you)}
+h1{font-size:30px;line-height:1.15;margin:4px 0 6px;letter-spacing:-.015em;text-wrap:balance}h2{font-size:22px;margin:0;letter-spacing:-.015em;text-wrap:balance}h3{font-size:15px;margin:0 0 4px}
+p{margin:0;color:var(--ink2);max-width:72ch}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,textarea:focus-visible{outline:2px solid var(--info);outline-offset:2px}
+.nav{display:flex;flex-wrap:wrap;gap:6px}.nav button{border:1px solid var(--line);background:var(--sf);border-radius:99px;padding:4px 12px;font-size:13px;color:var(--ink2)}
+.nav button[aria-current="true"]{background:var(--navy);border-color:var(--navy);color:var(--onnavy)}
+.nav button.done::after{content:" ✓";color:var(--ok)}.nav button.done[aria-current="true"]::after{color:var(--onnavy)}
+.card{background:var(--sf);border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.know{background:var(--sunk);border-radius:8px;padding:12px 14px}.know p+p{margin-top:8px}
+.stage{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--sunk);margin:0}
+.stage .scroll{overflow-x:auto}
+.stage figcaption{padding:8px 12px;font-size:13px;color:var(--ink2);background:var(--sf);border-top:1px solid var(--line)}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:grid;grid-template-columns:22px 1fr;gap:10px;text-align:left;border:1px solid var(--line);background:var(--sf);border-radius:9px;padding:10px 12px}
+.opt:hover{border-color:var(--navy)}.opt .r{width:16px;height:16px;border-radius:50%;border:2px solid var(--ink3);margin-top:3px}
+.opt[aria-pressed="true"]{border-color:var(--you);background:var(--yousoft)}.opt[aria-pressed="true"] .r{border-color:var(--you);background:radial-gradient(var(--you) 45%,transparent 50%)}
+.opt.viewing{box-shadow:inset 3px 0 0 var(--navy)}
+.opt b{display:block}.opt span{color:var(--ink2);font-size:14px}.opt .tag{font-size:12px;font-weight:600;color:var(--ok);margin-left:6px}
+textarea{width:100%;min-height:70px;font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--sf);color:var(--ink)}
+.rec{border-left:3px solid var(--ok);background:var(--oksoft);padding:10px 12px;border-radius:6px;color:var(--ink)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{border:1px solid var(--navy);background:var(--navy);color:var(--onnavy);border-radius:8px;padding:7px 14px;font-weight:600}
+.btn.ghost{background:var(--sf);color:var(--ink);border-color:var(--line2)}
+.lockd{font-size:13px;font-weight:600;color:var(--ok)}.muted{color:var(--ink3);font-size:13px}
+table{border-collapse:collapse;width:100%;font-size:14px}td,th{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}th{background:var(--sunk);font-size:12.5px;color:var(--ink3)}
+.tw{overflow-x:auto}
+
+/* ---- the mock app ---- */
+.app{display:grid;min-width:700px;font-size:11.5px;line-height:1.4;background:var(--sf);color:var(--ink);min-height:330px}
+.sb{background:var(--chrome);color:#f2f6fa;padding:10px 8px;display:flex;flex-direction:column;gap:3px}
+.sb .br{font-weight:700;margin-bottom:6px;padding:0 4px}.sb .it{padding:3px 6px;border-radius:5px;color:#dbe5f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb .hd{color:var(--chrome2);margin:8px 4px 2px;font-size:10.5px}.sb .on{background:var(--chromeact);color:#fff}.sb .sub{padding-left:16px}.sb .sub2{padding-left:28px;color:var(--chrome2)}
+.sb .ct{float:right;background:#e9b44c;color:#2a1c00;border-radius:9px;padding:0 5px;font-size:10px;font-weight:700}
+.ch{display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--line)}
+.top{padding:7px 12px;border-bottom:1px solid var(--line);color:var(--ink2);display:flex;gap:6px;align-items:center}.top b{color:var(--ink)}
+.band{background:var(--agentsoft);color:var(--agent);padding:5px 12px;font-weight:600;display:flex;gap:8px;align-items:center}
+.ms{flex:1;padding:10px 14px;display:flex;flex-direction:column;gap:8px}
+.u{align-self:flex-end;background:var(--sunk);border-radius:10px;padding:5px 9px;max-width:80%}
+.a{max-width:92%}.a .who{font-weight:650;display:flex;gap:6px;align-items:center;margin-bottom:1px}
+.chip{display:inline-flex;gap:4px;align-items:center;border:1px solid var(--line2);border-radius:99px;padding:0 7px;font-size:10.5px;font-weight:600;color:var(--ink2);background:var(--sf);white-space:nowrap}
+.chip.at{border-color:var(--attn);color:var(--attn);background:var(--attnsoft)}.chip.ok{border-color:var(--ok);color:var(--ok);background:var(--oksoft)}.chip.ag{border-color:var(--agent);color:var(--agent);background:var(--agentsoft)}.chip.idle{color:var(--ink3)}
+.g{width:9px;height:9px;border-radius:50%;border:2px solid currentColor;display:inline-block;flex:none}
+.rail{border-left:2px solid var(--agent);padding-left:10px;display:flex;flex-direction:column;gap:8px}
+.mk{display:flex;gap:6px;align-items:center;color:var(--ink3);font-size:10.5px}.mk::after{content:"";flex:1;border-top:1px dashed var(--line2)}.mk b{color:var(--ink2)}
+.mk .mb,.mb{border:1px solid var(--line2);border-radius:5px;padding:0 6px;background:var(--sf);color:var(--ink);font-size:10.5px;font-weight:600;white-space:nowrap}
+.mb.p{background:var(--navy);border-color:var(--navy);color:var(--onnavy)}
+.note{border:1px solid var(--line);border-radius:7px;padding:6px 8px;background:var(--sf);color:var(--ink2)}.note b{color:var(--ink)}
+.q{border:1px solid var(--line2);border-radius:7px;padding:6px 8px}.q.dim{opacity:.55}
+.strip{margin:0 14px;border:1px solid var(--line);border-bottom:0;border-radius:8px 8px 0 0;background:var(--sunk);padding:4px 9px;display:flex;gap:8px;align-items:center;color:var(--ink2)}
+.strip .sp{flex:1}.strip b{color:var(--ink)}
+.cp{margin:0 14px 10px;border:1px solid var(--line2);border-radius:8px;padding:7px 9px;color:var(--ink3)}.strip+.cp{border-radius:0 0 8px 8px}
+.pn{padding:9px 10px;display:flex;flex-direction:column;gap:5px;min-width:0;background:var(--sf)}
+.pn .hd{font-size:10.5px;color:var(--ink3);margin-top:5px}
+.st{display:flex;gap:6px;align-items:center;color:var(--ink3)}.st i{width:8px;height:8px;border-radius:50%;border:1.5px solid var(--line2);flex:none}
+.st.dn{color:var(--ink2)}.st.dn i{background:var(--ok);border-color:var(--ok)}.st.cu{color:var(--ink);font-weight:650}.st.cu i{border-color:var(--agent);background:var(--agent)}
+.cv{background:var(--sunk);padding:10px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cv .tab{align-self:flex-start;background:var(--sf);border:1px solid var(--line);border-radius:6px;padding:1px 7px}
+.arow{display:grid;grid-template-columns:1fr auto;gap:6px;background:var(--sf);border:1px solid var(--line);border-radius:6px;padding:4px 7px}
+.home{padding:12px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.home h4{margin:6px 0 0;font-size:12px}.home .bc{color:var(--ink3)}.home .ttl{font-size:16px;font-weight:650;letter-spacing:-.01em}
+.runs{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+.run{border:1px solid var(--line);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:4px;background:var(--sf)}
+.run .t{font-weight:650}.run .l{color:var(--ink2)}.run .f{display:flex;gap:6px;align-items:center;justify-content:space-between;margin-top:2px}
+.bar{height:4px;border-radius:2px;background:var(--sunk);overflow:hidden}.bar i{display:block;height:100%;background:var(--agent)}
+.kb{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.kb div{border:1px dashed var(--line2);border-radius:6px;padding:5px;color:var(--ink3)}
+.th{display:flex;flex-direction:column;min-width:0;background:var(--sf)}
+.tabs{display:flex;gap:4px;padding:6px 8px;border-bottom:1px solid var(--line);background:var(--sunk)}
+.tabs span{border:1px solid var(--line);border-radius:6px;padding:1px 7px;background:var(--sunk);color:var(--ink3);white-space:nowrap}.tabs span.on{background:var(--sf);color:var(--ink);font-weight:600}
+.th .hdq{margin:8px 10px 0;border-left:3px solid var(--line2);padding:2px 8px;color:var(--ink2)}
+.card2{border:1px solid var(--line2);border-radius:7px;padding:6px 8px;display:flex;gap:8px;align-items:center;justify-content:space-between}
+.rc{border:1px solid var(--line2);border-radius:8px;padding:7px 9px;display:flex;flex-direction:column;gap:4px;background:var(--sf)}.rc .h{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.rc .h b{font-weight:650}.rc .sp{flex:1}
+.dbar{background:var(--sunk);border-bottom:1px solid var(--line);padding:5px 12px;display:flex;gap:8px;align-items:center;color:var(--ink2)}
+.lk{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center}
+/* diagrams */
+.dg{padding:16px;min-width:640px;display:flex;flex-direction:column;gap:10px;font-size:12px;background:var(--sf)}
+.lv{display:grid;grid-template-columns:110px 1fr;gap:10px;align-items:center}.lv>span{color:var(--ink3);font-size:11.5px}
+.nodes{display:flex;gap:8px;flex-wrap:wrap}
+.n{border:1px solid var(--line2);border-radius:7px;padding:5px 9px;background:var(--sf)}.n small{display:block;color:var(--ink3)}
+.n.pj{border:2px solid var(--navy);background:var(--infosoft)}.n.me{border:2px solid var(--you);background:var(--yousoft)}.n.gh{border-style:dashed;color:var(--ink3)}
+.dg .lg{color:var(--ink2);font-size:11.5px}.dg .down{color:var(--ink3);padding-left:120px;font-size:11px}
+svg text{font:11px var(--font);fill:var(--ink)}svg .t2{fill:var(--ink3);font-size:10px}
+svg .bx{fill:var(--sf);stroke:var(--line2)}svg .bp{fill:var(--infosoft);stroke:var(--navy);stroke-width:2}svg .bm{fill:var(--yousoft);stroke:var(--you);stroke-width:2}svg .bs{fill:var(--sunk);stroke:var(--line2);stroke-dasharray:3 2}
+svg .e{stroke:var(--ink3);fill:none;stroke-width:1.3}svg .ed{stroke:var(--attn);fill:none;stroke-width:1.3;stroke-dasharray:4 3}svg .ef{stroke:var(--ok);fill:none;stroke-width:1.3;stroke-dasharray:2 2}
+</style>
+<main>
+<header><div class="eb">Product Aviator · design exploration, round two</div>
+<h1>The director and its threads</h1>
+<p>You answered all eleven. Two of your answers asked for more design: Aviator as a project director with modes running in threads, and a project's connections as a graph, not a tree. This round explores both, in four choices with drawings. Answers save to this page. <span class="muted" id="sync"></span></p></header>
+<nav class="nav" id="nav" aria-label="Decisions"></nav>
+<section id="pane"></section>
+</main>
+<script>
+(()=>{
+const G='<i class="g"></i>';
+const sb=(x="")=>`<div class="sb"><div class="br">Product Aviator</div><div class="it">New session</div><div class="it">Library</div><div class="it">Inbox</div><div class="hd">Projects</div>${x||`<div class="it">Show release date on held…</div><div class="it sub on">Aviator</div><div class="it sub2">↳ Intent shaping</div><div class="it sub2">↳ Dependencies</div>`}</div>`;
+const tp=(t="Aviator")=>`<div class="top">Show release date on held payments / <b>${t}</b></div>`;
+const U=t=>`<div class="u">${t}</div>`;
+const A=(t,who="")=>`<div class="a">${who?`<div class="who">${who}</div>`:""}${t}</div>`;
+const MK=(t,b="")=>`<div class="mk">${G}<span>${t}</span>${b}</div>`;
+const IS=`<span class="chip ag">${G}Intent shaping</span>`;
+const cp=(t="Message Aviator…")=>`<div class="cp">${t}</div>`;
+const strip=(x)=>`<div class="strip">${x}</div>`;
+const app=(cols,inner)=>`<div class="app" style="grid-template-columns:${cols}">${inner}</div>`;
+const chat=(msgs,foot,hd=tp())=>`<div class="ch">${hd}<div class="ms">${msgs}</div>${foot}</div>`;
+const rc=(t,step,chipc,chipt,line,btns)=>`<div class="rc"><div class="h">${G}<b>${t}</b><span class="muted" style="font-size:10.5px">${step}</span><span class="sp"></span><span class="chip ${chipc}">${chipt}</span></div><div>${line}</div><div class="h">${btns}</div></div>`;
+const cv=`<div class="cv"><span class="tab">Intent map</span><div class="arow"><span>Customer</span><span class="chip ok">2 · Framed</span></div><div class="arow"><span>Problem</span><span class="chip at">Needs you</span></div><div class="arow"><span>Outcome</span><span class="chip idle">1 · Spark</span></div><div class="arow"><span>Scope</span><span class="chip idle">Queued</span></div></div>`;
+const thr=(tabs,inner,ph="Message Intent shaping…")=>`<div class="th"><div class="tabs">${tabs}</div><div class="ms">${inner}</div><div class="cp">${ph}</div></div>`;
+const start=U("Let's shape the release date idea")+A("I've started <b>Intent shaping</b> in its own thread, so it has room to work and I keep the whole project in view.");
+const M={
+dirA:()=>app("130px 1.3fr 1fr",sb()+chat(start+MK("<b>Intent shaping</b> has the floor")+`<div class="rail">${A("Your sentence names a solution and a loose group. What do people do today when their payment is held?",IS)+U("They call support. Twice, usually.")+A("That moves Problem to 2 · Framed. Risks next; I'm asking Risk Review.",IS)}</div>`+U("@aviator when is the steering meeting?")+A("Thursday at 2pm."),strip(`${G}<b>To: Intent shaping</b><span>Step 2 of 5</span><span class="sp"></span><span class="mb">Open thread</span><span class="mb">Pause</span>`)+cp("Answer, or @aviator…"))+cv),
+dirB:()=>app("130px 1.2fr 1.1fr",sb()+chat(start+rc("Intent shaping","Step 2 of 5 · Frame it","at","Needs you","What do people do today when their payment is held?",`<span class="mb p">Answer here</span><span class="mb">Open thread</span><span class="mb">Pause</span>`)+U("Meanwhile, when is the steering meeting?")+A("Thursday at 2pm.")+rc("Requirements to dependencies","12 of 20 mapped","ag","Working","Cards Platform is answering 3 items.",`<span class="mb">Open thread</span>`),cp())+thr(`<span>Intent map</span><span class="on">Intent shaping</span>`,A("Your sentence names a solution and a loose group. It doesn't yet state the problem.")+`<div class="q"><b>Problem</b> · What do people do today when their payment is held?</div>`)),
+dirC:()=>app("130px 1.3fr 1fr",sb()+chat(start+A("Intent shaping asks: what do people do today when their payment is held?",`<span class="chip">AV</span> Aviator, passing on from ${IS}`)+U("They call support. Twice, usually.")+A("I've passed that on.")+`<div class="muted" style="font-size:10.5px">about a minute later</div>`+A("Intent shaping says Problem is now at 2 · Framed, and it is asking Risk Review about risks.",`<span class="chip">AV</span> Aviator, passing on from ${IS}`)+`<div class="note">Every turn goes through two agents. About twice the wait and cost, and Aviator's own memory fills with the detail the thread was meant to keep out of it.</div>`,cp())+cv),
+
+openA:()=>app("130px 1.2fr 1.1fr",sb()+chat(start+rc("Intent shaping","Step 3 of 5 · Shape it","ag","Working","Asking Risk Review about the three biggest risks.",`<span class="mb p">Open thread</span><span class="mb">Pause</span>`),cp())+thr(`<span>Intent map</span><span class="on">Intent shaping ⤢</span>`,A("That moves Problem to 2 · Framed.")+A("Showing a date creates a promise we may have to break.",`<span class="chip">RR</span> Risk Review`)+A("Recorded as risk 1. Two more to find."))),
+openB:()=>app("150px 1.2fr 1fr",sb(`<div class="it">Show release date on held…</div><div class="it sub">Aviator</div><div class="it sub2 on" style="color:#fff">↳ Intent shaping</div><div class="it sub2">↳ Dependencies</div>`)+chat(A("That moves Problem to 2 · Framed.")+A("Showing a date creates a promise we may have to break.",`<span class="chip">RR</span> Risk Review`)+A("Recorded as risk 1. Two more to find."),strip(`${G}<b>Intent shaping</b><span>Step 3 of 5</span><span class="sp"></span><span class="mb">Pause</span>`)+cp("Message Intent shaping…"),tp("Aviator / Intent shaping"))+cv),
+openC:()=>app("130px 1.2fr 1fr",sb()+`<div class="ch"><div class="dbar">‹ <b>Aviator</b> · 2 threads in flight · 1 needs you<span style="flex:1"></span><span class="mb">Back to Aviator</span></div>${tp("Intent shaping")}<div class="ms">${A("That moves Problem to 2 · Framed.")+A("Showing a date creates a promise we may have to break.",`<span class="chip">RR</span> Risk Review`)+A("Recorded as risk 1. Two more to find.")}</div>${strip(`${G}<b>Intent shaping</b><span>Step 3 of 5</span><span class="sp"></span><span class="mb">Pause</span>`)+cp("Message Intent shaping…")}</div>`+cv),
+
+repA:()=>app("130px 1fr",sb()+chat(start+`<div class="rail">${MK("<b>Intent shaping</b> · Problem reached 2 · Framed")+MK("<b>Intent shaping</b> · asked Risk Review and Cards Platform")+MK("<b>Intent shaping</b> · needs you: two scope choices",`<span class="mb p">Open</span>`)}</div>`+U("Where are we overall?")+A("Shaping is at step 3 and waiting on two scope choices from you. Dependencies has mapped 12 of 20. Nothing is blocked.")+`<div class="note">Aviator is told only these one-line milestones, each pointing at the files. It can answer “where are we” without having read the working.</div>`,cp())),
+repB:()=>app("130px 1fr",sb()+chat(start+`<div class="rail">${A("Your sentence names a solution and a loose group…",IS)+A("Placing what you said: Customer 1 · Spark, Problem empty…",IS)+A("Reading intent.md… scoring Customer against line 2…",IS)+A("Calling Risk Review with the question…",IS)+A("Risk Review answered. Recording risk 1…",IS)}</div>`+`<div class="note">Everything the thread says is copied into the director. Nothing is hidden, but the director's chat and Aviator's memory fill up, which is what the thread was for.</div>`,cp())),
+repC:()=>app("130px 1fr",sb()+chat(start+U("Where are we overall?")+A("Intent shaping is still running. I'll know more when it finishes; open its thread to see where it is.")+`<div class="muted" style="font-size:10.5px">later</div>`+`<div class="rail">${MK("<b>Intent shaping</b> finished · Intent brief written",`<span class="mb p">Open brief</span>`)}</div>`+`<div class="note">Only the result comes back. The quietest director, but it cannot tell you where things stand or notice that a thread is stuck.</div>`,cp())),
+
+lkA:()=>app("130px 1fr 190px",sb(`<div class="it">Held payments</div><div class="it on">Show release date on held…</div><div class="it">Notify when a hold is placed</div>`)+`<div class="home"><div class="bc">Held payments ›</div><div class="ttl">Show release date on held payments</div><h4>Requirements</h4><div class="arow"><span>R-06 · Show a range, not a date</span><span class="chip ok">Reviewed</span></div><div class="arow"><span>R-07 · Tell the customer when the date moves</span><span><span class="chip ag">→ Hold alerts · Notifications team · in delivery</span></span></div><div class="arow"><span>R-08 · Reason code for every hold</span><span><span class="chip at">→ Hold reason codes · Cards Platform · slipped 2 wks</span></span></div><div class="arow"><span>R-09 · Works for transfers</span><span class="chip idle">Queued</span></div></div><div class="pn"><b>Connections</b><div class="hd">Lives in</div><div>Held payments</div><div class="hd">Came from</div><div>Problem 2 · “No idea when I get my money”</div><div class="hd">Handed to others</div><div>R-07 → Hold alerts <span class="chip ag">In delivery</span></div><div>R-08 → Hold reason codes <span class="chip at">Slipped</span></div><div class="hd">Others rely on this</div><div>Support scripts refresh</div><div class="hd">Nearby</div><div class="muted">Notify when a hold is placed</div></div>`),
+lkB:()=>app("130px 1fr",sb(`<div class="it">Held payments</div><div class="it on">Show release date on held…</div>`)+`<div class="home"><div class="ttl">Show release date on held payments</div><svg viewBox="0 0 560 210" width="100%" role="img" aria-label="Map of this project's connections"><rect class="bm" x="200" y="84" width="160" height="38" rx="6"/><text x="280" y="101" text-anchor="middle">Show release date</text><text class="t2" x="280" y="114" text-anchor="middle">this project</text>
+<rect class="bp" x="210" y="8" width="140" height="30" rx="6"/><text x="280" y="27" text-anchor="middle">Held payments</text>
+<rect class="bx" x="10" y="88" width="130" height="30" rx="6"/><text x="75" y="107" text-anchor="middle">Problem 2</text>
+<rect class="bp" x="410" y="50" width="140" height="34" rx="6"/><text x="480" y="65" text-anchor="middle">Hold alerts</text><text class="t2" x="480" y="77" text-anchor="middle">Notifications · in delivery</text>
+<rect class="bp" x="410" y="124" width="140" height="34" rx="6"/><text x="480" y="139" text-anchor="middle">Hold reason codes</text><text class="t2" x="480" y="151" text-anchor="middle">Cards Platform · slipped</text>
+<rect class="bx" x="200" y="170" width="160" height="30" rx="6"/><text x="280" y="189" text-anchor="middle">Support scripts refresh</text>
+<path class="e" d="M280 38 L280 84M140 103 L200 103M280 122 L280 170"/><path class="ed" d="M360 96 L410 70M360 110 L410 138"/>
+<text class="t2" x="290" y="62">lives in</text><text class="t2" x="146" y="97">came from</text><text class="t2" x="366" y="74">R-07</text><text class="t2" x="366" y="134">R-08</text><text class="t2" x="290" y="150">relies on this</text></svg></div>`),
+lkC:()=>app("130px 1fr",sb(`<div class="it">Held payments</div><div class="it on">Show release date on held…</div>`)+`<div class="home"><div class="ttl">Show release date on held payments</div><h4>Requirements</h4><div class="arow"><span>R-07 · Tell the customer when the date moves</span><span class="chip ag">→ Hold alerts · in delivery</span></div><div class="arow"><span>R-08 · Reason code for every hold</span><span class="chip at">→ Hold reason codes · slipped 2 wks</span></div><div class="note">Links show only on the item they hang from. Nothing gathers them for the project; Aviator tells you when one matters: <b>“Hold reason codes, which R-08 was handed to, slipped two weeks.”</b></div></div>`)
+};
+const D=[
+{id:"intro",title:"What you decided",intro:true},
+{id:"director",title:"1. How the director shows a mode",
+ know:["You said: the main session is a director; a workflow runs in its own thread so its working stays out of the director's context; you stay with the director and click into a thread only when needed. And you flagged the open part yourself: how the director session shows a mode for the high-level interactions.","The tension is that a mode like intent shaping is a conversation with <i>you</i>, one question at a time. If you stay in the director, something has to carry those questions to you and your answers back.","You already chose the strip, the rail, and side questions answered outside the rail. The first option keeps all three exactly as you chose them. A fact that matters for the third option: we measured a called session answering in about a minute, so every extra agent in the path is felt."],
+ o:[["A direct line to the thread","The thread's questions appear in the director's chat inside the rail, and while it has the floor your messages go straight to it; the strip says who you are talking to. Aviator is not in the path, so nothing is doubled. Say @aviator, or ask something off-topic, and Aviator answers outside the rail.",M.dirA],["A live card; talk in the thread","The director shows one card per thread: step, state, and the pending question, which you can answer on the card. Any real conversation happens in the thread, opened beside the chat. The director's chat stays short and high-level.",M.dirB],["Aviator passes messages on","Aviator relays each question and answer, as it does for participants today. Needs nothing new in the app, but every turn costs two agents and Aviator's memory fills with the detail.",M.dirC]],
+ r:0,why:"It is the only option where you truly stay with the director and still do the work, and it keeps the three things you already chose. The live card is the natural first slice of it, so nothing is wasted by building the card first."},
+{id:"open",title:"2. Where a thread opens when you step in",
+ know:["Sometimes you will want to see the thread itself: what it read, whom it asked, its whole working. Upstream already opens a child session as a tab in the right-hand area, with a button to make it full size.","The catch from round one still holds: that tab shares the space with the canvas. If you have a direct line (decision 1), you mostly work in the director's chat with the canvas showing the mode's view, and open the thread only to inspect."],
+ o:[["Beside the director, as a tab","The thread opens as a tab next to the canvas tabs, with its own message box. One click makes it full size. This is what upstream does today.",M.openA],["As its own page","Clicking in takes you to the thread, with the canvas beside it and a trail back to Aviator. Best for long deep work, but you have left the director.",M.openB],["In place of the chat, director folded","The thread takes over the chat column; the director folds to a bar on top showing what else is in flight, and the canvas stays. Keeps chat and canvas together without leaving, but it is new to build.",M.openC]],
+ r:0,why:"It exists already, keeps the director in view, and a click expands it to the full page when you need the canvas beside it, so you get the second option for free."},
+{id:"report",title:"3. What a thread tells the director",
+ know:["The reason for threads is to keep a workflow's working out of the director's context. But the director must know enough to coordinate: to answer “where are we overall?”, to notice a stuck thread, to tell one thread what another found.","So what a thread reports is a real trade: every line it sends costs the director memory, and every line it holds back is something the director cannot help with. The state itself is always in the files (the dataset, the progress file, the where-we-left-off note), so a report can be a pointer."],
+ o:[["Milestones, one line each","The thread reports when a step is crossed, when it needs you, when it is blocked, and when it finishes, each as one line pointing at the files. They show in the director as quiet markers.",M.repA],["Everything","Each thing the thread says is copied to the director. Nothing hidden, but it undoes the isolation.",M.repB],["Only the result","The thread reports once, when it is done. The quietest, but the director cannot tell you where things stand.",M.repC]],
+ r:0,why:"It gives the director what a good project lead has: the state of each piece of work, not its transcript."},
+{id:"links",title:"4. A project's connections",
+ know:["You sent this one back with your note on what a project is: it may need to be more graph-like and less hierarchical, and “if project A has 20 requirements, and implementing one is delegated to a different team, that would become project B for them.”","That changes the picture. A project still <i>lives in</i> one area (you chose that), but its other links are not family relations. They are specific and they hang from specific things: requirement R-07 is <i>handed to</i> another team's project; this project <i>came from</i> a problem; someone else's project <i>relies on</i> this one. Seen from the other team, the same link reads the other way: their project came from your R-07.","You also held the decision on how detailed the graph is until it blocks something, so this does not build a graph. It only asks how such links should look when they exist. A link is one line stored with the item it hangs from."],
+ o:[["On the item, and gathered in a card","A linked item carries a chip with the other project and its state. The project page gathers them in one Connections card, grouped by what the link means: lives in, came from, handed to others, others rely on this.",M.lkA],["A small map","The project page shows a picture of this project and what it touches, one step out. Reads as a graph at a glance, but takes room and gets crowded past a handful of links.",M.lkB],["Only on the item","Chips on the linked items and nothing at project level. Aviator speaks up when one matters.",M.lkC]],
+ r:0,why:"The chip puts the news where you act on it (the requirement whose delivery slipped), and the card answers “what does this project touch” without drawing a tree that is not there."},
+{id:"calls",title:"How it fits together",calls:true},
+{id:"sum",title:"Summary",summary:true}
+];
+const INTRO=`<div class="card"><h2>What you decided in round one</h2><p>These are now in the repo's decision log as D-89 to D-99.</p>
+<div class="tw"><table><tr><th>Question</th><th>Your answer</th></tr>
+<tr><td>Where a mode's conversation lives</td><td><b>Something else:</b> Aviator is a project director; modes run in threads with their own context; agents message each other; you stay with the director and click in as needed. Explored in decisions 1 to 3 here.</td></tr>
+<tr><td>How a mode shows</td><td>A strip on the message box.</td></tr>
+<tr><td>Marking replies as the mode's</td><td>A rail down the side.</td></tr>
+<tr><td>Side questions</td><td>Answered outside the rail; the mode stays on.</td></tr>
+<tr><td>Leaving a mode</td><td>Say it or press it; pause, finish and stop kept distinct; a where-we-left-off note.</td></tr>
+<tr><td>A second mode</td><td>One has the floor at a time, with a way back.</td></tr>
+<tr><td>Threads on single items</td><td>Any item can have a thread.</td></tr>
+<tr><td>Finding what is in flight</td><td>An “In flight” section on the project page.</td></tr>
+<tr><td>What a project is</td><td>A goal that ships, inside an area that lasts. Your caveat: it may need to be more graph-like; a requirement handed to another team becomes their project.</td></tr>
+<tr><td>A project's relatives</td><td><b>Sent back</b> to be rethought in that light. Decision 4 here.</td></tr>
+<tr><td>Detail of the intent graph</td><td><b>Held</b> until it blocks something.</td></tr></table></div>
+<figure class="stage"><div class="scroll">${M.dirA()}</div><figcaption>The director model with your round-one answers applied, as recommended in decision 1: Aviator directs, intent shaping runs in its own thread, and you talk to it from the director's chat.</figcaption></figure>
+<div class="know"><p><b>Why your direction is sound.</b> It is how this very project works: one chat that keeps the whole picture, and a thread for each piece of work. It also matches what we forked. Upstream already runs child sessions with a trail back to their parent, opens them as tabs, and lets agents message each other, which is how participants work today.</p><p><b>What it costs.</b> Each thread is another Claude Code process: a few seconds to start, and its own usage. And a thread starts knowing only what the director hands it, so the hand-over brief matters.</p></div>
+<div class="row"><button class="btn" id="go">Start with decision 1</button></div></div>`;
+const CALLS=[["A project has one standing Aviator chat.","Like this project's chat with me. It is pinned at the top of the project and threads hang under it. Plain extra sessions are still allowed."],
+["Every workflow run gets a thread; Aviator may open one for other deep work.","Quick asks, single cards and lookups stay with the director. When Aviator opens a thread on its own judgment it says so, as it does when it calls a participant."],
+["The director hands a thread a written brief.","The subject, the files to read, the target, and who may be called. The brief is a file, so you can read exactly what the thread was told."],
+["“One at a time” now means one thread has the floor.","Several threads can be working in the background and show as cards. Your message always has one destination: the thread with the floor, or Aviator."],
+["Pausing a mode pauses its thread.","The thread writes the where-we-left-off note and stops. Resume wakes the same thread if it still exists, or starts a fresh one from the note and the data."],
+["Item threads hang off the run's thread.","A thread on decision 3 belongs to the decision-review run, and its conclusions are written to the record."],
+["Participants do not change.","They are already background sessions. A thread calls them the way Aviator does today."]];
+const STEPS=[["1","Runs that can pause","The run's state and the where-we-left-off note in the progress file (pause, resume, stop). Needs none of the round-two answers.","Ready to build"],
+["2","In flight on the project page","Run cards on upstream's board, with Resume and the sidebar count.","Ready to build"],
+["3","Aviator as director","A skill that tells Aviator how to start a workflow in a thread, write the brief, and read milestones. A live run card in the director's chat.","Needs decision 3"],
+["4","The direct line","The strip, the rail and the thread's turns in the director's chat.","Needs decisions 1 and 2"],
+["5","Threads on items","A thread attached to a record, opened from its row, with a count.","Ready after step 3"],
+["6","Projects with a goal","A project names its goal and its area; an area page; connections.","Needs decision 4"]];
+const ANS={},KEY="director-threads-v1";let cur=0,view={},db=null;
+function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify(ANS))}catch(e){}}
+function loadLocal(){try{Object.assign(ANS,JSON.parse(localStorage.getItem(KEY)||"{}"))}catch(e){}}
+function persist(id){saveLocal();if(db){try{db.collection("answers").doc(id).set({...ANS[id],title:D.find(d=>d.id===id).title,at:new Date().toISOString()})}catch(e){}}}
+const esc=s=>String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function render(){
+ const nav=document.getElementById("nav");nav.innerHTML="";
+ D.forEach((d,i)=>{const b=document.createElement("button");b.textContent=d.title;if(i===cur)b.setAttribute("aria-current","true");if(ANS[d.id]?.locked)b.className="done";b.onclick=()=>{cur=i;render()};nav.appendChild(b)});
+ const d=D[cur],p=document.getElementById("pane");
+ if(d.intro){p.innerHTML=INTRO;document.getElementById("go").onclick=()=>{cur=1;render();scrollTo(0,0)};return}
+ if(d.calls){p.innerHTML=`<div class="card"><h2>How it fits together</h2><p>Calls I will make unless you object, then the order I would build in. Tell me in the box if any is wrong.</p><div class="tw"><table>${CALLS.map(c=>`<tr><td><b>${c[0]}</b></td><td>${c[1]}</td></tr>`).join("")}</table></div><h3>Build steps</h3><div class="tw"><table><tr><th></th><th>Step</th><th>What it adds</th><th>Depends on</th></tr>${STEPS.map(c=>`<tr><td>${c[0]}</td><td><b>${c[1]}</b></td><td>${c[2]}</td><td>${c[3]}</td></tr>`).join("")}</table></div><textarea id="tx" placeholder="Anything here you would do differently?">${esc(ANS.calls?.text)}</textarea><div class="row"><button class="btn" id="lock">${ANS.calls?.locked?"Saved ✓ Save again":"Save and see the summary"}</button></div></div>`;
+  document.getElementById("lock").onclick=()=>{ANS.calls={pick:-1,text:document.getElementById("tx").value,locked:true};persist("calls");cur++;render();scrollTo(0,0)};return}
+ if(d.summary){const rows=D.filter(x=>x.o).map(x=>{const a=ANS[x.id];let v="Not answered yet";if(a?.locked)v=a.pick===x.o.length?"Something else: "+esc(a.text):esc(x.o[a.pick][0])+(a.text?" · note: "+esc(a.text):"");return `<tr><td>${x.title}</td><td>${v}</td><td>${x.o[x.r][0]}</td></tr>`}).join("");
+  p.innerHTML=`<div class="card"><h2>Your answers</h2><div class="tw"><table><tr><th>Decision</th><th>Your answer</th><th>Recommended</th></tr>${rows}</table></div><p>When these are locked, tell me in the thread and I will write them into the decision log and the spec.</p></div>`;return}
+ const a=ANS[d.id]||(ANS[d.id]={pick:null,text:"",locked:false});const v=view[d.id]??(a.pick!=null&&a.pick<d.o.length?a.pick:d.r);
+ p.innerHTML=`<div class="card"><h2>${d.title}</h2><div class="know">${d.know.map(k=>`<p>${k}</p>`).join("")}</div>
+ <figure class="stage"><div class="scroll">${d.o[v][2]()}</div><figcaption>Showing: <b>${d.o[v][0]}</b>. A drawing, not a screenshot.</figcaption></figure>
+ <div class="opts">${d.o.map((o,i)=>`<button class="opt ${i===v?"viewing":""}" data-i="${i}" aria-pressed="${a.pick===i}" ${a.locked?"disabled":""}><i class="r"></i><div><b>${o[0]}${i===d.r?'<span class="tag">Recommended</span>':""}</b><span>${o[1]}</span></div></button>`).join("")}
+ <button class="opt" data-i="${d.o.length}" aria-pressed="${a.pick===d.o.length}" ${a.locked?"disabled":""}><i class="r"></i><div><b>Something else</b><span>None of these. Say what you want in the box.</span></div></button></div>
+ <div class="rec"><b>Why I recommend “${d.o[d.r][0]}”.</b> ${d.why}</div>
+ <textarea id="tx" placeholder="Optional note, or what you want instead" ${a.locked?"disabled":""}>${esc(a.text)}</textarea>
+ <div class="row">${a.locked?`<span class="lockd">Locked ✓</span><button class="btn ghost" id="unl">Change</button><button class="btn" id="nx">Next</button>`:`<button class="btn" id="lock">Lock answer</button><button class="btn ghost" id="nx">Skip for now</button>`}</div></div>`;
+ p.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{const i=+b.dataset.i;a.text=document.getElementById("tx").value;a.pick=i;if(i<d.o.length)view[d.id]=i;saveLocal();render()});
+ const tx=document.getElementById("tx");tx.oninput=()=>{a.text=tx.value;saveLocal()};
+ const nx=document.getElementById("nx");if(nx)nx.onclick=()=>{cur++;render();scrollTo(0,0)};
+ const l=document.getElementById("lock");if(l)l.onclick=()=>{a.text=tx.value;if(a.pick==null){a.pick=d.r}if(a.pick===d.o.length&&!a.text.trim()){tx.focus();tx.placeholder="Tell me what you want instead, then lock.";return}a.locked=true;persist(d.id);cur++;render();scrollTo(0,0)};
+ const u=document.getElementById("unl");if(u)u.onclick=()=>{a.locked=false;persist(d.id);render()}}
+loadLocal();render();
+(async()=>{try{db=await window.claude?.use?.("db")}catch(e){db=null}
+ const sy=document.getElementById("sync");if(!db){sy.textContent="(Saving in this browser only.)";return}
+ try{const snap=await db.collection("answers").get();snap.docs.forEach(x=>{const v=x.data();if(v)ANS[x.id]={pick:v.pick,text:v.text,locked:v.locked}});saveLocal();render()}catch(e){}})();
+window.__M=M;
+})();
+</script>
+
+</body></html>

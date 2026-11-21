@@ -1,0 +1,473 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!-- decision-archive:start -->
+<div style="font:13px/1.45 system-ui,sans-serif;background:Canvas;color:CanvasText;border-bottom:1px solid GrayText;padding:8px 16px">Archived copy of <b>Demos, Starters and the Library</b>, a decision artifact from 2026-11-21. Nothing on this page is saved. The index of all of them is in <a href="../index.html">docs/decision-artifacts</a>.</div>
+<script>
+(function(){
+  var A={};
+  function snap(){var docs=Object.keys(A).map(function(k){return {id:k,data:function(){return A[k]},exists:true}});return {docs:docs,empty:!docs.length,size:docs.length,forEach:function(f){docs.forEach(f)}}}
+  function doc(id){return {id:id,get:async function(){return {id:id,exists:id in A,data:function(){return A[id]}}},set:async function(){},update:async function(){},delete:async function(){}}}
+  var db={collection:function(){return {get:async function(){return snap()},doc:doc,onSnapshot:function(f){setTimeout(function(){f(snap())},0);return function(){}},add:async function(){}}},doc:function(p){return doc(String(p).split("/").pop())}};
+  window.claude={use:async function(name){return name==="db"?db:null}};
+})();
+</script>
+<!-- decision-archive:end -->
+
+<title>Demos, Starters and the Library</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one reading column with full-width figure panels; mockups use Product Aviator's own tokens (navy frame, teal Hangar). */
+:root{
+  --bg:#f4f6f9; --surface:#ffffff; --sunk:#eaeef3; --ink:#0f1e30; --ink-2:#475a70; --ink-3:#71829a;
+  --line:#d6dde6; --line-strong:#b4c0ce; --navy:#0a223d; --chrome-ink:#f2f6fa; --chrome-ink-2:#9fb4cc; --chrome-active:#2a5486;
+  --build:#0d6e78; --build-soft:#d9f0f1; --hangar-bg:#edf4f6; --hangar-grid:#d3e3e7; --hangar-paper:#fbfdfd;
+  --ok:#17794a; --ok-soft:#ddf1e6; --attn:#8d5a00; --attn-soft:#f9ebcf; --fail:#b3261e; --fail-soft:#f9dedc; --agent:#4f46b8; --agent-soft:#e8e6f8;
+  --rec:#17794a;
+  --f-body:"Inter",-apple-system,"Segoe UI",system-ui,sans-serif; --f-head:"Space Grotesk","Inter",system-ui,sans-serif; --f-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#071526; --surface:#0c1e33; --sunk:#091a2d; --ink:#e6edf5; --ink-2:#a6b6c8; --ink-3:#71849a; --line:#1e3550; --line-strong:#3a5676;
+  --navy:#0d2138; --chrome-ink:#f2f6fa; --chrome-ink-2:#8ea6c2; --chrome-active:#1f4470;
+  --build:#5cc3cc; --build-soft:#0f3337; --hangar-bg:#0a1c26; --hangar-grid:#13303b; --hangar-paper:#0c2029;
+  --ok:#5bcb93; --ok-soft:#0f3123; --attn:#e9b44c; --attn-soft:#362808; --fail:#ff8a80; --fail-soft:#3d1715; --agent:#a9a3f5; --agent-soft:#221f4a; --rec:#5bcb93; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#071526; --surface:#0c1e33; --sunk:#091a2d; --ink:#e6edf5; --ink-2:#a6b6c8; --ink-3:#71849a; --line:#1e3550; --line-strong:#3a5676;
+  --navy:#0d2138; --chrome-ink:#f2f6fa; --chrome-ink-2:#8ea6c2; --chrome-active:#1f4470;
+  --build:#5cc3cc; --build-soft:#0f3337; --hangar-bg:#0a1c26; --hangar-grid:#13303b; --hangar-paper:#0c2029;
+  --ok:#5bcb93; --ok-soft:#0f3123; --attn:#e9b44c; --attn-soft:#362808; --fail:#ff8a80; --fail-soft:#3d1715; --agent:#a9a3f5; --agent-soft:#221f4a; --rec:#5bcb93; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;margin:0}
+.wrap{max-width:1040px;margin:0 auto;padding-block:40px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{font-family:var(--f-head);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:34px;line-height:1.15}
+h2{font-size:24px}
+h3{font-size:17px}
+p{margin:0;max-width:68ch}
+.lede{font-size:17px;color:var(--ink-2)}
+section{display:flex;flex-direction:column;gap:16px}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.answer{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:22px 24px;display:flex;flex-direction:column;gap:12px}
+.answer ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+code{background:var(--sunk);padding:1px 5px;border-radius:4px}
+.fig{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.cap{font-size:13px;color:var(--ink-3)}
+.scroll{overflow-x:auto}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.pill.rec{background:var(--ok-soft);color:var(--ok)}
+.pill.bad{background:var(--fail-soft);color:var(--fail)}
+.pill.warn{background:var(--attn-soft);color:var(--attn)}
+.pill.build{background:var(--build-soft);color:var(--build)}
+.term{display:grid;grid-template-columns:120px 1fr;gap:6px 16px;align-items:baseline}
+.term dt{font-family:var(--f-head);font-weight:600}
+.term dd{margin:0;color:var(--ink-2)}
+@media (max-width:560px){.term{grid-template-columns:1fr}.term dd{margin-bottom:8px}}
+
+/* -------- app mockups -------- */
+.app{display:grid;grid-template-columns:190px 1fr;border:1px solid var(--line-strong);border-radius:10px;overflow:hidden;min-width:640px;font-size:13px;line-height:1.45}
+.side{background:var(--navy);color:var(--chrome-ink);padding:12px 10px;display:flex;flex-direction:column;gap:3px}
+.side .brand{font-family:var(--f-head);font-weight:600;font-size:13px;padding:2px 6px 10px}
+.side .nav{padding:5px 8px;border-radius:6px;color:var(--chrome-ink-2)}
+.side .nav.on{background:var(--chrome-active);color:var(--chrome-ink)}
+.side .grp{font-size:11px;color:var(--chrome-ink-2);padding:10px 8px 2px;opacity:.85}
+.side .proj{padding:4px 8px;color:var(--chrome-ink)}
+.side .sess{padding:3px 8px 3px 20px;color:var(--chrome-ink-2);font-size:12px}
+.side .new{outline:2px dashed #f5c518;outline-offset:-2px;border-radius:6px}
+.side .foot{margin-top:auto;border-top:1px dashed #2a4a70;padding:8px 8px 0;color:var(--chrome-ink-2);font-size:12px}
+.main{background:var(--bg);padding:16px 18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.main h4{font-family:var(--f-head);font-size:17px;margin:0}
+.main h5{font-size:13px;font-weight:600;margin:4px 0 0;display:flex;gap:8px;align-items:center}
+.main .sub{color:var(--ink-3);font-size:12px}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cards.two{grid-template-columns:repeat(2,1fr)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 10px;display:flex;flex-direction:column;gap:5px;position:relative}
+.card b{font-weight:600}
+.card .d{color:var(--ink-2);font-size:12px}
+.card .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:2px}
+.btn{font-size:11.5px;padding:3px 9px;border-radius:6px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);white-space:nowrap}
+.btn.primary{background:var(--navy);color:var(--chrome-ink);border-color:var(--navy)}
+.marks{display:flex}
+.mk{width:18px;height:18px;border-radius:50%;font-size:9px;font-weight:700;display:grid;place-items:center;color:#fff;border:2px solid var(--surface);margin-left:-5px}
+.mk:first-child{margin-left:0}
+.wr{position:absolute;right:8px;top:8px;width:16px;height:16px;opacity:.35}
+.ghost{opacity:.45}
+.callout{border:2px dashed #f5c518;border-radius:8px}
+.note{font-size:11.5px;color:var(--attn);display:flex;gap:6px;align-items:flex-start}
+.x{color:var(--fail)}
+.chat{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.turn{display:flex;gap:8px;align-items:flex-start}
+.turn .who{font-weight:600;font-size:12px}
+.turn p{font-size:12.5px;color:var(--ink-2)}
+.ctx{display:flex;flex-wrap:wrap;gap:6px}
+.file{font-family:var(--f-mono);font-size:11px;background:var(--sunk);border:1px solid var(--line);border-radius:5px;padding:2px 6px}
+.hangar .side{background:var(--hangar-paper);color:var(--ink);border-right:1.5px dashed var(--build)}
+.hangar .side .brand{color:var(--build)}
+.hangar .side .nav{color:var(--ink-2)}
+.hangar .side .nav.on{background:var(--build-soft);color:var(--build)}
+.hangar .main{background-color:var(--hangar-bg);background-image:linear-gradient(var(--hangar-grid) 1px,transparent 1px),linear-gradient(90deg,var(--hangar-grid) 1px,transparent 1px);background-size:16px 16px}
+.band{grid-column:1/-1;background:var(--build);color:#fff;padding:6px 12px;font-size:12px;font-weight:600}
+
+/* diagram */
+.dia{min-width:720px}
+.dia text{font-family:var(--f-body);font-size:13px;fill:var(--ink)}
+.dia .s{font-size:11.5px;fill:var(--ink-2)}
+.dia .h{font-family:var(--f-head);font-weight:600;font-size:14px}
+.dia .box{fill:var(--surface);stroke:var(--line-strong);stroke-width:1.2}
+.dia .zoneF{fill:var(--sunk);stroke:none}
+.dia .zoneH{fill:var(--build-soft);stroke:none}
+.dia .zt{font-size:11px;font-weight:600;letter-spacing:.06em;fill:var(--ink-3)}
+.dia .ztH{font-size:11px;font-weight:600;letter-spacing:.06em;fill:var(--build)}
+.dia .ln{stroke:var(--ink-3);stroke-width:1.4;fill:none}
+.dia .lnB{stroke:var(--fail);stroke-width:1.6;fill:none;stroke-dasharray:5 4}
+.dia .lnG{stroke:var(--ok);stroke-width:1.8;fill:none}
+.dia .bad{fill:var(--fail);font-size:12px;font-weight:600}
+.dia .good{fill:var(--ok);font-size:12px;font-weight:600}
+.dia .hl{fill:var(--build-soft);stroke:var(--build);stroke-width:1.6}
+.dia .hlt{fill:var(--build)}
+
+/* decisions */
+.dec{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:20px;display:flex;flex-direction:column;gap:14px}
+.dec .q{font-family:var(--f-head);font-size:19px;font-weight:600}
+.opt{border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0;background:var(--bg)}
+.opt.is-rec{border-color:var(--ok);box-shadow:inset 0 0 0 1px var(--ok)}
+.opt h4{margin:0;font-size:14.5px;font-family:var(--f-head);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.opt p{font-size:13px;color:var(--ink-2)}
+.pro,.con{font-size:12.5px;margin:0;padding-left:18px}
+.pro li::marker{content:"+  ";color:var(--ok)}
+.con li::marker{content:"–  ";color:var(--fail)}
+.thumb{background:var(--surface);border:1px solid var(--line-strong);border-radius:7px;display:grid;grid-template-columns:56px 1fr;height:118px;overflow:hidden;font-size:9.5px;line-height:1.3}
+.thumb .s{background:var(--navy);padding:6px 5px;display:flex;flex-direction:column;gap:3px;color:var(--chrome-ink-2)}
+.thumb .s i{font-style:normal;padding:2px 3px;border-radius:3px}
+.thumb .s i.on{background:var(--chrome-active);color:var(--chrome-ink)}
+.thumb .s i.hot{outline:1.5px dashed #f5c518}
+.thumb .m{padding:6px;display:flex;flex-direction:column;gap:4px;background:var(--bg)}
+.thumb .m b{font-size:10px}
+.thumb .r{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
+.thumb .r span{height:16px;background:var(--surface);border:1px solid var(--line);border-radius:3px}
+.thumb .r span.d{background:var(--agent-soft);border-color:var(--agent)}
+.thumb.hg .m{background:var(--hangar-bg)}
+.thumb.hg .s{background:var(--hangar-paper);border-right:1px dashed var(--build);color:var(--ink-2)}
+.thumb.hg .s i.on{background:var(--build-soft);color:var(--build)}
+table.cmp{border-collapse:collapse;width:100%;font-size:13.5px;min-width:560px}
+table.cmp th,table.cmp td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+table.cmp th{font-size:12px;color:var(--ink-3);font-weight:600}
+.slice{background:var(--sunk);border-radius:10px;padding:16px 18px;font-family:var(--f-mono);font-size:12.5px;line-height:1.6;white-space:pre;overflow-x:auto}
+.slice .c{color:var(--ink-3)}
+</style>
+
+<div class="wrap">
+
+<header style="display:flex;flex-direction:column;gap:12px">
+  <div class="eyebrow">Product Aviator · Flight Deck · proposal, 21 Nov 2026</div>
+  <h1>Demos, starters and the Library</h1>
+  <p class="lede">You asked how demo sessions, the scenarios built in the Hangar, and the Library you see while flying relate. Today they don't, cleanly. This page shows why, proposes one model, and asks three questions. The questions are also on cards in the thread.</p>
+</header>
+
+<section class="answer">
+  <div class="eyebrow">The short answer</div>
+  <p><b>A scenario is a demo.</b> It is a story with invented documents, invented data, a cast, and what each cast member knows. You build it in the Hangar. Once published, it shows up in the Library while flying with two buttons:</p>
+  <ul>
+    <li><b>Play</b> runs the click-through. It is scripted, needs no agent, and gives the same result every time.</li>
+    <li><b>Run live</b> starts a <b>demo session</b>. That is a real session with Aviator, in a project of its own, already loaded with the story's documents and data. Its cast know their part of the story.</li>
+  </ul>
+  <p>A <b>starter</b> (today's "canned session") is different. It starts real work on <i>your</i> material, using the same kind of work, with nothing invented. The Library holds both, in separate sections, so nobody mistakes the Allowances story for their own work.</p>
+</section>
+
+<section>
+  <div class="eyebrow">1 · What's tangled today</div>
+  <h2>Three surfaces, five things, no clear lines</h2>
+  <p>I read the Hangar spec, D-39 to D-59, <code>slim_library.py</code>, the seven <code>scenario.json</code> files, the roster and the roadmap. The app opens on the Library, so the Library is the front door while flying. This is how the pieces connect now:</p>
+  <div class="fig">
+    <div class="scroll">
+    <svg class="dia" viewBox="0 0 960 360" width="100%" role="img" aria-label="Diagram of how starters, scenarios and the Library connect today">
+      <rect class="zoneF" x="10" y="10" width="420" height="340" rx="12"/>
+      <text class="zt" x="28" y="34">FLYING · LIBRARY PAGE</text>
+      <rect class="zoneH" x="530" y="10" width="420" height="340" rx="12"/>
+      <text class="ztH" x="548" y="34">HANGAR</text>
+
+      <rect class="box" x="30" y="52" width="380" height="74" rx="8"/>
+      <text class="h" x="46" y="76">Canned sessions (13)</text>
+      <text class="s" x="46" y="96">A prompt with blanks. Starts a live session.</text>
+      <text class="s" x="46" y="113">e.g. "Walk me through the open decisions on …"</text>
+
+      <rect class="box" x="30" y="140" width="380" height="54" rx="8"/>
+      <text class="h" x="46" y="164">Artifact templates (6)</text>
+      <text class="s" x="46" y="182">Blank HTML pages the agent fills in.</text>
+
+      <rect class="box" x="30" y="212" width="380" height="120" rx="8" style="stroke:var(--fail);stroke-dasharray:5 4"/>
+      <text class="h" x="46" y="236">workspace/context/ (your real work)</text>
+      <text class="s" x="46" y="256">allowances-prd.md, platform-map.md: invented demo</text>
+      <text class="s" x="46" y="273">documents sitting beside your own. Some skills also</text>
+      <text class="s" x="46" y="290">copy demo files in when you give them nothing.</text>
+      <text class="bad" x="46" y="316">Demo material leaks into real work</text>
+
+      <rect class="box" x="550" y="52" width="380" height="74" rx="8"/>
+      <text class="h" x="566" y="76">Starters (13)</text>
+      <text class="s" x="566" y="96">The same 13 canned sessions, under another name.</text>
+      <text class="bad" x="566" y="116">Two names for one thing</text>
+
+      <rect class="box" x="550" y="140" width="380" height="110" rx="8"/>
+      <text class="h" x="566" y="164">Scenarios (7)</text>
+      <text class="s" x="566" y="184">Screenplay, invented data, cast. Plays as a click-through.</text>
+      <text class="s" x="566" y="201">Lives inside the workflow's folder today (D-42 splits it).</text>
+      <text class="bad" x="566" y="226">No way to reach it while flying</text>
+
+      <rect class="box" x="550" y="264" width="380" height="68" rx="8"/>
+      <text class="h" x="566" y="288">People and agents (4)</text>
+      <text class="s" x="566" y="307">One brief each, the same for every story.</text>
+      <text class="bad" x="566" y="324">Live, they don't know the story</text>
+
+      <path class="lnB" d="M410 89 C470 89 490 89 550 89"/>
+      <text class="bad" x="440" y="80">same files</text>
+      <path class="lnB" d="M550 195 C480 195 470 150 410 150" />
+      <text class="bad" x="432" y="210">not linked</text>
+    </svg>
+    </div>
+    <p class="cap">What breaks for a PM: there is no "demo" anywhere while flying. "Walk me through the open decisions on the Allowances launch" looks like a demo but is a live run on whatever is in your context folder. The one live run so far (delivery status, 21 Nov) showed the cast had nothing to say about the story, because their briefs don't contain it.</p>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">2 · The proposed model</div>
+  <h2>Three things, each with one job</h2>
+  <dl class="term">
+    <dt>Workflow</dt><dd>A kind of work: steps, record shapes, views, instructions. Built in the Hangar. A flier never picks one directly; they meet it through a starter or a demo.</dd>
+    <dt>Starter</dt><dd>A way to start a workflow on your own material. It asks for blanks, then opens a normal session in your project. Nothing invented. This is today's canned session under the name the Hangar already uses.</dd>
+    <dt>Demo</dt><dd>A story that runs one or more workflows: invented documents and data, a cast, what each cast member knows, a screenplay, and the opening line. Built in the Hangar (today's "scenario"). It can be <b>played</b> (click-through) or <b>run live</b> (a demo session).</dd>
+  </dl>
+  <div class="fig">
+    <div class="scroll">
+    <svg class="dia" viewBox="0 0 960 330" width="100%" role="img" aria-label="Diagram of the proposed model">
+      <rect class="zoneH" x="10" y="10" width="300" height="310" rx="12"/>
+      <text class="ztH" x="28" y="34">HANGAR · WHERE THEY ARE BUILT</text>
+      <rect class="zoneF" x="340" y="10" width="610" height="310" rx="12"/>
+      <text class="zt" x="358" y="34">FLYING · LIBRARY, THEN A SESSION</text>
+
+      <rect class="box" x="30" y="56" width="260" height="60" rx="8"/>
+      <text class="h" x="46" y="80">Workflow</text>
+      <text class="s" x="46" y="99">kind of work · e.g. Decision review</text>
+
+      <rect class="box" x="30" y="146" width="260" height="56" rx="8"/>
+      <text class="h" x="46" y="170">Starter</text>
+      <text class="s" x="46" y="189">prompt + blanks → one workflow</text>
+
+      <rect class="hl" x="30" y="226" width="260" height="76" rx="8"/>
+      <text class="h hlt" x="46" y="250">Demo</text>
+      <text class="s" x="46" y="269">story → one or more workflows</text>
+      <text class="s" x="46" y="286">docs · data · cast + what they know · script</text>
+
+      <path class="ln" d="M160 116 V146"/>
+      <path class="ln" d="M290 86 C320 86 320 260 290 260"/>
+
+      <rect class="box" x="360" y="140" width="190" height="66" rx="8"/>
+      <text class="h" x="376" y="164">Start work</text>
+      <text class="s" x="376" y="183">Library section · starters</text>
+
+      <rect class="box" x="360" y="226" width="190" height="76" rx="8" style="stroke:var(--build);stroke-width:1.6"/>
+      <text class="h" x="376" y="250">Demos</text>
+      <text class="s" x="376" y="269">Library section</text>
+      <text class="s" x="376" y="286">Play · Run live</text>
+
+      <path class="lnG" d="M290 174 H360"/>
+      <path class="lnG" d="M290 264 H360"/>
+
+      <rect class="box" x="600" y="56" width="330" height="76" rx="8"/>
+      <text class="h" x="616" y="80">Session in your project</text>
+      <text class="s" x="616" y="99">your context files, your data</text>
+      <text class="s" x="616" y="116">roster narrowed to the workflow's people</text>
+      <path class="lnG" d="M550 173 C580 173 570 94 600 94"/>
+
+      <rect class="box" x="600" y="152" width="330" height="56" rx="8"/>
+      <text class="h" x="616" y="176">Click-through player</text>
+      <text class="s" x="616" y="195">scripted, no agent, same every time</text>
+      <path class="lnG" d="M550 250 C580 250 570 180 600 180"/>
+
+      <rect class="box" x="600" y="226" width="330" height="76" rx="8" style="stroke:var(--build);stroke-width:1.6"/>
+      <text class="h" x="616" y="250">Demo session (live)</text>
+      <text class="s" x="616" y="269">own project, loaded with the story</text>
+      <text class="s" x="616" y="286">cast know their part · your work untouched</text>
+      <path class="lnG" d="M550 278 H600"/>
+    </svg>
+    </div>
+    <p class="cap">The rule underneath: invented material only ever reaches a session through a demo, and a demo never writes into your own project. That one rule removes the leak in the first diagram.</p>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">3 · What you'd see while flying</div>
+  <h2>The Library, with a Demos section</h2>
+  <p>This is the recommended answer to question 1. The wrench (D-51) appears only on hover, so the Hangar never shows in a recording. The yellow dashed outlines mark what's new compared with today and are not part of the design.</p>
+  <div class="fig">
+    <div class="scroll">
+    <div class="app">
+      <div class="side">
+        <div class="brand">✈ Product Aviator</div>
+        <div class="nav">New session</div>
+        <div class="nav on">Library</div>
+        <div class="grp">Projects</div>
+        <div class="proj">Workspace</div>
+        <div class="sess">PRD for allowances v2</div>
+        <div class="sess">Notes from Tuesday</div>
+        <div class="foot">Hangar · Geoff</div>
+      </div>
+      <div class="main">
+        <div><h4>Library</h4><div class="sub">Start real work from a starter, or show how the work goes with a demo.</div></div>
+
+        <h5>Start work <span class="sub">your material · nothing invented</span></h5>
+        <div class="cards">
+          <div class="card"><b>Walk me through open decisions</b><span class="d">Gathers what is waiting on you and prepares each decision.</span><div class="row"><span class="btn primary">Start</span><span class="sub" style="font-size:11px">See the demo ↓</span></div></div>
+          <div class="card"><b>Find the problems worth solving</b><span class="d">Reads interviews, tickets or data and lays out the problems.</span><div class="row"><span class="btn primary">Start</span></div></div>
+          <div class="card"><b>Update delivery status</b><span class="d">Checks each milestone with its owner and projects the date.</span><div class="row"><span class="btn primary">Start</span></div></div>
+        </div>
+
+        <h5 class="callout" style="padding:3px 6px">Demos <span class="sub">invented stories · safe to show</span></h5>
+        <div class="cards two callout" style="padding:6px">
+          <div class="card">
+            <svg class="wr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></svg>
+            <b>Allowances: steering prep</b>
+            <span class="d">Seven open decisions before the steering group. Risk Review won't sign off on one of them.</span>
+            <div class="row"><span class="marks"><span class="mk" style="background:#b3261e">RR</span><span class="mk" style="background:#1e6aa6">MO</span><span class="mk" style="background:#4d6b1f">CP</span></span><span class="sub" style="font-size:11px">Decision review · 4 min</span></div>
+            <div class="row"><span class="btn">▶ Play</span><span class="btn primary">Run live</span></div>
+          </div>
+          <div class="card">
+            <b>Allowances: the launch slips</b>
+            <span class="d">A load test fails two weeks out. Find a way to hold the date and write the update.</span>
+            <div class="row"><span class="marks"><span class="mk" style="background:#4d6b1f">CP</span><span class="mk" style="background:#b3261e">RR</span><span class="mk" style="background:#1e6aa6">MO</span></span><span class="sub" style="font-size:11px">Delivery status · 5 min</span></div>
+            <div class="row"><span class="btn">▶ Play</span><span class="btn primary">Run live</span></div>
+          </div>
+        </div>
+
+        <h5>Templates <span class="sub">blank pages the agent fills</span></h5>
+        <div class="cards">
+          <div class="card"><b>Decision matrix</b><div class="row"><span class="btn">Use</span></div></div>
+          <div class="card"><b>PRD one-pager</b><div class="row"><span class="btn">Use</span></div></div>
+          <div class="card"><b>Now, next, later</b><div class="row"><span class="btn">Use</span></div></div>
+        </div>
+      </div>
+    </div>
+    </div>
+    <p class="cap">"Canned sessions" becomes "Start work" and matches the Hangar's Starters shelf. A starter whose workflow has a demo gets a quiet "See the demo" link, which is how a PM finds out what the work looks like before trying it on their own material. The demo titles are placeholders I wrote for this mockup.</p>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">4 · What "Run live" does</div>
+  <h2>A demo session opens in a project of its own</h2>
+  <p>This is the recommended answer to question 2. Context is already per project (D-15), so a demo project carries the story's documents without touching yours. The cast are called as usual, with the story's facts added to their brief for this project only.</p>
+  <div class="fig">
+    <div class="scroll">
+    <div class="app">
+      <div class="side">
+        <div class="brand">✈ Product Aviator</div>
+        <div class="nav">New session</div>
+        <div class="nav">Library</div>
+        <div class="grp">Projects</div>
+        <div class="proj">Workspace</div>
+        <div class="sess">PRD for allowances v2</div>
+        <div class="proj new">Allowances: steering prep</div>
+        <div class="sess" style="color:var(--chrome-ink)">● Steering prep, live</div>
+        <div class="foot">Hangar · Geoff</div>
+      </div>
+      <div class="main">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap"><h4>Steering prep, live</h4><span class="sub">Project: Allowances: steering prep</span></div>
+        <div class="chat">
+          <div class="turn"><span class="mk" style="background:#b0237a;margin:0">You</span><div><div class="who">You</div><p>Before we take this to the steering group, walk me through what is still open on Allowances.</p></div></div>
+          <div class="turn"><span class="mk" style="background:#0a223d;margin:0">AV</span><div><div class="who">Aviator</div><p>I went through the review findings, the dependency map and our conversation. Seven things need a decision from you…</p></div></div>
+          <div class="turn"><span class="mk" style="background:#b3261e;margin:0">RR</span><div><div class="who">Risk Review <span class="sub">stand-in</span></div><p>It does, provided the consent record is kept seven years. <span class="sub">(knows this from the demo's cast notes, not from a script)</span></p></div></div>
+        </div>
+        <div class="card"><b>Context in this project</b><div class="ctx"><span class="file">allowances-prd.md</span><span class="file">platform-map.md</span><span class="file">review-findings.md</span><span class="file">data/allowances-decisions.json</span></div><span class="d">Copied from the demo when the project was made. Your Workspace project still has only your own files.</span></div>
+      </div>
+    </div>
+    </div>
+    <p class="cap">The opening line comes from the demo, already in the composer, so the presenter only presses Send. Running the same demo again offers "Reset to the start" or "Keep going", because a live run changes its data. The project name says what it is; nothing else marks it, so recordings stay clean.</p>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">5 · The three questions</div>
+  <h2>What I need you to decide</h2>
+  <p>Each question is also on its own card in the thread, with a "Something else" option. Whatever you pick becomes D-60 to D-62.</p>
+
+  <div class="dec">
+    <div class="eyebrow">Question 1 · D-60</div>
+    <div class="q">Where should demos live while flying?</div>
+    <div class="grid3">
+      <div class="opt is-rec">
+        <h4>A · A Demos section in the Library <span class="pill rec">Recommended</span></h4>
+        <div class="thumb"><div class="s"><i>New</i><i class="on">Library</i><i>Workspace</i></div><div class="m"><b>Start work</b><div class="r"><span></span><span></span><span></span></div><b>Demos</b><div class="r"><span class="d"></span><span class="d"></span><span></span></div></div></div>
+        <ul class="pro"><li>One front door; the app already opens on the Library</li><li>Starters can point at their demo</li></ul>
+        <ul class="con"><li>The Library gets longer as demos grow</li></ul>
+      </div>
+      <div class="opt">
+        <h4>B · Their own sidebar item</h4>
+        <div class="thumb"><div class="s"><i>New</i><i>Library</i><i class="on hot">Demos</i><i>Workspace</i></div><div class="m"><b>Demos</b><div class="r"><span class="d"></span><span class="d"></span><span class="d"></span></div><div class="r"><span class="d"></span><span class="d"></span><span></span></div></div></div>
+        <ul class="pro"><li>Demos are easy to find for a presenter</li></ul>
+        <ul class="con"><li>A "Demos" item is visible in every recording</li><li>Starters and their demos sit apart</li></ul>
+      </div>
+      <div class="opt">
+        <h4>C · Only in the Hangar</h4>
+        <div class="thumb hg"><div class="s"><i>People</i><i>Workflows</i><i class="on">Scenarios</i></div><div class="m"><b>Scenarios</b><div class="r"><span class="d"></span><span class="d"></span><span class="d"></span></div></div></div>
+        <ul class="pro"><li>No change to the flying side</li></ul>
+        <ul class="con"><li>You'd present from inside the Hangar frame, which D-41 says must never show in a demo</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="dec">
+    <div class="eyebrow">Question 2 · D-61</div>
+    <div class="q">What should "Run live" do with the story's documents and data?</div>
+    <div class="grid3">
+      <div class="opt is-rec">
+        <h4>A · Open a demo project <span class="pill rec">Recommended</span></h4>
+        <p>A new project per demo, loaded with the story. The cast get the story's facts.</p>
+        <ul class="pro"><li>Your real work never sees invented files</li><li>Reset is easy: rebuild the project</li><li>Uses per-project context, which already exists (D-15)</li></ul>
+        <ul class="con"><li>One more project in the sidebar per demo you've run</li></ul>
+      </div>
+      <div class="opt">
+        <h4>B · Load it into your current project</h4>
+        <p>Copy the story's files into the project you're in, as happens by accident today.</p>
+        <ul class="pro"><li>No new projects</li></ul>
+        <ul class="con"><li>Invented PRDs and data sit beside your own</li><li>Hard to undo after a run</li></ul>
+      </div>
+      <div class="opt">
+        <h4>C · No live runs</h4>
+        <p>Demos are click-through only. Live work only ever starts from a starter.</p>
+        <ul class="pro"><li>Least to build</li></ul>
+        <ul class="con"><li>No way to show the real agent on a known story</li><li>Cast never learn their part</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="dec">
+    <div class="eyebrow">Question 3 · D-62</div>
+    <div class="q">What should we call a story people can play or run?</div>
+    <div class="scroll">
+    <table class="cmp">
+      <tr><th></th><th>Hangar shelf</th><th>Library section</th><th>Live run is called</th><th></th></tr>
+      <tr><td><b>A · "Demo" everywhere</b></td><td>Demos</td><td>Demos</td><td>a demo session</td><td><span class="pill rec">Recommended</span></td></tr>
+      <tr><td><b>B · "Scenario" everywhere</b></td><td>Scenarios</td><td>Scenarios</td><td>a scenario run</td><td></td></tr>
+      <tr><td><b>C · Split by mode</b></td><td>Scenarios</td><td>Demos</td><td>a demo session</td><td></td></tr>
+    </table>
+    </div>
+    <p style="font-size:13.5px;color:var(--ink-2)">A says what it's for in the words you already used ("demo sessions"), and one word in both modes avoids the confusion that started this thread. B keeps the term used in D-42 and the docs. C reads well to each audience, but it's two names for one thing again, the same problem as "Canned sessions" and "Starters" today. With any choice, folder and file names can stay <code>scenarios/</code>, the way the repository kept <code>omnigent-slim</code> under the Flight Deck name (D-35).</p>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">6 · What this means for the scenario builder (slice 3)</div>
+  <h2>Small additions to the D-42 folder</h2>
+  <p>The Hangar builder thread is already moving each demo into its own folder. This proposal adds three things to that folder and one rule. They don't need your decision. They follow from the answers above.</p>
+  <div class="slice"><span class="c"># workspace/scenarios/&lt;id&gt;/   (shown as a Demo)</span>
+scenario.json      workflow(s) it runs, title, summary, cast,
+                   <b>opening line</b>  <span class="c">← new: goes into the composer on Run live</span>
+context/           <b>invented documents</b>  <span class="c">← new: moved out of workspace/context/</span>
+fixtures/          invented datasets
+cast/&lt;person&gt;.md    <b>what each cast member knows in this story</b>  <span class="c">← new</span>
+script.md          the screenplay for Play</div>
+  <p>The rule: a workflow's <code>SKILL.md</code> never copies demo files on its own. If you give it nothing, it asks. Today three skills copy the Allowances files in quietly, and that's how invented material ends up in real work.</p>
+</section>
+
+</div>
+
+</body></html>

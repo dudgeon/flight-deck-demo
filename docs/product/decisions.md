@@ -199,6 +199,18 @@ as a notional one and kept swappable: a markdown file in
 can replace it later without changing the skill. He will correct the draft
 from a preview.
 
+**D-115 · 2026-11-21 · Geoff asked, Claude chose.** Every page used to put a
+decision to Geoff (walkthroughs, design rounds, proposals, mockups) is kept in
+the repository as an offline HTML copy in `docs/decision-artifacts/`, with
+the answers he recorded on it, listed in `artifacts.json` and an index. The
+`docs-refresh` contributor skill (`.claude/skills/docs-refresh/`) keeps the
+copies and the docs current; its script makes each copy load nothing from the
+network and shows the recorded answers read-only. *Geoff: the copies are "for
+historic record and as examples we can refer to in the future; the html
+versions will let others see the artifacts without needing access to my
+Claude account." A skill, rather than a one-off, because walkthroughs keep
+being made and the docs pass needs repeating.*
+
 ## Name and design language
 
 **D-35 · 2026-11-21 · Geoff.** The fork of the Omnigent meta-harness is named

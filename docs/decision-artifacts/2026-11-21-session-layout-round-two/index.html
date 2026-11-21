@@ -1,0 +1,285 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!-- decision-archive:start -->
+<div style="font:13px/1.45 system-ui,sans-serif;background:Canvas;color:CanvasText;border-bottom:1px solid GrayText;padding:8px 16px">Archived copy of <b>Session Layout Round Two</b>, a decision artifact from 2026-11-21. Nothing on this page is saved. The index of all of them is in <a href="../index.html">docs/decision-artifacts</a>.</div>
+<script>
+(function(){
+  var A={};
+  function snap(){var docs=Object.keys(A).map(function(k){return {id:k,data:function(){return A[k]},exists:true}});return {docs:docs,empty:!docs.length,size:docs.length,forEach:function(f){docs.forEach(f)}}}
+  function doc(id){return {id:id,get:async function(){return {id:id,exists:id in A,data:function(){return A[id]}}},set:async function(){},update:async function(){},delete:async function(){}}}
+  var db={collection:function(){return {get:async function(){return snap()},doc:doc,onSnapshot:function(f){setTimeout(function(){f(snap())},0);return function(){}},add:async function(){}}},doc:function(p){return doc(String(p).split("/").pop())}};
+  window.claude={use:async function(name){return name==="db"?db:null}};
+})();
+</script>
+<!-- decision-archive:end -->
+
+<title>Session Layout Round Two</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one narrow reading column; two wide "stages" that play wireframes of the app. */
+:root {
+  --bg: #eef1f5; --surface: #ffffff; --sunk: #e4e9ef; --ink: #0a223d; --ink-2: #45586e; --ink-3: #7b8a9c; --line: #cfd7e1;
+  --navy: #0a223d; --on-navy: #f3f5f8; --you: #c2501f; --you-soft: #fbe6dc; --ok: #1d7a4f; --ok-soft: #dcf0e6;
+  --agent: #2f5d8a; --agent-soft: #dfe9f3; --attn: #b8323c; --attn-soft: #f8dfe1; --wire: #c3ccd8;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #06121f; --surface: #0e2238; --sunk: #091a2c; --ink: #e8eef5; --ink-2: #a9b8c9; --ink-3: #74879c; --line: #24394f;
+  --navy: #030b15; --on-navy: #e8eef5; --you: #ff9166; --you-soft: #3a2118; --ok: #7fd0a6; --ok-soft: #153a2a;
+  --agent: #8fb8e0; --agent-soft: #17324e; --attn: #ff8b93; --attn-soft: #45181d; --wire: #34495f; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #06121f; --surface: #0e2238; --sunk: #091a2c; --ink: #e8eef5; --ink-2: #a9b8c9; --ink-3: #74879c; --line: #24394f;
+  --navy: #030b15; --on-navy: #e8eef5; --you: #ff9166; --you-soft: #3a2118; --ok: #7fd0a6; --ok-soft: #153a2a;
+  --agent: #8fb8e0; --agent-soft: #17324e; --attn: #ff8b93; --attn-soft: #45181d; --wire: #34495f; color-scheme: dark }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font); padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.col { max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+.read { max-width: 68ch; }
+.eyebrow { font: 600 11px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--you); }
+h1 { font-size: 30px; line-height: 1.15; margin: 4px 0 6px; letter-spacing: -.01em; text-wrap: balance; }
+h2 { font-size: 21px; margin: 26px 0 0; text-wrap: balance; }
+h3 { font-size: 15px; margin: 0; }
+p { margin: 0; color: var(--ink-2); }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--you); outline-offset: 2px; }
+
+/* stepper */
+.steps { display: flex; flex-wrap: wrap; gap: 6px; }
+.steps button { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 4px 12px; font-size: 13px; color: var(--ink-2); }
+.steps button[aria-pressed="true"] { background: var(--navy); border-color: var(--navy); color: var(--on-navy); }
+.steps .play { border-style: dashed; color: var(--you); border-color: var(--you); }
+.cap { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--you); border-radius: 8px; padding: 10px 14px; min-height: 66px; }
+.cap b { display: block; color: var(--ink); }
+
+/* the wireframe app */
+.scroll { overflow-x: auto; border-radius: 10px; }
+.app { min-width: 860px; height: 470px; display: grid; grid-template-columns: 44px minmax(0, 1fr) var(--panel, 232px) var(--canvas, 0px); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; transition: grid-template-columns .5s cubic-bezier(.3,.7,.2,1); font-size: 12px; line-height: 1.4; position: relative; }
+.app[data-canvas="open"] { --panel: 0px; --canvas: 54%; }
+.rail { background: var(--navy); display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 10px 0; }
+.rail i { width: 20px; height: 20px; border-radius: 5px; border: 1.5px solid var(--on-navy); opacity: .4; }
+.rail i:first-child { opacity: 1; background: var(--on-navy); }
+.chat { display: flex; flex-direction: column; min-width: 0; border-right: 1px solid var(--line); position: relative; }
+.head { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--line); min-height: 40px; }
+.head b { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 99px; padding: 2px 9px; font: 500 11px var(--mono); white-space: nowrap; background: var(--surface); transition: background .3s, border-color .3s, color .3s, transform .3s, opacity .3s; }
+.chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-3); transition: background .3s; }
+.app:not([data-canvas="open"]) .chip.session { opacity: 0; transform: translateX(10px); pointer-events: none; }
+.chip.session.work .dot { background: var(--agent); }
+.chip.session.attn { background: var(--attn-soft); border-color: var(--attn); color: var(--attn); }
+.chip.session.attn .dot { background: var(--attn); }
+.chip.session.pulse { animation: pulse .9s ease-out 2; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 var(--you); } 100% { box-shadow: 0 0 0 9px transparent; } }
+.log { flex: 1; overflow: hidden; padding: 10px; display: flex; flex-direction: column; gap: 7px; justify-content: flex-end; }
+.msg { max-width: 86%; border: 1px solid var(--line); border-radius: 9px; padding: 6px 9px; background: var(--surface); animation: rise .35s ease-out; }
+.msg.you { align-self: flex-end; background: var(--you-soft); border-color: var(--you); }
+.msg.call { align-self: stretch; max-width: none; border-left: 3px solid var(--agent); background: var(--sunk); }
+.msg .who { display: flex; gap: 6px; align-items: center; font-weight: 650; margin-bottom: 2px; }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.mark { width: 17px; height: 17px; border-radius: 4px; display: inline-grid; place-items: center; font: 700 8px var(--font); background: var(--agent-soft); color: var(--agent); flex: none; }
+.mark.p { border-radius: 50%; background: var(--ok-soft); color: var(--ok); border: 1px dashed currentColor; }
+.box { margin: 0 10px 10px; border: 1px solid var(--line); border-radius: 9px; height: 40px; background: var(--sunk); display: flex; align-items: center; padding: 0 10px; color: var(--ink-3); }
+.panel { overflow: hidden; background: var(--sunk); border-right: 1px solid var(--line); min-width: 0; }
+.cards { width: 232px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; transition: opacity .4s, transform .4s, max-height .5s, padding .4s, margin .4s, border-width .4s; max-height: 220px; overflow: hidden; }
+.card[hidden-soft] { opacity: 0; max-height: 0; padding-block: 0; border-width: 0; margin-top: -8px; transform: translateY(-6px); }
+.card h4 { margin: 0; font: 600 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); display: flex; justify-content: space-between; }
+.card .row { display: flex; align-items: center; gap: 6px; color: var(--ink-2); }
+.card .row.new { animation: flash 1.6s ease-out; }
+@keyframes flash { 0% { background: var(--you-soft); } 100% { background: transparent; } }
+.card ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.card li { display: flex; gap: 6px; color: var(--ink-3); transition: color .3s; }
+.card li::before { content: attr(data-n); width: 12px; text-align: center; font: 600 10px var(--mono); }
+.card li.done::before { content: "✓"; color: var(--ok); }
+.card li.now { color: var(--ink); font-weight: 650; }
+.bar { height: 5px; border-radius: 99px; background: var(--sunk); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--ok); border-radius: 99px; transition: width .6s; }
+.small { font-size: 11px; color: var(--ink-3); }
+.small.attn { color: var(--attn); font-weight: 600; }
+.canvas { min-width: 0; overflow: hidden; display: flex; flex-direction: column; background: var(--surface); }
+.canvas .tab { padding: 8px 12px; border-bottom: 1px solid var(--line); font-weight: 600; white-space: nowrap; }
+.canvas .body { flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 7px; min-width: 300px; }
+.ln { height: 22px; border-radius: 5px; background: var(--sunk); border: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; padding: 0 8px; color: var(--ink-3); font-size: 11px; white-space: nowrap; }
+.ln b { font-weight: 600; color: var(--ink-2); }
+.ln .st { font: 600 9.5px var(--mono); padding: 1px 6px; border-radius: 99px; background: var(--agent-soft); color: var(--agent); transition: background .3s, color .3s; }
+.ln .st.ok { background: var(--ok-soft); color: var(--ok); } .ln .st.attn { background: var(--attn-soft); color: var(--attn); }
+.pop { position: absolute; top: 44px; right: 8px; width: 252px; background: var(--sunk); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 30px rgba(10,34,61,.22); opacity: 0; transform: translateY(-8px) scale(.97); transform-origin: top right; pointer-events: none; transition: opacity .25s, transform .25s; z-index: 3; max-height: 412px; overflow-y: auto; }
+.app[data-pop="open"] .pop { opacity: 1; transform: none; pointer-events: auto; }
+@media (prefers-reduced-motion: reduce) { .app, .card, .chip, .pop, .bar i { transition: none; } .msg, .card .row.new, .chip.session.pulse { animation: none; } }
+
+/* decisions and option mocks */
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.note { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.opt { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.opt.rec { border-color: var(--you); box-shadow: inset 0 3px 0 var(--you); }
+.opt .tag { font: 600 10.5px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+.opt.rec .tag { color: var(--you); }
+.mini { display: grid; grid-template-columns: 1fr 1fr; height: 190px; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; font-size: 10.5px; line-height: 1.35; }
+.mini .c { padding: 7px; display: flex; flex-direction: column; gap: 5px; justify-content: flex-end; border-right: 1px solid var(--line); min-width: 0; background: var(--sunk); }
+.mini .v { padding: 7px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.mini .v.empty { align-items: center; justify-content: center; color: var(--ink-3); text-align: center; }
+.b { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 3px 6px; max-width: 92%; }
+.b.y { align-self: flex-end; background: var(--you-soft); border-color: var(--you); }
+.b.ref { border-style: dashed; color: var(--ink-2); }
+.b.w { max-width: none; border-color: var(--agent); display: flex; flex-direction: column; gap: 3px; }
+.b.w .l { height: 9px; border-radius: 3px; background: var(--sunk); border: 1px solid var(--line); }
+.b.w .btn { align-self: flex-start; font-weight: 650; color: var(--on-navy); background: var(--navy); border-radius: 4px; padding: 1px 6px; }
+.b.w.frozen { border-style: dashed; border-color: var(--wire); opacity: .75; }
+.v .l { height: 13px; border-radius: 3px; background: var(--sunk); border: 1px solid var(--line); }
+.v .t { font-weight: 650; }
+ul.pc { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; font-size: 13.5px; color: var(--ink-2); }
+ul.pc li { padding-left: 18px; position: relative; }
+ul.pc li::before { position: absolute; left: 0; font-weight: 700; }
+ul.pc li.pro::before { content: "+"; color: var(--ok); } ul.pc li.con::before { content: "−"; color: var(--attn); }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; background: var(--surface); }
+th, td { text-align: left; padding: 7px 10px; border: 1px solid var(--line); vertical-align: top; }
+th { font: 600 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); background: var(--sunk); }
+.tw { overflow-x: auto; }
+</style>
+
+<div class="col">
+  <header class="read">
+    <div class="eyebrow">Product Aviator · layout, round two</div>
+    <h1>One panel that gets out of the way, and where views belong</h1>
+    <p>Two things you asked for. First, direction A refined and shown in motion: what happens to the Session panel as a session moves through its states. Second, the "views in chat" question laid out properly as four options with a mock of each.</p>
+  </header>
+
+  <h2>Part 1 · Direction A, in motion</h2>
+  <p class="read">The rule behind A is simple. When there is room, the Session panel sits beside the chat. When the canvas opens, the canvas gets that room and the panel folds into one chip in the header that carries the single most important fact. Press a state, or Play, and watch what moves.</p>
+
+  <div class="steps" id="steps" role="group" aria-label="Session states"></div>
+  <div class="cap" id="cap" aria-live="polite"></div>
+
+  <div class="scroll">
+    <div class="app" id="app" data-canvas="closed" data-pop="closed">
+      <div class="rail" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="chat">
+        <div class="head"><b>Allowances PRD review</b><span class="chip session" id="chip"><span class="dot"></span><span id="chiptext">Session</span></span></div>
+        <div class="log" id="log"></div>
+        <div class="box">Message Aviator, or @ someone</div>
+        <div class="pop" id="pop"></div>
+      </div>
+      <div class="panel"><div class="cards" id="cards">
+        <div class="card" id="c-flow" hidden-soft>
+          <h4>Workflow</h4>
+          <div><b>Review a document</b></div>
+          <ol><li data-n="1">First read</li><li data-n="2">Call in others</li><li data-n="3">Their reviews</li><li data-n="4">Your decisions</li></ol>
+          <div class="bar"><i id="barfill"></i></div>
+          <div class="small" id="count">0 of 0 findings decided</div>
+        </div>
+        <div class="card" id="c-out"><h4>Outputs <span id="outn"></span></h4><div class="small" id="outempty">What the agent makes appears here.</div><div id="outs"></div></div>
+        <div class="card" id="c-ctx"><h4>Context <span>2</span></h4><div class="row">☐ allowances-prd.md</div><div class="row">☐ platform-map.md</div><div class="small">Shared by every session in this project</div></div>
+        <div class="card" id="c-ppl"><h4>People and agents <span>3</span></h4>
+          <div class="row" id="p-rr"><span class="mark">RR</span>Risk Review <span class="small" id="rrstate"></span></div>
+          <div class="row"><span class="mark p">MO</span>Mara Okafor <span class="small">stand-in</span></div>
+          <div class="row"><span class="mark">CP</span>Cards Platform</div>
+        </div>
+      </div></div>
+      <div class="canvas">
+        <div class="tab">Review findings</div>
+        <div class="body" id="cbody"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="note"><h3>What I refined</h3><p>The chip now changes meaning with the session: plain while idle, a progress count while a workflow runs, and the attention color only when something waits on you. It is the one place to glance.</p></div>
+    <div class="note"><h3>Card order follows the work</h3><p>Before a workflow starts, Context leads, because choosing what to work from is the job. Once a workflow runs, its card moves to the top and Context drops below Outputs.</p></div>
+    <div class="note"><h3>New things announce themselves once</h3><p>A new output or a participant joining flashes its row once and pulses the chip twice if the panel is folded. Nothing keeps moving after that.</p></div>
+    <div class="note"><h3>What I left out on purpose</h3><p>No second rail, no tabs inside the panel, no per-card settings. Those were what made the other directions feel cluttered.</p></div>
+  </div>
+
+  <h2>Part 2 · Where should a view appear?</h2>
+  <p class="read">This is the question I asked badly. A "view" is anything drawn from the kit: a form with three choices, a one-record card, a summary, a twenty-row catalog, a board. The question is which of those may be drawn <em>inside the chat transcript</em>, and which only in the canvas. The app today does the first option. The demo previews already do the second.</p>
+
+  <div class="grid">
+    <div class="opt">
+      <div class="tag">Option 1 · how the app works today</div>
+      <h3>Canvas only</h3>
+      <div class="mini"><div class="c"><div class="b y">Catalog this PRD</div><div class="b">Three choices before I start.</div><div class="b ref">↗ Opened: Catalog setup</div></div><div class="v"><div class="t">Catalog setup</div><div class="l"></div><div class="l"></div><div class="l"></div></div></div>
+      <p>Every view opens in the canvas. The chat only says that it did.</p>
+      <ul class="pc"><li class="pro">One place for everything structured. Nothing to build.</li><li class="pro">The chat stays a clean transcript.</li><li class="con">A three-choice question takes over the whole canvas and hides the document you were reading.</li><li class="con">Scrolling back, you see that a view was opened but not what you answered.</li></ul>
+    </div>
+    <div class="opt rec">
+      <div class="tag">Option 2 · recommended</div>
+      <h3>Asks in the chat, work in the canvas</h3>
+      <div class="mini"><div class="c"><div class="b y">Catalog this PRD</div><div class="b w"><b>Before I start</b><div class="l"></div><div class="l"></div><span class="btn">Start</span></div></div><div class="v"><div class="t">allowances-prd.md</div><div class="l"></div><div class="l"></div><div class="l"></div><div class="l"></div></div></div>
+      <p>Small views that are part of the conversation (a question, a pick-one, a one-record card, a summary) are drawn in the chat. Anything you work in for a while (catalog, board, document) opens in the canvas. Once answered, a chat view freezes into a record of what you chose.</p>
+      <ul class="pc"><li class="pro">The canvas keeps showing your work while you answer a question.</li><li class="pro">The transcript records decisions, which fits attributed turns from participants.</li><li class="pro">One rule the agent can follow: is it an ask, or a workspace?</li><li class="con">Needs building: the app cannot draw a view inside a message yet.</li></ul>
+    </div>
+    <div class="opt">
+      <div class="tag">Option 3</div>
+      <h3>Anything in the chat, expand to canvas</h3>
+      <div class="mini"><div class="c"><div class="b w"><b>Requirements · 20</b><div class="l"></div><div class="l"></div><div class="l"></div><span class="btn">Expand ↗</span></div><div class="b">Catalog ready.</div></div><div class="v empty">Canvas opens only when you expand something</div></div>
+      <p>Every view first appears in the chat at chat width, with a button to open it large.</p>
+      <ul class="pc"><li class="pro">Works without a canvas at all, for narrow windows.</li><li class="con">A twenty-row table at chat width is cramped, and it scrolls away as the conversation continues.</li><li class="con">The same live view can exist twice. Which one is current?</li><li class="con">Most to build and to keep consistent.</li></ul>
+    </div>
+    <div class="opt">
+      <div class="tag">Option 4</div>
+      <h3>A still snapshot in the chat, the live view in the canvas</h3>
+      <div class="mini"><div class="c"><div class="b w frozen"><b>Requirements · 20</b><span>12 ready · 3 need you</span><span class="btn">Open ↗</span></div><div class="b">Catalog ready.</div></div><div class="v"><div class="t">Requirements catalog</div><div class="l"></div><div class="l"></div><div class="l"></div></div></div>
+      <p>The chat shows a small, non-interactive card of the view as it was at that moment. The live view is always in the canvas.</p>
+      <ul class="pc"><li class="pro">The transcript shows what things looked like when they were made.</li><li class="pro">Never two live copies.</li><li class="con">Questions still take over the canvas, as in option 1.</li><li class="con">A snapshot that looks clickable but is not can confuse.</li></ul>
+    </div>
+  </div>
+
+  <div class="tw"><table>
+    <tr><th></th><th>1 Canvas only</th><th>2 Asks in chat</th><th>3 Anything in chat</th><th>4 Snapshots</th></tr>
+    <tr><td>Answer a question without losing the canvas</td><td>No</td><td>Yes</td><td>Yes</td><td>No</td></tr>
+    <tr><td>Transcript shows what was decided</td><td>No</td><td>Yes</td><td>Partly</td><td>Yes</td></tr>
+    <tr><td>Risk of two live copies of one view</td><td>None</td><td>None</td><td>High</td><td>None</td></tr>
+    <tr><td>Participants can put a view in their own turn</td><td>No</td><td>Yes</td><td>Yes</td><td>As a snapshot</td></tr>
+    <tr><td>Work to build in the live app</td><td>Done</td><td>Moderate</td><td>Large</td><td>Small</td></tr>
+  </table></div>
+  <p class="read">My recommendation is option 2, and option 4's snapshot can be added to it later for large views if the transcript feels thin. A decision card in the thread asks which you want.</p>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var app = $("app"), log = $("log"), timer = null;
+  function msg(cls, html) { var d = document.createElement("div"); d.className = "msg " + cls; d.innerHTML = html; log.appendChild(d); while (log.children.length > 5) log.removeChild(log.firstChild); }
+  function soft(el, hide) { if (hide) el.setAttribute("hidden-soft", ""); else el.removeAttribute("hidden-soft"); }
+  function flow(now, done, total, waiting) {
+    var lis = $("c-flow").querySelectorAll("li");
+    for (var i = 0; i < lis.length; i++) lis[i].className = i + 1 < now ? "done" : i + 1 === now ? "now" : "";
+    $("barfill").style.width = total ? (done / total * 100) + "%" : "0";
+    $("count").textContent = done + " of " + total + " findings decided" + (waiting ? " · " + waiting + " waiting on you" : "");
+    $("count").className = "small" + (waiting ? " attn" : "");
+  }
+  function order(flowFirst) { var c = $("cards"); if (flowFirst) { c.insertBefore($("c-flow"), c.firstChild); c.insertBefore($("c-out"), $("c-ctx")); } else { c.insertBefore($("c-ctx"), c.firstChild); c.insertBefore($("c-flow"), c.firstChild); } }
+  function chip(text, cls, pulse) { var c = $("chip"); c.className = "chip session " + (cls || ""); $("chiptext").textContent = text; if (pulse) { void c.offsetWidth; c.classList.add("pulse"); } }
+  function rows(list) { $("cbody").innerHTML = list.map(function (r) { return '<div class="ln"><b>' + r[0] + '</b><span class="st ' + (r[2] || "") + '">' + r[1] + "</span></div>"; }).join(""); }
+  function output(on, fresh) { $("outempty").hidden = on; $("outn").textContent = on ? "1" : ""; $("outs").innerHTML = on ? '<div class="row' + (fresh ? " new" : "") + '">Allowances review</div>' : ""; }
+  function pop(open) { app.dataset.pop = open ? "open" : "closed"; if (open) { $("pop").innerHTML = ""; var c = $("cards").cloneNode(true); c.removeAttribute("id"); c.querySelectorAll("[id]").forEach(function (n) { n.removeAttribute("id"); }); c.style.width = "auto"; $("pop").appendChild(c); } }
+  var S = [
+    { name: "Starting out", cap: ["Nothing has been made yet", "The panel is docked beside the chat. Context leads, because the first job is choosing what to work from. The header chip is hidden: everything it would say is already visible."],
+      run: function () { log.innerHTML = ""; app.dataset.canvas = "closed"; pop(false); soft($("c-flow"), true); order(false); output(false); chip("Session"); $("rrstate").textContent = ""; msg("you", "Review the Allowances PRD with me."); } },
+    { name: "Workflow starts", cap: ["A workflow card arrives", "The agent recognised a structured job. Its card slides in at the top with the steps and the current one marked, and Context drops below it."],
+      run: function () { soft($("c-flow"), false); order(true); flow(1, 0, 0); msg("", "Reading it end to end first."); } },
+    { name: "Canvas opens", cap: ["The panel folds into the chip", "The canvas takes the room. The panel does not shrink or stack: it folds away entirely, and one chip in the header carries the workflow's progress."],
+      run: function () { app.dataset.canvas = "open"; rows([["F-01 FAQ contradicts 3.3", "Raised"], ["F-02 Short months", "Raised"], ["F-03 Whose consent", "Raised"]]); output(true, true); flow(2, 0, 3); chip("Step 2 of 4 · 0/3", "work", true); msg("", "Three findings so far. They are in the canvas."); } },
+    { name: "Someone joins", cap: ["A participant is called in", "The call shows in the chat as a block under their name. In the panel their row shows they are here; with the panel folded, the chip pulses twice and settles."],
+      run: function () { $("rrstate").textContent = "in the conversation"; $("p-rr").className = "row new"; flow(3, 0, 5); rows([["F-01 FAQ contradicts 3.3", "Raised"], ["F-02 Short months", "Raised"], ["F-03 Whose consent", "Raised"], ["RR-01 Counted, not blocked", "Raised"], ["RR-02 Fraud scoring", "Raised"]]); chip("Step 3 of 4 · 0/5", "work", true); msg("call", '<div class="who"><span class="mark">RR</span>Risk Review <span class="small">called by Aviator</span></div>Two findings from me, one High.'); } },
+    { name: "Needs you", cap: ["The chip changes color only for this", "Something is waiting on you. The chip takes the attention color and says how many. Nothing else on screen uses that color, so it reads at a glance."],
+      run: function () { flow(3, 0, 5, 1); rows([["F-01 FAQ contradicts 3.3", "Raised"], ["F-02 Short months", "Raised"], ["F-03 Whose consent", "Needs you", "attn"], ["RR-01 Counted, not blocked", "Raised"], ["RR-02 Fraud scoring", "Raised"]]); chip("1 waiting on you", "attn", true); msg("call", '<div class="who"><span class="mark">RR</span>Risk Review</div>Whose consent does 7.4 mean?'); } },
+    { name: "Peek", cap: ["Press the chip for the whole panel", "The same cards, in the same order, drop down over the chat. The canvas does not move. Press again or click away and it closes."],
+      run: function () { pop(true); } },
+    { name: "Progress", cap: ["Counts move as you decide", "You answered and accepted three findings in the canvas. The bar fills, the step ticks over, and the chip returns to its calm state."],
+      run: function () { pop(false); flow(4, 3, 5); rows([["F-01 FAQ contradicts 3.3", "Accepted", "ok"], ["F-02 Short months", "Raised"], ["F-03 Whose consent", "Accepted", "ok"], ["RR-01 Counted, not blocked", "Accepted", "ok"], ["RR-02 Fraud scoring", "Raised"]]); chip("Step 4 of 4 · 3/5", "work"); msg("you", "The cardholder gives consent."); } },
+    { name: "Canvas closed", cap: ["The panel unfolds again", "Close the canvas and the panel returns to its place with everything as you left it. The chip fades out because the panel now says it all."],
+      run: function () { pop(false); app.dataset.canvas = "closed"; chip("Session"); msg("", "Two findings left to decide."); } }
+  ];
+  var at = 0, steps = $("steps");
+  function go(i) { for (var k = 0; k <= i; k++) if (k === 0 || k > at || i < at) S[k].run(); if (i < at) { for (var j = 0; j <= i; j++) S[j].run(); } at = i; paint(); }
+  function show(i) { stop(); /* replay from the start so any state can be reached directly */ S[0].run(); for (var k = 1; k <= i; k++) S[k].run(); at = i; paint(); }
+  function paint() { Array.prototype.forEach.call(steps.querySelectorAll("[data-i]"), function (b) { b.setAttribute("aria-pressed", String(Number(b.dataset.i) === at)); }); $("cap").innerHTML = "<b>" + S[at].cap[0] + "</b>" + S[at].cap[1]; }
+  function stop() { if (timer) { clearInterval(timer); timer = null; steps.querySelector(".play").textContent = "▶ Play"; } }
+  function play() { if (timer) return stop(); steps.querySelector(".play").textContent = "■ Stop"; if (at === S.length - 1) { S[0].run(); at = 0; paint(); } timer = setInterval(function () { if (at >= S.length - 1) return stop(); at++; S[at].run(); paint(); }, 2600); }
+  steps.innerHTML = '<button class="play" type="button">▶ Play</button>' + S.map(function (s, i) { return '<button type="button" data-i="' + i + '" aria-pressed="false">' + (i + 1) + " " + s.name + "</button>"; }).join("");
+  steps.addEventListener("click", function (e) { var b = e.target.closest("button"); if (!b) return; if (b.classList.contains("play")) play(); else show(Number(b.dataset.i)); });
+  $("chip").addEventListener("click", function () { pop(app.dataset.pop !== "open"); });
+  /* Rest on a telling state so the page is complete without pressing anything. */
+  show(4);
+})();
+</script>
+
+</body></html>

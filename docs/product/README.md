@@ -19,7 +19,9 @@ for, and what was tried, without asking the people who were there.
   and the intent graph. Lists the open decisions.
 
 Outside this folder: `../history.md` tells the story from the first import
-to now, and `../architecture.md` explains how each part is built.
+to now, `../architecture.md` explains how each part is built, and
+`../decision-artifacts/` keeps offline copies of the walkthroughs and design
+rounds the decisions were made on, with Geoff's recorded answers (D-115).
 
 Rules for keeping these current, including how to claim a decision number,
 are in the repository's `CLAUDE.md`.

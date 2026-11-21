@@ -1,0 +1,178 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!-- decision-archive:start -->
+<div style="font:13px/1.45 system-ui,sans-serif;background:Canvas;color:CanvasText;border-bottom:1px solid GrayText;padding:8px 16px">Archived copy of <b>Workspace Layout Options</b>, a decision artifact from 2026-11-21. Nothing on this page is saved. The index of all of them is in <a href="../index.html">docs/decision-artifacts</a>.</div>
+<script>
+(function(){
+  var A={};
+  function snap(){var docs=Object.keys(A).map(function(k){return {id:k,data:function(){return A[k]},exists:true}});return {docs:docs,empty:!docs.length,size:docs.length,forEach:function(f){docs.forEach(f)}}}
+  function doc(id){return {id:id,get:async function(){return {id:id,exists:id in A,data:function(){return A[id]}}},set:async function(){},update:async function(){},delete:async function(){}}}
+  var db={collection:function(){return {get:async function(){return snap()},doc:doc,onSnapshot:function(f){setTimeout(function(){f(snap())},0);return function(){}},add:async function(){}}},doc:function(p){return doc(String(p).split("/").pop())}};
+  window.claude={use:async function(name){return name==="db"?db:null}};
+})();
+</script>
+<!-- decision-archive:end -->
+
+<title>Workspace Layout Options</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: a reading column with one instrument, a workspace schematic that redraws per work mode. */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --sunk:#e9edf2; --ink:#0a223d; --ink-2:#44566c; --ink-3:#7a8899;
+  --line:#d3dae3; --navy:#0a223d; --on-navy:#f3f5f8;
+  --you:#c2501f; --you-soft:#fbe6dc;
+  --exists:#2f5d8a; --exists-soft:#dfe9f3; --ours:#17756b; --ours-soft:#d9efec;
+  --extend:#8a6200; --extend-soft:#f6ecd0; --new:#c2501f; --new-soft:#fbe6dc;
+  --ok:#1d7a4f; --warn:#9a6a00; --attn:#b8323c; --idle:#7a8899;
+  --display:"Space Grotesk","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#07172a; --surface:#0e2238; --sunk:#0a1c30; --ink:#e8eef5; --ink-2:#a9b8c9; --ink-3:#74879c;
+  --line:#22384f; --navy:#16385f; --on-navy:#eef3f8;
+  --you:#ff9166; --you-soft:#3a2118;
+  --exists:#8fbbe6; --exists-soft:#15304c; --ours:#6fd0c3; --ours-soft:#103631;
+  --extend:#e6bd55; --extend-soft:#35290c; --new:#ff9166; --new-soft:#3a2118;
+  --ok:#5fcf98; --warn:#e6bd55; --attn:#ff7d86; --idle:#74879c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#07172a; --surface:#0e2238; --sunk:#0a1c30; --ink:#e8eef5; --ink-2:#a9b8c9; --ink-3:#74879c;
+  --line:#22384f; --navy:#16385f; --on-navy:#eef3f8;
+  --you:#ff9166; --you-soft:#3a2118;
+  --exists:#8fbbe6; --exists-soft:#15304c; --ours:#6fd0c3; --ours-soft:#103631;
+  --extend:#e6bd55; --extend-soft:#35290c; --new:#ff9166; --new-soft:#3a2118;
+  --ok:#5fcf98; --warn:#e6bd55; --attn:#ff7d86; --idle:#74879c; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+.wrap{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:56px}
+h1,h2,h3{font-family:var(--display);font-weight:600;text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);line-height:1.08}
+h2{font-size:24px;line-height:1.2}
+h3{font-size:16px}
+p{margin:0;max-width:68ch;color:var(--ink-2)}
+.eyebrow{font:500 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+section{display:flex;flex-direction:column;gap:18px}
+.head{display:flex;flex-direction:column;gap:10px}
+.lede{font-size:17px;color:var(--ink-2)}
+.thesis{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.thesis div{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.thesis b{font-family:var(--display);font-size:15px}
+.thesis span{color:var(--ink-2);font-size:14px}
+
+/* tags */
+.tag{display:inline-flex;align-items:center;gap:6px;font:500 11px/1 var(--mono);padding:4px 7px;border-radius:3px;white-space:nowrap}
+.tag::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.t-exists{color:var(--exists);background:var(--exists-soft)}
+.t-ours{color:var(--ours);background:var(--ours-soft)}
+.t-extend{color:var(--extend);background:var(--extend-soft)}
+.t-new{color:var(--new);background:var(--new-soft)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:13px;color:var(--ink-2)}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+
+</style>
+
+<style>
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,500px),1fr));gap:20px}
+.opt{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.opt.pick{border-color:var(--you);box-shadow:0 0 0 1px var(--you)}
+.opt header{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.letter{font:600 13px/1 var(--mono);color:var(--on-navy);background:var(--navy);border-radius:4px;padding:5px 7px}
+.tag{font:500 10.5px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:4px 6px;border-radius:4px;background:var(--you-soft);color:var(--you)}
+.tag.built{background:var(--ours-soft);color:var(--ours)}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.wf{display:flex;flex-direction:column;gap:5px;min-width:0}
+.wf>span{font:500 10.5px/1.2 var(--mono);color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase}
+.fr{aspect-ratio:16/10;border:1.5px solid var(--ink-3);border-radius:6px;display:flex;overflow:hidden;background:var(--bg)}
+.fr>div{border-right:1.5px solid var(--ink-3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:500 9.5px/1.15 var(--mono);color:var(--ink-2);text-align:center;padding:3px;min-width:0;overflow:hidden}
+.fr>div:last-child{border-right:0}
+.sb{flex:0 0 11%;background:var(--navy);color:var(--on-navy)!important}
+.ch{flex:1 1 0}
+.cv{flex:1.5 1 0;background:var(--surface)}
+.rl{flex:0 0 21%;background:var(--you-soft);color:var(--you)!important}
+.st{flex:0 0 6%;background:var(--you-soft);color:var(--you)!important}
+.col{flex-direction:column!important;padding:0!important;align-items:stretch!important;justify-content:flex-start!important;gap:0!important}
+.col>i{font-style:normal;display:flex;align-items:center;justify-content:center;flex:1;padding:2px}
+.col>i.r{background:var(--you-soft);color:var(--you);flex:0 0 auto;padding:5px 2px;border-block:1.5px solid var(--ink-3)}
+.col>i.r:first-child{border-top:0}.col>i.r:last-child{border-bottom:0}
+.pop{position:relative}
+.pop::after{content:"panel";position:absolute;top:8%;right:4%;width:38%;height:52%;background:var(--you-soft);color:var(--you);border:1.5px solid var(--you);border-radius:4px;display:flex;align-items:center;justify-content:center}
+.pc{display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13.5px}
+.pc ul{margin:0;padding-left:16px;color:var(--ink-2);display:flex;flex-direction:column;gap:4px}
+.pc b{font:500 10.5px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);display:block;margin-bottom:6px}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:13.5px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:500 10.5px/1.2 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+td.g{color:var(--ok);font-weight:600}td.m{color:var(--warn);font-weight:600}td.b{color:var(--attn);font-weight:600}
+.rec{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--you);border-radius:8px;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px}
+.modes .wf p{font-size:13.5px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font:500 11px/1 var(--mono);color:var(--ink-2)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-2px;border:1.5px solid var(--ink-3)}
+@media(max-width:520px){.pc{grid-template-columns:1fr}}
+</style>
+
+<div class="wrap">
+<section><div class="head"><span class="eyebrow">Product Aviator · information architecture</span>
+<h1>Where do outputs and context live when the right side is also the canvas?</h1>
+<p class="lede">Five ways to place a session's outputs and its context, drawn at wireframe level. Each is shown twice: while you are only chatting, and with the canvas open.</p></div>
+<div class="legend"><span><i style="background:var(--navy)"></i>navigation</span><span><i style="background:var(--bg)"></i>chat</span><span><i style="background:var(--surface)"></i>canvas</span><span><i style="background:var(--you-soft);border-color:var(--you)"></i>outputs and context</span></div>
+</section>
+
+<section><div class="head"><span class="eyebrow">The tension</span><h2>Two things want the same space</h2>
+<p>A list of what this session has made and what it may read is small, always relevant and wants to be glanceable. The canvas is large, wants every pixel, and is where structured work happens. On a 13-inch laptop there is room for navigation, chat and one more column. So the real question is which of the two gets that column, and where the other one goes.</p></div></section>
+
+<section><div class="head"><span class="eyebrow">Options</span><h2>Five placements</h2></div>
+<div class="opts"><article class="opt"><header><span class="letter">A</span><h3>The panel gives way</h3><span class="tag built">Built tonight</span></header>
+<p>A Session panel sits on the right while you are only chatting. When the canvas opens it steps aside and becomes a drop-down from a Session button in the header.</p>
+<div class="pair"><div class="wf"><span>Chatting</span><div class="fr "><div class="sb">nav</div><div class="ch">chat</div><div class="rl">outputs<br>context<br>cost</div></div></div><div class="wf"><span>Canvas open</span><div class="fr "><div class="sb">nav</div><div class="ch">chat</div><div class="cv pop">canvas</div></div></div></div>
+<div class="pc"><div><b>For</b><ul><li>Uses a panel Omnigent already has, so almost no new code</li><li>Canvas keeps its full width</li><li>Right side is never empty</li></ul></div><div><b>Against</b><ul><li>Outputs and context are one click away exactly when you are working with them</li><li>The same thing lives in two places depending on width</li></ul></div></div></article><article class="opt"><header><span class="letter">B</span><h3>Home tab in the canvas</h3></header>
+<p>The right side is always one region with tabs. The first tab is a Session home listing outputs, context and steps. Opening an output adds a tab beside it.</p>
+<div class="pair"><div class="wf"><span>Home tab</span><div class="fr "><div class="sb">nav</div><div class="ch">chat</div><div class="cv col"><i class="r">home · requirements · board</i><i>outputs, context, steps</i></div></div></div><div class="wf"><span>Output open</span><div class="fr "><div class="sb">nav</div><div class="ch">chat</div><div class="cv col"><i class="r">home · requirements · board</i><i>canvas</i></div></div></div></div>
+<div class="pc"><div><b>For</b><ul><li>One place, one rule: the right side is where the work is</li><li>Tabs already exist in Omnigent</li><li>Scales to many outputs</li></ul></div><div><b>Against</b><ul><li>You cannot see the list and an output at once</li><li>Context is something you give, and here it sits among things you get</li></ul></div></div></article><article class="opt"><header><span class="letter">C</span><h3>Second level in the left sidebar</h3></header>
+<p>The left sidebar shows the session list until you are in a session, then shows that session's context and outputs, like a file tree for the work.</p>
+<div class="pair"><div class="wf"><span>Chatting</span><div class="fr "><div class="rl" style="flex-basis:20%">context<br>outputs<br><br>sessions</div><div class="ch">chat</div></div></div><div class="wf"><span>Canvas open</span><div class="fr "><div class="rl" style="flex-basis:20%">context<br>outputs<br><br>sessions</div><div class="ch">chat</div><div class="cv">canvas</div></div></div></div>
+<div class="pc"><div><b>For</b><ul><li>Lists and canvas visible together</li><li>Familiar from every editor</li><li>Natural home for project-wide context later</li></ul></div><div><b>Against</b><ul><li>Three columns is tight on a 13-inch laptop</li><li>Competes with the session list for the same space</li><li>Largest change to upstream code</li></ul></div></div></article><article class="opt"><header><span class="letter">D</span><h3>Thin strip on the far right</h3></header>
+<p>A narrow strip of three icons stays on the right edge in every state: Outputs, Context, Steps. Each opens a flyout over the canvas.</p>
+<div class="pair"><div class="wf"><span>Chatting</span><div class="fr "><div class="sb">nav</div><div class="ch">chat</div><div class="st">O<br>C<br>S</div></div></div><div class="wf"><span>Canvas open</span><div class="fr "><div class="sb">nav</div><div class="ch">chat</div><div class="cv">canvas</div><div class="st">O<br>C<br>S</div></div></div></div>
+<div class="pc"><div><b>For</b><ul><li>Always in the same place</li><li>Costs the canvas almost nothing</li><li>Counts on the icons can show what is new</li></ul></div><div><b>Against</b><ul><li>Icons need learning</li><li>Flyouts cover the thing you were looking at</li><li>A new piece of chrome to build and maintain</li></ul></div></div></article><article class="opt pick"><header><span class="letter">E</span><h3>Split by direction</h3><span class="tag ">Recommended</span></header>
+<p>What you give the agent sits where you talk to it. What it gives you sits where you look at it. Context is a shelf above the message box. Outputs are the canvas's own tab list, with a home tab when nothing is open.</p>
+<div class="pair"><div class="wf"><span>Chatting</span><div class="fr "><div class="sb">nav</div><div class="ch col"><i>chat</i><i class="r">context shelf</i><i style="flex:0 0 auto;padding:4px">message box</i></div><div class="cv col"><i class="r">outputs</i><i>home: outputs and steps</i></div></div></div><div class="wf"><span>Canvas open</span><div class="fr "><div class="sb">nav</div><div class="ch col"><i>chat</i><i class="r">context shelf</i><i style="flex:0 0 auto;padding:4px">message box</i></div><div class="cv col"><i class="r">outputs as tabs</i><i>canvas</i></div></div></div></div>
+<div class="pc"><div><b>For</b><ul><li>Each list is next to the action it serves</li><li>No third column at any width</li><li>The shelf makes it obvious what the agent can see before you send</li></ul></div><div><b>Against</b><ul><li>Two things to build instead of one</li><li>The shelf takes height from the chat on small screens</li></ul></div></div></article></div></section>
+
+<section><div class="head"><span class="eyebrow">Side by side</span><h2>How they compare</h2></div>
+<div class="tw"><table>
+<tr><th></th><th>Canvas width on a laptop</th><th>Lists visible while working</th><th>Easy to find</th><th>Change to Omnigent</th><th>Room for project-wide context later</th></tr>
+<tr><td><b>A</b> Panel gives way</td><td class="g">Full</td><td class="b">No</td><td class="m">Medium</td><td class="g">Tiny</td><td class="m">Some</td></tr>
+<tr><td><b>B</b> Home tab</td><td class="g">Full</td><td class="m">One at a time</td><td class="g">Good</td><td class="g">Small</td><td class="m">Some</td></tr>
+<tr><td><b>C</b> Left sidebar</td><td class="b">Reduced</td><td class="g">Yes</td><td class="g">Good</td><td class="b">Large</td><td class="g">Best</td></tr>
+<tr><td><b>D</b> Thin strip</td><td class="g">Nearly full</td><td class="m">On demand</td><td class="m">Needs learning</td><td class="m">Medium</td><td class="m">Some</td></tr>
+<tr><td><b>E</b> Split by direction</td><td class="g">Full</td><td class="g">Context yes, outputs as tabs</td><td class="g">Good</td><td class="m">Medium</td><td class="g">Good</td></tr>
+</table></div></section>
+
+<section><div class="head"><span class="eyebrow">Added 21 November</span><h2>Where other participants fit</h2>
+<p>Other agents and people will join the conversation as participants (see <a href="../2026-11-21-conversation-participants/index.html" style="color:var(--you)">Conversation Participants</a>). That adds a third small list beside outputs and context: who is in the room. It does not change the ranking, but it sharpens it.</p></div>
+<div class="tw"><table>
+<tr><th></th><th>Where the roster goes</th><th>Effect</th></tr>
+<tr><td><b>A</b> Panel gives way</td><td>A "People and agents" section in the Session panel</td><td class="m">Hidden whenever the canvas is open, which is when guests are most active</td></tr>
+<tr><td><b>B</b> Home tab</td><td>On the home tab</td><td class="m">Same problem: not visible beside the work</td></tr>
+<tr><td><b>C</b> Left sidebar</td><td>A third group under context and outputs</td><td class="g">Always visible, at the cost of width</td></tr>
+<tr><td><b>D</b> Thin strip</td><td>A fourth icon, or the marks themselves stacked on the strip</td><td class="g">Marks on the strip work well as presence</td></tr>
+<tr><td><b>E</b> Split by direction</td><td>Marks in the chat header, and the address chip in the message box</td><td class="g">Fits the rule: who you talk to sits where you talk</td></tr>
+</table></div>
+<p>In every option the chat header should show the marks of who is present, because attribution in the timeline only reads well if the reader has already met the cast.</p></section>
+
+<section><div class="rec"><span class="eyebrow">Recommendation</span><h2>Ship A now, build toward E</h2>
+<p>A is in the branch tonight because it reuses a panel Omnigent already has. It answers "can I see outputs and choose context at all" with almost no risk.</p>
+<p>E is where I would take it. Context is an input, so it belongs beside the message box, where you can see what the agent will read before you press Send. Outputs are what the canvas shows, so the canvas should list them itself. That removes the tension instead of managing it: nothing competes with the canvas for the right side.</p>
+<p>C is the one to revisit when context becomes project-wide and shared across sessions, because a tree in the sidebar is the natural shape for that.</p></div></section>
+
+<section><div class="head"><span class="eyebrow">Option E in use</span><h2>How the screen shifts through a piece of work</h2>
+<p>The same three regions, in different proportions depending on what the person is doing.</p></div>
+<div class="modes">
+<div class="wf"><span>1 · Open-ended chat</span><div class="fr "><div class="sb">nav</div><div class="ch col" style="flex:2.2"><i>chat</i><i class="r">context shelf</i><i style="flex:0 0 auto;padding:4px">message box</i></div><div class="cv col" style="flex:1"><i class="r">outputs</i><i>home</i></div></div><p>Chat leads. The canvas is a narrow home listing outputs and steps.</p></div>
+<div class="wf"><span>2 · Reading an output</span><div class="fr "><div class="sb">nav</div><div class="ch col"><i>chat</i><i class="r">context shelf</i><i style="flex:0 0 auto;padding:4px">message box</i></div><div class="cv col" style="flex:1.5"><i class="r">outputs as tabs</i><i>document or artifact</i></div></div><p>Even split. Comments and edits flow back to chat.</p></div>
+<div class="wf"><span>3 · Structured workflow</span><div class="fr "><div class="sb">nav</div><div class="ch col" style="flex:.8"><i>chat</i><i style="flex:0 0 auto;padding:4px">message box</i></div><div class="cv col" style="flex:2.6"><i class="r">catalog · board · summary</i><i>template view</i></div></div><p>The canvas leads. Chat narrows to a side column and the shelf folds away.</p></div>
+</div></section>
+</div>
+</body></html>

@@ -1,0 +1,104 @@
+{
+  "at": {
+    "at": "2026-11-21T13:08:59.437Z",
+    "locked": true,
+    "pick": 0,
+    "text": "When I @ a participant, the aviator orchestrator agent sees it (and the full conversation), but the mentioned participant responds. Messages in user without an @, or with @aviator, go to the main agent session."
+  },
+  "call": {
+    "at": "2026-11-21T13:06:57.795Z",
+    "locked": true,
+    "pick": 1,
+    "text": ""
+  },
+  "context": {
+    "at": "2026-11-21T13:05:24.218Z",
+    "locked": true,
+    "pick": 0,
+    "text": ""
+  },
+  "icon": {
+    "at": "2026-11-21T12:58:06.444Z",
+    "locked": true,
+    "pick": 0,
+    "text": ""
+  },
+  "inline": {
+    "at": "2026-11-21T13:06:30.569Z",
+    "locked": true,
+    "pick": "else",
+    "text": "Please clarify your question — you are making a distinction I don’t understand, please enumerate the options, make options for each, and explain the tradeoffs."
+  },
+  "install": {
+    "at": "2026-11-21T13:01:57.074Z",
+    "locked": true,
+    "pick": "else",
+    "text": "download full repo as zip, user unzips, user runs some script; we can run a test today to unblock, and you can make the setup script fail in ways that are diagnostically useful for us.\n\nWe can try the curl script approach as well as long as a human performs the curl, not Claude. So the script instructions need to be very non-technical-user-friendly. work Mac definitely blocks cloning repos that are not in the company’s namespace."
+  },
+  "layout": {
+    "at": "2026-11-21T13:04:31.447Z",
+    "locked": true,
+    "pick": "else",
+    "text": "Do another round of refinement on these directions. I am generally comfortable with a; the rest seem very cluttered; make more refined wireframes including animations for state changes"
+  },
+  "merge": {
+    "at": "2026-11-21T13:03:01.335Z",
+    "locked": true,
+    "pick": 1,
+    "text": "The Claude project orchestrator agent on my dev machine (Mac mini) review PRs, merges them. I will not review code — only designs and test result summaries."
+  },
+  "mirror": {
+    "at": "2026-11-21T12:57:22.411Z",
+    "locked": true,
+    "pick": 0,
+    "text": ""
+  },
+  "pin": {
+    "at": "2026-11-21T12:58:20.869Z",
+    "locked": true,
+    "pick": 0,
+    "text": ""
+  },
+  "restart": {
+    "at": "2026-11-21T12:57:15.861Z",
+    "locked": true,
+    "pick": 0,
+    "text": ""
+  },
+  "second": {
+    "at": "2026-11-21T13:11:52.347Z",
+    "locked": true,
+    "pick": "else",
+    "text": "Problem discovery (reviewing data, interviews, call transcripts, etc to find problems worth solving); intent shaping (taking a high level idea and progressively elaborating on it — uses notional company frameworks for intent definition depth and breadth that we will need to define), decision review (a process much like the one we are following right now in this decision flow), delivery status update (includes execution of plan, monitoring dependencies, exploration of alternatives, and updated projections for delivery)"
+  },
+  "sees": {
+    "at": "2026-11-21T13:07:23.691Z",
+    "locked": true,
+    "pick": 1,
+    "text": "For the demos we are building, full context; we may need to revisit in the future."
+  },
+  "sidebar": {
+    "at": "2026-11-21T12:59:22.165Z",
+    "locked": true,
+    "pick": 2,
+    "text": "Full logo is fine but the spacing and alignment is bad."
+  },
+  "team": {
+    "at": "2026-11-21T13:14:44.925Z",
+    "locked": true,
+    "pick": "else",
+    "text": "Ignore the production build and focus on the local demo. The production team will be able to introspect out decisions (because you will document them), features specs, PRDs, etc that we built for this demo harness. The demo harness is functional, so they will be able to replicate it when the time comes. But be sure we are documenting feature intent as we go, decisions, etc."
+  },
+  "unasked": {
+    "at": "2026-11-21T13:03:19.716Z",
+    "locked": true,
+    "pick": 0,
+    "text": ""
+  },
+  "who": {
+    "at": "2026-11-21T13:13:10.653Z",
+    "locked": true,
+    "pick": 1,
+    "text": "Ideally, scenario creation happens in aviator and we build assistive guided workflows, canvas elements, etc to help the scenario builder build a full packaged demo that can be run, including leveraging existing personas (and their skills) as well as creating new ones"
+  }
+}

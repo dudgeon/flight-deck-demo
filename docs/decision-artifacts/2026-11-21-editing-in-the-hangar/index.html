@@ -1,0 +1,615 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!-- decision-archive:start -->
+<div style="font:13px/1.45 system-ui,sans-serif;background:Canvas;color:CanvasText;border-bottom:1px solid GrayText;padding:8px 16px">Archived copy of <b>Editing in the Hangar</b>, a decision artifact from 2026-11-21. Nothing on this page is saved. The index of all of them is in <a href="../index.html">docs/decision-artifacts</a>.</div>
+<script>
+(function(){
+  var A={};
+  function snap(){var docs=Object.keys(A).map(function(k){return {id:k,data:function(){return A[k]},exists:true}});return {docs:docs,empty:!docs.length,size:docs.length,forEach:function(f){docs.forEach(f)}}}
+  function doc(id){return {id:id,get:async function(){return {id:id,exists:id in A,data:function(){return A[id]}}},set:async function(){},update:async function(){},delete:async function(){}}}
+  var db={collection:function(){return {get:async function(){return snap()},doc:doc,onSnapshot:function(f){setTimeout(function(){f(snap())},0);return function(){}},add:async function(){}}},doc:function(p){return doc(String(p).split("/").pop())}};
+  window.claude={use:async function(name){return name==="db"?db:null}};
+})();
+</script>
+<!-- decision-archive:end -->
+
+<title>Editing in the Hangar</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: a reading column of findings and decisions, with one wide working mockup of the in-Hangar editor. Colors are Product Aviator's own tokens (Hangar teal for building). */
+:root {
+  --bg: #f4f6f9; --surface: #ffffff; --ink: #0f1e30; --ink-2: #475a70; --ink-3: #71829a;
+  --line: #d6dde6; --line-strong: #b4c0ce; --navy: #0a223d; --on-navy: #f2f6fa;
+  --build: #0d6e78; --build-soft: #d9f0f1; --on-build: #ffffff;
+  --hangar-bg: #edf4f6; --hangar-grid: #d3e3e7; --hangar-paper: #fbfdfd;
+  --ok: #17794a; --ok-soft: #ddf1e6; --attn: #8d5a00; --attn-soft: #f9ebcf; --fail: #b3261e; --fail-soft: #f9dedc;
+  --add: #ddf1e6; --del: #f9dedc;
+  --font: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --r: 6px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #071526; --surface: #0c1e33; --ink: #e6edf5; --ink-2: #a6b6c8; --ink-3: #71849a;
+  --line: #1e3550; --line-strong: #3a5676; --navy: #2f64a0; --on-navy: #f2f6fa;
+  --build: #58c9d3; --build-soft: #0c3237; --on-build: #04262a;
+  --hangar-bg: #081d24; --hangar-grid: #12333b; --hangar-paper: #0b252d;
+  --ok: #5bcb93; --ok-soft: #0f3123; --attn: #e9b44c; --attn-soft: #362808; --fail: #ff8a80; --fail-soft: #3d1715;
+  --add: #0f3123; --del: #3d1715; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #071526; --surface: #0c1e33; --ink: #e6edf5; --ink-2: #a6b6c8; --ink-3: #71849a;
+  --line: #1e3550; --line-strong: #3a5676; --navy: #2f64a0; --on-navy: #f2f6fa;
+  --build: #58c9d3; --build-soft: #0c3237; --on-build: #04262a;
+  --hangar-bg: #081d24; --hangar-grid: #12333b; --hangar-paper: #0b252d;
+  --ok: #5bcb93; --ok-soft: #0f3123; --attn: #e9b44c; --attn-soft: #362808; --fail: #ff8a80; --fail-soft: #3d1715;
+  --add: #0f3123; --del: #3d1715; color-scheme: dark }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 64px; }
+.col { max-width: 860px; margin: 0 auto; display: grid; gap: 28px; }
+.wide { max-width: 1240px; margin: 0 auto; }
+h1 { font-size: 30px; line-height: 1.2; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 20px; margin: 0 0 8px; text-wrap: balance; }
+h3 { font-size: 15px; margin: 0; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--build); font-weight: 600; }
+.lead { color: var(--ink-2); font-size: 16px; }
+.muted { color: var(--ink-2); }
+code, .mono { font-family: var(--mono); font-size: 13px; }
+section { display: grid; gap: 12px; }
+
+.found { display: grid; gap: 10px; }
+.found div { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; }
+.found .mk { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; margin-top: 3px; }
+.mk.bad { background: var(--fail-soft); color: var(--fail); }
+.mk.gap { background: var(--attn-soft); color: var(--attn); }
+
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 620px; font-size: 14px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; color: var(--ink-3); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; background: var(--hangar-paper); }
+tr:last-child td { border-bottom: 0; }
+.how { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 99px; background: var(--build-soft); color: var(--build); font-weight: 600; white-space: nowrap; }
+.how.ask { background: var(--navy); color: var(--on-navy); }
+.how.try { background: var(--ok-soft); color: var(--ok); }
+
+/* ---------- the mockup ---------- */
+.frame { border: 1px solid var(--line-strong); border-radius: 10px; overflow: hidden; background: var(--hangar-bg);
+  background-image: linear-gradient(var(--hangar-grid) 1px, transparent 1px), linear-gradient(90deg, var(--hangar-grid) 1px, transparent 1px);
+  background-size: 24px 24px; position: relative; }
+.band { background: var(--build); color: var(--on-build); display: flex; gap: 12px; align-items: center; padding: 8px 14px; font-size: 13px; flex-wrap: wrap; }
+.band b { font-size: 14px; }
+.band .sp { flex: 1; }
+.band button { background: transparent; color: var(--on-build); border: 1px solid currentColor; border-radius: 5px; padding: 2px 10px; font: inherit; }
+.mock { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; padding: 16px 16px 84px; min-height: 640px; }
+.crumb { grid-column: 1 / -1; font-size: 13px; color: var(--ink-3); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.crumb a { color: var(--build); }
+.who { grid-column: 1 / -1; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.av { width: 36px; height: 36px; border-radius: 50%; border: 1.5px dashed var(--build); display: grid; place-items: center; font-weight: 700; font-size: 13px; color: var(--build); background: var(--surface); flex: none; }
+.who h3 { font-size: 22px; }
+.chip { font-size: 12px; padding: 2px 8px; border-radius: 99px; font-weight: 600; }
+.chip.draft { background: var(--build-soft); color: var(--build); }
+.chip.ok { background: var(--ok-soft); color: var(--ok); }
+.chip.attn { background: var(--attn-soft); color: var(--attn); }
+.who .sp { flex: 1; }
+.btn { font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 5px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); cursor: pointer; }
+.btn.pri { background: var(--build); border-color: var(--build); color: var(--on-build); font-weight: 600; }
+.btn.quiet { border-color: transparent; background: transparent; color: var(--ink-2); }
+.btn:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--build); outline-offset: 1px; }
+.btn[disabled] { opacity: .5; cursor: default; }
+
+.card { background: var(--hangar-paper); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; display: grid; gap: 10px; min-width: 0; }
+.card.editing { border: 1.5px dashed var(--build); background: var(--surface); }
+.card > .lbl { font-size: 12px; color: var(--ink-3); display: flex; justify-content: space-between; gap: 8px; }
+.stack { display: grid; gap: 16px; align-content: start; min-width: 0; }
+.field { display: grid; gap: 3px; }
+.field label { font-size: 12px; color: var(--ink-2); font-weight: 600; }
+.field .hint { font-size: 12px; color: var(--ink-3); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+input[type=text], textarea, select { font: inherit; font-size: 14px; color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong); border-radius: 5px; padding: 6px 8px; width: 100%; }
+textarea { font-family: var(--mono); font-size: 12.5px; line-height: 1.55; min-height: 210px; resize: vertical; }
+.ro { font-size: 14px; padding: 6px 0; }
+.seg { justify-self: start; display: inline-flex; border: 1px solid var(--line-strong); border-radius: 5px; overflow: hidden; }
+.seg button { font: inherit; font-size: 13px; border: 0; background: var(--surface); color: var(--ink-2); padding: 5px 12px; cursor: pointer; }
+.seg button[aria-pressed=true] { background: var(--build); color: var(--on-build); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font-size: 13px; padding: 3px 4px 3px 10px; border-radius: 99px; background: var(--build-soft); color: var(--build); display: inline-flex; align-items: center; gap: 4px; }
+.tag button { border: 0; background: transparent; color: inherit; cursor: pointer; font-size: 14px; line-height: 1; padding: 0 4px; }
+.addtag { font-size: 13px; padding: 3px 10px; border-radius: 99px; border: 1px dashed var(--build); background: transparent; color: var(--build); cursor: pointer; font-family: inherit; }
+.pick { display: grid; gap: 4px; }
+.pick label { display: flex; gap: 8px; align-items: baseline; font-size: 14px; }
+.pick small { color: var(--ink-3); }
+.menu { border: 1px solid var(--line-strong); background: var(--surface); border-radius: var(--r); padding: 6px; display: grid; gap: 2px; box-shadow: 0 6px 20px rgba(10,34,61,.14); }
+.menu button { text-align: left; font: inherit; font-size: 13px; background: transparent; border: 0; color: var(--ink); padding: 5px 8px; border-radius: 4px; cursor: pointer; }
+.menu button:hover { background: var(--build-soft); }
+.menu small { color: var(--ink-3); display: block; }
+
+.turn { border: 1px solid var(--line); border-radius: var(--r); padding: 10px 12px; background: var(--surface); display: grid; gap: 4px; }
+.turn .h { display: flex; gap: 8px; align-items: center; font-size: 13px; flex-wrap: wrap; }
+.turn .h .av { width: 26px; height: 26px; font-size: 11px; border-style: solid; }
+.standin { font-family: var(--mono); font-size: 10.5px; padding: 0 5px; border: 1px dashed var(--attn); color: var(--attn); border-radius: 3px; }
+.turn p { font-size: 13px; color: var(--ink-2); }
+.checks { display: grid; gap: 4px; font-size: 13.5px; }
+.checks .ok { color: var(--ok); }
+.checks .bad { color: var(--fail); }
+.diff { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); border-radius: 5px; background: var(--surface); overflow-x: auto; }
+.diff div { padding: 1px 10px; white-space: pre; }
+.diff .a { background: var(--add); }
+.diff .d { background: var(--del); text-decoration: line-through; color: var(--ink-2); }
+.saved { font-size: 12px; color: var(--ink-3); }
+
+.pubbar { position: absolute; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px dashed var(--build); padding: 10px 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.pubbar input { flex: 1 1 220px; width: auto; }
+.pubbar .sp { flex: 1; }
+
+/* Aviator pop-over */
+.fab { position: absolute; right: 16px; bottom: 70px; background: var(--navy); color: var(--on-navy); border: 0; border-radius: 99px; padding: 9px 16px; font: inherit; font-weight: 600; font-size: 14px; cursor: pointer; box-shadow: 0 6px 18px rgba(10,34,61,.28); display: flex; gap: 8px; align-items: center; }
+.pop { position: absolute; right: 16px; bottom: 70px; width: min(400px, calc(100% - 32px)); height: min(500px, calc(100% - 130px)); background: var(--surface); border: 1px solid var(--line-strong); border-radius: 10px; box-shadow: 0 14px 40px rgba(10,34,61,.3); display: grid; grid-template-rows: auto auto 1fr auto; overflow: hidden; }
+.pop header { background: var(--navy); color: var(--on-navy); padding: 9px 12px; display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.pop header .sp { flex: 1; }
+.pop header button { background: transparent; border: 0; color: var(--on-navy); font: inherit; cursor: pointer; font-size: 13px; padding: 2px 6px; border-radius: 4px; }
+.tabs { display: flex; border-bottom: 1px solid var(--line); }
+.tabs button { flex: 1; font: inherit; font-size: 13px; padding: 7px; background: transparent; border: 0; border-bottom: 2px solid transparent; color: var(--ink-2); cursor: pointer; }
+.tabs button[aria-selected=true] { border-bottom-color: var(--build); color: var(--ink); font-weight: 600; }
+.log { padding: 12px; overflow-y: auto; display: grid; gap: 10px; align-content: start; font-size: 13.5px; }
+.msg { padding: 8px 10px; border-radius: 8px; max-width: 92%; }
+.msg.me { background: var(--build-soft); justify-self: end; }
+.msg.bot { background: var(--bg); }
+.msg .edit { margin-top: 6px; font-size: 12px; color: var(--build); font-weight: 600; }
+.compose { border-top: 1px solid var(--line); padding: 8px; display: flex; gap: 6px; }
+.compose input { flex: 1; }
+.sugg { display: flex; flex-wrap: wrap; gap: 6px; }
+.sugg button { font: inherit; font-size: 12px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink-2); border-radius: 99px; padding: 3px 10px; cursor: pointer; }
+.pinned .mock { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) 360px; }
+.pinned .pop { position: static; width: auto; height: auto; grid-row: 1 / span 20; grid-column: 3; box-shadow: none; align-self: stretch; min-height: 560px; }
+.pinned .popslot { grid-column: 3; grid-row: 3 / span 10; display: grid; }
+
+/* decisions */
+.dec { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 18px; display: grid; gap: 12px; }
+.dec .q { font-size: 17px; font-weight: 600; }
+.opts { display: grid; gap: 8px; }
+.opt { border: 1px solid var(--line); border-radius: var(--r); padding: 10px 12px; display: grid; grid-template-columns: 20px 1fr; gap: 10px; cursor: pointer; background: var(--hangar-paper); }
+.opt:has(input:checked) { border-color: var(--build); background: var(--build-soft); }
+.opt input { margin-top: 4px; accent-color: var(--build); }
+.opt b { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.rec { font-size: 11px; font-weight: 700; color: var(--ok); background: var(--ok-soft); padding: 1px 7px; border-radius: 99px; letter-spacing: .02em; }
+.opt p { font-size: 13.5px; color: var(--ink-2); }
+.dec textarea { min-height: 60px; font-family: var(--font); font-size: 14px; }
+.dec .status { font-size: 12.5px; color: var(--ink-3); min-height: 1em; }
+.why { font-size: 13.5px; color: var(--ink-2); border-left: 3px solid var(--line-strong); padding-left: 10px; }
+.thumbs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.thumb { border: 1px solid var(--line); border-radius: 6px; background: var(--hangar-bg); height: 92px; position: relative; overflow: hidden; }
+.thumb .pg { position: absolute; inset: 8px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 5px; }
+.thumb .pg i { background: var(--hangar-paper); border: 1px solid var(--line); border-radius: 3px; }
+.thumb .ch { position: absolute; background: var(--surface); border: 1.5px solid var(--navy); border-radius: 4px; }
+.thumb .ch::before { content: ""; position: absolute; inset: 0 0 auto; height: 9px; background: var(--navy); }
+.thumb span { position: absolute; left: 6px; bottom: 4px; font-size: 11px; color: var(--ink-2); background: var(--surface); padding: 0 4px; border-radius: 3px; }
+.summary { position: sticky; bottom: 0; }
+
+@media (max-width: 860px) {
+  .mock, .pinned .mock { grid-template-columns: minmax(0, 1fr); }
+  .pinned .pop { grid-column: 1; grid-row: auto; min-height: 420px; }
+  .row2 { grid-template-columns: 1fr; }
+  .thumbs { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: no-preference) { .pop { animation: up .16s ease-out; } @keyframes up { from { transform: translateY(8px); opacity: .6 } } }
+</style>
+
+<div class="col">
+  <header style="display:grid;gap:10px">
+    <div class="eyebrow">Hangar · person builder, take two</div>
+    <h1>Editing a person without leaving the Hangar</h1>
+    <p class="lead">You said changing a character felt clunky, opaque and mysterious. You were right. Here is what goes wrong today, every change a PM makes to a person, a working mockup of the fix, and six choices for you to settle. Your answers save as you pick them.</p>
+  </header>
+
+  <section>
+    <h2>What goes wrong today</h2>
+    <div class="found">
+      <div><span class="mk bad">!</span><p><b>Edit throws you out.</b> "Edit" starts a draft and then opens a new chat in flying mode with a prefilled prompt. You lose the page you were on, and nothing says how to get back.</p></div>
+      <div><span class="mk bad">!</span><p><b>Nothing on the page is editable.</b> The brief (the character's system message) and every field can only be changed by asking Aviator, even a one-word fix to a role.</p></div>
+      <div><span class="mk gap">?</span><p><b>Skills go nowhere.</b> A person file can carry a <code>skills:</code> line, but I checked: today nothing reads it. The background session that plays them is never told about those skills. So the link was hard to find because there was nothing behind it.</p></div>
+      <div><span class="mk gap">?</span><p><b>Where they appear is read-only.</b> The page lists the workflows and starters that use someone, but you can't add or remove them there.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The changes you'd want to make, and how each one would work</h2>
+    <p class="muted">Most changes are typing or picking, so they happen right on the page. Aviator is for the changes where words need writing, and trying someone out is a chat by nature.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Change</th><th>Example</th><th>How</th></tr></thead>
+      <tbody>
+        <tr><td>Name, role, initials</td><td>Mara moves to Design director</td><td><span class="how">Type in place</span></td></tr>
+        <tr><td>Person or agent, and the stand-in label</td><td>Turn a team into a named person (always a stand-in)</td><td><span class="how">Toggle</span></td></tr>
+        <tr><td>How they answer</td><td>A live session, or fixed answers from a script</td><td><span class="how">Toggle</span></td></tr>
+        <tr><td>When to call them</td><td>Add "pricing copy" to Mara's call-for line</td><td><span class="how">Type in place</span></td></tr>
+        <tr><td>Brief (their system message)</td><td>Add what she thinks about notifications</td><td><span class="how">Edit the text</span> or <span class="how ask">Ask Aviator</span></td></tr>
+        <tr><td>Script answers (scripted agents)</td><td>Change what Support Insights says about volume</td><td><span class="how">Edit the text</span></td></tr>
+        <tr><td>Skills they bring</td><td>Give Risk Review the "intent" framework</td><td><span class="how">Pick from Skills</span></td></tr>
+        <tr><td>Where they can be called</td><td>Add Mara to Delivery status, drop her from a starter</td><td><span class="how">Tick boxes</span></td></tr>
+        <tr><td>Rework the voice or stance</td><td>"Make her more sceptical about extra alerts"</td><td><span class="how ask">Ask Aviator</span></td></tr>
+        <tr><td>Try them out</td><td>Ask the draft a real question and see the turn</td><td><span class="how try">Try them</span></td></tr>
+        <tr><td>Duplicate, remove, go back</td><td>Restore last week's Mara</td><td><span class="how">Buttons, as now</span></td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>The mockup</h2>
+    <p class="muted">Click around. Edit a field and watch the preview and "What changes" update. Open <b>Ask Aviator</b> and try a suggestion or the "Try them" tab. Pin the chat to see it as a column instead.</p>
+  </section>
+</div>
+
+<div class="wide" style="margin-top:14px">
+  <div class="frame" id="frame">
+    <div class="band"><b>Hangar</b><span>Where the people, workflows and views others fly are defined. Nothing is live until you publish.</span><span class="sp"></span><button type="button">Back to flying</button></div>
+    <div class="mock" id="mock">
+      <div class="crumb"><a href="#mock">People and agents</a><span>/</span><span>Mara Okafor</span></div>
+      <div class="who">
+        <span class="av" id="avI">MO</span>
+        <h3 id="hName">Mara Okafor</h3>
+        <span class="chip draft" id="modeChip">Live</span>
+        <span class="chip ok" id="checkChip" hidden>Ready to publish</span>
+        <span class="sp"></span>
+        <span class="saved" id="saved"></span>
+        <button class="btn pri" id="editBtn" type="button">Edit</button>
+        <button class="btn" type="button" id="dupBtn">Duplicate</button>
+        <button class="btn quiet" type="button">History</button>
+      </div>
+
+      <div class="stack">
+        <div class="card" id="cWho">
+          <div class="lbl"><span>Who they are</span></div>
+          <div class="row2">
+            <div class="field"><label for="fName">Name</label><input type="text" id="fName" value="Mara Okafor" disabled></div>
+            <div class="field"><label for="fRole">Role</label><input type="text" id="fRole" value="Design lead, Cards" disabled></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>Kind</label><div class="seg" id="kindSeg"><button type="button" aria-pressed="true" data-v="person" disabled>Person</button><button type="button" aria-pressed="false" data-v="agent" disabled>Agent</button></div><span class="hint" id="kindHint">A person is always shown as a stand-in.</span></div>
+            <div class="field"><label>How they answer</label><div class="seg" id="backSeg"><button type="button" aria-pressed="true" data-v="session" disabled>Live session</button><button type="button" aria-pressed="false" data-v="script" disabled>Script</button></div></div>
+          </div>
+          <div class="field"><label for="fCall">Call them for</label><input type="text" id="fCall" value="the customer's experience, wording, flows, accessibility, research evidence" disabled></div>
+        </div>
+
+        <div class="card" id="cBrief">
+          <div class="lbl"><span>Brief · what the agent playing them is told</span><span id="briefCount"></span></div>
+          <textarea id="fBrief" disabled spellcheck="false" aria-label="Brief">You are standing in for Mara Okafor, the design lead the product manager works with on Cards. The real Mara is not here: you answer the way she would, from what is written below, and you never claim to have checked with her.
+
+What Mara cares about:
+
+- The moment of a decline. A teenager at a till with a declined card is the worst moment in this product; everything there must be fast, clear and kind.
+- Plain words. She removes "authorized user" and "cycle" from anything a customer reads.
+- Evidence. She ran eight family interviews in the spring and quotes them.
+
+How Mara talks: warm, direct, short paragraphs, first names.</textarea>
+        </div>
+
+        <div class="card" id="cSkills">
+          <div class="lbl"><span>Skills they bring</span></div>
+          <div class="chips" id="skillChips"></div>
+          <div id="skillMenu" class="menu" hidden></div>
+          <span class="hint muted" style="font-size:12px">Their session is told to use these when they answer.</span>
+        </div>
+
+        <div class="card" id="cWhere">
+          <div class="lbl"><span>Where they can be called</span></div>
+          <div class="pick" id="wherePick"></div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="card">
+          <div class="lbl"><span>How they appear when flying</span></div>
+          <div class="turn"><div class="h"><span class="av" id="tAv">MO</span><b id="tName">Mara Okafor</b><span class="standin" id="tStand">STAND-IN</span><span class="muted" id="tRole">Design lead, Cards</span></div><p id="tCall">Called for the customer's experience, wording, flows, accessibility, research evidence.</p></div>
+        </div>
+        <div class="card"><div class="lbl"><span>Checks</span></div><div class="checks" id="checks"></div></div>
+        <div class="card"><div class="lbl"><span>What changes</span><span id="chgCount"></span></div><div class="diff" id="diff"></div></div>
+        <div class="popslot" id="popslot"></div>
+      </div>
+    </div>
+
+    <div class="pubbar" id="pubbar" hidden>
+      <span class="chip draft">Draft</span>
+      <input type="text" id="sumIn" placeholder="One line on what changed (kept in History)" aria-label="What changed">
+      <button class="btn pri" id="pubBtn" type="button">Publish</button>
+      <button class="btn quiet" id="discBtn" type="button">Discard draft</button>
+    </div>
+
+    <button class="fab" id="fab" type="button" hidden>✦ Ask Aviator</button>
+    <div class="pop" id="pop" hidden role="dialog" aria-label="Aviator">
+      <header><b>Aviator</b><span style="opacity:.75;font-size:12px">working on this draft</span><span class="sp"></span><button type="button" id="pinBtn">Pin</button><button type="button" id="closeBtn" aria-label="Close">✕</button></header>
+      <div class="tabs" role="tablist"><button role="tab" aria-selected="true" id="tabEdit" type="button">Change with Aviator</button><button role="tab" aria-selected="false" id="tabTry" type="button">Try them</button></div>
+      <div class="log" id="log"></div>
+      <div class="compose"><input type="text" id="cIn" placeholder="Ask for a change…" aria-label="Message"><button class="btn pri" id="cSend" type="button">Send</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="col" style="margin-top:36px">
+  <section>
+    <h2>Six choices for you</h2>
+    <p class="muted">Each one has my recommendation and a "Something else" option. Add a note anywhere. I'll build on the recommended options while you look, and change course on anything you pick differently.</p>
+  </section>
+  <div id="decisions" style="display:grid;gap:18px"></div>
+  <p class="muted" id="dbNote" style="font-size:13px"></p>
+
+  <section>
+    <h2>What this changes beyond people</h2>
+    <p>The same pattern carries into the workflow and scenario builders I'm building next: the page is the editor, changes save to a draft as you go, Aviator sits in a pop-over for the writing, and Publish stays the one gate. A scenario's cast, title and invented data are typed or picked on the page. Its script gets Aviator's help, and "Try it" plays it in the player.</p>
+  </section>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const live = {
+    name: "Mara Okafor", role: "Design lead, Cards", kind: "person", backing: "session",
+    call: "the customer's experience, wording, flows, accessibility, research evidence",
+    brief: $("fBrief").value, skills: ["intent"], where: ["document-review", "decision-review", "review-with-others"],
+  };
+  const SKILLS = [
+    ["intent", "Intent framework: how deep an idea must go"],
+    ["document-review", "Reviewing a document with findings"],
+    ["participants", "Calling others into a conversation"],
+    ["view-kit", "Drawing views and records"],
+    ["problem-discovery", "Finding problems worth solving"],
+  ];
+  const WHERE = [
+    ["document-review", "Review a document with others", "workflow"],
+    ["decision-review", "Decision review", "workflow"],
+    ["delivery-status", "Delivery status update", "workflow"],
+    ["problem-discovery", "Problem discovery", "workflow"],
+    ["review-with-others", "Review a document with others", "starter"],
+    ["shape-an-idea", "Shape an idea into an intent", "starter"],
+  ];
+  let d = structuredClone(live);
+  let editing = false, timer = null;
+
+  const initials = (n) => n.split(/\s+/).filter(Boolean).map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "?";
+  function lines(o) {
+    const out = ["name: " + o.name, "kind: " + o.kind, "role: " + o.role, "stand_in: " + (o.kind === "person" ? "true" : "false"),
+      "backing: " + o.backing, "call_for: " + o.call, "skills: " + o.skills.join(", ")];
+    o.where.forEach((w) => out.push("called in: " + w));
+    return out.concat(o.brief.split("\n"));
+  }
+  function render() {
+    $("hName").textContent = d.name || "Unnamed";
+    $("avI").textContent = initials(d.name);
+    $("tAv").textContent = initials(d.name);
+    $("tName").textContent = d.name || "Unnamed";
+    $("tRole").textContent = d.role;
+    $("tStand").hidden = d.kind !== "person";
+    $("tCall").textContent = "Called for " + (d.call || "…") + ".";
+    $("kindHint").textContent = d.kind === "person" ? "A person is always shown as a stand-in." : "An agent speaks as itself.";
+    for (const [seg, key] of [["kindSeg", "kind"], ["backSeg", "backing"]])
+      $(seg).querySelectorAll("button").forEach((b) => { b.setAttribute("aria-pressed", String(b.dataset.v === d[key])); b.disabled = !editing; });
+    $("briefCount").textContent = d.brief.split(/\s+/).filter(Boolean).length + " words";
+    const chips = $("skillChips"); chips.textContent = "";
+    d.skills.forEach((s) => {
+      const t = document.createElement("span"); t.className = "tag"; t.textContent = s;
+      if (editing) { const x = document.createElement("button"); x.type = "button"; x.textContent = "×"; x.setAttribute("aria-label", "Remove " + s);
+        x.onclick = () => { d.skills = d.skills.filter((k) => k !== s); changed(); }; t.append(x); }
+      chips.append(t);
+    });
+    if (editing) { const a = document.createElement("button"); a.type = "button"; a.className = "addtag"; a.textContent = "+ Add a skill";
+      a.onclick = () => { $("skillMenu").hidden = !$("skillMenu").hidden; }; chips.append(a); }
+    const menu = $("skillMenu"); menu.textContent = "";
+    SKILLS.filter(([id]) => !d.skills.includes(id)).forEach(([id, about]) => {
+      const b = document.createElement("button"); b.type = "button"; b.textContent = id;
+      const s = document.createElement("small"); s.textContent = about; b.append(s);
+      b.onclick = () => { d.skills.push(id); menu.hidden = true; changed(); }; menu.append(b);
+    });
+    if (!editing) menu.hidden = true;
+    const pick = $("wherePick"); pick.textContent = "";
+    WHERE.forEach(([id, title, kind]) => {
+      const l = document.createElement("label"); const c = document.createElement("input"); c.type = "checkbox";
+      c.checked = d.where.includes(id); c.disabled = !editing; c.id = "w-" + id;
+      c.onchange = () => { d.where = c.checked ? d.where.concat(id) : d.where.filter((w) => w !== id); changed(); };
+      const t = document.createElement("span"); t.textContent = title; const k = document.createElement("small"); k.textContent = kind;
+      l.append(c, t, k); pick.append(l);
+    });
+    // checks
+    const probs = [];
+    if (!d.name.trim()) probs.push("needs a name");
+    if (!d.call.trim()) probs.push("needs a line on when to call them");
+    if (d.brief.trim().split(/\s+/).length < 12) probs.push("the brief is too short to play them from");
+    const same = JSON.stringify(lines(d)) === JSON.stringify(lines(live));
+    const ck = $("checks"); ck.textContent = "";
+    (probs.length ? probs : ["Every check passes."]).forEach((p) => { const r = document.createElement("div"); r.className = probs.length ? "bad" : "ok"; r.textContent = (probs.length ? "✕ " : "✓ ") + p; ck.append(r); });
+    if (editing && same) { const r = document.createElement("div"); r.className = "muted"; r.textContent = "Nothing has changed yet."; ck.append(r); }
+    // diff
+    const a = lines(live), b = lines(d), diff = $("diff"); diff.textContent = ""; let n = 0;
+    const max = Math.max(a.length, b.length);
+    for (let i = 0; i < max; i++) {
+      if (a[i] === b[i]) continue;
+      if (a[i] !== undefined && !b.includes(a[i])) { const r = document.createElement("div"); r.className = "d"; r.textContent = "− " + a[i]; diff.append(r); n++; }
+      if (b[i] !== undefined && !a.includes(b[i])) { const r = document.createElement("div"); r.className = "a"; r.textContent = "+ " + b[i]; diff.append(r); n++; }
+    }
+    if (!n) { const r = document.createElement("div"); r.className = "muted"; r.textContent = editing ? "No changes yet." : "This is the live version."; diff.append(r); }
+    $("chgCount").textContent = n ? n + " line" + (n === 1 ? "" : "s") : "";
+    $("pubBtn").disabled = !!probs.length || same;
+    $("checkChip").hidden = !editing || !!probs.length || same;
+    $("modeChip").textContent = editing ? "Draft · change" : "Live";
+  }
+  function changed() {
+    $("saved").textContent = "Saving…"; clearTimeout(timer);
+    timer = setTimeout(() => { $("saved").textContent = "Draft saved"; }, 500);
+    render();
+  }
+  function setEditing(on) {
+    editing = on;
+    ["fName", "fRole", "fCall", "fBrief"].forEach((id) => { $(id).disabled = !on; });
+    document.querySelectorAll(".mock .card").forEach((c, i) => { if (i < 4) c.classList.toggle("editing", on); });
+    $("editBtn").hidden = on; $("dupBtn").hidden = on;
+    $("pubbar").hidden = !on; $("fab").hidden = !on || !$("pop").hidden;
+    if (!on) { closePop(); $("frame").classList.remove("pinned"); $("saved").textContent = ""; }
+    render();
+  }
+  $("editBtn").onclick = () => setEditing(true);
+  $("discBtn").onclick = () => { d = structuredClone(live); fill(); setEditing(false); };
+  $("pubBtn").onclick = () => { Object.assign(live, structuredClone(d)); $("sumIn").value = ""; setEditing(false); $("saved").textContent = "Published. The old version is in History."; };
+  function fill() { $("fName").value = d.name; $("fRole").value = d.role; $("fCall").value = d.call; $("fBrief").value = d.brief; }
+  [["fName", "name"], ["fRole", "role"], ["fCall", "call"], ["fBrief", "brief"]].forEach(([id, key]) => { $(id).addEventListener("input", (e) => { d[key] = e.target.value; changed(); }); });
+  for (const [seg, key] of [["kindSeg", "kind"], ["backSeg", "backing"]])
+    $(seg).addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b || !editing) return; d[key] = b.dataset.v; changed(); });
+
+  // ---- Aviator pop-over
+  let tab = "edit";
+  const SUGG = {
+    edit: ["Make her more sceptical about extra alerts", "Add that she owns the pricing copy", "Tighten the brief to 80 words"],
+    try: ["What would you cut from the decline screen?", "Is a weekly digest better than alerts?"],
+  };
+  function say(who, text, note) {
+    const m = document.createElement("div"); m.className = "msg " + (who === "me" ? "me" : "bot"); m.textContent = text;
+    if (note) { const e = document.createElement("div"); e.className = "edit"; e.textContent = note; m.append(e); }
+    $("log").append(m); $("log").scrollTop = 1e6;
+  }
+  function turn(text) {
+    const t = document.createElement("div"); t.className = "turn";
+    const h = document.createElement("div"); h.className = "h";
+    const av = document.createElement("span"); av.className = "av"; av.textContent = initials(d.name);
+    const b = document.createElement("b"); b.textContent = d.name; h.append(av, b);
+    if (d.kind === "person") { const s = document.createElement("span"); s.className = "standin"; s.textContent = "STAND-IN"; h.append(s); }
+    const p = document.createElement("p"); p.textContent = text; t.append(h, p); $("log").append(t); $("log").scrollTop = 1e6;
+  }
+  function openLog() {
+    $("log").textContent = "";
+    if (tab === "edit") say("av", "I can see the draft of " + d.name + ". Tell me what to change; you'll see each change land on the page and in What changes.");
+    else say("av", "Ask " + d.name + " anything. The draft answers, the way people will meet them when flying. Nothing here is published.");
+    const s = document.createElement("div"); s.className = "sugg";
+    SUGG[tab].forEach((q) => { const b = document.createElement("button"); b.type = "button"; b.textContent = q; b.onclick = () => send(q); s.append(b); });
+    $("log").append(s);
+    $("cIn").placeholder = tab === "edit" ? "Ask for a change…" : "Ask " + d.name.split(" ")[0] + " a question…";
+  }
+  function send(q) {
+    if (!q.trim()) return; say("me", q); $("cIn").value = "";
+    setTimeout(() => {
+      if (tab === "try") {
+        turn(/decline/i.test(q) ? "The second paragraph. Nobody at a till reads it. Keep the reason, keep 'Ask your parent', drop the rest. Our spring interviews were clear on that." : "A digest, with one exception: anything that blocks a purchase goes out at once. Everything else can wait for Sunday.");
+        return;
+      }
+      if (/sceptical|skeptical/i.test(q)) {
+        d.brief = d.brief.replace("- Evidence.", "- Fewer notifications. She is sceptical of any new alert and asks which one it replaces.\n- Evidence.");
+        say("av", "Added a line under what Mara cares about.", "Changed the brief · 1 line added");
+      } else if (/pricing/i.test(q)) {
+        d.call = d.call + ", pricing copy";
+        say("av", "Added pricing copy to when to call her.", "Changed 'Call them for'");
+      } else {
+        d.brief = d.brief.replace(" A teenager at a till with a declined card is the worst moment in this product; everything there must be fast, clear and kind.", " The worst moment in the product; it must be fast, clear and kind.");
+        say("av", "Shortened the first point. The brief is now tighter.", "Changed the brief · 1 line");
+      }
+      fill(); changed();
+    }, 450);
+  }
+  function openPop() { $("pop").hidden = false; $("fab").hidden = true; openLog(); $("cIn").focus(); }
+  function closePop() { $("pop").hidden = true; $("fab").hidden = !editing; if ($("frame").classList.contains("pinned")) togglePin(); }
+  function togglePin() {
+    const f = $("frame"), pinned = f.classList.toggle("pinned");
+    if (pinned) $("mock").append($("pop")); else f.append($("pop"));
+    $("pinBtn").textContent = pinned ? "Unpin" : "Pin";
+  }
+  $("fab").onclick = openPop; $("closeBtn").onclick = closePop; $("pinBtn").onclick = togglePin;
+  $("cSend").onclick = () => send($("cIn").value);
+  $("cIn").addEventListener("keydown", (e) => { if (e.key === "Enter") send($("cIn").value); });
+  $("tabEdit").onclick = () => { tab = "edit"; $("tabEdit").setAttribute("aria-selected", "true"); $("tabTry").setAttribute("aria-selected", "false"); openLog(); };
+  $("tabTry").onclick = () => { tab = "try"; $("tabTry").setAttribute("aria-selected", "true"); $("tabEdit").setAttribute("aria-selected", "false"); openLog(); };
+  render();
+
+  // ---- decisions
+  const DECISIONS = [
+    { id: "chat", q: "Where should the Aviator chat live in the Hangar?",
+      why: "Most edits are typing and picking, so the chat is the occasional helper. A pop-over keeps the page full width and comes back where you left it.",
+      thumbs: [["Pop-over", "right:6px;bottom:6px;width:38%;height:58%"], ["Pinned column", "right:6px;top:6px;width:30%;bottom:6px"], ["Half-screen slide-over", "right:0;top:0;width:50%;bottom:0"]],
+      opts: [
+        ["Pop-over, can be pinned", "A button at the bottom right opens a chat over the page. Pin turns it into a third column for long sessions.", true],
+        ["Always a third column", "The chat is always on the right while editing. Less to open, less room for the form and preview."],
+        ["Half-screen slide-over", "Slides over half the page, like a drawer. Roomy for chat, hides the preview while open."],
+      ] },
+    { id: "save", q: "How should edits be kept?",
+      why: "Nothing reaches anyone flying until Publish, so saving every keystroke to the draft is safe and means you never lose work.",
+      opts: [
+        ["Every edit saves to the draft at once", "A quiet 'Draft saved' note. Publish is the only step that makes it live.", true],
+        ["A Save draft button", "Edits stay on screen until you press Save draft. One more step, and work can be lost if you leave."],
+      ] },
+    { id: "entry", q: "What should Edit do?",
+      why: "Editing on the page you are reading keeps you oriented: the preview, checks and diff sit next to the fields.",
+      opts: [
+        ["The page itself becomes the editor", "Fields turn into inputs with a dashed draft frame, and the Publish bar appears at the bottom. Same address.", true],
+        ["Open a separate editor page", "A dedicated form page. Cleaner split between reading and editing, one more place to learn."],
+      ] },
+    { id: "casting", q: "Can you change where someone is called from their own page?",
+      why: "It's the most natural place to ask 'where does Mara show up?'. The workflow changes go into the same draft and publish together, after the same checks.",
+      opts: [
+        ["Yes, tick workflows, scenarios and starters here", "Ticking adds them to that workflow's list. Unticking is blocked if a scenario script still has them speak.", true],
+        ["Show it here, change it on the workflow", "The person page stays about the person. Casting is done from each workflow or scenario."],
+      ] },
+    { id: "skills", q: "What should skills on a person mean?",
+      why: "Today the field is stored and ignored. Making it real is a small change: the session playing them is told which skills to use.",
+      opts: [
+        ["Skills they bring to their answers", "Picked from the Skills shelf. The background session that plays them is told to use those skills.", true],
+        ["Drop the field for now", "Simpler. A person is only their brief until we need more."],
+      ] },
+    { id: "try", q: "Where should you try someone out?",
+      why: "A real turn from the real background session is the honest test, and it belongs next to the chat that changes them.",
+      opts: [
+        ["A Try them tab in the Aviator pop-over", "You ask, the draft answers as a real participant turn. Nothing is published.", true],
+        ["A small test box on the page", "Ask one question from the right column and see one answer. Quicker, less like the real thing."],
+      ] },
+  ];
+  let db = null; const saved = {};
+  function status(id, text) { const s = document.getElementById("st-" + id); if (s) s.textContent = text; }
+  async function save(id) {
+    const choice = document.querySelector(`input[name="d-${id}"]:checked`);
+    const note = document.getElementById("n-" + id).value;
+    const body = { choice: choice ? choice.value : "", note, at: new Date().toISOString() };
+    if (!db) { status(id, "Answers can't be saved in this view."); return; }
+    status(id, "Saving…");
+    try { await db.doc("answers/" + id).set(body); status(id, "Saved"); } catch (e) { status(id, "Couldn't save (" + (e && e.code || "error") + ")."); }
+  }
+  const host = $("decisions");
+  DECISIONS.forEach((dc, i) => {
+    const box = document.createElement("div"); box.className = "dec";
+    const n = document.createElement("div"); n.className = "eyebrow"; n.textContent = "Choice " + (i + 1) + " of " + DECISIONS.length;
+    const q = document.createElement("div"); q.className = "q"; q.textContent = dc.q;
+    box.append(n, q);
+    if (dc.thumbs) {
+      const th = document.createElement("div"); th.className = "thumbs";
+      dc.thumbs.forEach(([label, pos]) => { const t = document.createElement("div"); t.className = "thumb";
+        t.innerHTML = '<div class="pg"><i></i><i></i></div><div class="ch" style="' + pos + '"></div>';
+        const s = document.createElement("span"); s.textContent = label; t.append(s); th.append(t); });
+      box.append(th);
+    }
+    const opts = document.createElement("div"); opts.className = "opts";
+    dc.opts.concat([["Something else", "Tell me in the note below."]]).forEach(([label, text, rec], j) => {
+      const l = document.createElement("label"); l.className = "opt";
+      const r = document.createElement("input"); r.type = "radio"; r.name = "d-" + dc.id; r.value = label; r.id = "d-" + dc.id + "-" + j;
+      r.onchange = () => save(dc.id);
+      const body = document.createElement("div"); const b = document.createElement("b"); b.textContent = label;
+      if (rec) { const rr = document.createElement("span"); rr.className = "rec"; rr.textContent = "Recommended"; b.append(rr); }
+      const p = document.createElement("p"); p.textContent = text; body.append(b, p); l.append(r, body); opts.append(l);
+    });
+    const why = document.createElement("div"); why.className = "why"; why.textContent = "Why I recommend it: " + dc.why;
+    const ta = document.createElement("textarea"); ta.id = "n-" + dc.id; ta.placeholder = "A note, if you have one"; ta.setAttribute("aria-label", "Note on " + dc.q);
+    let t2; ta.addEventListener("input", () => { clearTimeout(t2); t2 = setTimeout(() => save(dc.id), 800); });
+    const st = document.createElement("div"); st.className = "status"; st.id = "st-" + dc.id;
+    box.append(opts, why, ta, st); host.append(box);
+  });
+  (async () => {
+    try { db = await (window.claude && window.claude.use ? window.claude.use("db") : null); } catch { db = null; }
+    if (!db) { $("dbNote").textContent = "Answers save when this page is opened on claude.ai while signed in."; return; }
+    const timeout = setTimeout(() => { $("dbNote").textContent = "Saved answers can't be reached yet."; }, 10000);
+    db.collection("answers").onSnapshot((snap) => {
+      clearTimeout(timeout); $("dbNote").textContent = "";
+      snap.docs.forEach((doc) => {
+        const v = doc.data() || {}; const id = doc.id;
+        if (saved[id] === JSON.stringify(v)) return; saved[id] = JSON.stringify(v);
+        const r = [...document.querySelectorAll(`input[name="d-${id}"]`)].find((x) => x.value === v.choice);
+        if (r) r.checked = true;
+        const ta = document.getElementById("n-" + id); if (ta && document.activeElement !== ta) ta.value = v.note || "";
+        if (v.choice) status(id, "Saved");
+      });
+    }, () => { clearTimeout(timeout); $("dbNote").textContent = "Saved answers can't be reached right now."; });
+  })();
+})();
+</script>
+
+</body></html>
