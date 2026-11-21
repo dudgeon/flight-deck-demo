@@ -182,3 +182,102 @@ def test_two_projects_sharing_a_folder_each_list_their_own_runs(
 
 def test_an_unknown_project_has_no_runs(tmp_path: Path) -> None:
     assert _client(tmp_path).get("/v1/slim/runs", params={"project": "Nope"}).json()["runs"] == []
+
+
+# ---------------------------------------------------------------- threads (D-89, D-118)
+
+
+def test_a_brief_is_a_file_and_the_threads_first_message(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    assert pa.main(["brief", SCENARIO, "--subject", "Teen allowances", "--director", SESSION,
+                    "--context", "context/notes.md", "--target", "Shaped"]) == 0
+    out = capsys.readouterr()
+    brief = tmp_path / "briefs/teen-allowances-intent--intent-shaping.md"
+    text = brief.read_text()
+    assert "Read your brief at `briefs/teen-allowances-intent--intent-shaping.md`" in out.out
+    assert text in out.out
+    assert "run: progress/teen-allowances-intent--intent-shaping.json" in out.err
+    for expected in (SESSION, "`intent-shaping` skill", "`context/notes.md`", "Shaped",
+                     "data/teen-allowances-intent.json", "never send\neverything", "`risk-review`"):
+        assert expected in text, expected
+
+
+def test_the_run_file_a_brief_names_is_the_one_the_thread_writes(workspace: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    pa.main(["brief", SCENARIO, "--subject", "Allowances", "--director", "d" * 32, "--json"])
+    (file,) = (workspace / "progress").glob("*.json")
+    assert file.as_posix().endswith("progress/allowances-intent--intent-shaping.json")
+
+
+def test_reports_are_one_line_and_the_last_twenty(workspace: Path) -> None:
+    pa.main(["flow", DATA, "--director", "d" * 32, "--brief", "briefs/x.md"])
+    assert pa.main(["report", DATA, "Idea captured in four areas; see the dataset."]) == 0
+    assert pa.main(["report", DATA, "x" * 300]) != 0
+    assert pa.main(["report", DATA, "  "]) != 0
+    run = _run(workspace)
+    assert run["director"] == "d" * 32 and run["brief"] == "briefs/x.md"
+    assert [(r["kind"], r["step"], r["text"]) for r in run["reports"]] == [
+        ("milestone", 1, "Idea captured in four areas; see the dataset.")
+    ]
+    for n in range(25):
+        pa.main(["report", DATA, f"line {n}", "--kind", "progress"])
+    assert len(_run(workspace)["reports"]) == 20
+    assert _run(workspace)["reports"][-1]["text"] == "line 24"
+
+
+def test_a_blocker_shows_the_run_as_waiting_until_work_moves(workspace: Path) -> None:
+    pa.main(["report", DATA, "Waiting on Risk Review for the consent rule.", "--kind", "blocker"])
+    assert _run(workspace)["state"] == "waiting"
+    pa.main(["flow", DATA, "--step", "2"])
+    assert _run(workspace)["state"] == "working"
+
+
+def test_a_thread_is_listed_in_its_directors_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setitem(os.environ, "OMNIGENT_SLIM_PROJECT", "Workspace")
+    folder = tmp_path / "progress"
+    folder.mkdir()
+    thread = "a" * 32
+    (folder / "t.json").write_text(json.dumps({
+        "steps": ["One", "Two"], "current": 1, "session": thread, "director": SESSION,
+        "reports": [{"at": "2026-11-21T10:00:00+00:00", "kind": "blocker", "text": "Stuck."}, {"kind": "nonsense", "text": "Ok."}, "junk"],
+    }))
+
+    class _Family(_Conversations):
+        def get_conversation(self, conversation_id: str) -> Any:
+            if conversation_id == thread:
+                return SimpleNamespace(project_id=None, parent_conversation_id=SESSION, title="Intent shaping: X")
+            return super().get_conversation(conversation_id)
+
+    app = FastAPI()
+    app.include_router(
+        create_slim_runs_router(project_store=_Projects(tmp_path), conversation_store=_Family()),  # type: ignore[arg-type]
+        prefix="/v1",
+    )
+    client = TestClient(app)
+    hangar = client.get("/v1/slim/runs", params={"project": "Hangar"}).json()["runs"]
+    assert [run["id"] for run in hangar] == ["t"]
+    assert hangar[0]["director"] == SESSION
+    assert [(r["kind"], r["text"]) for r in hangar[0]["reports"]] == [("blocker", "Stuck."), ("milestone", "Ok.")]
+    assert client.get("/v1/slim/runs", params={"project": "Workspace"}).json()["runs"] == []
+
+
+def test_a_run_card_reads_its_run_through_the_session_that_shows_it(tmp_path: Path) -> None:
+    folder = tmp_path / "progress"
+    folder.mkdir()
+    (folder / "a--b.json").write_text(json.dumps({"steps": ["One"], "current": 1, "session": "f" * 32,
+                                                  "reports": [{"kind": "done", "text": "Finished."}]}))
+    projects = _Projects(tmp_path)
+    projects.get = lambda project_id, user_id=None: next((p for p in projects._projects if p.id == project_id), None)  # type: ignore[attr-defined]
+    app = FastAPI()
+    app.include_router(
+        create_slim_runs_router(project_store=projects, conversation_store=_Conversations()),  # type: ignore[arg-type]
+        prefix="/v1",
+    )
+    client = TestClient(app)
+    run = client.get("/v1/slim/runs/a--b", params={"session": SESSION}).json()["run"]
+    assert run["reports"][0]["text"] == "Finished."
+    assert run["session"] is None  # its thread is gone
+    assert client.get("/v1/slim/runs/missing", params={"session": SESSION}).json() == {"run": None}
+    assert client.get("/v1/slim/runs/a--b", params={"session": "nope"}).json() == {"run": None}
+    assert client.get("/v1/slim/runs/..%2Fa--b", params={"session": SESSION}).json().get("run") is None

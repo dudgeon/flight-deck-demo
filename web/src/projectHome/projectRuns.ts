@@ -41,6 +41,31 @@ export interface ProjectRun {
   sessionTitle: string | null;
   /** ISO time of the last change. */
   updated: string;
+  /** The director session that started the run in a thread (D-89), if any. */
+  director: string | null;
+  /** The one-line reports the run sent its director (D-118), oldest first. */
+  reports: RunReport[];
+}
+
+export const REPORT_KINDS = ["milestone", "progress", "blocker", "done"] as const;
+export interface RunReport {
+  at: string;
+  kind: (typeof REPORT_KINDS)[number];
+  text: string;
+}
+
+function parseReports(raw: unknown): RunReport[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.slice(-20).flatMap((item): RunReport[] => {
+    if (typeof item !== "object" || item === null) return [];
+    const report = item as Record<string, unknown>;
+    const line = text(report.text, 280);
+    if (!line) return [];
+    const kind = (REPORT_KINDS as readonly string[]).includes(text(report.kind))
+      ? (report.kind as RunReport["kind"])
+      : "milestone";
+    return [{ at: text(report.at, 40), kind, text: line }];
+  });
 }
 
 export interface ProjectRuns {
@@ -96,6 +121,8 @@ export function parseProjectRun(raw: unknown): ProjectRun | null {
     session: text(data.session, 80) || null,
     sessionTitle: text(data.session_title, 200) || null,
     updated: text(data.updated, 40),
+    director: text(data.director, 80) || null,
+    reports: parseReports(data.reports),
   };
 }
 

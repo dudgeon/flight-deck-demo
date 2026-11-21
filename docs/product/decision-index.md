@@ -170,7 +170,7 @@ decided but nothing is built yet.
 
 | D | Decision | Who | Status |
 |---|---|---|---|
-| D-89 | Aviator is a project director; modes run in threads with agent-to-agent messages | Geoff | Decided, not built |
+| D-89 | Aviator is a project director; modes run in threads with agent-to-agent messages | Geoff | Partly built: director skill, briefs and the run card, opt-in; the direct line is not |
 | D-90 | A mode shows as a strip on the message box | Geoff | Decided, not built |
 | D-91 | A mode's replies are marked by a rail with start, pause and resume markers | Geoff | Decided, not built |
 | D-92 | Side questions are answered outside the rail; the mode stays on | Geoff | Decided, not built |
@@ -181,6 +181,10 @@ decided but nothing is built yet.
 | D-97 | A project is one in-market goal inside a lasting area | Geoff | Decided, not built |
 | D-98 | The intent graph's detail is held until it blocks something | Geoff | Decided, not built |
 | D-99 | The smaller calls stand (every workflow makes a mode, no mode color, and so on) | Claude, accepted by Geoff | Decided, not built |
+| D-116 | The director shows a mode through a direct line to its thread; Aviator is not in the path | Geoff | Decided, not built |
+| D-117 | Stepping into a thread puts it in place of the chat, the director folded to a bar, the canvas kept | Geoff | Decided, not built |
+| D-118 | A thread reports milestones, progress, blockers and state, at its own discretion, never everything | Geoff | Built (`pa report`), not yet flown with a live agent |
+| D-119 | A project's connections: a chip on the linked item and a Connections card on the project page | Geoff | Decided, not built |
 | D-120 | Routing is modular: each workflow carries its own routing, stage and persona; Aviator reads them with `pa workflows` (PR 34) | Geoff asked, Claude chose | Decided, not built |
 
 
@@ -198,11 +202,6 @@ decided but nothing is built yet.
 
 ## Open questions not yet numbered
 
-- The modes questions still unanswered (M-8, M-12 to M-14 in
-  [modes-and-projects.md](modes-and-projects.md)): how the director shows a
-  mode, where a thread opens, what a thread reports back, how a project's
-  connections show. They take the next free number when Geoff answers
-  (D-115 or later).
 - Aviator coordination, skill routing and persona strictness (AV-1 to
   AV-6 in [director-coordination.md](director-coordination.md)): put to
   Geoff 2026-11-21; numbered when answered.

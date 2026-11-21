@@ -30,7 +30,7 @@ in the same pull request.
 | [Canvas tools across several tabs](#canvas-tools-across-several-tabs) | Done |
 | [Dock launcher](#dock-launcher) | Done |
 | [Branding](#branding) | Done; repository renamed (D-114) |
-| [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | D-89 to D-99 decided; runs and In flight built (PR 24); four questions open |
+| [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | D-89 to D-99 and D-116 to D-119 decided; runs and In flight built (PR 24) |
 | [Aviator coordination and skill routing](#aviator-coordination-and-skill-routing) | Designed; six questions (AV-1 to AV-6) with Geoff; nothing built |
 
 ---
@@ -304,14 +304,16 @@ a project means something (a goal to ship) and knows its relatives.
 - **Built.** Runs that pause, resume and stop with a where-we-left-off note
   (`pa flow`, `pa runs`), and the "In flight" section on the project page
   with Resume and a sidebar count of runs that need the person.
-- **Next.** The director skill and its run card, the direct line, threads on
-  items and projects with a goal all wait on the second walkthrough. Build
+- **Built, not yet flown live.** Aviator as director: the `director` skill,
+  thread briefs (`pa brief`), thread reports (`pa report`, D-118) and the
+  live run card in the director's chat. Opt-in until it has been run with a
+  live agent on the Mac mini.
+- **Next.** Fly the director with a live agent and fix what breaks. Then the
+  direct line and stepping into a thread (D-116, D-117); threads on items
+  (D-95); projects with a goal and their connections (D-97, D-119). Build
   order is in modes-and-projects.md.
-- **Open.** Four decisions (M-12 how the director shows a mode, M-13 where a
-  thread opens, M-14 what a thread reports, M-8 a project's connections). The
-  intent graph's detail is deliberately held (D-98). When answered, they take
-  the next free number (D-115 or later).
-- **Read.** [modes-and-projects.md](modes-and-projects.md); D-89 to D-99;
+- **Open.** Nothing. The intent graph's detail is deliberately held (D-98).
+- **Read.** [modes-and-projects.md](modes-and-projects.md); D-89 to D-99, D-116 to D-119;
   walkthroughs at https://claude.ai/artifact/HRgpJURjcqasGSCmd3894d and
   https://claude.ai/artifact/YQcb4HDRGMnn6YW82uFNZd.
 
@@ -380,5 +382,3 @@ skill's Gemini key is out of credit, and its OpenAI call names
 
 - Ignore the production build for now; the local demo is the product (D-29).
 - Progressive complexity (D-54).
-- The modes round-two questions (M-8, M-12 to M-14), unanswered at
-  https://claude.ai/artifact/YQcb4HDRGMnn6YW82uFNZd.
