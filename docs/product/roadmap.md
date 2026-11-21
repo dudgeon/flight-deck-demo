@@ -21,7 +21,7 @@ in the same pull request.
 | [Canvas tools across several tabs](#canvas-tools-across-several-tabs) | Done |
 | [Dock launcher](#dock-launcher) | Done |
 | [Branding](#branding) | Done; one naming question open |
-| [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | Design exploration; eleven decisions open |
+| [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | Partly decided (D-89 to D-99); four decisions open; nothing built |
 
 ---
 
@@ -251,21 +251,24 @@ workflow's mode, visibly; replies made in the mode are marked as its own; the
 person can pause in plain language and come back later from the project;
 and a project means something (a goal to ship) and knows its relatives.
 
-- **Done.** A design exploration with drawings of every option (2026-11-21).
-  Nothing is built.
+- **Done.** Two design walkthroughs with drawings (2026-11-21). Geoff answered
+  the first: D-89 to D-99. The headline is D-89: Aviator is a project
+  director and modes run in threads. Nothing is built.
 - **Exists already and would be reused.** The workflow card and `pa flow`
   progress files (D-16), direct actions for state changes (D-11), views in
   the chat (D-53), amber for needs-you (D-50), a project per flown demo
-  (D-76). From upstream: the project board, session
-  families, child sessions and side chats.
-- **Next.** Geoff answers the walkthrough; the answers become decisions; then
-  the smallest slice is the run state and the where-we-left-off note in
-  `pa flow`, the strip and the rail.
-- **Open.** Eleven decisions, M-1 to M-11, and a list of things not yet
-  explored (area pages, a project's life cycle, how upstream changes reach
-  the person).
-- **Read.** [modes-and-projects.md](modes-and-projects.md); walkthrough at
-  https://claude.ai/artifact/HRgpJURjcqasGSCmd3894d.
+  (D-76). From upstream: the project board, child sessions and their tabs,
+  agent-to-agent messages, side chats.
+- **Next.** Two slices need no further decision and can be built now: run
+  state with pause and resume in `pa flow`, and the "In flight" section on
+  the project page. The rest waits on the second walkthrough. Build order is
+  in modes-and-projects.md.
+- **Open.** Four decisions (M-12 how the director shows a mode, M-13 where a
+  thread opens, M-14 what a thread reports, M-8 a project's connections). The
+  intent graph's detail is deliberately held (D-98).
+- **Read.** [modes-and-projects.md](modes-and-projects.md); D-89 to D-99;
+  walkthroughs at https://claude.ai/artifact/HRgpJURjcqasGSCmd3894d and
+  https://claude.ai/artifact/YQcb4HDRGMnn6YW82uFNZd.
 
 ---
 
