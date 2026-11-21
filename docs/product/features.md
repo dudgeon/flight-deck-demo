@@ -212,6 +212,75 @@ discovery finds the held-payment problem, intent shaping shapes the idea of
 showing a release date, decision review settles open questions, delivery
 status tracks it. Each demo also stands alone.
 
+## Collaborative markdown editor
+
+**Intent.** A person and agents should be able to work on the same document
+the way people do in a shared doc: see what the agent changed, propose
+changes instead of making them, discuss in comments, and know who said what
+(D-26). Participants only ever suggest; the main agent edits directly when
+asked to make a change and suggests when asked to propose one.
+
+**Behaviour.** A review layer on upstream's TipTap markdown editor. A
+Suggesting mode turns typing and deleting into suggestions, stored in the
+`.md` itself as CriticMarkup with the author and time, so they survive any
+tool that reads the file. Comment threads, attributed to the person, Aviator
+or a participant, live in a sidecar `<doc>.md.review.json`. An `@name` in a
+comment asks Aviator to get that participant's reply into the thread. Edits
+that land on disk while the file is open are tinted until marked seen. The
+Review panel lists suggestions and threads to accept, reject or answer.
+Agents read and write the same files with `pa review`. Known gaps: no
+simultaneous typing (the editor reloads from disk and asks "Keep mine / Load
+latest" on a clash), and a comment loses its anchor when its text is deleted.
+
+**Where.** `web/src/shell/review/`, the hook in upstream's
+`MarkdownRichTextViewer.tsx`; `skills/view-kit/scripts/docreview.py`
+(`pa review`); `skills/document-collaboration/`.
+
+## The Library and canned sessions
+
+**Intent.** A demo, or a PM new to the tool, should start from a good prompt
+rather than a blank box, and those prompts should be plain files anyone can
+edit.
+
+**Behaviour.** The Library page lists artifact templates and canned
+sessions (prompts with fill-in fields). "Open in composer" opens a new
+session in the Workspace project with the prompt filled in; nothing is sent
+until the person presses Send. Each kind of work has a canned session that
+starts it.
+
+**Where.** `workspace/templates/`, `web/src/pages/LibraryPage.tsx`,
+`omnigent/server/routes/slim_library.py`. How to add one:
+`docs/customizing.md`.
+
+## Canvas tools
+
+**Intent.** Claude should be able to check and operate what it put on the
+canvas (read the page, click, type) without an outside browser, which the
+work Mac does not allow, and without widening what is pre-approved.
+
+**Behaviour.** The `canvas_*` tools act inside the sandboxed artifact frame
+in the person's own browser tab. When the session is open in several tabs,
+one tab is the active canvas; the others dim and offer "Use this tab". The
+tabs are deliberately not mirrored, and a call that moves to another tab
+tells Claude to read the page again.
+
+**Where.** `omnigent/runner/tool_dispatch.py`,
+`omnigent/server/routes/sessions/routes_browser.py`,
+`web/src/lib/canvasFrameRuntime.ts`; for skill writers,
+`docs/skill-writers/artifacts.md`.
+
+## Dock launcher
+
+**Intent.** On the work Mac, starting the demo should be one click, not a
+Terminal command.
+
+**Behaviour.** `scripts/make_dock_app.sh` builds a small Product Aviator app
+on the machine (so nothing is downloaded or quarantined). It starts the
+server if needed and opens the UI in a Chrome app window or the default
+browser; `--add-to-dock` pins it.
+
+**Where.** `scripts/make_dock_app.sh`, `scripts/dock/`.
+
 ## Design language and tokens
 
 **What it is for.** Product Aviator should look like one product, and a

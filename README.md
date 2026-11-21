@@ -19,7 +19,9 @@ repository, folders and commands keep the name `omnigent-slim`.
 It stays close to upstream Omnigent on purpose, so prototypes carry over to
 apps built on Omnigent; see [Staying close to upstream](#staying-close-to-upstream-omnigent).
 
-**Other docs:** [Customizing](docs/customizing.md) ·
+**Other docs:** [Where things stand (roadmap)](docs/product/roadmap.md) ·
+[Decisions and feature intent](docs/product/README.md) ·
+[Customizing](docs/customizing.md) ·
 [Writing skills for Omnigent](docs/skill-writers/README.md) ·
 [Server API](omnigent/server/API.md)
 
@@ -133,7 +135,12 @@ Your sessions are kept in `~/.omnigent-slim` for next time.
 Included templates: PRD one-pager, decision matrix, now/next/later roadmap,
 metrics dashboard, interview synthesis, question form. Included canned
 sessions: draft a PRD, compare options, build a roadmap, weekly metrics review,
-synthesize interviews, interview me about requirements.
+synthesize interviews, interview me about requirements, and the structured
+workflows: catalog requirements from a PRD, map platform dependencies, review
+a document with others, walk through open decisions, find the problems worth
+solving, update delivery status, and shape an idea into an intent. Each
+workflow is a skill in `skills/` with a click-through preview; other agents
+and people they can call in are in `workspace/participants/`.
 
 To add your own templates, canned sessions, skills or styles, see
 **[docs/customizing.md](docs/customizing.md)**.
