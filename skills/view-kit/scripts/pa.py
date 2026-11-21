@@ -1062,10 +1062,15 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--participants", help="the roster folder; default participants/ in the workspace")
     p.set_defaults(run=cmd_preview)
 
+    # Comments and suggested changes in markdown documents (docreview.py).
+    from docreview import ReviewError, register as register_review
+
+    register_review(sub)
+
     args = parser.parse_args(argv)
     try:
         args.run(args)
-    except PaError as err:
+    except (PaError, ReviewError) as err:
         print(f"pa: {err}", file=sys.stderr)
         return 2
     return 0
