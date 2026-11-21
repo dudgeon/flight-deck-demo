@@ -12,6 +12,11 @@ into `SKILL.md`.
 | [`artifacts.md`](artifacts.md) | How to make, show and update artifacts, and how artifacts talk back |
 | [`example-skill/SKILL.md`](example-skill/SKILL.md) | A small, complete skill that uses all of the above, to copy from |
 
+To ship a skill with omnigent-slim, drop its folder in the repo's
+[`skills/`](../../skills/README.md) folder: every new session gets it, in any
+folder. [`skills/omnigent-operator`](../../skills/omnigent-operator/SKILL.md)
+is a full working example built from these references.
+
 ## Vocabulary
 
 Use these words in skills so they match what Omnigent and its users say.

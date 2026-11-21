@@ -9,6 +9,7 @@ need a Mac with internet to rebuild.
 | Canned sessions | `workspace/templates/sessions/*.md` | Next Library page load | No |
 | Artifact templates and their look | `workspace/templates/artifacts/*.html` | Next artifact Claude makes | No |
 | How Claude works in the workspace | `workspace/CLAUDE.md`, `workspace/.claude/skills/` | Next session | No |
+| Skills every session gets, in any folder | `skills/<name>/SKILL.md` (see [skills/README.md](../skills/README.md)) | Next session | No |
 | What every session knows about the canvas | `slim_canvas_instruction()` in `omnigent/runtime/prompt.py` | After `./stop.sh && ./start.sh` | No |
 | Colors and theme of the app | Settings → Appearance in the web UI | Immediately | No |
 | The app's own layout, pages or styles | `web/src/` | After rebuilding the web UI | Yes, on a Mac with internet |
@@ -119,8 +120,11 @@ Three layers, from most general to most specific:
    working offline, and `window.omnigent.prompt`. Keep it short and general.
 2. **Sessions in the workspace folder** also read `workspace/CLAUDE.md`: the
    template table and house rules. Put project-specific guidance here.
-3. **Skills** in `workspace/.claude/skills/` load when relevant. The included
-   `artifacts` skill is a compact checklist.
+3. **Skills** load when relevant. Drop a skill folder in `skills/` and every
+   new session gets it, whatever folder it runs in (see
+   [skills/README.md](../skills/README.md); `skills/omnigent-operator` is a
+   working example). Skills in `workspace/.claude/skills/`, like the included
+   `artifacts` checklist, only apply to sessions in the workspace folder.
 
 To write skills that work in Omnigent and elsewhere, see
 [skill-writers/README.md](skill-writers/README.md).
