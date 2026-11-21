@@ -25,11 +25,9 @@ import {
   WarehouseIcon,
   WrenchIcon,
 } from "lucide-react";
-import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Route, Routes } from "react-router-dom";
-import { useResolvedThemeMode } from "@/components/theme/useResolvedThemeMode";
 import { ParticipantTurnBlock } from "@/components/chat/ParticipantTurn";
-import { injectDesignTokens } from "@/lib/artifactBridge";
 import { Link, useLocation, useNavigate, useParams } from "@/lib/routing";
 import { cn } from "@/lib/utils";
 import {
@@ -38,6 +36,7 @@ import {
   type HangarView,
   type HangarWorkflow,
   BUILD_STEPS,
+  aviatorPrompt,
   builderSessionLink,
   buildPrompts,
   type CastKind,
@@ -45,35 +44,56 @@ import {
   type HangarDraft,
   type PersonEdit,
   hangarPath,
-  lineDiff,
   participantSlug,
   previewPagePath,
   templatePagePath,
+  trialPrompt,
   unwrap,
   useHangar,
   useHangarActions,
-  useHangarPage,
   useHangarVersion,
   viewPagePath,
 } from "./hangarApi";
 import { AviatorPopover } from "./AviatorPopover";
+import { ActionError, Checks, Crumb, Diff, Links, Rendered, SHELF_LABELS, Section } from "./parts";
+import { FolderActions, FolderDraftPage, FolderHistory, NewScenarioButton } from "./FolderEditor";
 import "./hangar.css";
 
 // ---------------------------------------------------------------- the frame
 
 const SHELVES: { id: string; label: string; icon: LucideIcon; count: (h: Hangar) => number }[] = [
-  { id: "people", label: "People and agents", icon: UsersIcon, count: (h) => h.people.length },
-  { id: "workflows", label: "Workflows", icon: RouteIcon, count: (h) => h.workflows.length },
+  { id: "people", label: SHELF_LABELS.people, icon: UsersIcon, count: (h) => h.people.length },
+  {
+    id: "workflows",
+    label: SHELF_LABELS.workflows,
+    icon: RouteIcon,
+    count: (h) => h.workflows.length,
+  },
   {
     id: "views",
-    label: "Views",
+    label: SHELF_LABELS.views,
     icon: LayoutGridIcon,
     count: (h) => h.views.length + h.templates.length,
   },
-  { id: "scenarios", label: "Scenarios", icon: PlayIcon, count: (h) => h.scenarios.length },
-  { id: "skills", label: "Skills", icon: SparklesIcon, count: (h) => h.skills.length },
-  { id: "starters", label: "Starters", icon: FileTextIcon, count: (h) => h.starters.length },
-  { id: "frameworks", label: "Frameworks", icon: CompassIcon, count: (h) => h.frameworks.length },
+  {
+    id: "scenarios",
+    label: SHELF_LABELS.scenarios,
+    icon: PlayIcon,
+    count: (h) => h.scenarios.length,
+  },
+  { id: "skills", label: SHELF_LABELS.skills, icon: SparklesIcon, count: (h) => h.skills.length },
+  {
+    id: "starters",
+    label: SHELF_LABELS.starters,
+    icon: FileTextIcon,
+    count: (h) => h.starters.length,
+  },
+  {
+    id: "frameworks",
+    label: SHELF_LABELS.frameworks,
+    icon: CompassIcon,
+    count: (h) => h.frameworks.length,
+  },
 ];
 
 function HangarSidebar({ hangar }: { hangar: Hangar | undefined }) {
@@ -107,7 +127,7 @@ function HangarSidebar({ hangar }: { hangar: Hangar | undefined }) {
         </Link>
       ))}
       <div className="hangar-sidehd">Drafts</div>
-      {hangar && hangar.drafts.length === 0 && (
+      {hangar && hangar.drafts.length + hangar.folder_drafts.length === 0 && (
         <p className="hangar-sidenote">Nothing is being built.</p>
       )}
       {hangar?.drafts.map((draft) => (
@@ -123,6 +143,29 @@ function HangarSidebar({ hangar }: { hangar: Hangar | undefined }) {
           <span className="n">{draft.problems.length === 0 ? "ready" : draftStepLabel(draft)}</span>
         </Link>
       ))}
+      {hangar?.folder_drafts.map((draft) => (
+        <Link
+          key={`${draft.kind}/${draft.id}`}
+          to={hangarPath.folderDraft(draft.kind, draft.id)}
+          className="hangar-nav"
+          aria-current={
+            pathname === hangarPath.folderDraft(draft.kind, draft.id) ? "page" : undefined
+          }
+          data-testid="hangar-draft-nav"
+        >
+          <WrenchIcon aria-hidden="true" />
+          <span className="min-w-0 flex-1 truncate">
+            {String(draft.manifest.title || draft.id)}
+          </span>
+          <span className="n">
+            {draft.action === "remove"
+              ? "remove"
+              : draft.problems.length === 0
+                ? "ready"
+                : draft.kind}
+          </span>
+        </Link>
+      ))}
       <div className="grow" />
       <div className="hangar-foot">
         <Link to="/" className="hangar-back" data-testid="hangar-back-foot">
@@ -132,6 +175,12 @@ function HangarSidebar({ hangar }: { hangar: Hangar | undefined }) {
       </div>
     </nav>
   );
+}
+
+function FolderDraftRoute({ hangar }: { hangar: Hangar }) {
+  const { kind = "", id = "" } = useParams<{ kind: string; id: string }>();
+  if (kind !== "scenario" && kind !== "workflow") return <NotHere />;
+  return <FolderDraftPage hangar={hangar} kind={kind} id={id} />;
 }
 
 export function HangarPage() {
@@ -162,6 +211,7 @@ export function HangarPage() {
               <Route path="people/:id" element={<PersonPage hangar={data} />} />
               <Route path="people/:id/history" element={<HistoryPage hangar={data} />} />
               <Route path="drafts/person/:id" element={<DraftPage hangar={data} />} />
+              <Route path="drafts/:kind/:id" element={<FolderDraftRoute hangar={data} />} />
               <Route path="workflows" element={<WorkflowShelf hangar={data} />} />
               <Route path="workflows/:id" element={<WorkflowPage hangar={data} />} />
               <Route path="views" element={<ViewShelf hangar={data} />} />
@@ -195,22 +245,6 @@ function Health({ problems, ok = "Passes checks" }: { problems: string[]; ok?: s
     <span className="chip fail" title={problems.join("\n")}>
       ✕ {problems.length} problem{problems.length === 1 ? "" : "s"}
     </span>
-  );
-}
-
-function Checks({ problems, passed }: { problems: string[]; passed: string }) {
-  return (
-    <ul className="checks" data-testid="hangar-checks">
-      {problems.length === 0 ? (
-        <li>{passed}</li>
-      ) : (
-        problems.map((p) => (
-          <li key={p} className="x">
-            {p}
-          </li>
-        ))
-      )}
-    </ul>
   );
 }
 
@@ -249,109 +283,17 @@ function KindChip({ person }: { person: HangarPerson }) {
 const Builtin = () => (
   <span
     className="chip lock"
-    title="Ships with the app. From the next version: duplicate to change."
+    title="Ships with the app. Editing it makes a workspace copy that takes over its id."
   >
     <LockIcon aria-hidden="true" /> Built-in
   </span>
 );
-
-function Crumb({ shelf, label }: { shelf: string; label: string }) {
-  const name = SHELVES.find((s) => s.id === shelf)?.label ?? shelf;
-  return (
-    <div className="crumb">
-      <Link to={hangarPath.shelf(shelf)}>{name}</Link>
-      <span aria-hidden="true">/</span>
-      <span>{label}</span>
-    </div>
-  );
-}
-
-function Section({
-  title,
-  children,
-  aside,
-}: {
-  title: string;
-  children: ReactNode;
-  aside?: ReactNode;
-}) {
-  return (
-    <section className="card">
-      <div className="row">
-        <span className="lab">{title}</span>
-        {aside && <span className="sp" />}
-        {aside}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function Links({
-  items,
-  empty,
-}: {
-  items: { to: string; label: string; note?: string }[];
-  empty: string;
-}) {
-  if (items.length === 0) return <p className="lab">{empty}</p>;
-  return (
-    <ul className="plain">
-      {items.map((item) => (
-        <li key={item.to}>
-          <Link className="link" to={item.to}>
-            {item.label}
-          </Link>
-          {item.note && <span className="lab"> · {item.note}</span>}
-        </li>
-      ))}
-    </ul>
-  );
-}
 
 function NotHere() {
   return <p className="empty">There is nothing here. It may have been renamed or removed.</p>;
 }
 
 /** A page drawn by the server (a view, a template or a scenario player) in a sandboxed frame. */
-function Rendered({
-  path,
-  title,
-  height,
-  thumb,
-  host = "canvas",
-}: {
-  path: string;
-  title: string;
-  height?: number;
-  thumb?: boolean;
-  host?: "canvas" | "chat";
-}) {
-  const { data, error } = useHangarPage(path);
-  const mode = useResolvedThemeMode() === "dark" ? "dark" : "light";
-  const srcDoc = useMemo(() => (data ? injectDesignTokens(data, mode) : null), [data, mode]);
-  return (
-    <div
-      className={cn("frame", thumb && "thumb", thumb && host === "chat" && "chat")}
-      style={height ? { height } : undefined}
-      data-testid="hangar-rendered"
-    >
-      {error && <p className="empty">{String(error)}</p>}
-      {srcDoc && (
-        <iframe
-          title={title}
-          srcDoc={srcDoc}
-          // Scripts only: the page cannot reach the app, its storage or the network.
-          sandbox="allow-scripts"
-          loading="lazy"
-          tabIndex={thumb ? -1 : undefined}
-          aria-hidden={thumb ? true : undefined}
-          style={height && !thumb ? { height } : undefined}
-        />
-      )}
-    </div>
-  );
-}
 
 const LAYOUT_GROUPS: { layout: string; label: string }[] = [
   { layout: "tree-table", label: "Tables and lists" },
@@ -485,10 +427,35 @@ function Overview({ hangar }: { hangar: Hangar }) {
           </div>
         </Section>
         <Section title="In progress">
-          {hangar.drafts.length === 0 ? (
+          {hangar.drafts.length + hangar.folder_drafts.length === 0 ? (
             <p className="lab">No drafts.</p>
           ) : (
-            hangar.drafts.map((draft) => <DraftCard key={draft.id} draft={draft} />)
+            <>
+              {hangar.drafts.map((draft) => (
+                <DraftCard key={draft.id} draft={draft} />
+              ))}
+              {hangar.folder_drafts.map((draft) => (
+                <Link
+                  key={`${draft.kind}/${draft.id}`}
+                  to={hangarPath.folderDraft(draft.kind, draft.id)}
+                  className="card draft"
+                  data-testid="hangar-draft-card"
+                >
+                  <div className="row">
+                    <b>{String(draft.manifest.title || draft.id)}</b>
+                    <span className="chip build">
+                      {draft.action === "new"
+                        ? "New"
+                        : draft.action === "remove"
+                          ? "Removal"
+                          : "Change"}{" "}
+                      · {draft.kind} draft
+                    </span>
+                  </div>
+                  <span className="lab">Not published. Nobody flying can see this.</span>
+                </Link>
+              ))}
+            </>
           )}
         </Section>
       </div>
@@ -734,7 +701,9 @@ function WorkflowShelf({ hangar }: { hangar: Hangar }) {
       <div>
         <h1>Workflows</h1>
         <p className="sub">
-          Each kind of work a person can do with Aviator. The lock means it ships with the app.
+          Each kind of work a person can do with Aviator. The lock means it ships with the app:
+          editing one makes a workspace copy. For a new kind of work, open the nearest one and
+          duplicate it.
         </p>
       </div>
       <div className="grid2">
@@ -776,6 +745,11 @@ function WorkflowPage({ hangar }: { hangar: Hangar }) {
       <div className="row">
         <h1>{workflow.title}</h1>
         {workflow.builtin && <Builtin />}
+        {!workflow.builtin && workflow.shipped && (
+          <span className="chip build" title="A workspace copy hides the shipped version">
+            Workspace copy
+          </span>
+        )}
         <Health problems={workflow.problems} ok="All checks pass" />
         <span className="sp" />
         {workflow.script && (
@@ -785,6 +759,14 @@ function WorkflowPage({ hangar }: { hangar: Hangar }) {
         )}
       </div>
       <p className="sub">{workflow.summary}</p>
+      <FolderActions
+        hangar={hangar}
+        kind="workflow"
+        id={workflow.id}
+        builtin={workflow.builtin}
+        shipped={workflow.shipped}
+      />
+      <FolderHistory kind="workflow" id={workflow.id} versions={workflow.history ?? []} />
       <Section title="Steps, as the Session panel shows them">
         <div className="steps">
           {workflow.steps.map((step) => (
@@ -1072,6 +1054,7 @@ function ScenarioShelf({ hangar }: { hangar: Hangar }) {
           Scripted runs of a workflow with a cast and invented data, for demos that must go the same
           way every time.
         </p>
+        <NewScenarioButton hangar={hangar} />
       </div>
       <div className="grid2">
         {hangar.scenarios.map((s) => (
@@ -1129,6 +1112,9 @@ function ScenarioPage({ hangar }: { hangar: Hangar }) {
           </Link>
         )}
       </div>
+      {scenario.summary && <p className="sub">{scenario.summary}</p>}
+      <FolderActions hangar={hangar} kind="scenario" id={scenario.id} builtin={false} />
+      <FolderHistory kind="scenario" id={scenario.id} versions={scenario.history ?? []} />
       <Section title="The player, as it runs in a demo">
         <Rendered
           path={previewPagePath(scenario.id)}
@@ -1524,12 +1510,6 @@ function DraftCard({ draft }: { draft: HangarDraft }) {
   );
 }
 
-function ActionError({ error }: { error: unknown }) {
-  return error ? (
-    <p className="chip fail">{error instanceof Error ? error.message : String(error)}</p>
-  ) : null;
-}
-
 /** Edit, duplicate, retire and history for a live person. Edits always open a draft. */
 function PersonActions({ hangar, id }: { hangar: Hangar; id: string }) {
   const navigate = useNavigate();
@@ -1597,25 +1577,6 @@ function StepBar({ step, action }: { step: string | null; action: HangarDraft["a
         </span>
       ))}
     </div>
-  );
-}
-
-function Diff({ before, after }: { before: string; after: string }) {
-  const all = lineDiff(before, after).map((row, line) => ({ ...row, line }));
-  const changed = (i: number) => all[i] !== undefined && all[i].op !== "same";
-  // Changed lines, with one line of context either side.
-  const rows = all.filter((r, i) => r.op !== "same" || changed(i - 1) || changed(i + 1));
-  if (!rows.some((r) => r.op !== "same")) return <p className="lab">No changes yet.</p>;
-  return (
-    <pre className="text diff" data-testid="hangar-diff">
-      {rows.map((row) => (
-        <span key={row.line} className={row.op}>
-          {row.op === "add" ? "+ " : row.op === "del" ? "− " : "  "}
-          {row.text}
-          {"\n"}
-        </span>
-      ))}
-    </pre>
   );
 }
 
@@ -1865,6 +1826,7 @@ function PersonEditor({ hangar, draft }: { hangar: Hangar; draft: HangarDraft })
     .map((w) => w[0].toUpperCase())
     .join("");
   const person = { ...form, initials, stand_in: form.kind === "person" };
+  const firstName = form.name.split(/\s+/)[0] || "them";
   const live = hangar.people.find((p) => p.id === draft.id);
   const workflows = byId(hangar.workflows);
   const scenarios = byId(hangar.scenarios);
@@ -2117,11 +2079,19 @@ function PersonEditor({ hangar, draft }: { hangar: Hangar; draft: HangarDraft })
         <ActionError error={publish.error ?? discard.error} />
       </div>
       <AviatorPopover
-        draft={draft}
         name={form.name || "this person"}
         workspace={hangar.workspace_dir}
         pinned={pinned}
         onPinnedChange={setPinned}
+        sessionId={draft.aviator}
+        onSession={(aviator) => edit.mutateAsync({ id: draft.id, edit: { aviator } })}
+        firstPrompt={aviatorPrompt(draft, form.name || "this person")}
+        trial={{
+          tab: "Try them",
+          intro: `Ask ${firstName} a real question. The draft answers the way people will meet them when flying. Nothing is published.`,
+          placeholder: `Ask ${firstName} a question…`,
+          prompt: (q) => trialPrompt(draft.id, form.name || draft.id, q),
+        }}
       />
     </div>
   );

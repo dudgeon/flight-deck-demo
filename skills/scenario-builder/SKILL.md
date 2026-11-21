@@ -1,6 +1,6 @@
 ---
 name: scenario-builder
-description: Create or change a demo use case for the product workspace (a "scenario"): a skill folder with a dataset shape, views, invented fixture data and a click-through script, checked and previewed with `pa`. Use when the user wants to prototype a new workflow or template, add a stage to an existing one, or produce a standalone demo of how an agent and a person would work through a task together.
+description: Create or change a workflow (a kind of work, with its dataset shape and views) or a scenario (one scripted demo of a workflow, with invented data and a click-through script) for the product workspace, as Hangar drafts checked and previewed with `pa`. Use when the user wants to prototype a new workflow or template, add a stage to an existing one, or produce a standalone demo of how an agent and a person would work through a task together.
 ---
 
 # Scenario builder
@@ -15,18 +15,58 @@ this skill, are the reference examples. Read one before you start.
 PA="python3 <this skill's folder>/../view-kit/scripts/pa.py"
 ```
 
-## What is in a scenario folder
+## Workflows and scenarios (D-42)
+
+A **workflow** is the kind of work; a **scenario** is one scripted run of it
+with invented data. They live apart, so one workflow can have several demos:
 
 ```
-skills/<scenario-name>/
+skills/<workflow>/                 (shipped)  or  .claude/skills/<workflow>/ (built in the workspace)
   SKILL.md            what the agent does, step by step, and what it does for each button
-  scenario.json       the manifest: inputs, dataset, views, work products, what comes next
-  schemas/records.json  the record types this scenario reads and adds
+  workflow.json       the manifest: workflow (its id), title, summary, inputs, dataset, views,
+                      steps, progress, participants (who may be called), work products
+  schemas/records.json  the record types the workflow reads and adds
   views/*.json        view specs (see the view-kit skill)
-  fixtures/           an invented dataset in its finished state, plus any documents
-  script.md           the click-through, a markdown screenplay: who says what, which view appears, where it waits
   references/         briefs for sub-agents, if it uses them
+
+scenarios/<scenario>/              (in the workspace)
+  scenario.json       scenario (its id), title, summary, workflow (the id it runs),
+                      participants (the cast), fixtures, script, opening (the first line)
+  fixtures/           an invented dataset in its finished state, plus any documents
+  script.md           the click-through, a markdown screenplay
+  context/            invented documents the demo starts from, if any
+  cast/<person>.md    story facts for a person in this demo, if any
 ```
+
+The first scenario of a workflow usually shares its id. Paths in `fixtures`
+and `script` are relative to the scenario folder.
+
+## Build in the Hangar: drafts, never the live folder
+
+Others fly what is live, so you never edit `scenarios/` or `.claude/skills/`
+directly. Work on a draft, check it, and publish when the user says so (the
+Publish button in the Hangar, or `pa publish`). Publishing keeps the version it
+replaces, under History.
+
+```bash
+$PA draft scenario <id>                                     # a draft of a live scenario
+$PA draft scenario --name "Fraud rules review" --duplicate document-review
+$PA draft scenario --name "Card freeze demo" --workflow document-review   # a blank one
+$PA draft workflow --name "Policy review" --duplicate document-review     # a new workflow
+$PA draft workflow document-review                          # change one (a shipped one becomes a workspace copy)
+$PA draft scenario <id> --set title="..." --set participants=risk-review,mara-okafor \
+  --file script.md=/tmp/script.md                           # change fields and whole files
+$PA draft scenario <id>                                     # checks, and what changes
+$PA publish scenario <id> --summary "one line"              # only with the user's go-ahead
+```
+
+The draft is a folder under `.hangar/drafts/scenarios/<id>/` (or
+`workflows/<id>/`); you may also edit files there directly. A scenario only
+publishes when `pa check` passes and its script plays through. A workflow
+can't be removed while a scenario runs it (unless a shipped one of the same id
+takes over again). In the app, the Hangar page for the draft is the editor and
+you may be the Aviator in its pop-over: keep changes small and say what you
+changed.
 
 ## Ask before you build
 
@@ -65,8 +105,10 @@ spec names a status tone such as `ok` or `attn`, never a color.
 
 ## Steps
 
-1. Copy the nearest reference scenario to `skills/<new-name>/` and rename it in
-   `SKILL.md` and `scenario.json`.
+1. Start drafts from the nearest reference: `pa draft workflow --name ...
+   --duplicate <nearest>` for a new kind of work, and `pa draft scenario
+   --name ... --duplicate <nearest>` (then `--set workflow=<new id>`) for its
+   demo. Both are renamed for you.
 2. Write `schemas/records.json`: the record types, required fields and allowed
    values.
 3. Write the fixture dataset as the work would look when it is about two
@@ -76,7 +118,7 @@ spec names a status tone such as `ok` or `attn`, never a color.
    (view-kit skill, "Building a new view").
 5. Write `SKILL.md` for the live agent. It must say what to do for every
    action id in the views.
-   Give `scenario.json` a `steps` list (three to six short names for the
+   Give `workflow.json` a `steps` list (three to six short names for the
    stages of the work, as the person would say them) and a `progress` entry
    that says which records count and which statuses mean done. Have `SKILL.md`
    call `$PA flow` at each stage, as the reference scenarios do, so the
@@ -87,26 +129,29 @@ spec names a status tone such as `ok` or `attn`, never a color.
    else. The whole vocabulary is in the view-kit skill's
    `references/script.md`. Keep it under about thirty steps.
    If other agents or people take part, list their ids under `participants`
-   in `scenario.json`. They must be on the roster (the `participants` skill
+   in `workflow.json` (who may be called) and in `scenario.json` (the cast). They must be on the roster (the `participants` skill
    explains how to add one). Then they can speak in the script by name, be
    called and leave. `skills/document-review` is the example.
 7. Check and preview:
 
 ```bash
-$PA check skills/<new-name>
-$PA preview skills/<new-name> --out artifacts/<new-name>-preview.html
+$PA draft scenario <name>          # runs every check on the draft
+$PA preview .hangar/drafts/scenarios/<name> --out artifacts/<name>-preview.html
 ```
 
    Open the preview with `ui_open_file`, click through it yourself with the
    `canvas_*` tools, and fix what reads badly. The preview file is
    self-contained, so the user can send it to someone or open it in a browser.
-8. Tell the user what you built in three lines and what you were unsure about.
+8. Tell the user what you built in three lines and what you were unsure about,
+   and that it goes live when they publish the drafts (workflow first).
 
-## Changing a scenario
+## Changing a scenario or workflow
 
-Change the spec, schema or fixture, run `check`, rebuild the preview. If you
+Start a draft (`pa draft scenario <id>` or `pa draft workflow <id>`), change
+the spec, schema, fixture or script in the draft folder, run `pa draft` again
+to check, and rebuild the preview. If you
 rename an action id or a field, search `SKILL.md` and the other scenarios that
 list this one under `needs`.
 
-New sessions pick up a new skill folder. A running session keeps the skills it
+New sessions pick up a newly published workflow. A running session keeps the skills it
 started with.

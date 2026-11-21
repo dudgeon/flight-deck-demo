@@ -200,3 +200,70 @@ def test_edit_on_the_page_casts_and_gives_skills(
     person = pa._participants(workspace / "participants")["mara-okafor"]
     assert person["skills"] == ["intent"]
     assert "`intent`" in pa.opening_message(person, "hello")
+
+
+def test_build_scenarios_and_workflows_as_folder_drafts(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = _scratch_workspace(tmp_path, monkeypatch)
+    shutil.copytree(REPO / "workspace" / "scenarios", workspace / "scenarios")
+    # A scenario: change the title and the script, see the change, publish, restore.
+    draft = slim_hangar.start_folder_draft("scenario", "document-review")
+    assert "nothing has changed yet" in draft["problems"]
+    script = next(f for f in draft["files"] if f["path"] == "script.md")["text"]
+    draft = slim_hangar.edit_folder_draft(
+        "scenario",
+        "document-review",
+        {
+            "manifest": {"title": "PRD review, take 2", "opening": "Let's review it."},
+            "files": {"script.md": script + "\n**Aviator:** That is everything.\n"},
+        },
+    )
+    assert draft["problems"] == [], draft["problems"]
+    assert {f["path"] for f in draft["files"] if f["change"] == "changed"} == {
+        "scenario.json",
+        "script.md",
+    }
+    assert "PRD review" in slim_hangar.render_draft_preview("scenario", "document-review")
+    slim_hangar.publish_folder("scenario", "document-review", "take 2")
+    live = slim_hangar.load_hangar()
+    entry = next(s for s in live["scenarios"] if s["id"] == "document-review")
+    assert entry["title"] == "PRD review, take 2" and entry["opening"] == "Let's review it."
+    assert len(entry["history"]) == 1
+    slim_hangar.restore_folder("scenario", "document-review", entry["history"][0]["version"])
+    entry = next(s for s in slim_hangar.load_hangar()["scenarios"] if s["id"] == "document-review")
+    assert entry["title"] == "Allowances PRD review"
+    # A broken script is caught before publishing.
+    slim_hangar.start_folder_draft("scenario", "document-review")
+    draft = slim_hangar.edit_folder_draft(
+        "scenario", "document-review", {"files": {"script.md": "**Nobody Here:** hi\n"}}
+    )
+    assert draft["problems"]
+    with pytest.raises(Exception, match="checks fail"):
+        slim_hangar.publish_folder("scenario", "document-review", "")
+    slim_hangar.discard_folder("scenario", "document-review")
+    # A shipped workflow: editing it publishes a workspace copy; removing that brings it back.
+    draft = slim_hangar.start_folder_draft("workflow", "document-review")
+    assert draft["builtin"] and draft["shipped"]
+    draft = slim_hangar.edit_folder_draft(
+        "workflow", "document-review", {"manifest": {"steps": ["Read", "Call in", "Decide"]}}
+    )
+    assert draft["problems"] == [], draft["problems"]
+    slim_hangar.publish_folder("workflow", "document-review", "three steps")
+    copy = workspace / ".claude" / "skills" / "document-review"
+    assert (copy / "workflow.json").is_file()
+    wf = next(w for w in slim_hangar.load_hangar()["workflows"] if w["id"] == "document-review")
+    assert wf["steps"] == ["Read", "Call in", "Decide"] and not wf["builtin"]
+    draft = slim_hangar.start_folder_draft("workflow", "document-review", remove=True)
+    assert draft["problems"] == []  # the shipped one takes over again
+    slim_hangar.publish_folder("workflow", "document-review", "back to shipped")
+    assert not copy.exists()
+    # A new scenario starts from a copy and can't escape its folder.
+    draft = slim_hangar.new_folder_draft(
+        "scenario", {"name": "Fraud rules review", "duplicate_of": "document-review"}
+    )
+    assert draft["id"] == "fraud-rules-review" and draft["problems"] == []
+    with pytest.raises(Exception, match="not a file inside"):
+        slim_hangar.edit_folder_draft(
+            "scenario", "fraud-rules-review", {"files": {"../../evil.md": "x"}}
+        )

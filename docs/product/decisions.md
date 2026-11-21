@@ -351,6 +351,32 @@ their ids. `pa` still reads the old one-folder layout. *Lets one workflow have
 several scenarios, and lets the scenario builder (slice 3) edit demo data
 without touching the workflow.*
 
+**D-71 · 2026-11-21 · Claude.** Scenarios and workflows are built like people
+(D-63): the Hangar page is the editor, saving to a draft as you type, with the
+Aviator pop-over beside it and Publish as the gate. Their draft is a copy of the
+whole folder (`.hangar/drafts/scenarios/<id>/` or `workflows/<id>/`), so the
+fields (title, summary, workflow, cast, steps, opening line) and every text file
+in the folder (the script, fixtures, `SKILL.md`, `context/` and `cast/` notes)
+can be edited in place. A scenario publishes only when `pa check` passes and it
+plays through; a workflow can't be removed while a scenario runs it. Publish
+keeps the folder it replaces, and History can restore it. *Same pattern as
+people, so there is one way to build anything; folder drafts because a scenario
+is several files that must change together.*
+
+**D-72 · 2026-11-21 · Claude.** A workflow that ships with the app is never
+changed in place. "Edit a copy" drafts it, and publishing puts a workspace copy
+in `.claude/skills/<id>/` that takes over its id; removing that copy brings the
+shipped one back. A new workflow starts as a duplicate of the nearest one.
+*Keeps the shipped workflows as a safe floor while letting a PM change one for
+their team; a blank workflow has too many parts to start from nothing.*
+
+**D-73 · 2026-11-21 · Claude.** A scenario draft plays on its own editor page
+(the same player a demo uses, drawn from the draft), and the pop-over's second
+tab is "Play it" instead of "Try them", asking Aviator to run the draft. A
+scenario can carry an opening line (`opening` in `scenario.json`), for the
+Library's demos. *Seeing the demo is the real check that a script change
+worked.*
+
 ## Open
 
 - Progressive complexity (from D-54): how a workflow shows less at first and

@@ -850,7 +850,10 @@ def scenarios_of(wid: str, workspace: Path | None = None) -> list[Path]:
 
 
 def _workspace_of_scenario(folder: Path) -> Path:
-    return folder.resolve().parent.parent
+    folder = folder.resolve()
+    if HANGAR_DIR in folder.parts:  # a draft: .hangar/drafts/scenarios/<id>
+        return Path(*folder.parts[: folder.parts.index(HANGAR_DIR)])
+    return folder.parent.parent
 
 
 def resolve_run(folder: Path, workspace: Path | None = None) -> dict[str, Any]:
@@ -1636,8 +1639,438 @@ def restore_version(workspace: Path, pid: str, version: str, skills: Path | None
         raise
 
 
+
+# --------------------------------------------------- workflows and scenarios
+#
+# Slice 3 of the Hangar: workflows and scenarios are built the same way as
+# people, but a draft is a whole folder: `.hangar/drafts/<kinds>/<id>/` plus
+# `<id>.json` for what the draft is. Publish keeps the folder it replaces under
+# `.hangar/history/<kinds>/<id>/<version>/`. A scenario goes live in
+# `<workspace>/scenarios/<id>/`; a workflow in `<workspace>/.claude/skills/<id>/`.
+# A shipped workflow is never changed: changing it publishes a workspace copy
+# that takes over its id, and removing that copy brings the shipped one back
+# (D-71).
+
+FOLDER_KINDS = {"scenario": "scenarios", "workflow": "workflows"}
+BUILD_KINDS = ["person", "scenario", "workflow"]
+SCENARIO_KEYS = ("title", "summary", "workflow", "participants", "fixtures", "script", "opening")
+WORKFLOW_KEYS = ("title", "summary", "steps", "participants", "inputs", "launchers", "work_products")
+_TEXT_SUFFIXES = {".md", ".json", ".txt", ".csv", ".html", ".yaml", ".yml"}
+_MAX_FILE = 1_000_000
+_MAX_SHOWN = 300_000
+
+
+def _kind(kind: str) -> str:
+    if kind not in FOLDER_KINDS:
+        raise PaError(f"a draft is of a person, scenario or workflow, not {kind!r}")
+    return kind
+
+
+def _fd_paths(workspace: Path, kind: str, fid: str) -> tuple[Path, Path]:
+    base = _hangar(workspace, "drafts", FOLDER_KINDS[_kind(kind)])
+    return base / fid, base / f"{fid}.json"
+
+
+def _manifest_name(kind: str, folder: Path | None = None) -> str:
+    if kind == "scenario":
+        return SCENARIO_FILE
+    found = workflow_manifest_path(folder) if folder else None
+    return found.name if found else WORKFLOW_FILE
+
+
+def live_folder(workspace: Path, kind: str, fid: str) -> Path | None:
+    if _kind(kind) == "scenario":
+        return list_scenarios(workspace).get(fid)
+    return find_workflow(fid, workspace)
+
+
+def publish_target(workspace: Path, kind: str, fid: str) -> Path:
+    if _kind(kind) == "scenario":
+        return workspace / SCENARIOS_DIR / fid
+    return workspace / ".claude" / "skills" / fid
+
+
+def is_builtin(workspace: Path, folder: Path) -> bool:
+    """A shipped workflow, outside the workspace: it can be copied, never changed in place."""
+    return not folder.resolve().is_relative_to(workspace.resolve())
+
+
+def shipped_workflow(workspace: Path, fid: str) -> Path | None:
+    """The shipped workflow of this id, whether or not a workspace copy hides it."""
+    for root in workflow_roots(workspace):
+        if not is_builtin(workspace, root):
+            continue
+        if workflow_manifest_path(root / fid):
+            return root / fid
+    return None
+
+
+def _copy_folder(source: Path, dest: Path) -> None:
+    import shutil
+
+    if dest.exists():
+        shutil.rmtree(dest)
+    shutil.copytree(source, dest, ignore=shutil.ignore_patterns("__pycache__", ".DS_Store"))
+
+
+def _rename_skill(folder: Path, old: str, new: str) -> None:
+    skill = folder / "SKILL.md"
+    if skill.is_file():
+        text = skill.read_text(encoding="utf-8")
+        _write_atomic(skill, re.sub(rf"^name:\s*{re.escape(old)}\s*$", f"name: {new}", text, count=1, flags=re.M))
+
+
+def start_folder_draft(workspace: Path, kind: str, *, fid: str | None = None, name: str | None = None,
+                       duplicate_of: str | None = None, remove: bool = False, workflow: str | None = None) -> str:
+    """Start a draft of a scenario or workflow: a change, a removal, a copy, or (scenarios) a new one."""
+    folder, meta_path = _fd_paths(workspace, kind, fid or "x")
+    if fid and not name:
+        fid = _checked_id(fid)
+        folder, meta_path = _fd_paths(workspace, kind, fid)
+        if meta_path.is_file():
+            return fid
+        live = live_folder(workspace, kind, fid)
+        if not live:
+            raise PaError(f"there is no {kind} {fid}")
+        builtin = is_builtin(workspace, live)
+        if remove:
+            if builtin:
+                raise PaError(f"{fid} ships with the app and cannot be removed; only a workspace copy can")
+            _write_folder_meta(workspace, kind, fid, {"action": "remove", "from": fid})
+            return fid
+        _copy_folder(live, folder)
+        _write_folder_meta(workspace, kind, fid, {"action": "change", "from": fid, "builtin": builtin})
+        return fid
+    if not name:
+        raise PaError(f"give the id of a {kind}, or a name for a new one")
+    new_id = _checked_id(slug(name))
+    folder, meta_path = _fd_paths(workspace, kind, new_id)
+    if live_folder(workspace, kind, new_id) or meta_path.is_file():
+        raise PaError(f"the id {new_id} is taken; pick a different name")
+    if duplicate_of:
+        source = live_folder(workspace, kind, _checked_id(duplicate_of))
+        if not source:
+            raise PaError(f"there is no {kind} {duplicate_of}")
+        _copy_folder(source, folder)
+        path = folder / _manifest_name(kind, folder)
+        data = _read_json(path)
+        data[kind] = new_id
+        data["title"] = name
+        _write_atomic(path, json.dumps(data, indent=1, ensure_ascii=False) + "\n")
+        if kind == "workflow":
+            _rename_skill(folder, duplicate_of, new_id)
+    elif kind == "scenario":
+        workflows = list_workflows(workspace)
+        wid = workflow or next(iter(workflows), None)
+        if not wid or wid not in workflows:
+            raise PaError(f"a new scenario runs a workflow; there is no workflow {wid!r}")
+        folder.mkdir(parents=True, exist_ok=True)
+        data = {"scenario": new_id, "title": name, "summary": "", "workflow": wid, "participants": [],
+                "fixtures": {}, "script": "script.md"}
+        _write_atomic(folder / SCENARIO_FILE, json.dumps(data, indent=1, ensure_ascii=False) + "\n")
+        _write_atomic(folder / "script.md", f"# {name}\n\n**You:** \n\n**Aviator:** \n")
+    else:
+        raise PaError("a new workflow starts as a copy of one that exists; give the one to copy")
+    _write_folder_meta(workspace, kind, new_id, {"action": "new", "from": duplicate_of})
+    return new_id
+
+
+def _write_folder_meta(workspace: Path, kind: str, fid: str, info: dict[str, Any]) -> None:
+    _, meta_path = _fd_paths(workspace, kind, fid)
+    meta_path.parent.mkdir(parents=True, exist_ok=True)
+    info = {**info, "updated": _now()}
+    info.setdefault("started", info["updated"])
+    _write_atomic(meta_path, json.dumps(info, indent=1, ensure_ascii=False) + "\n")
+
+
+def _safe_rel(rel: str) -> str:
+    path = Path(rel)
+    if not rel or path.is_absolute() or ".." in path.parts or rel.startswith("."):
+        raise PaError(f"{rel!r} is not a file inside the folder")
+    if path.suffix.lower() not in _TEXT_SUFFIXES:
+        raise PaError(f"{rel}: only text files ({', '.join(sorted(_TEXT_SUFFIXES))}) can be edited here")
+    return path.as_posix()
+
+
+def edit_folder_draft(workspace: Path, kind: str, fid: str, manifest: dict[str, Any] | None = None,
+                      files: dict[str, str | None] | None = None, step: str | None = None,
+                      aviator: str | None = None) -> None:
+    """Change a scenario or workflow draft: manifest fields (None removes one) and whole text files."""
+    folder, meta_path = _fd_paths(workspace, kind, _checked_id(fid))
+    info = _read_meta(meta_path)
+    if not info:
+        raise PaError(f"there is no draft of {fid}; start one first")
+    if info.get("action") == "remove":
+        raise PaError(f"the draft of {fid} removes it; discard it to make changes instead")
+    if manifest:
+        keys = SCENARIO_KEYS if kind == "scenario" else WORKFLOW_KEYS
+        unknown = sorted(set(manifest) - set(keys))
+        if unknown:
+            raise PaError(f"a {kind} has no {', '.join(unknown)} here; fields are {', '.join(keys)}")
+        for key in ("title", "summary", "workflow", "script", "opening"):
+            if manifest.get(key) is not None and not isinstance(manifest[key], str):
+                raise PaError(f"{key} must be text")
+        for key in ("participants", "steps"):
+            value = manifest.get(key)
+            if value is not None and not (isinstance(value, list) and all(isinstance(v, str) for v in value)):
+                raise PaError(f"{key} must be a list of text")
+        if manifest.get("workflow") and manifest["workflow"] not in list_workflows(workspace):
+            raise PaError(f"there is no workflow {manifest['workflow']}")
+        path = folder / _manifest_name(kind, folder)
+        data = _read_json(path)
+        for key, value in manifest.items():
+            if value is None:
+                data.pop(key, None)
+            else:
+                data[key] = value
+        _write_atomic(path, json.dumps(data, indent=1, ensure_ascii=False) + "\n")
+    for rel, text in (files or {}).items():
+        rel = _safe_rel(rel)
+        if rel == _manifest_name(kind, folder) and text is None:
+            raise PaError(f"{rel} is what makes the folder a {kind}; it cannot be deleted")
+        path = folder / rel
+        if text is None:
+            path.unlink(missing_ok=True)
+            continue
+        if len(text.encode("utf-8")) > _MAX_FILE:
+            raise PaError(f"{rel} is too big to edit here (over 1 MB)")
+        if path.suffix == ".json":
+            try:
+                json.loads(text)
+            except json.JSONDecodeError as err:
+                raise PaError(f"{rel} is not valid JSON: {err.msg} on line {err.lineno}") from err
+        path.parent.mkdir(parents=True, exist_ok=True)
+        _write_atomic(path, text)
+    if step:
+        info["step"] = step
+    if aviator is not None:
+        info["aviator"] = aviator
+    _write_folder_meta(workspace, kind, fid, info)
+
+
+def _files_of(folder: Path | None) -> dict[str, Path]:
+    if not folder or not folder.is_dir():
+        return {}
+    return {p.relative_to(folder).as_posix(): p for p in sorted(folder.rglob("*"))
+            if p.is_file() and "__pycache__" not in p.parts and p.name != ".DS_Store"}
+
+
+def _text(path: Path | None) -> str | None:
+    if path is None or path.suffix.lower() not in _TEXT_SUFFIXES or path.stat().st_size > _MAX_SHOWN:
+        return None
+    try:
+        return path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
+
+
+def folder_uses(workspace: Path, kind: str, fid: str) -> dict[str, list[str]]:
+    """What depends on a scenario or workflow: a workflow's scenarios and the starters that name it."""
+    if kind == "scenario":
+        return {"scenarios": [], "starters": []}
+    scenarios = [f.name for f in scenarios_of(fid, workspace)]
+    starters = [p.stem for p in sorted((workspace / "templates" / "sessions").glob("*.md"))
+                if re.search(rf"\b{re.escape(fid)}\b", p.read_text(encoding="utf-8"))]
+    return {"scenarios": scenarios, "starters": starters}
+
+
+def folder_draft_info(workspace: Path, kind: str, fid: str) -> dict[str, Any]:
+    folder, meta_path = _fd_paths(workspace, kind, _checked_id(fid))
+    if not meta_path.is_file():
+        raise PaError(f"there is no draft of the {kind} {fid}")
+    meta = _read_meta(meta_path)
+    action = meta.get("action", "change")
+    live = live_folder(workspace, kind, fid)
+    builtin = bool(live and is_builtin(workspace, live))
+    uses = folder_uses(workspace, kind, fid)
+    problems: list[str] = []
+    manifest: dict[str, Any] = {}
+    files: list[dict[str, Any]] = []
+    if action == "remove":
+        if not live or builtin:
+            problems.append(f"{fid} has no workspace copy to remove")
+        if kind == "workflow" and not shipped_workflow(workspace, fid):
+            for sid in uses["scenarios"]:
+                problems.append(f"the scenario {sid} runs {fid}; remove it or move it to another workflow first")
+    else:
+        mpath = folder / _manifest_name(kind, folder)
+        try:
+            manifest = _read_json(mpath)
+        except PaError as err:
+            problems.append(str(err))
+        if manifest and manifest.get(kind) != fid:
+            problems.append(f"{mpath.name}: {kind} must be {fid!r}, the folder's id")
+        roster = str(workspace / PARTICIPANTS_DIR)
+        try:
+            _, found, _ = check_run(folder, roster, workspace)
+            problems += [p for p in found if p not in problems]
+        except PaError as err:
+            problems.append(str(err))
+        if kind == "scenario" and not problems:
+            try:
+                preview_html(folder, roster, workspace)
+            except (PaError, OSError, ValueError, KeyError) as err:
+                problems.append(f"the scenario does not play through: {err}")
+        if action == "new" and live is not None:
+            problems.append(f"a {kind} called {fid} already exists; pick another name")
+        now, before = _files_of(folder), _files_of(live if action != "new" else None)
+        for rel in sorted(set(now) | set(before)):
+            after_text, before_text = _text(now.get(rel)), _text(before.get(rel))
+            if rel not in before:
+                change = "added"
+            elif rel not in now:
+                change = "removed"
+            elif now[rel].read_bytes() == before[rel].read_bytes():
+                change = "same"
+            else:
+                change = "changed"
+            files.append({"path": rel, "change": change, "size": now[rel].stat().st_size if rel in now else 0,
+                          "text": after_text, "live": before_text if change != "same" else None,
+                          "editable": rel in now and after_text is not None})
+        if action == "change" and all(f["change"] == "same" for f in files):
+            problems.append("nothing has changed yet")
+    return {
+        "kind": kind,
+        "id": fid,
+        "action": action,
+        "from": meta.get("from"),
+        "builtin": builtin,
+        "shipped": bool(kind == "workflow" and shipped_workflow(workspace, fid)),
+        "started": meta.get("started"),
+        "updated": meta.get("updated"),
+        "step": meta.get("step"),
+        "aviator": meta.get("aviator"),
+        "manifest": manifest,
+        "manifest_file": _manifest_name(kind, folder if folder.is_dir() else None),
+        "files": files,
+        "problems": problems,
+        "uses": uses,
+        "path": f"{HANGAR_DIR}/drafts/{FOLDER_KINDS[kind]}/{fid}/",
+        "target": publish_target(workspace, kind, fid).relative_to(workspace).as_posix() + "/",
+    }
+
+
+def list_folder_drafts(workspace: Path) -> list[dict[str, Any]]:
+    out = []
+    for kind, kinds in FOLDER_KINDS.items():
+        base = _hangar(workspace, "drafts", kinds)
+        for meta in sorted(base.glob("*.json")) if base.is_dir() else []:
+            try:
+                out.append(folder_draft_info(workspace, kind, meta.stem))
+            except PaError:
+                continue
+    return out
+
+
+def discard_folder_draft(workspace: Path, kind: str, fid: str) -> None:
+    import shutil
+
+    folder, meta_path = _fd_paths(workspace, kind, _checked_id(fid))
+    if folder.is_dir():
+        shutil.rmtree(folder)
+    meta_path.unlink(missing_ok=True)
+
+
+def publish_folder_draft(workspace: Path, kind: str, fid: str, summary: str = "") -> dict[str, Any]:
+    """Check, keep the workspace folder it replaces, swap the draft in, and drop the draft."""
+    import shutil
+
+    info = folder_draft_info(workspace, kind, fid)
+    if info["problems"]:
+        raise PaError("cannot publish while checks fail: " + "; ".join(info["problems"]))
+    target = publish_target(workspace, kind, fid)
+    kept = None
+    if target.is_dir():
+        stamp = _dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+        base = _hangar(workspace, "history", FOLDER_KINDS[kind], fid)
+        version, n = stamp, 1
+        while (base / version).exists():
+            n += 1
+            version = f"{stamp}-{n}"
+        _copy_folder(target, base / version)
+        _write_atomic(base / f"{version}.json",
+                      json.dumps({"at": _now(), "summary": summary or info["action"], "replaced_by": info["action"]}, indent=1) + "\n")
+        kept = version
+    if info["action"] == "remove":
+        shutil.rmtree(target)
+    else:
+        staging = target.with_name(f".{fid}.publishing")
+        _copy_folder(_fd_paths(workspace, kind, fid)[0], staging)
+        if target.exists():
+            shutil.rmtree(target)
+        staging.rename(target)
+    discard_folder_draft(workspace, kind, fid)
+    return {"id": fid, "kind": kind, "action": info["action"], "kept": kept}
+
+
+def folder_history(workspace: Path, kind: str, fid: str) -> list[dict[str, Any]]:
+    base = _hangar(workspace, "history", FOLDER_KINDS[_kind(kind)], _checked_id(fid))
+    out = []
+    for folder in sorted((p for p in base.iterdir() if p.is_dir()), reverse=True) if base.is_dir() else []:
+        meta = _read_meta(base / f"{folder.name}.json")
+        out.append({"version": folder.name, "at": meta.get("at", ""), "summary": meta.get("summary", ""),
+                    "files": sorted(_files_of(folder))})
+    return out
+
+
+def restore_folder_version(workspace: Path, kind: str, fid: str, version: str) -> dict[str, Any]:
+    """Make an earlier version live again, through the same gate."""
+    if not re.fullmatch(r"\d{8}-\d{6}(-\d+)?", version):
+        raise PaError(f"{version!r} is not a version")
+    old = _hangar(workspace, "history", FOLDER_KINDS[_kind(kind)], _checked_id(fid), version)
+    if not old.is_dir():
+        raise PaError(f"{fid} has no version {version}")
+    folder, meta_path = _fd_paths(workspace, kind, fid)
+    if meta_path.is_file():
+        raise PaError(f"{fid} has a draft in progress; publish or discard it first")
+    _copy_folder(old, folder)
+    live = live_folder(workspace, kind, fid)
+    _write_folder_meta(workspace, kind, fid, {"action": "change" if live else "new", "from": f"{fid}@{version}"})
+    try:
+        return publish_folder_draft(workspace, kind, fid, f"restored the version of {version}")
+    except PaError:
+        discard_folder_draft(workspace, kind, fid)
+        raise
+
+
+def cmd_folder_draft(args: argparse.Namespace, workspace: Path) -> None:
+    kind = args.kind
+    if args.list:
+        print(json.dumps(list_folder_drafts(workspace), indent=1, ensure_ascii=False))
+        return
+    if args.discard:
+        discard_folder_draft(workspace, kind, args.id or "")
+        print(f"discarded the draft of {args.id}")
+        return
+    fid = start_folder_draft(workspace, kind, fid=args.id, name=args.name, duplicate_of=args.duplicate,
+                             remove=args.remove, workflow=args.workflow)
+    manifest: dict[str, Any] = {}
+    for key, value in _pairs(args.set).items():
+        if key in ("participants", "steps"):
+            value = [v.strip() for v in str(value or "").split(",") if v.strip()]
+        manifest[key] = value
+    files: dict[str, str | None] = {}
+    for item in args.file:
+        rel, _, local = item.partition("=")
+        files[rel.strip()] = Path(local).read_text(encoding="utf-8") if local.strip() else None
+    if manifest or files or args.step:
+        edit_folder_draft(workspace, kind, fid, manifest or None, files or None, args.step)
+    info = folder_draft_info(workspace, kind, fid)
+    if args.json:
+        print(json.dumps(info, indent=1, ensure_ascii=False))
+        return
+    print(f"draft {info['path']} ({info['action']}) -> {info['target']}")
+    for f in info["files"]:
+        if f["change"] != "same":
+            print(f"  {f['change']}: {f['path']}")
+    print("checks: ok, ready to publish" if not info["problems"] else "checks: " + "; ".join(info["problems"]))
+
+
 def cmd_draft(args: argparse.Namespace) -> None:
     workspace = workspace_of(_roster_dir(args.dir))
+    if args.kind != "person":
+        cmd_folder_draft(args, workspace)
+        return
     if args.list:
         print(json.dumps([{k: v for k, v in d.items() if k not in ("text", "live")} for d in list_drafts(workspace)], indent=1))
         return
@@ -1667,6 +2100,11 @@ def cmd_draft(args: argparse.Namespace) -> None:
 
 
 def cmd_publish(args: argparse.Namespace) -> None:
+    if args.kind != "person":
+        result = publish_folder_draft(workspace_of(_roster_dir(args.dir)), args.kind, args.id, args.summary or "")
+        kept = f"; the previous version is kept as {result['kept']}" if result["kept"] else ""
+        print(f"published the {args.kind} {result['id']} ({result['action']}){kept}")
+        return
     result = publish_draft(workspace_of(_roster_dir(args.dir)), args.id, args.summary or "")
     kept = f"; the previous version is kept as {result['kept']}" if result["kept"] else ""
     print(f"published {result['id']} ({result['action']}){kept}")
@@ -1674,6 +2112,14 @@ def cmd_publish(args: argparse.Namespace) -> None:
 
 def cmd_history(args: argparse.Namespace) -> None:
     workspace = workspace_of(_roster_dir(args.dir))
+    if args.kind != "person":
+        if args.restore:
+            result = restore_folder_version(workspace, args.kind, args.id, args.restore)
+            print(f"restored {args.id} to {args.restore}; the version it replaced is kept as {result['kept']}")
+            return
+        for v in folder_history(workspace, args.kind, args.id) or [{"version": f"{args.id} has no earlier versions", "summary": ""}]:
+            print(f"{v['version']}  {v['summary']}".rstrip())
+        return
     if args.restore:
         result = restore_version(workspace, args.id, args.restore)
         print(f"restored {args.id} to {args.restore}; the version it replaced is kept as {result['kept']}")
@@ -1686,7 +2132,11 @@ def cmd_history(args: argparse.Namespace) -> None:
 
 
 def cmd_uses(args: argparse.Namespace) -> None:
-    uses = person_uses(workspace_of(_roster_dir(args.dir)), _checked_id(args.id))
+    workspace = workspace_of(_roster_dir(args.dir))
+    if args.kind == "person":
+        uses = person_uses(workspace, _checked_id(args.id))
+    else:
+        uses = folder_uses(workspace, args.kind, _checked_id(args.id))
     if args.json:
         print(json.dumps(uses))
         return
@@ -1781,13 +2231,18 @@ def main(argv: list[str] | None = None) -> int:
     p.set_defaults(run=cmd_preview)
 
     # The Hangar's builder: drafts, publish, history, used-by.
-    p = sub.add_parser("draft", help="start or change a draft of a participant (nothing is live until publish)")
-    p.add_argument("kind", choices=["person"], help="what is being built; only person so far")
-    p.add_argument("id", nargs="?", help="the id of someone on the roster")
-    p.add_argument("--name", help="a new person's name (their id is made from it)")
+    p = sub.add_parser("draft", help="start or change a draft of a participant, scenario or workflow (nothing is live until publish)")
+    p.add_argument("kind", choices=BUILD_KINDS, help="what is being built")
+    p.add_argument("id", nargs="?", help="the id of someone on the roster, or of a scenario or workflow")
+    p.add_argument("--name", help="a new one's name (its id is made from it)")
     p.add_argument("--duplicate", help="with --name: start from a copy of this id")
     p.add_argument("--remove", action="store_true", help="draft taking them off the roster")
-    p.add_argument("--set", action="append", default=[], help="field=value: " + ", ".join(PERSON_FIELDS))
+    p.add_argument("--set", action="append", default=[],
+                   help="field=value. person: " + ", ".join(PERSON_FIELDS) + "; scenario: " + ", ".join(SCENARIO_KEYS)
+                   + "; workflow: " + ", ".join(WORKFLOW_KEYS) + " (participants and steps are comma lists)")
+    p.add_argument("--file", action="append", default=[],
+                   help="scenario or workflow: path/in/folder=local-file replaces a text file; path= deletes it")
+    p.add_argument("--workflow", help="a new scenario: the workflow it runs")
     p.add_argument("--brief", help="replace the brief or script")
     p.add_argument("--brief-file", help="replace the brief or script with this file")
     p.add_argument("--step", help="which step of the guided build the draft is at, for the Hangar")
@@ -1800,21 +2255,21 @@ def main(argv: list[str] | None = None) -> int:
     p.set_defaults(run=cmd_draft)
 
     p = sub.add_parser("publish", help="check a draft, keep the live version, and make the draft live")
-    p.add_argument("kind", choices=["person"])
+    p.add_argument("kind", choices=BUILD_KINDS)
     p.add_argument("id")
     p.add_argument("--summary", help="one line on what changed")
     p.add_argument("--dir")
     p.set_defaults(run=cmd_publish)
 
     p = sub.add_parser("history", help="earlier versions of a participant, or restore one")
-    p.add_argument("kind", choices=["person"])
+    p.add_argument("kind", choices=BUILD_KINDS)
     p.add_argument("id")
     p.add_argument("--restore", metavar="VERSION")
     p.add_argument("--dir")
     p.set_defaults(run=cmd_history)
 
     p = sub.add_parser("uses", help="what depends on a participant")
-    p.add_argument("kind", choices=["person"])
+    p.add_argument("kind", choices=BUILD_KINDS)
     p.add_argument("id")
     p.add_argument("--json", action="store_true")
     p.add_argument("--dir")
