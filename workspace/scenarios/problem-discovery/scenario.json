@@ -1,0 +1,14 @@
+{
+ "scenario": "problem-discovery",
+ "title": "Business onboarding problems",
+ "summary": "The Problem discovery workflow played with invented evidence about business account onboarding.",
+ "workflow": "problem-discovery",
+ "participants": [
+  "mara-okafor",
+  "support-insights"
+ ],
+ "fixtures": {
+  "dataset": "fixtures/business-onboarding-problems.json"
+ },
+ "script": "script.md"
+}

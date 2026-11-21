@@ -1,0 +1,17 @@
+{
+ "scenario": "intent-shaping",
+ "title": "Release dates: shaping the intent",
+ "summary": "The Intent shaping workflow played with an invented brief for showing release dates.",
+ "workflow": "intent-shaping",
+ "participants": [
+  "risk-review",
+  "cards-platform",
+  "mara-okafor",
+  "support-insights"
+ ],
+ "fixtures": {
+  "dataset": "fixtures/release-dates-intent.json",
+  "document": "fixtures/intent-brief.md"
+ },
+ "script": "script.md"
+}

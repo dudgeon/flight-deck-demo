@@ -21,7 +21,7 @@ PA="python3 <this skill's folder>/../view-kit/scripts/pa.py"
 ## 1. Find the document and read it
 
 Use the file the user named, otherwise look in `context/`. For a demo with no
-document: `mkdir -p context && cp SKILL_DIR/fixtures/allowances-prd.md context/`.
+document: `mkdir -p context && cp scenarios/document-review/fixtures/allowances-prd.md context/`.
 Pick a short slug, e.g. `allowances`.
 
 ## 2. Your own review

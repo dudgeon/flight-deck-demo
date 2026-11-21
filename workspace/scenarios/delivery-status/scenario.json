@@ -1,0 +1,16 @@
+{
+ "scenario": "delivery-status",
+ "title": "Release dates: status update",
+ "summary": "The Delivery status update workflow played with an invented Release dates delivery and its status update.",
+ "workflow": "delivery-status",
+ "participants": [
+  "cards-platform",
+  "risk-review",
+  "mara-okafor"
+ ],
+ "fixtures": {
+  "dataset": "fixtures/release-dates-delivery.json",
+  "document": "fixtures/status-update.md"
+ },
+ "script": "script.md"
+}

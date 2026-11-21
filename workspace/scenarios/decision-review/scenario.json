@@ -1,0 +1,15 @@
+{
+ "scenario": "decision-review",
+ "title": "Allowances: open decisions",
+ "summary": "The Decision review workflow played with invented open decisions on the Allowances launch.",
+ "workflow": "decision-review",
+ "participants": [
+  "risk-review",
+  "mara-okafor",
+  "cards-platform"
+ ],
+ "fixtures": {
+  "dataset": "fixtures/allowances-decisions.json"
+ },
+ "script": "script.md"
+}

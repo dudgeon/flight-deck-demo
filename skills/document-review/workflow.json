@@ -1,0 +1,63 @@
+{
+ "workflow": "document-review",
+ "title": "Review a document with others",
+ "summary": "Review a document, then call in other agents and people for second opinions. Everyone's comments and findings land in one list, each with who raised it.",
+ "inputs": [
+  {
+   "name": "document",
+   "kind": "markdown",
+   "hint": "The document to review. Looks in context/ first."
+  }
+ ],
+ "dataset": {
+  "path": "data/{slug}-review.json",
+  "adds": [
+   "finding"
+  ],
+  "status_field": "status"
+ },
+ "steps": [
+  "First read",
+  "Call in others",
+  "Their reviews",
+  "Your decisions",
+  "Wrap up"
+ ],
+ "progress": {
+  "records": {
+   "type": "finding"
+  },
+  "field": "status",
+  "done": [
+   "reviewed",
+   "returned"
+  ],
+  "noun": "findings",
+  "label": "decided"
+ },
+ "schemas": "schemas/records.json",
+ "views": {
+  "findings": "views/findings.json",
+  "who": "views/who-form.json",
+  "question": "views/consent-question.json",
+  "summary": "views/summary.json"
+ },
+ "work_products": [
+  {
+   "name": "Review findings",
+   "view": "findings",
+   "out": "artifacts/{slug}-review.html"
+  }
+ ],
+ "participants": [
+  "risk-review",
+  "mara-okafor"
+ ],
+ "launchers": [
+  {
+   "label": "Review with others",
+   "on": "markdown",
+   "prompt": "Review {path} and call in whoever should look at it."
+  }
+ ]
+}

@@ -1,0 +1,15 @@
+{
+ "scenario": "document-review",
+ "title": "Allowances PRD review",
+ "summary": "The Review a document with others workflow played with the invented Allowances PRD.",
+ "workflow": "document-review",
+ "participants": [
+  "risk-review",
+  "mara-okafor"
+ ],
+ "fixtures": {
+  "dataset": "fixtures/allowances-review.json",
+  "document": "fixtures/allowances-prd.md"
+ },
+ "script": "script.md"
+}

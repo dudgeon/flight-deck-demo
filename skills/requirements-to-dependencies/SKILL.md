@@ -26,13 +26,13 @@ workspace folder.
 - **The dataset.** Use the one the user named, else the one requirements
   dataset in `data/`. If there is none and the user wants a demo, start from
   the invented one:
-  `$PA init data/allowances.json --title Allowances --from SKILL_DIR/fixtures/allowances.json`
+  `$PA init data/allowances.json --title Allowances --from scenarios/requirements-to-dependencies/fixtures/allowances.json`
   That fixture is already half explored, which is good for showing the board.
   For a clean run on it, reset first:
   `$PA set data/allowances.json --where type=requirement explore_status=queued`.
 - **The platform map.** What the platform offers, in the user's own files.
   Look in `context/`. For a demo, copy
-  `SKILL_DIR/fixtures/platform-map.md` into `context/`. If there is nothing to
+  `scenarios/requirements-to-dependencies/fixtures/platform-map.md` into `context/`. If there is nothing to
   read, say so and ask where the capability documentation is. Do not invent
   capabilities.
 
