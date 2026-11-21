@@ -5,7 +5,7 @@ Status: **proposed; one rule decided (D-120, modular routing); nothing built.** 
 https://claude.ai/artifact/La4Qa5THk5JhwQBQGcVY7d (answers in its database,
 collection `answers`; offline copy in
 [../decision-artifacts/2026-11-21-aviator-coordination/](../decision-artifacts/2026-11-21-aviator-coordination/index.html)).
-The open questions are labelled AV-1 to AV-6 and take D-numbers only when
+The open questions are labelled AV-1 to AV-7 and take D-numbers only when
 Geoff answers them. Read with [modes-and-projects.md](modes-and-projects.md)
 (D-89 to D-99, and D-116 to D-119 in PR 32) and the `director` skill (PR 33).
 
@@ -285,6 +285,96 @@ it is not the recommendation.
 Alternatives: routing suite only for now (an afternoon to build, says nothing
 about personas); the full matrix before any change.
 
+## Part 6. Remembering across sessions and compactions (AV-7)
+
+Geoff, 2026-11-21: "Directors are often long running, spanning many sessions
+and compactions; please think about how we make the director remember its
+skill instructions." He pointed to Anthropic's
+[Building always-on agents](https://claude.com/resources/articles/building-always-on-agents)
+as useful but not to be followed too closely.
+
+### What Claude Code keeps today
+
+From the Claude Code docs ([memory](https://code.claude.com/docs/en/memory),
+[skills](https://code.claude.com/docs/en/skills),
+[hooks](https://code.claude.com/docs/en/hooks),
+[CLI reference](https://code.claude.com/docs/en/cli-reference)) and our
+own bridge:
+
+| Thing | After a compaction |
+|---|---|
+| The system prompt, including `--append-system-prompt` | Kept: it is not part of the conversation that gets summarised. |
+| The project root `CLAUDE.md` (here `workspace/CLAUDE.md`) | Re-read from disk and put back. Shared by every session in the workspace, threads included. |
+| A skill that was invoked | Re-attached, but only its first 5,000 tokens, and all re-attached skills share 25,000 tokens, filled from the most recently used. A director that has used many skills since can lose its own. |
+| The list of available skills | Not put back; only invoked skills are. |
+| Anything said only in the conversation | Summarised, so details are lost. |
+| A `SessionStart` hook's `additionalContext` | Runs again with source `compact` (also `startup`, `resume`, `clear`), so whatever it adds is back before the next reply. |
+
+Our bridge (`omnigent/harnesses/claude_native/bridge.py`) already wires a
+`SessionStart` hook that re-adds a persistent startup-context file on every
+start, resume and compaction, and passes session startup instructions
+through `--append-system-prompt`. So the mechanism exists; nothing puts the
+director's instructions into it yet.
+
+### The design: three layers
+
+The article's main lesson fits: instructions and state live in files that
+are reloaded on every wake, not in the transcript, and state is saved as the
+work goes rather than at the moment of compaction.
+
+1. **A short charter that is always present.** About 40 lines: who Aviator is
+   as director, the routing ladder in one paragraph, the rules that must never
+   be forgotten (only the person approves; honesty rules never relax; name no
+   workflow, read `pa workflows`, D-120), and the re-orientation step below.
+   Delivered as the startup instructions of the project's standing Aviator
+   session (D-89), so it is in the system prompt and comes back through the
+   `SessionStart` hook after every compaction. Only the director gets it;
+   threads and plain sessions do not.
+2. **The playbook, re-loaded on demand.** The `director` skill stays the full
+   method. It is kept well under 5,000 tokens (it is about 1,500 today) so a
+   re-attachment is never cut, with detail in reference files it reads when
+   needed. The charter says: after a compaction or at the start of a new
+   session, invoke the director skill again before directing. Because hero
+   skills run in threads, the director rarely invokes other skills, so its
+   own skill is usually still attached anyway.
+3. **State in files, written as it goes.** Per project, beside its manifest
+   (D-97):
+   - `director/state.md`: what is in flight beyond what `pa runs` shows, what
+     is waiting on the person, news being held (AV-5), questions asked and not
+     answered, the last few decisions. Rewritten at each checkpoint: a thread
+     reports, the person decides, a thread starts or ends.
+   - `director/memory.md`: lasting facts and preferences (who is who, how the
+     person likes to work, corrections). Added to when learned, never
+     rewritten wholesale. Handed to every thread brief, so no thread asks
+     again.
+   - Runs and their notes are already files (`pa flow`, `pa runs`, D-93).
+
+**Re-orienting.** A new `pa recap` prints, in one block: the charter's
+version, `state.md`, `memory.md`'s index and `pa runs`. The `SessionStart`
+hook for `compact`, `resume` and `startup` adds that block itself, so the
+director comes back knowing where things stand without rereading any thread.
+On a new session for the same project the director starts from the same
+recap; the standing chat can be replaced without losing anything, as a
+paused run can be resumed in a new thread (D-93).
+
+**Keeping it honest.** The coordination suite (AV-6) gains long-haul stories:
+a `/compact` forced at a scripted point, and a restart into a new session,
+then checks that the director still follows the ladder and the hold rule,
+knows what is in flight without opening threads, and asks the person nothing
+already in `memory.md`. A small test checks that the charter and the recap are
+added after a `SessionStart` with source `compact`.
+
+**What the person sees (AV-7, the one product question).** Recommended: the
+director's notes appear on the project page as "Director's notes", readable
+and editable, so the person can correct a wrong memory and see what the
+director is holding. Alternatives: hidden files only (simplest, but a wrong
+memory persists unseen); readable but not editable.
+
+Build notes, not for Geoff: the charter is a file in `skills/director/`
+(`charter.md`), so it travels with the skill; the slim change to the bridge
+that adds `pa recap` to the startup context is marked `omnigent-slim:`; which
+session is the director comes from the project manifest.
+
 ## Open questions
 
 | | Question | Recommended |
@@ -295,6 +385,7 @@ about personas); the full matrix before any change.
 | AV-4 | Who changes strictness | The person in words, per run, visible; the Hangar sets the default |
 | AV-5 | News while the person is mid-conversation | Hold until a break, except failures and blockers |
 | AV-6 | How to test and tune | Three suites through the real app on the Mac mini, with Geoff ranking blind pairs |
+| AV-7 | Whether the person sees what the director remembers | "Director's notes" on the project page, readable and editable |
 
 ## Build order once answered
 
@@ -307,4 +398,9 @@ about personas); the full matrix before any change.
    and in the run (needs AV-3, AV-4); persona suite.
 4. Feature lifecycle skill and its view (needs AV-2, and D-97's project
    manifest).
-5. Coordination suite, once the direct line (D-116) is built.
+5. Coordination suite, now that the direct line (D-116) is built, with the
+   long-haul stories.
+6. Director memory: `charter.md`, `state.md` and `memory.md`, `pa recap`, the
+   `SessionStart` re-orientation, and Director's notes on the project page
+   (needs AV-7). Steps 1 and 6 can go together: the charter is where the
+   ladder lives.

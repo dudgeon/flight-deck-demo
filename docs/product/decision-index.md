@@ -203,7 +203,7 @@ decided but nothing is built yet.
 ## Open questions not yet numbered
 
 - Aviator coordination, skill routing and persona strictness (AV-1 to
-  AV-6 in [director-coordination.md](director-coordination.md)): put to
+  AV-7 in [director-coordination.md](director-coordination.md)): put to
   Geoff 2026-11-21; numbered when answered.
 - Progressive complexity (D-54).
 - D-24 for production.

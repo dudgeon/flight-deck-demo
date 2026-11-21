@@ -31,7 +31,7 @@ in the same pull request.
 | [Dock launcher](#dock-launcher) | Done |
 | [Branding](#branding) | Done; repository renamed (D-114) |
 | [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | D-89 to D-99 and D-116 to D-119 decided; runs and In flight built (PR 24) |
-| [Aviator coordination and skill routing](#aviator-coordination-and-skill-routing) | Designed; six questions (AV-1 to AV-6) with Geoff; nothing built |
+| [Aviator coordination and skill routing](#aviator-coordination-and-skill-routing) | Designed; D-120 decided; seven questions (AV-1 to AV-7) with Geoff; nothing built |
 
 ---
 
@@ -341,7 +341,8 @@ strictly as the moment needs, measured by evals rather than argued.
   blocks and strictness; then the lifecycle skill.
 - **Open.** AV-1 routing, AV-2 the lifecycle skill, AV-3 default strictness,
   AV-4 who changes it, AV-5 news while the person is mid-conversation, AV-6
-  how to test. They take D-numbers when answered.
+  how to test, AV-7 whether the person sees what the director remembers across
+  sessions and compactions. They take D-numbers when answered.
 - **Read.** [director-coordination.md](director-coordination.md); walkthrough
   at https://claude.ai/artifact/La4Qa5THk5JhwQBQGcVY7d.
 
