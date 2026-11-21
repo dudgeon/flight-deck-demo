@@ -421,10 +421,11 @@ from the person's page (D-65) and skills passed to the session (D-66).
 - Progressive complexity (from D-54): how a workflow shows less at first and
   more on demand, to the person and to the agent. Not designed yet.
 - Modes, runs, projects and the intent graph (raised by Geoff 2026-11-21):
-  nine questions, M-1 to M-9, in [modes-and-projects.md](modes-and-projects.md),
+  eleven questions, M-1 to M-11, in [modes-and-projects.md](modes-and-projects.md),
   each put to him with drawings at
   https://claude.ai/artifact/HRgpJURjcqasGSCmd3894d. They are: how a mode
   shows; how replies are marked as the mode's; side questions during a mode;
   leaving a mode (pause, finish, stop); a second mode in the same session;
   where in-flight work is found; what a project is; how a project's relatives
-  show; how detailed the intent graph is. Nothing is built.
+  show; how detailed the intent graph is; where a mode's
+  conversation lives; threads on single items. Nothing is built.
