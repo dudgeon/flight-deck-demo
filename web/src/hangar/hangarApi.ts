@@ -111,6 +111,9 @@ export interface HangarWorkflow {
   views: HangarView[];
   script: { path: string; title: string; steps: number; error: string | null } | null;
   builtin: boolean;
+  /** A workflow of this id ships with the app (a workspace copy may hide it). */
+  shipped?: boolean;
+  history?: FolderVersion[];
   path: string;
   problems: string[];
   starters: string[];
@@ -137,7 +140,65 @@ export interface HangarScenario {
   text: string;
   cast: string[];
   fixtures: string[];
+  opening?: string;
+  history?: FolderVersion[];
   problems: string[];
+}
+
+export interface FolderVersion {
+  version: string;
+  at: string;
+  summary: string;
+  files: string[];
+}
+
+export type FolderKind = "scenario" | "workflow";
+
+/** One file of a scenario or workflow draft, beside the live one. */
+export interface FolderFile {
+  path: string;
+  change: "same" | "changed" | "added" | "removed";
+  size: number;
+  /** Text, for text files (not in the catalog listing; the editor fetches it). */
+  text?: string | null;
+  live?: string | null;
+  editable: boolean;
+}
+
+/** A scenario or workflow being built: a copy of the whole folder (D-71). */
+export interface FolderDraft {
+  kind: FolderKind;
+  id: string;
+  action: "new" | "change" | "remove";
+  from: string | null;
+  /** The live one ships with the app; publishing makes a workspace copy. */
+  builtin: boolean;
+  shipped: boolean;
+  started: string | null;
+  updated: string | null;
+  step: string | null;
+  aviator: string | null;
+  manifest: Record<string, unknown> & {
+    title?: string;
+    summary?: string;
+    workflow?: string;
+    participants?: string[];
+    steps?: string[];
+    script?: string;
+    opening?: string;
+  };
+  manifest_file: string;
+  files: FolderFile[];
+  problems: string[];
+  uses: { scenarios: string[]; starters: string[] };
+  path: string;
+  target: string;
+}
+
+export interface FolderEdit {
+  manifest?: Record<string, unknown>;
+  files?: Record<string, string | null>;
+  aviator?: string;
 }
 
 export interface HangarSkill {
@@ -181,13 +242,23 @@ export interface Hangar {
   skills: HangarSkill[];
   starters: HangarStarter[];
   frameworks: HangarFramework[];
+  /** Drafts of people. */
   drafts: HangarDraft[];
+  /** Drafts of scenarios and workflows. */
+  folder_drafts: FolderDraft[];
 }
 
 async function fetchHangar(): Promise<Hangar> {
   const res = await authenticatedFetch("/v1/slim/hangar");
   if (!res.ok) throw new Error(`The Hangar could not be read (${res.status})`);
-  return (await res.json()) as Hangar;
+  const data = (await res.json()) as Omit<Hangar, "drafts"> & {
+    drafts: (HangarDraft | FolderDraft)[];
+  };
+  return {
+    ...data,
+    drafts: data.drafts.filter((d): d is HangarDraft => d.kind === "person"),
+    folder_drafts: data.drafts.filter((d): d is FolderDraft => d.kind !== "person"),
+  };
 }
 
 export function useHangar() {
@@ -237,6 +308,7 @@ export const hangarPath = {
   starter: (id: string) => `/hangar/starters/${encodeURIComponent(id)}`,
   framework: (id: string) => `/hangar/frameworks/${encodeURIComponent(id)}`,
   draft: (id: string) => `/hangar/drafts/person/${encodeURIComponent(id)}`,
+  folderDraft: (kind: FolderKind, id: string) => `/hangar/drafts/${kind}/${encodeURIComponent(id)}`,
   history: (id: string) => `/hangar/people/${encodeURIComponent(id)}/history`,
 };
 
@@ -296,6 +368,101 @@ export function useHangarActions() {
       onSuccess: done,
     }),
   };
+}
+
+const folderApi = (kind: FolderKind, id: string) =>
+  `/v1/slim/hangar/drafts/${kind}/${encodeURIComponent(id)}`;
+
+/** A scenario or workflow draft with its files' text, kept fresh with the catalog. */
+export function useFolderDraft(kind: FolderKind, id: string) {
+  return useQuery({
+    queryKey: ["slim-hangar", "folder-draft", kind, id],
+    queryFn: async () => (await send(folderApi(kind, id), "GET")) as FolderDraft,
+  });
+}
+
+export const folderPreviewPath = (kind: FolderKind, id: string) => `${folderApi(kind, id)}/preview`;
+
+/** The same moves as people, for scenarios and workflows. */
+export function useFolderActions() {
+  const client = useQueryClient();
+  const done = () => client.invalidateQueries({ queryKey: ["slim-hangar"] });
+  return {
+    startDraft: useMutation({
+      mutationFn: ({ kind, id, remove }: { kind: FolderKind; id: string; remove?: boolean }) =>
+        send(folderApi(kind, id), "POST", { remove: Boolean(remove) }) as Promise<FolderDraft>,
+      onSuccess: done,
+    }),
+    create: useMutation({
+      mutationFn: ({
+        kind,
+        name,
+        duplicateOf,
+        workflow,
+      }: {
+        kind: FolderKind;
+        name: string;
+        duplicateOf?: string;
+        workflow?: string;
+      }) =>
+        send(`/v1/slim/hangar/drafts/${kind}`, "POST", {
+          name,
+          duplicate_of: duplicateOf ?? null,
+          workflow: workflow ?? null,
+        }) as Promise<FolderDraft>,
+      onSuccess: done,
+    }),
+    edit: useMutation({
+      mutationFn: ({ kind, id, edit }: { kind: FolderKind; id: string; edit: FolderEdit }) =>
+        send(folderApi(kind, id), "PATCH", edit) as Promise<FolderDraft>,
+      onSuccess: (saved) => {
+        client.setQueryData(["slim-hangar", "folder-draft", saved.kind, saved.id], saved);
+        void client.invalidateQueries({ queryKey: ["slim-hangar"], exact: true });
+      },
+    }),
+    discard: useMutation({
+      mutationFn: ({ kind, id }: { kind: FolderKind; id: string }) =>
+        send(folderApi(kind, id), "DELETE"),
+      onSuccess: done,
+    }),
+    publish: useMutation({
+      mutationFn: ({ kind, id, summary }: { kind: FolderKind; id: string; summary: string }) =>
+        send(`${folderApi(kind, id)}/publish`, "POST", { summary }),
+      onSuccess: done,
+    }),
+    restore: useMutation({
+      mutationFn: ({ kind, id, version }: { kind: FolderKind; id: string; version: string }) =>
+        send(
+          `/v1/slim/hangar/history/${kind}/${encodeURIComponent(id)}/${encodeURIComponent(version)}/restore`,
+          "POST",
+        ),
+      onSuccess: done,
+    }),
+  };
+}
+
+/** The first message of the Aviator session beside a scenario or workflow draft. */
+export function folderAviatorPrompt(
+  draft: Pick<FolderDraft, "kind" | "id">,
+  title: string,
+): string {
+  return [
+    `I'm editing the ${draft.kind} "${title}" in the Hangar, with the scenario-builder skill.`,
+    `The draft is the folder ${draft.kind === "scenario" ? ".hangar/drafts/scenarios" : ".hangar/drafts/workflows"}/${draft.id}/.`,
+    "Change files only inside that draft folder (never the live one), keep each change small,",
+    `check it with \`pa draft ${draft.kind} ${draft.id}\`, and tell me in one line what you changed.`,
+    "I can see the page and edit there myself. Nothing is published until I press Publish.",
+    "Read the draft now and say in two lines what it does. Then wait for me.",
+  ].join(" ");
+}
+
+/** Play a scenario draft from a given point, in the same Aviator session. */
+export function playPrompt(draftId: string, note: string): string {
+  return [
+    `Play it: run the unpublished scenario draft .hangar/drafts/scenarios/${draftId}/ as a user would meet it,`,
+    "reading its script.md and fixtures, with the views drawn as the script says. Nothing is published.",
+    `${note ? `Start from or focus on: ${note}` : ""}`,
+  ].join(" ");
 }
 
 export function useHangarVersion(id: string, version: string | null) {

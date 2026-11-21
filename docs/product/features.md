@@ -360,9 +360,28 @@ session to change a role or a brief clunky and opaque, and could not see how
 to give someone skills or put them in a workflow. Direct edits handle the
 simple changes; Aviator is there for rewrites, without leaving the page.
 
+**Scenario and workflow builders (slice 3, D-71 to D-73).** Every scenario
+and workflow page has Edit, Duplicate and Remove (for a shipped workflow, "Edit
+a copy"), and the Scenarios shelf has "New scenario". The draft opens as an
+editor: title, summary, the workflow it runs and the opening line (scenarios)
+or the steps (workflows), tick boxes for the cast or for who may be called, the
+script or the instructions (`SKILL.md`) as a big text box, and every other text
+file in the folder, with a box to add one such as `context/brief.md` or
+`cast/mara-okafor.md`. Beside it are the checks and the files that change, each
+with a diff; a scenario draft also plays below, as a demo. Publish needs every
+check to pass and the script to play through, keeps the version it replaces,
+and History restores one. A shipped workflow publishes as a workspace copy
+that takes over its id. The same moves are `pa draft|publish|history
+scenario|workflow`, which the scenario-builder skill now uses. *Why:* so a PM
+can make a new demo, or adjust a kind of work for their team, without editing
+files or breaking what others fly, in the same way they edit a person.
+
 **Where.** Design in `hangar.md`. Server: `omnigent/server/routes/slim_hangar.py`
 (`GET /v1/slim/hangar`, rendered views, templates and scenario players, and the
-draft, publish, history and restore routes). Builder skill: `skills/build-person/`.
+draft, publish, history and restore routes for people, scenarios and
+workflows). Folder drafts: the "workflows and scenarios" builder section of
+`skills/view-kit/scripts/pa.py`. Web: `FolderEditor.tsx` beside the person
+editor. Builder skill: `skills/build-person/`.
 Web: `web/src/hangar/`. Colors: the `build` and `hangar-*` tokens.
 
 ## Views in the chat (asks in chat, work in canvas)

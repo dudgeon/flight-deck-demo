@@ -19,13 +19,7 @@ import { fetchHosts } from "@/hooks/useHosts";
 import { nativeAgentSortRank, nativeWrapperLabelsForAgent } from "@/lib/nativeCodingAgents";
 import { createSession, sendUserMessage } from "@/lib/sessionsApi";
 import { cn } from "@/lib/utils";
-import {
-  HANGAR_PROJECT,
-  type HangarDraft,
-  aviatorPrompt,
-  trialPrompt,
-  useHangarActions,
-} from "./hangarApi";
+import { HANGAR_PROJECT } from "./hangarApi";
 
 /** Start a Claude session in the Hangar project, in the workspace, and send its first message. */
 async function startAviatorSession(opts: {
@@ -54,18 +48,36 @@ async function startAviatorSession(opts: {
   return session.id;
 }
 
+/** How "Try" works for what is being edited: a person answers, a scenario plays. */
+export interface AviatorTrial {
+  tab: string;
+  intro: string;
+  placeholder: string;
+  prompt: (question: string) => string;
+}
+
 export function AviatorPopover({
-  draft,
   name,
   workspace,
   pinned,
   onPinnedChange,
+  sessionId,
+  onSession,
+  firstPrompt,
+  trial,
+  intro = "Aviator can rewrite the brief, suggest a call-for line, or change several things at once. Its changes land in this draft and show on the page as it works.",
 }: {
-  draft: Pick<HangarDraft, "id" | "action" | "aviator">;
   name: string;
   workspace: string;
   pinned: boolean;
   onPinnedChange: (pinned: boolean) => void;
+  /** The Aviator session already working on this draft, if any. */
+  sessionId: string | null;
+  /** Keep a new session's id on the draft. */
+  onSession: (id: string) => Promise<unknown>;
+  firstPrompt: string;
+  trial?: AviatorTrial;
+  intro?: string;
 }) {
   const [open, setOpen] = useState(pinned);
   const [tab, setTab] = useState<"change" | "try">("change");
@@ -73,9 +85,7 @@ export function AviatorPopover({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const resolveProjectId = useResolveOrCreateProjectId();
-  const { edit } = useHangarActions();
   const client = useQueryClient();
-  const sessionId = draft.aviator;
 
   // While Aviator is working, its edits to the draft file show on the page.
   useEffect(() => {
@@ -94,10 +104,10 @@ export function AviatorPopover({
       const id = await startAviatorSession({
         workspace,
         title: `Hangar: ${name}`,
-        prompt: first ?? aviatorPrompt(draft, name),
+        prompt: first ?? firstPrompt,
         resolveProjectId,
       });
-      await edit.mutateAsync({ id: draft.id, edit: { aviator: id } });
+      await onSession(id);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -107,12 +117,12 @@ export function AviatorPopover({
 
   async function tryThem() {
     const q = question.trim();
-    if (!q) return;
+    if (!q || !trial) return;
     setBusy(true);
     setError(null);
     try {
-      if (sessionId) await sendUserMessage(sessionId, trialPrompt(draft.id, name, q));
-      else await start(`${aviatorPrompt(draft, name)}\n\n${trialPrompt(draft.id, name, q)}`);
+      if (sessionId) await sendUserMessage(sessionId, trial.prompt(q));
+      else await start(`${firstPrompt}\n\n${trial.prompt(q)}`);
       setQuestion("");
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -133,7 +143,6 @@ export function AviatorPopover({
       </button>
     );
   }
-  const first = name.split(/\s+/)[0] || name;
   return (
     <div
       className={cn("aviator-pop", pinned && "pinned")}
@@ -173,17 +182,19 @@ export function AviatorPopover({
         >
           Change with Aviator
         </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "try"}
-          onClick={() => setTab("try")}
-          data-testid="hangar-try-tab"
-        >
-          Try them
-        </button>
+        {trial && (
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "try"}
+            onClick={() => setTab("try")}
+            data-testid="hangar-try-tab"
+          >
+            {trial.tab}
+          </button>
+        )}
       </div>
-      {tab === "try" && (
+      {tab === "try" && trial && (
         <form
           className="try"
           onSubmit={(e) => {
@@ -191,17 +202,14 @@ export function AviatorPopover({
             void tryThem();
           }}
         >
-          <span className="dim">
-            Ask {first} a real question. The draft answers the way people will meet them when
-            flying. Nothing is published.
-          </span>
+          <span className="dim">{trial.intro}</span>
           <div className="row">
             <input
               className="hangar-input"
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
-              placeholder={`Ask ${first} a question…`}
-              aria-label={`Question for ${name}`}
+              placeholder={trial.placeholder}
+              aria-label={trial.placeholder}
             />
             <button type="submit" className="hangar-btn pri" disabled={busy || !question.trim()}>
               Ask
@@ -214,10 +222,7 @@ export function AviatorPopover({
           <FullSessionChat key={sessionId} sessionId={sessionId} evenComposerPadding />
         ) : (
           <div className="start">
-            <p>
-              Aviator can rewrite the brief, suggest a call-for line, or change several things at
-              once. Its changes land in this draft and show on the page as it works.
-            </p>
+            <p>{intro}</p>
             {tab === "change" && (
               <button
                 type="button"

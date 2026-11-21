@@ -282,6 +282,8 @@ def _workflow(pa: ModuleType, folder: Path, roster: dict[str, Any]) -> dict[str,
         "script": script,
         "scenarios": [s.name for s in pa.scenarios_of(wid, workspace_dir())],
         "builtin": builtin,
+        "shipped": pa.shipped_workflow(workspace_dir(), wid) is not None,
+        "history": pa.folder_history(workspace_dir(), "workflow", wid),
         "path": _shown(folder) + "/",
         "problems": _check(pa, folder),
         "starters": [],
@@ -321,6 +323,8 @@ def _scenario_entry(pa: ModuleType, folder: Path, roster: dict[str, Any]) -> dic
         "fixtures": [
             _shown(folder / str(rel)) for rel in (manifest.get("fixtures") or {}).values()
         ],
+        "opening": str(scenario.get("opening") or ""),
+        "history": pa.folder_history(workspace_dir(), "scenario", folder.name),
         "problems": _check(pa, folder),
     }
 
@@ -496,11 +500,21 @@ def load_hangar() -> dict[str, Any]:
 
 
 def _drafts(pa: ModuleType) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
     try:
-        return pa.list_drafts(workspace_dir(), slim_skills_dir())
+        out += pa.list_drafts(workspace_dir(), slim_skills_dir())
     except Exception:
         _logger.warning("could not read the Hangar drafts", exc_info=True)
-        return []
+    try:
+        # Folder drafts are listed without file contents; the editor fetches those.
+        for draft in pa.list_folder_drafts(workspace_dir()):
+            draft["files"] = [
+                {k: v for k, v in f.items() if k not in ("text", "live")} for f in draft["files"]
+            ]
+            out.append(draft)
+    except Exception:
+        _logger.warning("could not read the Hangar folder drafts", exc_info=True)
+    return out
 
 
 def _pa_call(fn: Any, *args: Any, **kwargs: Any) -> Any:
@@ -580,6 +594,101 @@ def person_version(pid: str, version: str) -> dict[str, Any]:
         if entry["version"] == version:
             return entry
     raise HTTPException(status_code=404, detail="no such version")
+
+
+# Slice 3: scenarios and workflows. A draft is a whole folder; the same
+# ``pa`` functions back ``pa draft scenario|workflow`` for the builder skills.
+
+_FOLDER_KINDS = ("scenario", "workflow")
+
+
+def _folder_kind(kind: str) -> str:
+    if kind not in _FOLDER_KINDS:
+        raise HTTPException(status_code=404, detail="no such kind of draft")
+    return kind
+
+
+def folder_draft_detail(kind: str, fid: str) -> dict[str, Any]:
+    pa = _pa()
+    return _pa_call(pa.folder_draft_info, workspace_dir(), _folder_kind(kind), fid)
+
+
+def start_folder_draft(kind: str, fid: str, remove: bool = False) -> dict[str, Any]:
+    pa = _pa()
+    _pa_call(pa.start_folder_draft, workspace_dir(), _folder_kind(kind), fid=fid, remove=remove)
+    return folder_draft_detail(kind, fid)
+
+
+def new_folder_draft(kind: str, body: dict[str, Any]) -> dict[str, Any]:
+    pa = _pa()
+    name = str(body.get("name") or "").strip()[:80]
+    if not name:
+        raise HTTPException(status_code=422, detail=f"a new {kind} needs a name")
+    duplicate = body.get("duplicate_of")
+    workflow = body.get("workflow")
+    fid = _pa_call(
+        pa.start_folder_draft,
+        workspace_dir(),
+        _folder_kind(kind),
+        name=name,
+        duplicate_of=str(duplicate) if duplicate else None,
+        workflow=str(workflow) if workflow else None,
+    )
+    return folder_draft_detail(kind, fid)
+
+
+def edit_folder_draft(kind: str, fid: str, body: dict[str, Any]) -> dict[str, Any]:
+    """Save edits made on the Hangar page: manifest fields and whole text files."""
+    pa = _pa()
+    manifest = body.get("manifest")
+    files = body.get("files")
+    if manifest is not None and not isinstance(manifest, dict):
+        raise HTTPException(status_code=422, detail="manifest must be an object")
+    if files is not None and not (
+        isinstance(files, dict)
+        and all(isinstance(k, str) and (v is None or isinstance(v, str)) for k, v in files.items())
+    ):
+        raise HTTPException(status_code=422, detail="files must map a path to text (or null)")
+    aviator = body.get("aviator")
+    _pa_call(
+        pa.edit_folder_draft,
+        workspace_dir(),
+        _folder_kind(kind),
+        fid,
+        manifest or None,
+        files or None,
+        None,
+        str(aviator) if aviator else None,
+    )
+    return folder_draft_detail(kind, fid)
+
+
+def publish_folder(kind: str, fid: str, summary: str) -> dict[str, Any]:
+    pa = _pa()
+    return _pa_call(pa.publish_folder_draft, workspace_dir(), _folder_kind(kind), fid, summary)
+
+
+def discard_folder(kind: str, fid: str) -> dict[str, Any]:
+    pa = _pa()
+    _pa_call(pa.discard_folder_draft, workspace_dir(), _folder_kind(kind), fid)
+    return {"id": fid, "discarded": True}
+
+
+def restore_folder(kind: str, fid: str, version: str) -> dict[str, Any]:
+    pa = _pa()
+    return _pa_call(pa.restore_folder_version, workspace_dir(), _folder_kind(kind), fid, version)
+
+
+def render_draft_preview(kind: str, fid: str) -> str:
+    """The player for a draft scenario (or a draft workflow's first scenario)."""
+    pa = _pa()
+    folder, meta = pa._fd_paths(workspace_dir(), _folder_kind(kind), fid)
+    if not meta.is_file() or not folder.is_dir():
+        raise HTTPException(status_code=404, detail="no such draft")
+    try:
+        return pa.preview_html(folder, str(workspace_dir() / "participants"), workspace_dir())
+    except Exception as err:
+        raise HTTPException(status_code=422, detail=str(err)) from err
 
 
 # --------------------------------------------------------------- rendering
@@ -721,5 +830,55 @@ def create_slim_hangar_router(*, auth_provider: AuthProvider | None = None) -> A
     async def post_restore(request: Request, pid: str, version: str) -> dict[str, Any]:
         require_user(request, auth_provider)
         return restore_person(pid, version)
+
+    @router.get("/slim/hangar/drafts/{kind}/{fid}/preview", response_class=HTMLResponse)
+    async def get_folder_preview(request: Request, kind: str, fid: str) -> HTMLResponse:
+        require_user(request, auth_provider)
+        return HTMLResponse(render_draft_preview(kind, fid))
+
+    @router.get("/slim/hangar/drafts/{kind}/{fid}")
+    async def get_folder_draft(request: Request, kind: str, fid: str) -> dict[str, Any]:
+        require_user(request, auth_provider)
+        return folder_draft_detail(kind, fid)
+
+    @router.post("/slim/hangar/drafts/{kind}/{fid}")
+    async def post_folder_draft(
+        request: Request, kind: str, fid: str, body: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        require_user(request, auth_provider)
+        return start_folder_draft(kind, fid, remove=bool((body or {}).get("remove")))
+
+    @router.patch("/slim/hangar/drafts/{kind}/{fid}")
+    async def patch_folder_draft(
+        request: Request, kind: str, fid: str, body: dict[str, Any]
+    ) -> dict[str, Any]:
+        require_user(request, auth_provider)
+        return edit_folder_draft(kind, fid, body)
+
+    @router.post("/slim/hangar/drafts/{kind}")
+    async def post_new_folder_draft(
+        request: Request, kind: str, body: dict[str, Any]
+    ) -> dict[str, Any]:
+        require_user(request, auth_provider)
+        return new_folder_draft(kind, body)
+
+    @router.delete("/slim/hangar/drafts/{kind}/{fid}")
+    async def delete_folder_draft(request: Request, kind: str, fid: str) -> dict[str, Any]:
+        require_user(request, auth_provider)
+        return discard_folder(kind, fid)
+
+    @router.post("/slim/hangar/drafts/{kind}/{fid}/publish")
+    async def post_folder_publish(
+        request: Request, kind: str, fid: str, body: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        require_user(request, auth_provider)
+        return publish_folder(kind, fid, str((body or {}).get("summary") or "")[:200])
+
+    @router.post("/slim/hangar/history/{kind}/{fid}/{version}/restore")
+    async def post_folder_restore(
+        request: Request, kind: str, fid: str, version: str
+    ) -> dict[str, Any]:
+        require_user(request, auth_provider)
+        return restore_folder(kind, fid, version)
 
     return router
