@@ -5,13 +5,14 @@ stands now, and why. The full wording is in [decisions.md](decisions.md),
 which is never edited after the fact; this index is the part that changes.
 Update the status here whenever a decision is built, refined or replaced.
 
-Audit of 2026-11-21: D-01 to D-75 and D-89 to D-99 are on `main`. D-60, D-61 and D-62 were
-never assigned (parallel threads claimed blocks and skipped them); they stay
-unused so no reference can point at the wrong thing. D-76 to D-88 are claimed
-by open pull requests 17 and 19. D-89 to D-99 (modes and projects) are on
-`main` from pull request 21. D-100 to D-106 record decisions Geoff made earlier that were
-never logged (see "Backfilled" in decisions.md); D-107 onward is next. No
-number is used twice.
+Audit of 2026-11-21 (evening): D-01 to D-75, D-89 to D-107, D-111 and D-114
+are on `main`. D-60, D-61 and D-62 were never assigned (parallel threads
+claimed blocks and skipped them); they stay unused so no reference can point
+at the wrong thing. Claimed by open pull requests: D-76 to D-81 (PR 17),
+D-82 to D-88 (PR 19), D-108 to D-110 (PR 25, avatars, held), D-112 (PR 27)
+and D-113 (PR 29). D-100 to D-106 record decisions Geoff made earlier that
+were never logged (see "Backfilled" in decisions.md). D-115 onward is next;
+check open pull requests first, as `CLAUDE.md` says. No number is used twice.
 
 **Status words.** *Built*: in the code on `main`. *Active*: a rule or
 direction in force, nothing to build. *Refined by* / *replaced by*: a later
@@ -197,6 +198,7 @@ decided but nothing is built yet.
 - The modes questions still unanswered (M-8, M-12 to M-14 in
   [modes-and-projects.md](modes-and-projects.md)): how the director shows a
   mode, where a thread opens, what a thread reports back, how a project's
-  connections show. They take D-107 onward when Geoff answers.
+  connections show. They take the next free number when Geoff answers
+  (D-115 or later).
 - Progressive complexity (D-54).
 - D-24 for production.
