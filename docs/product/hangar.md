@@ -1,8 +1,11 @@
 # The Hangar: builder mode
 
-Status: designed and decided (D-39 to D-47, D-51, D-52, D-56 to D-59). Slice 1,
-the read-only look-around Hangar, and slice 2, the person builder, are built;
-slice 3 is not. Clickable mockup
+Status: designed, decided and built. Decisions D-39 to D-47, D-51, D-52,
+D-56 to D-59, D-63 to D-67 and D-71 to D-75 (where each stands:
+[decision-index.md](decision-index.md)). All three slices are built: the
+look-around Hangar, the person builder (edited in place with the Aviator
+pop-over) and the scenario and workflow builders, plus pictures for people.
+"Fly this" demos (D-76 to D-81) are in an open pull request. Clickable mockup
 and the decision walkthrough: https://claude.ai/artifact/9M4JGs5WuxigJz1jiJ9QVr
 
 ## What it is for
@@ -134,6 +137,8 @@ files are keyed by scenario id).
 - Server: a read-only endpoint modelled on `slim_library.py`.
 - `pa`: `draft`, `publish`, `history`, `uses`.
 - Skills: `build-person`, `build-workflow`, `build-scenario`, `build-skill`.
+  Built so far: `build-person`, and `scenario-builder` in place of
+  `build-scenario`.
 - A "Hangar" project so builder sessions stay out of the flying sidebar.
 
 ## Build order (D-45)

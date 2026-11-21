@@ -1,0 +1,256 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!-- decision-archive:start -->
+<div style="font:13px/1.45 system-ui,sans-serif;background:Canvas;color:CanvasText;border-bottom:1px solid GrayText;padding:8px 16px">Archived copy of <b>Workflow Prototyping System</b>, a decision artifact from 2026-11-21. Nothing on this page is saved. The index of all of them is in <a href="../index.html">docs/decision-artifacts</a>.</div>
+<script>
+(function(){
+  var A={};
+  function snap(){var docs=Object.keys(A).map(function(k){return {id:k,data:function(){return A[k]},exists:true}});return {docs:docs,empty:!docs.length,size:docs.length,forEach:function(f){docs.forEach(f)}}}
+  function doc(id){return {id:id,get:async function(){return {id:id,exists:id in A,data:function(){return A[id]}}},set:async function(){},update:async function(){},delete:async function(){}}}
+  var db={collection:function(){return {get:async function(){return snap()},doc:doc,onSnapshot:function(f){setTimeout(function(){f(snap())},0);return function(){}},add:async function(){}}},doc:function(p){return doc(String(p).split("/").pop())}};
+  window.claude={use:async function(name){return name==="db"?db:null}};
+})();
+</script>
+<!-- decision-archive:end -->
+
+<title>Workflow Prototyping System</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: a reading column with one instrument, a workspace schematic that redraws per work mode. */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --sunk:#e9edf2; --ink:#0a223d; --ink-2:#44566c; --ink-3:#7a8899;
+  --line:#d3dae3; --navy:#0a223d; --on-navy:#f3f5f8;
+  --you:#c2501f; --you-soft:#fbe6dc;
+  --exists:#2f5d8a; --exists-soft:#dfe9f3; --ours:#17756b; --ours-soft:#d9efec;
+  --extend:#8a6200; --extend-soft:#f6ecd0; --new:#c2501f; --new-soft:#fbe6dc;
+  --ok:#1d7a4f; --warn:#9a6a00; --attn:#b8323c; --idle:#7a8899;
+  --display:"Space Grotesk","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#07172a; --surface:#0e2238; --sunk:#0a1c30; --ink:#e8eef5; --ink-2:#a9b8c9; --ink-3:#74879c;
+  --line:#22384f; --navy:#16385f; --on-navy:#eef3f8;
+  --you:#ff9166; --you-soft:#3a2118;
+  --exists:#8fbbe6; --exists-soft:#15304c; --ours:#6fd0c3; --ours-soft:#103631;
+  --extend:#e6bd55; --extend-soft:#35290c; --new:#ff9166; --new-soft:#3a2118;
+  --ok:#5fcf98; --warn:#e6bd55; --attn:#ff7d86; --idle:#74879c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#07172a; --surface:#0e2238; --sunk:#0a1c30; --ink:#e8eef5; --ink-2:#a9b8c9; --ink-3:#74879c;
+  --line:#22384f; --navy:#16385f; --on-navy:#eef3f8;
+  --you:#ff9166; --you-soft:#3a2118;
+  --exists:#8fbbe6; --exists-soft:#15304c; --ours:#6fd0c3; --ours-soft:#103631;
+  --extend:#e6bd55; --extend-soft:#35290c; --new:#ff9166; --new-soft:#3a2118;
+  --ok:#5fcf98; --warn:#e6bd55; --attn:#ff7d86; --idle:#74879c; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+.wrap{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:56px}
+h1,h2,h3{font-family:var(--display);font-weight:600;text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);line-height:1.08}
+h2{font-size:24px;line-height:1.2}
+h3{font-size:16px}
+p{margin:0;max-width:68ch;color:var(--ink-2)}
+.eyebrow{font:500 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+section{display:flex;flex-direction:column;gap:18px}
+.head{display:flex;flex-direction:column;gap:10px}
+.lede{font-size:17px;color:var(--ink-2)}
+.thesis{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.thesis div{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.thesis b{font-family:var(--display);font-size:15px}
+.thesis span{color:var(--ink-2);font-size:14px}
+
+/* tags */
+.tag{display:inline-flex;align-items:center;gap:6px;font:500 11px/1 var(--mono);padding:4px 7px;border-radius:3px;white-space:nowrap}
+.tag::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.t-exists{color:var(--exists);background:var(--exists-soft)}
+.t-ours{color:var(--ours);background:var(--ours-soft)}
+.t-extend{color:var(--extend);background:var(--extend-soft)}
+.t-new{color:var(--new);background:var(--new-soft)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:13px;color:var(--ink-2)}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+
+
+.stack{display:flex;flex-direction:column;gap:10px}
+.band{border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:14px 16px;display:grid;grid-template-columns:150px minmax(0,1fr);gap:8px 18px;align-items:start}
+.band>b{font:600 15px var(--display)}
+.band>b small{display:block;font:400 12px var(--body);color:var(--ink-3);margin-top:3px}
+.cells{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.cell{border:1px solid var(--line);border-radius:4px;padding:9px 11px;font-size:13px;color:var(--ink-2);display:flex;flex-direction:column;gap:3px;min-width:0}
+.cell b{color:var(--ink);font:600 13.5px var(--display)}
+.band.app{border-color:var(--ink);border-width:1.5px}
+.band.fixed .cell{background:var(--sunk)}
+.arrow{font:500 11px var(--mono);color:var(--ink-3);text-align:center;letter-spacing:.08em;text-transform:uppercase}
+.prims{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.prims div{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--ink-2)}
+.prims b{font:600 16px var(--display);color:var(--ink)}
+.prims i{font:500 11px var(--mono);font-style:normal;color:var(--you)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card p,.card li{font-size:14px;color:var(--ink-2)}
+.card ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px}
+pre{margin:0;font:400 12px/1.55 var(--mono);background:var(--sunk);border-radius:4px;padding:12px;overflow-x:auto;color:var(--ink)}
+.loop{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;counter-reset:s}
+.loop div{border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:12px 14px;font-size:13.5px;color:var(--ink-2);display:flex;flex-direction:column;gap:4px;counter-increment:s}
+.loop div::before{content:counter(s);font:500 11px var(--mono);color:var(--you)}
+.loop b{font:600 14px var(--display);color:var(--ink)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:680px;font-size:14px}
+th{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);text-align:left;padding:10px 14px;border-bottom:1px solid var(--line)}
+td{padding:10px 14px;border-top:1px solid var(--line);vertical-align:top;color:var(--ink-2)}
+td:first-child{color:var(--ink);font-weight:500;width:24%}
+.size{font:500 11px var(--mono);white-space:nowrap}
+.frames{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.4fr);gap:16px}
+.frame{border:1.5px solid var(--ink);border-radius:8px;background:var(--surface);padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.frame h3{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.frame h3 span{font:500 11px var(--mono);color:var(--ink-3)}
+.frame ul{margin:0;padding-left:18px;font-size:13.5px;color:var(--ink-2);display:flex;flex-direction:column;gap:4px}
+.note{border-left:2px solid var(--you);padding-left:12px;color:var(--ink);font-size:15px;max-width:70ch}
+@media (max-width:760px){.band{grid-template-columns:minmax(0,1fr)}.frames{grid-template-columns:minmax(0,1fr)}}
+</style>
+
+<div class="wrap">
+  <header class="head">
+    <span class="eyebrow">Product Aviator · system design · draft 1 · 20 Nov 2026</span>
+    <h1>A system for inventing workflow types</h1>
+    <p class="lede">We do not yet know how product work should be staged, paced or reviewed. The demos exist to find out. So the system is designed around one rule: every product question is answered by editing a scenario, and none is answered by changing the app.</p>
+    <p class="note">The app knows five general things. Scenarios, carried by skills, know everything specific. A new use case costs a folder of files.</p>
+  </header>
+
+  <section>
+    <div class="head"><span class="eyebrow">Part 1</span><h2>Three layers</h2>
+    <p>The top layer changes daily during the sprint. The middle changes when a pattern proves itself. The bottom changes rarely, and each change is small enough to hand to the team building on upstream Omnigent.</p></div>
+    <div class="stack">
+      <div class="band"><b>Scenarios<small>change daily</small></b><div class="cells">
+        <div class="cell"><b>PRD to requirements</b>first demo</div>
+        <div class="cell"><b>Requirements to dependencies</b>second demo</div>
+        <div class="cell"><b>Decision table</b>from the film</div>
+        <div class="cell"><b>The next ten</b>not yet imagined</div></div></div>
+      <div class="arrow">built from</div>
+      <div class="band"><b>Kit<small>grows as patterns repeat</small></b><div class="cells">
+        <div class="cell"><b>Standard layouts</b>list, tree table, board, detail, form, summary, compare</div>
+        <div class="cell"><b>Design tokens</b>color, type, spacing, one status vocabulary</div>
+        <div class="cell"><b>Authoring skills</b>view builder, scenario builder</div>
+        <div class="cell"><b>Preview harness</b>plays a scenario from fixtures</div></div></div>
+      <div class="arrow">runs on</div>
+      <div class="band app fixed"><b>App<small>five primitives, rarely changes</small></b><div class="cells">
+        <div class="cell"><b>View</b></div><div class="cell"><b>Dataset</b></div><div class="cell"><b>Action</b></div><div class="cell"><b>Work product</b></div><div class="cell"><b>Flow</b></div></div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="head"><span class="eyebrow">Part 2</span><h2>The five things the app knows</h2>
+    <p>Each is general on purpose. None mentions requirements, dependencies or PRDs.</p></div>
+    <div class="prims">
+      <div><b>View</b><span>Something drawn in a frame. Either free HTML from any skill, or a short spec that configures a standard layout. The same view runs in the chat, in the canvas, and alone in a browser.</span><i>Two lanes, one frame</i></div>
+      <div><b>Dataset</b><span>A named set of linked records in the project folder. Views are bound to it and redraw when it changes. Skills change it through one data command, which writes a local file now and can call a remote service later.</span><i>The single source of truth</i></div>
+      <div><b>Action</b><span>A named event from a view, with the record it concerns: start, approve, return, edit. Simple edits change the dataset directly. The rest go to the session and show in chat as a small chip.</span><i>How a button reaches the agent</i></div>
+      <div><b>Work product</b><span>Anything worth coming back to: a document, a view of a dataset, a summary. The rail lists them, and any session in the project can open them.</span><i>What the rail's Outputs shows</i></div>
+      <div><b>Flow</b><span>An optional, ordered list of stages. Each stage names a skill, its views and its work products. The order is advice. People can move both ways, and stages never lock anything.</span><i>A lens over the data</i></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="head"><span class="eyebrow">Part 3</span><h2>State belongs to records, not to the process</h2>
+    <p>This is what keeps the system from fitting one use case too closely. Whether items move together or separately, and whether early ideas lock while others are revisited, is not something the app decides.</p></div>
+    <div class="two">
+      <div class="card"><h3>Every record carries its own state</h3>
+        <ul><li><b>Status</b>: queued, working, needs you, ready for review, reviewed, returned, failed. A scenario may add its own.</li>
+        <li><b>Stage</b>: where this record is in the flow, if there is one.</li>
+        <li><b>Locked</b>: the person has settled this and it should not change without them.</li>
+        <li><b>Stale</b>: something this record was built from has changed, so it deserves another look.</li></ul></div>
+      <div class="card"><h3>What that buys</h3>
+        <ul><li>All together, each at its own pace, or a mix: all are just patterns in the data.</li>
+        <li>Iterative intent works. Revising a requirement marks what was derived from it as stale, instead of throwing it away or silently keeping it.</li>
+        <li>Parts that are locked early keep moving while the rest is still being argued.</li>
+        <li>The board, the rail and a chat card all read the same fields, so they never disagree.</li></ul></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="head"><span class="eyebrow">Part 4</span><h2>The frame a view must respect</h2>
+    <p>The view builder skill is taught these limits, and the preview harness enforces them, so a view is tested in both places before it reaches a demo.</p></div>
+    <div class="frames">
+      <div class="frame"><h3>In the chat <span>narrow, brief</span></h3><ul>
+        <li>One column, roughly 480 to 720 wide.</li><li>Height is capped. Longer content offers Open in canvas.</li>
+        <li>One main action. No scrolling inside scrolling.</li><li>Once answered it freezes and stays as a record.</li>
+        <li>The agent may be waiting on it, or it may only be showing something.</li></ul></div>
+      <div class="frame"><h3>In the canvas <span>wide, lasting</span></h3><ul>
+        <li>Any width from about 480 to full screen; it must reflow.</li><li>Two levels: the collection and one item. The kit decides how an item opens.</li>
+        <li>Stays open for hours. Redraws when the dataset changes, without losing your place.</li><li>Sits in a tab beside documents and other views.</li>
+        <li>The agent can read it and operate it, and you watch that happen.</li></ul></div>
+    </div>
+    <p>In both places: self-contained and offline, light and dark, colors and type only from the shared tokens, statuses only from the shared vocabulary. Free HTML is exempt from the tokens but not from the sandbox.</p>
+  </section>
+
+  <section>
+    <div class="head"><span class="eyebrow">Part 5</span><h2>What a scenario is made of</h2>
+    <p>A scenario is a skill folder in a standard shape. The app reads the manifest and nothing else needs to be registered.</p></div>
+    <div class="two">
+      <div class="card"><h3>The folder</h3>
+<pre>skills/prd-to-requirements/
+  SKILL.md          how the agent runs it
+  flow.json         stages, launchers, work products
+  schemas/          the shape of each record type
+  views/            specs, or free HTML
+  fixtures/         invented data for demos
+  script.json       optional scripted demo steps</pre></div>
+      <div class="card"><h3>A view spec</h3>
+<pre>{ "layout": "tree-table",
+  "data": "requirements",
+  "group": "capability",
+  "columns": ["title", "priority", "status"],
+  "edit": ["priority", "locked"],
+  "actions": ["start-explore"],
+  "detail": "views/requirement-detail.json" }</pre>
+        <p>Short enough for a small model to write correctly, and for you to change by hand between two demo runs.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="head"><span class="eyebrow">Part 6</span><h2>The tooling, and the loop it serves</h2>
+    <p>Two authoring skills and one harness. The goal is that a new use-case idea becomes a clickable demo in one sitting.</p></div>
+    <div class="two">
+      <div class="card"><h3>View builder skill</h3><p>Makes or changes one view. It knows the frame limits, the tokens and the standard layouts. It renders the result with fixture data at chat and canvas sizes, in light and dark, and looks at it before saying it is done. When a spec cannot express an idea, it writes free HTML and notes what the kit is missing.</p></div>
+      <div class="card"><h3>Scenario builder skill</h3><p>Given a use case in a sentence or two, it writes the whole folder: record schemas, a realistic fixture, the stage list, view specs and the skill that runs it. It asks you about the product, not about the plumbing.</p></div>
+      <div class="card"><h3>Preview harness</h3><p>One standalone page that draws the workspace (chat, canvas, rail) and plays a scenario from its fixtures and script, with no agent running. It is where views are tested, and it doubles as a demo you can show anywhere.</p></div>
+      <div class="card"><h3>Checks</h3><p>A script that confirms a scenario is self-contained, its fixtures match its schemas, every action a view sends is one the skill handles, and nothing reaches the internet.</p></div>
+    </div>
+    <div class="loop">
+      <div><b>Describe</b>A use case in plain words.</div>
+      <div><b>Generate</b>The scenario builder writes the folder.</div>
+      <div><b>Preview</b>Play it from fixtures in the harness.</div>
+      <div><b>Tune</b>Edit specs, data and stages. Seconds per change.</div>
+      <div><b>Run live</b>The same files, with the real agent in Product Aviator.</div>
+      <div><b>Promote</b>What repeated across scenarios moves into the kit.</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="head"><span class="eyebrow">Part 7</span><h2>What the web app has to change</h2>
+    <p>A first pass, not a plan. Sizes are rough. Everything else stays as it is, including arbitrary HTML in the canvas, the agent operating the canvas, comments and the task list.</p></div>
+    <div class="tbl"><table><thead><tr><th>Change</th><th>Size</th><th>What it is</th><th>Closest thing today</th></tr></thead><tbody>
+      <tr><td>Data command</td><td><span class="size">Small</span></td><td>A tool the agent and sub-agents call to read and change records safely, many at once.</td><td>None. Skills write files by hand.</td></tr>
+      <tr><td>Bound datasets</td><td><span class="size">Medium</span></td><td>The frame is told which dataset it shows and is sent changes as they happen.</td><td>The viewer reloads a file when asked.</td></tr>
+      <tr><td>Action channel</td><td><span class="size">Medium</span></td><td>A view sends a named action to the session without you pressing Send, shown as a chip in chat.</td><td>An artifact can fill the chat box with text.</td></tr>
+      <tr><td>Layouts served by the app</td><td><span class="size">Small</span></td><td>The kit ships with the app, so a spec is enough to open a view.</td><td>Templates copied into each workspace.</td></tr>
+      <tr><td>Views in the chat</td><td><span class="size">Large</span></td><td>A frame inside the transcript that sizes itself, can hold the agent's turn open, and freezes when answered.</td><td>The multiple-choice question and schema form.</td></tr>
+      <tr><td>The rail</td><td><span class="size">Medium</span></td><td>Progress, Needs you, Outputs and Context, read from datasets and the flow.</td><td>Tasks bar, and an unfinished Session overview.</td></tr>
+      <tr><td>Scenario library</td><td><span class="size">Small</span></td><td>Lists scenarios from their manifests and offers their launchers where they apply.</td><td>The Library page.</td></tr>
+    </tbody></table></div>
+    <p>Views in the chat is the largest and the least certain piece. It touches how upstream draws the transcript, which is where staying compatible matters most. It needs a closer look at the code before I would commit to an approach.</p>
+  </section>
+
+  <section>
+    <div class="head"><span class="eyebrow">Part 8</span><h2>Left open on purpose</h2>
+    <p>These are what the demos are for. The system only has to make each one a quick edit.</p></div>
+    <div class="prims">
+      <div><b>Stage order and pacing</b><span>A list in flow.json.</span></div>
+      <div><b>What a detail view shows</b><span>A view spec.</span></div>
+      <div><b>Extra statuses and fields</b><span>A schema file.</span></div>
+      <div><b>When the agent asks versus proceeds</b><span>The skill's instructions.</span></div>
+      <div><b>Which layouts we need next</b><span>Found when free HTML keeps repeating a pattern.</span></div>
+    </div>
+  </section>
+</div>
+
+</body></html>

@@ -33,6 +33,43 @@ changes. Skills such as `prd-to-requirements` and
 `requirements-to-dependencies` are built this way, and `scenario-builder`
 makes new ones.
 
+## Work in flight
+
+A workflow working on one subject is a run, and the project page lists every
+run under "In flight" so the user can leave and come back. That list is only
+as true as what you record with the `pa flow` command (see "Runs" in the
+`view-kit` skill):
+
+- When the user sets a workflow aside in any words ("pause this", "let me
+  come back to that later"), record it at once with `--pause --note "<where
+  we left off>"`, say so in one line, and stop working on it. Do not ask
+  first.
+- When the user asks what is in flight or where they left off, or asks to
+  resume, run `pa runs`, read the note and the dataset, mark it `--resume`
+  and carry on from there. Do not start the workflow over.
+- When the user abandons a workflow, confirm once, then `--stop`.
+- A question on the side is not a pause. Answer it and carry on.
+
+### Projects and links
+
+A project is one goal that ships. When the user says what a project is for,
+which area it belongs to, or how another team's project stands, record it
+with `pa project "<name>" --goal … --area … --team … --state …`. When a
+record is handed to another project, started one, or relies on one, hang
+the link from that record with `pa link <dataset> <id> --to "<project>"
+--type handed-to|started|relies-on`. Write a link once, on the item it is
+about; the other project's page reads it the other way.
+
+### Threads
+
+A workflow can run in a thread of its own, with you as the project's
+director, so its detail stays out of this conversation. Use the `director`
+skill when the user asks you to direct or coordinate the project, asks for
+a workflow "in a thread", "in the background" or "on the side", or wants two
+pieces of work going at once. If your first message is a brief from a
+director (it starts "Read your brief at"), you are the thread: follow the
+brief, including what to report and when.
+
 ## Other people and agents
 
 `participants/` is the roster of other agents and people who can join a

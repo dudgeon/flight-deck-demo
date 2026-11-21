@@ -5,6 +5,14 @@ never edited after the fact; a later entry may replace an earlier one and says
 so. "Geoff" is the product owner. "Claude" marks a choice made by the agent
 while building, which Geoff later accepted as a group (D-27).
 
+Where each decision stands now (built, replaced, pending, open) is in
+[decision-index.md](decision-index.md), with a one-line reason for every
+entry. Entries are grouped by topic, so numbers are not always in order.
+D-60 to D-62 were never assigned. To add a decision, follow "Decisions" in
+the repository's `CLAUDE.md`: claim the next number after the highest one on
+`main` *and* in open pull requests, and say in the pull request which numbers
+it uses.
+
 ## Foundations
 
 **D-01 · 2026-11-20 · Geoff.** Product Aviator is a cut-down fork of Omnigent,
@@ -22,6 +30,32 @@ medium effort.
 **D-04 · 2026-11-20 · Geoff.** The product is a "product partner" for product
 managers: unstructured work with context files and generated artifacts,
 alternating with templated structured flows.
+
+**D-107 · 2026-11-21 · Geoff.** The setup script (D-100) clears the macOS
+download flag (quarantine) itself, from its own folder only, after explaining
+it and waiting for the person to press Return. A `curl` download, which never
+gets the flag, stays in the README as the other way. Setup always writes a
+report, on the Desktop, to send back when it stops. *A browser ZIP is the
+main way onto the work Mac. Clearing the flag on files the person chose to
+download is the Terminal version of macOS's own "Open Anyway", and sending
+people to IT for it would stall every install. This replaces the earlier
+advice in the README to ask IT.*
+
+**D-111 · 2026-11-21 · Geoff asked, Claude chose.** The app lives in one
+fixed folder, `~/flight-deck` (Geoff chose the name). Setup copies a download
+into it, and a newer download updates it without overwriting anything the
+person made or changed: their own files are untouched, their edits to shipped
+workspace files win (the new version is saved under `updates/`), files they
+deleted stay deleted, and app code outside `workspace/` is always replaced
+(their copy saved). A manifest of the last install's file hashes tells the
+cases apart. `sh ~/flight-deck/setup.sh` finds the newest download in
+~/Downloads by itself, so nobody navigates folders in Terminal, and the
+Workspace and Hangar projects follow the app when it moves out of a download
+folder. *Geoff asked that a re-download keep the files he added rather than
+overwrite them, and said navigating in the command line is hard. One fixed
+folder in the home folder, outside iCloud and OneDrive sync, gives updates a
+place to find, and comparing against what was shipped is the only way to
+tell his edits from ours.*
 
 ## Structured work
 
@@ -165,12 +199,35 @@ as a notional one and kept swappable: a markdown file in
 can replace it later without changing the skill. He will correct the draft
 from a preview.
 
+**D-115 · 2026-11-21 · Geoff asked, Claude chose.** Every page used to put a
+decision to Geoff (walkthroughs, design rounds, proposals, mockups) is kept in
+the repository as an offline HTML copy in `docs/decision-artifacts/`, with
+the answers he recorded on it, listed in `artifacts.json` and an index. The
+`docs-refresh` contributor skill (`.claude/skills/docs-refresh/`) keeps the
+copies and the docs current; its script makes each copy load nothing from the
+network and shows the recorded answers read-only. *Geoff: the copies are "for
+historic record and as examples we can refer to in the future; the html
+versions will let others see the artifacts without needing access to my
+Claude account." A skill, rather than a one-off, because walkthroughs keep
+being made and the docs pass needs repeating.*
+
 ## Name and design language
 
 **D-35 · 2026-11-21 · Geoff.** The fork of the Omnigent meta-harness is named
 **Flight Deck**. Product Aviator stays the name of the user interface. The
 repository, folders and code identifiers keep `omnigent-slim` unless Geoff
 says otherwise. *He liked the name when it came up for the design direction.*
+
+**D-114 · 2026-11-21 · Geoff.** The GitHub repository is renamed from
+`dudgeon/omnigent-slim` to `dudgeon/flight-deck-demo`. This refines D-35 for
+the repository only: local folders (the Mac mini checkout, `~/flight-deck` on
+the work Mac), the `~/.omnigent-slim` data folder, commands and code
+identifiers keep their names. The download ZIP and its folder are now
+`flight-deck-demo-main`; `setup.sh` finds downloads under either name.
+*Geoff wanted the repository to carry the product's name. Renaming a local
+checkout would break its Python environment and Dock launcher, which hold the
+folder's path, and would separate the folder from its Claude Code session
+history, so the folders stay put; GitHub redirects the old name.*
 
 **D-36 · 2026-11-21 · Geoff.** Anthropic's `frontend-design` skill is
 vendored into `skills/` (Apache 2.0, unchanged), so every session has it,
@@ -488,13 +545,313 @@ show. The seven shipped scenarios were retitled to match.
 **D-88 · 2026-11-21 · Geoff.** Artifact templates leave the Library. They are
 managed in the Hangar, and the agent finds them when asked.
 
+**D-112 · 2026-11-21 · Geoff asked, Claude chose.** A workflow's widgets and
+views are shown and edited in the Hangar. The workflow page splits them into
+"Widgets · in the chat" and "Views · in the canvas"; a view's page and the
+workflow page have Edit buttons that open the workflow's draft at that widget.
+In the draft each one opens beside its drawing from the draft (over the
+scenario's sample data), with its header lines, form questions and buttons as
+fields and the whole spec as JSON; only valid JSON is saved. "Add a widget or
+view" starts from a blank form, a blank summary or a copy of one already
+there, adds it to `workflow.json` `views` (now editable through `pa`), and
+writes a line in `SKILL.md` telling the agent how to draw it, with
+`--host chat` for a widget. Where a view shows is read from the scenario's
+script first, then from how `SKILL.md` renders it, then from its layout.
+*Geoff: "Widgets that relate to given workflows should be visible and editable
+in the hangar." Placing by `SKILL.md` makes the label match what the agent will
+really do, and editing inside the workflow draft keeps the publish gate,
+history and "travels with the repo" (D-75) for free.*
+
+**D-113 · 2026-11-21 · Geoff.** On a git copy of the app (the Mac mini), the
+Hangar's Overview has "Send to repo": it commits the published configuration
+(the D-75 folders) to a new `hangar/<date-time>` branch, pushes it, and opens a
+pull request with `gh` when it is installed, or links GitHub's page to open
+one. The commit is built in a throwaway index from HEAD, so the folder's
+branch and working tree are untouched; pulling main after the merge brings the
+same files back. It runs only when pressed, and the same changes are not sent
+twice. A ZIP copy (the work Mac) has no git and shows no button: there, what
+matters is that published files survive updates, which setup does (D-111).
+*Geoff: "I'm less concerned about the work Mac changes making their way to
+GitHub for now; primary concern is them surviving updates. Later, we may
+likely re-commit the repo to a company repo, treating this as a fork." The
+button pushes to whatever remote the copy came from, so it keeps working in a
+company fork. This is the one place the app reaches the network on purpose,
+and only on a person's press.*
+
 Geoff confirmed the person-editing choices on 21 Nov (combined walkthrough
 https://claude.ai/artifact/7gbkDmURSuwhWGWVzyBtU6): the page as the editor with
 autosave (D-63), the pinnable Aviator pop-over with "Try them" (D-64), casting
 from the person's page (D-65) and skills passed to the session (D-66).
 
+## Modes, runs and projects
+
+Geoff's answers of 2026-11-21 to the walkthrough at
+https://claude.ai/artifact/HRgpJURjcqasGSCmd3894d (questions M-1 to M-11 in
+[modes-and-projects.md](modes-and-projects.md)). Numbers start at D-89 because
+D-76 to D-88 are taken by work in open pull requests.
+
+**D-89 · 2026-11-21 · Geoff.** The main Aviator session acts as a project
+director, and modes are powered by threads. Deep work that benefits from its
+own context window (a workflow such as intent shaping) runs in a sub-session
+that runs the skill; the director coordinates with it by agent-to-agent
+messages. The person can stay in the director session and click into a thread
+only when needed. The approach is dynamic: the director decides when work
+earns a thread. A main session should feel like a Claude Code project. *His
+words: "for context reasons, the main session should act like a project
+director/orchestrator, with threads used to isolate context for a given
+workflow." He chose this over all three drawn options (in place with threads
+for branches, every mode in its own session, everything in one chat).* Still
+open, and his to decide: how the director session shows a mode for the
+high-level interactions (M-12).
+
+**D-90 · 2026-11-21 · Geoff.** A mode shows as a one-line strip on the message
+box: the workflow, the step, and Pause. Not a band under the header, and not
+only the Session panel card. *Always in view whether the canvas or the panel
+is open, and clearly lighter than the Hangar's frame change (D-40).*
+
+**D-91 · 2026-11-21 · Geoff.** Replies that belong to a mode are marked by a
+thin rail beside them, with a marker in the transcript where the mode starts,
+pauses and resumes. Participants keep their own names inside the rail. *Who
+is speaking stays separate from what work a turn belongs to.*
+
+**D-92 · 2026-11-21 · Geoff.** A side question during a mode is answered
+outside the rail and the mode stays on. It does not end or pause the mode.
+
+**D-93 · 2026-11-21 · Geoff.** Leaving a mode: say it in plain language or
+press Pause. There are three endings, kept distinct: pause (come back), finish
+(the work product is written) and stop (not worth pursuing; what exists is
+kept). On pause the agent writes a "where we left off" note and a Resume
+control, and an unanswered question is frozen as Paused. Only stop asks for
+confirmation.
+
+**D-94 · 2026-11-21 · Geoff.** One mode has the floor at a time. Starting a
+second pauses the first and remembers it, and the agent offers to return when
+the second ends. *Chosen when modes were drawn inside one chat. Under D-89
+several threads can be in flight at once; what this fixes is that the
+person's message always has one obvious destination.*
+
+**D-95 · 2026-11-21 · Geoff.** Any item (a decision, a risk, a requirement)
+can have its own thread, attached to the record, opened from its row, with a
+count on the row. Aviator may start one when a discussion of one item runs
+long, and says so. *Keeps each item's reasoning with the item.*
+
+**D-96 · 2026-11-21 · Geoff.** In-flight work is found on the project page: an
+"In flight" section with a card per run (step, state, where it left off,
+Resume), sessions below, and a count of runs that need the person in the
+sidebar. Built on upstream's project board.
+
+**D-97 · 2026-11-21 · Geoff.** A project is one in-market goal that ships and
+then ends. It sits inside an area, a lasting problem space where problem
+discovery and shared context live; a problem marked worth solving starts a
+goal project. *His caveat, recorded as a constraint on what follows: this may
+need to become more graph-like and less hierarchical. "If project A has 20
+requirements, and implementing one of them is delegated to a different team,
+that would become project B for them." So the area is a home, not the only
+kind of link, and a record must be able to point at another project.*
+
+**D-98 · 2026-11-21 · Geoff.** The level of detail of the intent graph is not
+decided yet, on purpose: "too early for me to decide; hold decision until it
+blocks something." Nothing is built for a graph beyond what D-97 needs (a
+project names its goal and its area). *The likely first thing to force it is
+his own example in D-97, a requirement handed to another team's project.*
+
+**D-99 · 2026-11-21 · Claude, accepted by Geoff.** The smaller calls listed
+in the walkthrough stand: every workflow makes a mode, not only the ones
+featured in the Library; a mode has no color of its own (it uses the "agent
+at work" token); starting a mode never asks first; a run belongs to one
+project; threads reuse upstream's side chats and child sessions; demo
+projects (D-76) stay as they are. "Resume returns to the same session" is
+carried over as "Resume returns to the run's own thread".
+
+**D-116 · 2026-11-21 · Geoff.** The director shows a mode through a direct
+line to its thread. The thread's questions appear in the director's chat
+inside the rail (D-91), and while the thread has the floor the person's
+messages go straight to it; the strip (D-90) says who they are talking to.
+Aviator is not in the path. `@aviator`, or a question off the topic, is
+answered by Aviator outside the rail (D-92). *It is the only option where the
+person truly stays with the director and still does the work, it keeps D-90
+to D-92 as chosen, and it avoids a second agent's wait on every turn. This
+answers M-12, the part D-89 left open.*
+
+**D-117 · 2026-11-21 · Geoff.** Stepping into a thread puts it in place of
+the chat: the thread takes the chat column, the director folds to a bar on
+top that shows what else is in flight and leads back, and the canvas stays
+where it is. Not a tab in the side area. *Geoff: a thread in the side pane
+steals space from the canvas, and a person who steps into a thread is
+choosing to focus. He asked how upstream handles it: upstream opens a child
+session as a tab in the Workspace panel, the same area as the canvas, with a
+maximise link to the child's own session page, which has a trail back to its
+parent. So upstream's tab has exactly the cost he named, and its full page is
+most of this option already; what is new is the folded director bar. Answers
+M-13.*
+
+**D-118 · 2026-11-21 · Geoff.** A thread reports to the director in short
+lines, not transcripts: milestones, progress, blockers, and state such as
+completion. The workflow's agent uses its own judgment about when and what to
+send, and must not send everything. Each line points at the files rather
+than repeating them. *Geoff: "the workflow agents should have discretion on
+when and what to send to the director, but they should not send everything."
+The director needs the state of each piece of work to coordinate; copying
+the working would undo the context isolation that threads exist for (D-89).
+Answers M-14.*
+
+**D-119 · 2026-11-21 · Geoff.** A project's connections show in two places:
+a chip on the linked item, naming the other project and its state, and one
+Connections card on the project page that gathers them, grouped by what the
+link means (lives in, came from, handed to others, others rely on this). No
+map. A link is typed, hangs from a specific thing (a requirement, a
+problem), reads the other way from the far end, and is stored as one line
+with the item it hangs from. *This follows his caveat on D-97 that projects
+are more graph-like than a family tree: a requirement handed to another team
+is that team's project. The chip puts the news where the person acts on it,
+and the card answers "what does this project touch" without drawing a tree
+that is not there. It does not build the intent graph, whose detail stays
+held (D-98). Answers M-8.*
+
+**D-120 · 2026-11-21 · Geoff asked, Claude chose.** Aviator's routing is
+modular: adding a hero or workflow skill never means editing Aviator. Geoff:
+"I don't want to have to update Aviator every time we add a new hero/workflow
+skill." Each workflow carries its own routing (when it fits, near misses,
+what it needs, its lifecycle stage, an offer line, eval examples) and its
+persona in its `workflow.json`; Aviator reads the catalog at run time with
+`pa workflows` and names no workflow; lifecycle stages are a data file;
+`pa check` fails a Library workflow without routing. *Workflows are built in
+the Hangar by people who should not have to touch the director, and the
+production team will add more; a hard-coded list would drift the first time
+one is added. See [director-coordination.md](director-coordination.md).*
+
+**D-121 · 2026-11-21 · Claude.** What a project is lives in a small file of
+our own, `projects/<slug>.json` in the workspace: its name, goal, area, team,
+state and a few words on the state. A link is one line on the record it
+hangs from (`"links": [{"type", "project"}]`), a dataset names the project it
+belongs to, and three types are stored: `handed-to`, `started` and
+`relies-on`. The far end is never stored; it is read from the same line. A
+project file may describe a project that is not in this app, such as another
+team's. `pa project` and `pa link` write them. *Upstream's project table is
+left alone so the production team can follow upstream; one line per link is
+what D-119 asked for and cannot fall out of step with itself; and files
+assembled on request work from a ZIP and are easy to replace with a service
+when the intent graph is designed (D-98). Another team's project has to be
+describable, because that is exactly Geoff's example in D-97.*
+
+## Usage logging
+
+Spec: [usage-logging.md](usage-logging.md). Open questions UL-1 to UL-3 are
+there; the build follows each one's recommendation until Geoff answers.
+
+**D-122 · 2026-11-21 · Geoff asked, Claude chose.** Flight Deck keeps one
+usage log: local files, one JSON line per event, one file per day, in
+`logs/usage/` in the app folder. Every part of the platform writes to it
+through one standard-library module (`skills/view-kit/scripts/usagelog.py`)
+shared by the server and `pa`. It is on by default, and
+`OMNIGENT_SLIM_USAGE=0` turns it off. `logs/` is gitignored and setup's
+updates skip it. *Geoff wants to understand how the whole platform is used,
+mostly while testing, with no remote storage available. Plain files work
+offline, from a ZIP, with no service, and can be aggregated or sent anywhere
+later. One writer means one set of rules, whoever writes. Skipping the folder
+in updates (D-111) is what lets the log outlive every update.*
+
+**D-123 · 2026-11-21 · Claude.** The log is fed from what upstream already
+instruments, not from new instrumentation: upstream's telemetry `emit()` is
+teed into it (before upstream's own opt-out, which stays off), the web app's
+upstream analytics events reach it through a host sink of ours, and the
+runner's existing `PostToolUse` observer adds one line per tool call. A line
+uses upstream's telemetry field names, and `pa usage pack --shape upstream`
+writes upstream's gateway records. *The production team will run upstream
+Omnigent, whose telemetry already has an event set and a wire format;
+matching them means our logs and theirs can be read by the same pipeline, and
+when upstream adds an event we get it free. The web app was already
+instrumented for a host sink that upstream never installs standalone.*
+
+**D-124 · 2026-11-21 · Claude.** What a line may hold is enforced by the
+writer, not left to each caller: numbers, yes or no, and short strings with no
+spaces (ids, status words, file names). Anything else becomes `<text N>`,
+keeping only its length. Paths are made relative to the app or home folder.
+A fingerprint level hashes names too, except a fixed vocabulary. `pa usage
+check` re-reads every line by the same rules, and a pack leaves out any line
+that fails. *Work data must not leak through a log, and a rule each caller
+has to remember will be forgotten once. "Ids and words, never sentences" is
+the rule the app already uses for direct actions (D-11, D-12), and it keeps
+the log useful for counting while making content structurally impossible.*
+
+**D-125 · 2026-11-21 · Claude.** Event names are `area.action` in lower case,
+from a fixed set of sources (`server`, `web`, `pa`, `skill`, `tool`, `eval`).
+Every `pa` command logs itself (`pa.<command>` with its ids, exit code and
+time), every change through a slim route logs itself (Hangar actions by name,
+others as `api.slim_write`), and reads are not logged. Skills write their own
+events with `pa log` only for moments `pa` cannot see. *Skills already do
+their work through `pa`, so logging `pa` covers every workflow without
+touching a skill; logging reads would bury the signal under the app's
+polling.*
+
+**D-126 · 2026-11-21 · Claude.** An eval trial is tagged (`pa usage eval
+start <suite> <task> <trial>`, or `OMNIGENT_SLIM_EVAL`), and its lines go to
+`logs/usage/eval/<suite>/`, left out of summaries unless asked for. The
+routing suite's code graders read a trial's lines: the skill loaded, whether a
+thread was briefed, whether a run started, failed turns. *The testing plan
+(AV-6) grades routing by what the agent did; the log records exactly that, so
+graders need not parse transcripts. Keeping trials apart keeps real use
+readable and lets eval output be deleted on its own.*
+
+**D-127 · 2026-11-21 · Claude.** Until there is a server, a log leaves a
+machine only as a pack a person makes and carries: `pa usage pack` writes one
+dated, compressed file to the Desktop, re-checking every line, optionally
+fingerprinted. A future remote exporter implements the same interface
+(`Exporter.send(batch)`) in upstream's gateway shape, and must be switched on
+by a person; the offline guard is unchanged until then. *Nothing reaches the
+internet at runtime (CLAUDE.md); a file a person moves is the only way out
+that keeps that true, and an exporter interface fixed now means the server
+can come later without changing the log.*
+
+## Backfilled
+
+Decisions Geoff made on 20 and 21 November that were acted on but never
+logged. Recorded on 21 November from the walkthroughs and threads where he
+made them, with the date he made them.
+
+**D-100 · 2026-11-21 · Geoff.** The work Mac gets Flight Deck as a ZIP of the
+whole repository downloaded from GitHub, unzipped, and set up by running one
+script. The script must fail in ways that say what broke and what to send
+back. A `curl` command is fine only if a person runs it, with instructions a
+non-technical PM can follow. *The work Mac blocks cloning repositories outside
+the company's own namespace, and the people setting it up are not
+engineers.* Not built yet: `start.sh` detects a quarantined copy, but the
+one-step setup script is still to come.
+
+**D-101 · 2026-11-21 · Geoff.** When a session is open in several browser
+tabs, one tab is the active canvas and the others offer "Use this tab". The
+canvas is not mirrored between tabs. *One active tab is enough for a demo, and
+mirroring the page's state would be a lot of machinery for no visible gain.*
+
+**D-102 · 2026-11-21 · Geoff.** The sidebar shows the Product Aviator emblem
+with the name as text beside it, at the top left. The new-session screen has
+no logo and no heading. *The full logo would be acceptable, but its spacing
+and alignment were poor at sidebar size.*
+
+**D-103 · 2026-11-21 · Geoff.** The Dock launcher uses icon A (the current
+emblem), and it is pinned to the Dock (`scripts/make_dock_app.sh
+--add-to-dock`). *One click to start the demo on the work Mac.*
+
+**D-104 · 2026-11-21 · Geoff.** In a document, the main agent's behaviour
+depends on how it is asked: "make a change" edits directly (the edit is
+highlighted until seen), "propose changes" makes tracked suggestions. Every
+other agent only suggests (D-26). *The person stays in control of what lands,
+without making every small fix a suggestion to accept.*
+
+**D-105 · 2026-11-21 · Geoff.** Every question card put to him includes a
+"Something else" option. Extends D-32. *The real answer is often not one of
+the options offered.*
+
+**D-106 · 2026-11-21 · Geoff.** Two choices the agent made overnight stand
+(confirming them under D-27): a view is redrawn by rewriting its HTML file,
+and the reviewed and locked states of a record belong to the person, never
+set by the agent. *Rewriting the file is what makes old artifacts and the
+canvas reload work; reviewed and locked are the person's judgment.*
+
 ## Open
 
+- Usage logging (UL-1 to UL-3 in [usage-logging.md](usage-logging.md)):
+  committing logs, what a work Mac pack holds, where the numbers are seen.
 - Progressive complexity (from D-54): how a workflow shows less at first and
   more on demand, to the person and to the agent. Not designed yet.
-
+- The intent graph's level of detail is deliberately held (D-98).

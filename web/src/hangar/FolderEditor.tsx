@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "@/lib/routing";
 import { cn } from "@/lib/utils";
 import { AviatorPopover } from "./AviatorPopover";
+import { WidgetsCard } from "./WidgetsCard";
 import { ActionError, Checks, Crumb, Diff, Links, Rendered, Section } from "./parts";
 import {
   type FolderDraft,
@@ -37,6 +38,8 @@ interface Form {
   workflow: string;
   participants: string[];
   steps: string[];
+  /** A workflow's widgets and views: name to spec file (D-112). */
+  views: Record<string, string>;
   /** Text files changed on the page and not yet saved, by path; null deletes. */
   files: Record<string, string | null>;
 }
@@ -44,6 +47,14 @@ interface Form {
 const str = (v: unknown) => (typeof v === "string" ? v : "");
 const list = (v: unknown) =>
   Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
+const viewMap = (v: unknown): Record<string, string> =>
+  v && typeof v === "object" && !Array.isArray(v)
+    ? Object.fromEntries(
+        Object.entries(v as Record<string, unknown>).filter(
+          (e): e is [string, string] => typeof e[1] === "string",
+        ),
+      )
+    : {};
 
 function formOf(draft: FolderDraft): Form {
   const m = draft.manifest;
@@ -54,6 +65,7 @@ function formOf(draft: FolderDraft): Form {
     workflow: str(m.workflow),
     participants: list(m.participants),
     steps: list(m.steps),
+    views: viewMap(m.views),
     files: {},
   };
 }
@@ -65,7 +77,7 @@ function editOf(draft: FolderDraft, form: Form): FolderEdit {
   const keys =
     draft.kind === "scenario"
       ? (["title", "summary", "opening", "workflow", "participants"] as const)
-      : (["title", "summary", "steps", "participants"] as const);
+      : (["title", "summary", "steps", "participants", "views"] as const);
   for (const key of keys) {
     if (JSON.stringify(form[key]) !== JSON.stringify(before[key])) {
       manifest[key] = key === "opening" && !form.opening ? null : form[key];
@@ -227,7 +239,13 @@ function FolderEditor({ hangar, draft }: { hangar: Hangar; draft: FolderDraft })
   const title = form.title || draft.id;
   const workflow = hangar.workflows.find((w) => w.id === form.workflow);
   const changed = draft.files.filter((f) => f.change !== "same");
-  const others = draft.files.filter((f) => f.path !== draft.manifest_file && f.path !== mainFile);
+  const viewFiles = new Set(draft.kind === "workflow" ? Object.values(form.views) : []);
+  const others = draft.files.filter(
+    (f) => f.path !== draft.manifest_file && f.path !== mainFile && !viewFiles.has(f.path),
+  );
+  const focus = window.location.hash.startsWith("#widget-")
+    ? decodeURIComponent(window.location.hash.slice(8))
+    : null;
 
   return (
     <div className={cn("editor", pinned && "with-aviator")} data-testid="hangar-folder-editor">
@@ -429,6 +447,18 @@ function FolderEditor({ hangar, draft }: { hangar: Hangar; draft: FolderDraft })
           )}
         </div>
       </div>
+      {draft.kind === "workflow" && (
+        <WidgetsCard
+          workflowId={draft.id}
+          version={draft.updated}
+          views={draft.views ?? []}
+          manifestViews={form.views}
+          text={fileText}
+          onFile={setFile}
+          onViews={(views) => change({ views })}
+          focus={focus}
+        />
+      )}
       {draft.kind === "scenario" && (
         <Section title="Play it" aside={<span className="lab">the draft, as a demo</span>}>
           {draft.problems.length === 0 ? (
@@ -553,7 +583,7 @@ function StepsField({ value, onChange }: { value: string[]; onChange: (v: string
 
 const FOLDER_HINT = {
   scenario: "context/brief.md, cast/mara-okafor.md or fixtures/notes.md",
-  workflow: "references/brief.md or views/summary.json",
+  workflow: "references/brief.md or schemas/records.json",
 };
 
 function FilesCard({
@@ -577,7 +607,7 @@ function FilesCard({
       <span className="lab">
         {kind === "scenario"
           ? "Files · invented data, context and story notes"
-          : "Files · views, schemas and references"}
+          : "Other files · schemas and references"}
       </span>
       <ul className="files" data-testid="hangar-files">
         {files
@@ -837,5 +867,48 @@ export function FolderHistory({
       </ul>
       <ActionError error={restore.error} />
     </details>
+  );
+}
+
+/** "Edit" beside a workflow's widgets, or one widget: opens the workflow's draft there (D-112). */
+export function EditWidgetButton({
+  hangar,
+  workflow,
+  view,
+  builtin,
+  label,
+}: {
+  hangar: Hangar;
+  workflow: string;
+  view?: string;
+  builtin: boolean;
+  label?: string;
+}) {
+  const navigate = useNavigate();
+  const { startDraft } = useFolderActions();
+  const where = `${hangarPath.folderDraft("workflow", workflow)}${view ? `#widget-${encodeURIComponent(view)}` : "#widgets"}`;
+  const text = label ?? (view ? "Edit this one" : "Edit widgets and views");
+  if (hangar.folder_drafts.some((d) => d.kind === "workflow" && d.id === workflow)) {
+    return (
+      <Link className="hangar-btn" to={where} data-testid="hangar-edit-widget">
+        {text}
+      </Link>
+    );
+  }
+  return (
+    <button
+      type="button"
+      className="hangar-btn"
+      disabled={startDraft.isPending}
+      title={
+        builtin ? "Ships with the app: editing makes a workspace copy of the workflow" : undefined
+      }
+      onClick={() =>
+        startDraft.mutate({ kind: "workflow", id: workflow }, { onSuccess: () => navigate(where) })
+      }
+      data-testid="hangar-edit-widget"
+    >
+      {text}
+    </button>
   );
 }

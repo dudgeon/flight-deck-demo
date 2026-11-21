@@ -26,6 +26,8 @@ import { applyMacElectronShellAttribute } from "./lib/nativeBridge";
 import { applyMobileAppTargetAttribute } from "./lib/mobileAppTargets";
 import { initNativeInsets } from "./lib/nativeInsets";
 import { initBrowserTelemetry } from "./lib/telemetry";
+import { setOmnigentHostConfig } from "./lib/host";
+import { slimUsageSink } from "./lib/slimUsage";
 import {
   applyStoredUiFontSize,
   applyUiFontFamily,
@@ -43,6 +45,10 @@ import "./index.css";
 // and a trace begins in the browser. No-op unless a collector endpoint is
 // configured (VITE_OTEL_EXPORTER_OTLP_ENDPOINT).
 initBrowserTelemetry();
+
+// omnigent-slim: upstream's analytics events (page views, clicks, timed
+// interactions) go to the local usage log, never off the machine (D-123).
+setOmnigentHostConfig({ analytics: slimUsageSink });
 
 // Single client at module scope — shared across the whole app.
 //

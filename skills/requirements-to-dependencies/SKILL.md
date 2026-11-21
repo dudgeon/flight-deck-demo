@@ -55,7 +55,7 @@ The Session panel shows this workflow's steps and how far along it is. Tell it
 as you go. Once the board is set up:
 
 ```bash
-$PA flow data/<slug>.json --scenario SKILL_DIR
+$PA flow data/<slug>.json --scenario SKILL_DIR --session <this session's id, from sys_session_get_info>
 ```
 
 Then `$PA flow data/<slug>.json --step <number> --note "<what is happening, a few words>"`

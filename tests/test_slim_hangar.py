@@ -403,3 +403,143 @@ def test_live_marks_only_follow_a_line() -> None:
     assert script["steps"][1]["live"] == "greet them"
     with pytest.raises(pa.PaError):
         pa.parse_script("**You:** Hi\n[live]\n", {})
+
+def test_send_to_repo_commits_published_config_to_a_new_branch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """D-113: Send to repo pushes only the published config, and leaves the checkout alone."""
+    import subprocess
+
+    def git(*args: str, cwd: Path) -> str:
+        return subprocess.run(
+            ["git", *args], cwd=cwd, check=True, capture_output=True, text=True
+        ).stdout.strip()
+
+    remote = tmp_path / "remote.git"
+    git("init", "--bare", "-b", "main", str(remote), cwd=tmp_path)
+    app = tmp_path / "app"
+    git("clone", str(remote), str(app), cwd=tmp_path)
+    git("config", "user.email", "t@example.com", cwd=app)
+    git("config", "user.name", "T", cwd=app)
+    workspace = app / "workspace"
+    (workspace / "participants").mkdir(parents=True)
+    (workspace / "participants" / "mara.md").write_text("Mara\n")
+    (app / "README.md").write_text("app\n")
+    git("add", "-A", cwd=app)
+    git("commit", "-m", "start", cwd=app)
+    git("push", "origin", "main", cwd=app)
+    monkeypatch.setenv("OMNIGENT_SLIM_WORKSPACE", str(workspace))
+    monkeypatch.setattr(slim_hangar.shutil, "which", lambda _: None)  # no gh here
+    with pytest.raises(HTTPException, match="already in the repo"):
+        slim_hangar.send_to_repo()
+    # A Hangar publish, a new workflow copy, and an unrelated edit that must stay behind.
+    (workspace / "participants" / "mara.md").write_text("Mara Okafor\n")
+    (workspace / ".claude" / "skills" / "decision-review").mkdir(parents=True)
+    (workspace / ".claude" / "skills" / "decision-review" / "workflow.json").write_text("{}\n")
+    (app / "README.md").write_text("changed by hand\n")
+    status = slim_hangar.repo_status()
+    assert status["count"] == 2
+    sent = slim_hangar.send_to_repo("Mara's full name")
+    assert sent["branch"].startswith("hangar/") and sent["files"] == 2
+    assert sent["pull_request"] is None and sent["open_pr"] is None  # not a GitHub remote
+    pushed = git("ls-tree", "-r", "--name-only", sent["branch"], cwd=remote).splitlines()
+    assert "workspace/.claude/skills/decision-review/workflow.json" in pushed
+    assert (
+        git("show", f"{sent['branch']}:workspace/participants/mara.md", cwd=remote)
+        == "Mara Okafor"
+    )
+    assert git("show", f"{sent['branch']}:README.md", cwd=remote) == "app"
+    assert "Mara's full name" in git("log", "-1", "--format=%s", sent["branch"], cwd=remote)
+    # The checkout is untouched: same branch, same HEAD, edits still in the working tree.
+    assert git("rev-parse", "--abbrev-ref", "HEAD", cwd=app) == "main"
+    assert git("rev-parse", "HEAD", cwd=app) == git("rev-parse", "main", cwd=remote)
+    assert slim_hangar.repo_status()["sent"]["branch"] == sent["branch"]
+    with pytest.raises(HTTPException, match="already sent"):
+        slim_hangar.send_to_repo()
+
+
+def test_compare_url_for_github_remotes() -> None:
+    url = slim_hangar._compare_url("git@github.com:dudgeon/omnigent-slim.git", "main", "hangar/x")
+    assert url == "https://github.com/dudgeon/omnigent-slim/compare/main...hangar/x?expand=1"
+    assert slim_hangar._compare_url("https://github.com/a/b", "main", "h") == (
+        "https://github.com/a/b/compare/main...h?expand=1"
+    )
+    assert slim_hangar._compare_url("/srv/git/x.git", "main", "h") is None
+
+
+def test_widgets_are_placed_by_the_instructions() -> None:
+    """D-112: a view the SKILL.md renders with --host chat is a widget; the script still wins."""
+    hangar = slim_hangar.load_hangar()
+    views = {(v["workflow"], v["name"]): v for v in hangar["views"]}
+    assert views[("decision-review", "card")]["host"] == "chat"
+    assert views[("decision-review", "queue")]["host"] == "canvas"
+    assert views[("decision-review", "card")]["file"] == "views/card.json"
+    folder = REPO / "skills" / "decision-review"
+    import json
+
+    manifest = json.loads((folder / "workflow.json").read_text())
+    assert slim_hangar.skill_hosts(folder, manifest) == {"queue": "canvas", "card": "chat"}
+
+
+def test_edit_and_add_a_widget_in_a_workflow_draft(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import json
+
+    workspace = _scratch_workspace(tmp_path, monkeypatch)
+    shutil.copytree(REPO / "workspace" / "scenarios", workspace / "scenarios")
+    draft = slim_hangar.start_folder_draft("workflow", "decision-review")
+    assert {v["name"]: v["host"] for v in draft["views"]} == {
+        "queue": "canvas",
+        "card": "chat",
+        "summary": "chat",
+    }
+    # Change the card's header: the draft draws it, the live one does not.
+    card = json.loads(next(f for f in draft["files"] if f["path"] == "views/card.json")["text"])
+    card["eyebrow"] = "Your call, Geoff"
+    skill = next(f for f in draft["files"] if f["path"] == "SKILL.md")["text"]
+    form = {
+        "view": "scope-check",
+        "layout": "form",
+        "title": "A question for you",
+        "fields": [{"id": "answer", "label": "Your answer", "kind": "line"}],
+        "submit": {"label": "Send", "prompt": "{answers}"},
+    }
+    views = {**draft["manifest"]["views"], "scope-check": "views/scope-check.json"}
+    draft = slim_hangar.edit_folder_draft(
+        "workflow",
+        "decision-review",
+        {
+            "manifest": {"views": views},
+            "files": {
+                "views/card.json": json.dumps(card),
+                "views/scope-check.json": json.dumps(form),
+                "SKILL.md": skill
+                + "\n## The scope-check widget\n\n"
+                "Draw it with `$PA render SKILL_DIR/views/scope-check.json --host chat --data x`.\n",
+            },
+        },
+    )
+    assert draft["problems"] == [], draft["problems"]
+    assert {v["name"]: v["host"] for v in draft["views"]}["scope-check"] == "chat"
+    assert "Your call, Geoff" in slim_hangar.render_draft_view("decision-review", "card")
+    assert "Your call, Geoff" not in slim_hangar.render_view("decision-review", "card")
+    assert "Your answer" in slim_hangar.render_draft_view("decision-review", "scope-check")
+    # Publishing puts it in the workspace copy, which travels with the repo (D-75).
+    slim_hangar.publish_folder("workflow", "decision-review", "a scope check")
+    copy = workspace / ".claude" / "skills" / "decision-review"
+    assert (copy / "views" / "scope-check.json").is_file()
+    wf = next(w for w in slim_hangar.load_hangar()["workflows"] if w["id"] == "decision-review")
+    assert "scope-check" in {v["name"] for v in wf["views"]}
+    # Names and paths are checked.
+    slim_hangar.start_folder_draft("workflow", "decision-review")
+    with pytest.raises(HTTPException):
+        slim_hangar.edit_folder_draft(
+            "workflow", "decision-review", {"manifest": {"views": {"Bad Name": "x.json"}}}
+        )
+    with pytest.raises(HTTPException):
+        slim_hangar.edit_folder_draft(
+            "workflow", "decision-review", {"manifest": {"views": {"x": "../../evil.json"}}}
+        )
+    with pytest.raises(HTTPException):
+        slim_hangar.render_draft_view("../evil", "card")

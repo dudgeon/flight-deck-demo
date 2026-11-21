@@ -4,7 +4,9 @@
 [Omnigent](https://github.com/omnigent-ai/omnigent), the open-source
 meta-harness from Databricks, for prototyping an agent workspace on a
 locked-down Mac. Its user interface is branded **Product Aviator**. The
-repository, folders and commands keep the name `omnigent-slim`.
+repository is `dudgeon/flight-deck-demo` (renamed from `omnigent-slim`, D-114);
+code identifiers, commands and the `~/.omnigent-slim` data folder keep the
+name `omnigent-slim`.
 
 - It drives **Claude Code as a terminal program** (your own `claude` login), so
   it needs no API key.
@@ -30,60 +32,109 @@ apps built on Omnigent; see [Staying close to upstream](#staying-close-to-upstre
 
 ## Quick start: from download to your first session
 
-Every step is a command or a click. Run commands in **Terminal**.
+You don't need to be technical for this. You'll click a link, double-click a
+file, and type two short lines into Terminal.
 
-### Step 0. Check what you need
+### Step 0. What you need
+
+- A Mac with Apple silicon (M1 or newer) and macOS 13 or newer.
+- **Claude Code**, installed and signed in. To check, open Terminal, type
+  `claude` and press Return. If it starts, type `/exit` to leave it. If it says
+  `command not found`, install Claude Code first.
+- About 1 GB of free disk space.
+
+The setup script checks all of this for you and tells you plainly if anything
+is missing.
+
+### Step 1. Download and unzip
+
+1. Click this link: **https://github.com/dudgeon/flight-deck-demo/archive/refs/heads/main.zip**
+   Your browser saves `flight-deck-demo-main.zip` (about 75 MB) to **Downloads**.
+2. In Finder, open **Downloads** and double-click the ZIP. You get a folder
+   called **flight-deck-demo-main**. (Safari may unzip it for you.)
+
+Leave it in Downloads. Setup copies the app to its own folder, `~/flight-deck`
+(the **flight-deck** folder in your home folder), and runs it from there.
+
+### Step 2. Run the setup
+
+1. Open **Terminal**: press Command-Space, type `Terminal`, press Return.
+2. Copy this line, paste it into Terminal and press Return:
+
+   ```bash
+   sh ~/Downloads/flight-deck-demo-main/setup.sh
+   ```
+
+   (If it says *No such file*, the folder has another name, such as
+   `flight-deck-demo-main 2`. Type `sh ` with a space, drag the **setup.sh** file
+   from that folder onto the Terminal window, and press Return.)
+
+The setup checks your Mac, then says that macOS has flagged the download as
+coming from the internet. Every browser download gets that flag, and macOS
+won't run the bundled Python and tmux while it's there. Press **Return** to
+let setup remove it from the download only; it's the same thing as macOS's own
+*Open Anyway* button. (If your company says not to, press Control-C instead
+and use the Terminal download below, which never adds the flag.)
+
+Setup then copies the app into `~/flight-deck`, adds a **Product Aviator**
+icon to your Dock, and starts it. The first run takes about a minute. When you
+see **Flight Deck is running**, your browser opens the **Library** page at
+`http://127.0.0.1:6767/library`. You can delete the download afterwards.
+
+**If it stops with a red ✗,** it says what went wrong and what to do. It also
+saves a report on your Desktop, `flight-deck-setup-report.txt`. If the fix
+doesn't work, send that file back. It lists the checks and errors, and has no
+passwords or keys in it. You can run setup again as often as you like.
+
+**Next time,** click **Product Aviator** in the Dock, or type
+`sh ~/flight-deck/setup.sh` in Terminal.
+
+### Updating to a newer version
+
+1. Download the ZIP again from the same link. You don't need to unzip it.
+2. In Terminal, type this and press Return:
+
+   ```bash
+   sh ~/flight-deck/setup.sh
+   ```
+
+(Installed before the repository was renamed on 21 November? Run the new
+download's own setup once instead: `sh ~/Downloads/flight-deck-demo-main/setup.sh`.
+An older `~/flight-deck/setup.sh` only looks for downloads named
+`omnigent-slim-main`. After that, the line above works again.)
+
+Setup finds the newest download in **Downloads**, stops the app, updates
+`~/flight-deck` and starts it again. **It never overwrites your work:**
+
+- Files you added (notes, data, artifacts, people, scenarios, drafts) are left
+  alone.
+- Files you changed that the new version also changes keep your version. The
+  new version is saved in `~/flight-deck/updates/<date>/new-versions/` so you
+  can compare.
+- Files you deleted stay deleted.
+- Your sessions, kept in `~/.omnigent-slim`, are never touched.
+
+Setup lists all of this as it runs and in its report. (The app's own code,
+outside the `workspace` folder, is always replaced with the new version; if
+you changed any of it, your copy is saved under `updates/<date>/replaced/`.)
+
+**Another way to download: one line in Terminal.** Paste this into Terminal
+yourself and press Return. It downloads the ZIP to Downloads, unzips it and
+runs the setup, for a first install or an update:
 
 ```bash
-uname -m
+cd ~/Downloads && curl -fL -o flight-deck-demo-main.zip https://github.com/dudgeon/flight-deck-demo/archive/refs/heads/main.zip && unzip -qo flight-deck-demo-main.zip && sh flight-deck-demo-main/setup.sh
 ```
 
-It must print `arm64` (an Apple silicon Mac). Intel Macs are not supported.
+A download made this way never gets the macOS flag. `git clone` works too, on
+a machine that allows it; run `sh setup.sh --here` in the clone to run it in
+place instead of copying it to `~/flight-deck`.
 
-```bash
-claude --version
-```
-
-It must print a version. If it says `command not found`, install Claude Code
-first. Then run `claude` once on its own, sign in, and quit it with `/exit`.
-
-### Step 1. Download the ZIP from Terminal
-
-Download with `curl`, not with a web browser. macOS marks files downloaded by a
-browser as *quarantined*, and then refuses to run the bundled tmux and Python.
-`curl` doesn't add that mark.
-
-```bash
-cd ~
-curl -fL -o omnigent-slim.zip https://github.com/dudgeon/omnigent-slim/archive/refs/heads/main.zip
-unzip -q omnigent-slim.zip
-cd omnigent-slim-main
-```
-
-The folder is `~/omnigent-slim-main`. (`git clone` works too and also avoids
-quarantine.)
-
-If you can only download through a browser, `./start.sh` will tell you the copy
-is quarantined. Ask your IT team how they want you to clear the flag; don't
-bypass it on your own.
-
-### Step 2. Start it
-
-```bash
-./start.sh
-```
-
-The first run takes about a minute: it unpacks the bundled Python into
-`.runtime/` and installs the bundled packages, with no network. Later starts take
-a few seconds. When it prints `omnigent-slim is running: http://127.0.0.1:6767/library`,
-your browser opens the **Library** page.
-
-**Optional: a Dock icon.** `scripts/make_dock_app.sh --add-to-dock` builds
-`~/Applications/Product Aviator.app` and pins it to the Dock. Clicking it starts
-the server if it isn't running and opens the UI in its own Chrome app window (or
-your default browser without Chrome). It's built locally, so there's nothing to
-download or un-quarantine. Leave off `--add-to-dock` to drag it there yourself,
-and run the script again if you move this folder.
+**The Dock icon.** Setup builds `~/Applications/Product Aviator.app` and pins
+it to the Dock the first time (D-103). Clicking it starts the server if it
+isn't running and opens the UI in its own Chrome app window (or your default
+browser without Chrome). It's built on your Mac, so there's nothing to download
+or un-quarantine. To rebuild it by hand: `~/flight-deck/scripts/make_dock_app.sh`.
 
 ### Step 3. Start work, or fly a demo
 
@@ -113,7 +164,7 @@ tell Claude to put the result in the viewer.
 ### Step 5. Stop it
 
 ```bash
-./stop.sh
+sh ~/flight-deck/stop.sh
 ```
 
 Your sessions are kept in `~/.omnigent-slim` for next time.
@@ -164,13 +215,15 @@ folder, hover over it in the sidebar, click **⋯**, then **Project settings**.
 
 | You see | Do this |
 |---|---|
-| `macOS has quarantined this copy` | Download again with `curl` (Step 1) |
+| `macOS has flagged this copy as downloaded from the internet` | Run setup (Step 2) |
+| Setup stops with a red ✗ | Do what it says. If that doesn't fix it, send `flight-deck-setup-report.txt` from your Desktop |
 | `Claude Code ('claude') is not on your PATH` | Install Claude Code, run `claude` once to sign in |
 | `this build needs an Apple silicon Mac` | Use an Apple silicon Mac |
 | A session says *Waiting for you in the agent's terminal* | Click the terminal icon (top right of the session) and answer Claude's question there, e.g. whether to trust a folder or a project MCP server |
-| The page doesn't load | Run `./stop.sh` then `./start.sh`. It prints the address; another app may hold port 6767, so it may use a different port |
+| The page doesn't load | Run `sh ~/flight-deck/stop.sh` then `sh ~/flight-deck/setup.sh`. It prints the address; another app may hold port 6767, so it may use a different port |
 | Claude wrote a file but nothing opened | Ask "open it in the viewer"; or click the file in the viewer's file tree (left icon in the viewer header) |
-| Start over completely | `./stop.sh`, then delete `~/.omnigent-slim` and `.runtime/` |
+| Start over completely | `sh ~/flight-deck/stop.sh`, then delete `~/.omnigent-slim` and `~/flight-deck/.runtime/` |
+| An update didn't take a change you expected | You had changed that file, so setup kept yours. The new version is in `~/flight-deck/updates/` |
 
 Logs are in `~/.omnigent-slim/logs/`.
 

@@ -13,7 +13,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useId, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/routing";
 import { FlyButton } from "@/hangar/FlyButton";
 import { HANGAR_WRENCH_GROUP, HangarWrench } from "@/hangar/HangarWrench";
 import { type DemoInfo, hangarPath } from "@/hangar/hangarApi";

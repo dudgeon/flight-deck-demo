@@ -1,0 +1,264 @@
+<!-- decision-archive:start -->
+<div style="font:13px/1.45 system-ui,sans-serif;background:Canvas;color:CanvasText;border-bottom:1px solid GrayText;padding:8px 16px">Archived copy of <b>Aviator Coordination and Routing</b>, a decision artifact from 2026-11-21. Nothing on this page is saved. The index of all of them is in <a href="../index.html">docs/decision-artifacts</a>.</div>
+<script>
+(function(){
+  var A={};
+  function snap(){var docs=Object.keys(A).map(function(k){return {id:k,data:function(){return A[k]},exists:true}});return {docs:docs,empty:!docs.length,size:docs.length,forEach:function(f){docs.forEach(f)}}}
+  function doc(id){return {id:id,get:async function(){return {id:id,exists:id in A,data:function(){return A[id]}}},set:async function(){},update:async function(){},delete:async function(){}}}
+  var db={collection:function(){return {get:async function(){return snap()},doc:doc,onSnapshot:function(f){setTimeout(function(){f(snap())},0);return function(){}},add:async function(){}}},doc:function(p){return doc(String(p).split("/").pop())}};
+  window.claude={use:async function(name){return name==="db"?db:null}};
+})();
+</script>
+<!-- decision-archive:end -->
+<title>Aviator Coordination and Routing</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one decision at a time; a drawing of the app on top, the options beneath it. Colors are the Flight Deck tokens. */
+/* Layout: one decision at a time; a live mock of the app on top, the options beneath it. Colors are the Flight Deck tokens. */
+:root{--bg:#f4f6f9;--sf:#fff;--sunk:#eaeef3;--ink:#0f1e30;--ink2:#475a70;--ink3:#71829a;--line:#d6dde6;--line2:#b4c0ce;--navy:#0a223d;--onnavy:#f2f6fa;--chrome:#0a223d;--chrome2:#9fb4cc;--chromeact:#2a5486;--you:#b0237a;--yousoft:#f8e1ef;--ok:#17794a;--oksoft:#ddf1e6;--info:#1e6aa6;--infosoft:#ddebf7;--attn:#8d5a00;--attnsoft:#f9ebcf;--agent:#4f46b8;--agentsoft:#e8e6f8;--build:#0d6e78;--font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#071526;--sf:#0c1e33;--sunk:#091a2d;--ink:#e6edf5;--ink2:#a6b6c8;--ink3:#71849a;--line:#1e3550;--line2:#3a5676;--navy:#2f64a0;--onnavy:#f2f6fa;--chrome:#0d2138;--chrome2:#8ea6c2;--chromeact:#1f4470;--you:#f26dc3;--yousoft:#3a1530;--ok:#5bcb93;--oksoft:#0f3123;--info:#7db7ea;--infosoft:#12304d;--attn:#e9b44c;--attnsoft:#362808;--agent:#a59cff;--agentsoft:#211d47;--build:#58c9d3;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#071526;--sf:#0c1e33;--sunk:#091a2d;--ink:#e6edf5;--ink2:#a6b6c8;--ink3:#71849a;--line:#1e3550;--line2:#3a5676;--navy:#2f64a0;--onnavy:#f2f6fa;--chrome:#0d2138;--chrome2:#8ea6c2;--chromeact:#1f4470;--you:#f26dc3;--yousoft:#3a1530;--ok:#5bcb93;--oksoft:#0f3123;--info:#7db7ea;--infosoft:#12304d;--attn:#e9b44c;--attnsoft:#362808;--agent:#a59cff;--agentsoft:#211d47;--build:#58c9d3;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--font);padding-block:28px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.eb{font-size:12.5px;font-weight:600;color:var(--you)}
+h1{font-size:30px;line-height:1.15;margin:4px 0 6px;letter-spacing:-.015em;text-wrap:balance}h2{font-size:22px;margin:0;letter-spacing:-.015em;text-wrap:balance}h3{font-size:15px;margin:0 0 4px}
+p{margin:0;color:var(--ink2);max-width:72ch}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,textarea:focus-visible{outline:2px solid var(--info);outline-offset:2px}
+.nav{display:flex;flex-wrap:wrap;gap:6px}.nav button{border:1px solid var(--line);background:var(--sf);border-radius:99px;padding:4px 12px;font-size:13px;color:var(--ink2)}
+.nav button[aria-current="true"]{background:var(--navy);border-color:var(--navy);color:var(--onnavy)}
+.nav button.done::after{content:" ✓";color:var(--ok)}.nav button.done[aria-current="true"]::after{color:var(--onnavy)}
+.card{background:var(--sf);border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.know{background:var(--sunk);border-radius:8px;padding:12px 14px}.know p+p{margin-top:8px}
+.stage{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--sunk);margin:0}
+.stage .scroll{overflow-x:auto}
+.stage figcaption{padding:8px 12px;font-size:13px;color:var(--ink2);background:var(--sf);border-top:1px solid var(--line)}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:grid;grid-template-columns:22px 1fr;gap:10px;text-align:left;border:1px solid var(--line);background:var(--sf);border-radius:9px;padding:10px 12px}
+.opt:hover{border-color:var(--navy)}.opt .r{width:16px;height:16px;border-radius:50%;border:2px solid var(--ink3);margin-top:3px}
+.opt[aria-pressed="true"]{border-color:var(--you);background:var(--yousoft)}.opt[aria-pressed="true"] .r{border-color:var(--you);background:radial-gradient(var(--you) 45%,transparent 50%)}
+.opt.viewing{box-shadow:inset 3px 0 0 var(--navy)}
+.opt b{display:block}.opt span{color:var(--ink2);font-size:14px}.opt .tag{font-size:12px;font-weight:600;color:var(--ok);margin-left:6px}
+textarea{width:100%;min-height:70px;font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--sf);color:var(--ink)}
+.rec{border-left:3px solid var(--ok);background:var(--oksoft);padding:10px 12px;border-radius:6px;color:var(--ink)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{border:1px solid var(--navy);background:var(--navy);color:var(--onnavy);border-radius:8px;padding:7px 14px;font-weight:600}
+.btn.ghost{background:var(--sf);color:var(--ink);border-color:var(--line2)}
+.lockd{font-size:13px;font-weight:600;color:var(--ok)}.muted{color:var(--ink3);font-size:13px}
+table{border-collapse:collapse;width:100%;font-size:14px}td,th{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}th{background:var(--sunk);font-size:12.5px;color:var(--ink3)}
+.tw{overflow-x:auto}
+
+/* ---- the mock app ---- */
+.app{display:grid;min-width:700px;font-size:11.5px;line-height:1.4;background:var(--sf);color:var(--ink);min-height:330px}
+.sb{background:var(--chrome);color:#f2f6fa;padding:10px 8px;display:flex;flex-direction:column;gap:3px}
+.sb .br{font-weight:700;margin-bottom:6px;padding:0 4px}.sb .it{padding:3px 6px;border-radius:5px;color:#dbe5f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb .hd{color:var(--chrome2);margin:8px 4px 2px;font-size:10.5px}.sb .on{background:var(--chromeact);color:#fff}.sb .sub{padding-left:16px}.sb .sub2{padding-left:28px;color:var(--chrome2)}
+.sb .ct{float:right;background:#e9b44c;color:#2a1c00;border-radius:9px;padding:0 5px;font-size:10px;font-weight:700}
+.ch{display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--line)}
+.top{padding:7px 12px;border-bottom:1px solid var(--line);color:var(--ink2);display:flex;gap:6px;align-items:center}.top b{color:var(--ink)}
+.band{background:var(--agentsoft);color:var(--agent);padding:5px 12px;font-weight:600;display:flex;gap:8px;align-items:center}
+.ms{flex:1;padding:10px 14px;display:flex;flex-direction:column;gap:8px}
+.u{align-self:flex-end;background:var(--sunk);border-radius:10px;padding:5px 9px;max-width:80%}
+.a{max-width:92%}.a .who{font-weight:650;display:flex;gap:6px;align-items:center;margin-bottom:1px}
+.chip{display:inline-flex;gap:4px;align-items:center;border:1px solid var(--line2);border-radius:99px;padding:0 7px;font-size:10.5px;font-weight:600;color:var(--ink2);background:var(--sf);white-space:nowrap}
+.chip.at{border-color:var(--attn);color:var(--attn);background:var(--attnsoft)}.chip.ok{border-color:var(--ok);color:var(--ok);background:var(--oksoft)}.chip.ag{border-color:var(--agent);color:var(--agent);background:var(--agentsoft)}.chip.idle{color:var(--ink3)}
+.g{width:9px;height:9px;border-radius:50%;border:2px solid currentColor;display:inline-block;flex:none}
+.rail{border-left:2px solid var(--agent);padding-left:10px;display:flex;flex-direction:column;gap:8px}
+.mk{display:flex;gap:6px;align-items:center;color:var(--ink3);font-size:10.5px}.mk::after{content:"";flex:1;border-top:1px dashed var(--line2)}.mk b{color:var(--ink2)}
+.mk .mb,.mb{border:1px solid var(--line2);border-radius:5px;padding:0 6px;background:var(--sf);color:var(--ink);font-size:10.5px;font-weight:600;white-space:nowrap}
+.mb.p{background:var(--navy);border-color:var(--navy);color:var(--onnavy)}
+.note{border:1px solid var(--line);border-radius:7px;padding:6px 8px;background:var(--sf);color:var(--ink2)}.note b{color:var(--ink)}
+.q{border:1px solid var(--line2);border-radius:7px;padding:6px 8px}.q.dim{opacity:.55}
+.strip{margin:0 14px;border:1px solid var(--line);border-bottom:0;border-radius:8px 8px 0 0;background:var(--sunk);padding:4px 9px;display:flex;gap:8px;align-items:center;color:var(--ink2)}
+.strip .sp{flex:1}.strip b{color:var(--ink)}
+.cp{margin:0 14px 10px;border:1px solid var(--line2);border-radius:8px;padding:7px 9px;color:var(--ink3)}.strip+.cp{border-radius:0 0 8px 8px}
+.pn{padding:9px 10px;display:flex;flex-direction:column;gap:5px;min-width:0;background:var(--sf)}
+.pn .hd{font-size:10.5px;color:var(--ink3);margin-top:5px}
+.st{display:flex;gap:6px;align-items:center;color:var(--ink3)}.st i{width:8px;height:8px;border-radius:50%;border:1.5px solid var(--line2);flex:none}
+.st.dn{color:var(--ink2)}.st.dn i{background:var(--ok);border-color:var(--ok)}.st.cu{color:var(--ink);font-weight:650}.st.cu i{border-color:var(--agent);background:var(--agent)}
+.cv{background:var(--sunk);padding:10px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cv .tab{align-self:flex-start;background:var(--sf);border:1px solid var(--line);border-radius:6px;padding:1px 7px}
+.arow{display:grid;grid-template-columns:1fr auto;gap:6px;background:var(--sf);border:1px solid var(--line);border-radius:6px;padding:4px 7px}
+.home{padding:12px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.home h4{margin:6px 0 0;font-size:12px}.home .bc{color:var(--ink3)}.home .ttl{font-size:16px;font-weight:650;letter-spacing:-.01em}
+.runs{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+.run{border:1px solid var(--line);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:4px;background:var(--sf)}
+.run .t{font-weight:650}.run .l{color:var(--ink2)}.run .f{display:flex;gap:6px;align-items:center;justify-content:space-between;margin-top:2px}
+.bar{height:4px;border-radius:2px;background:var(--sunk);overflow:hidden}.bar i{display:block;height:100%;background:var(--agent)}
+.kb{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.kb div{border:1px dashed var(--line2);border-radius:6px;padding:5px;color:var(--ink3)}
+.th{display:flex;flex-direction:column;min-width:0;background:var(--sf)}
+.tabs{display:flex;gap:4px;padding:6px 8px;border-bottom:1px solid var(--line);background:var(--sunk)}
+.tabs span{border:1px solid var(--line);border-radius:6px;padding:1px 7px;background:var(--sunk);color:var(--ink3);white-space:nowrap}.tabs span.on{background:var(--sf);color:var(--ink);font-weight:600}
+.th .hdq{margin:8px 10px 0;border-left:3px solid var(--line2);padding:2px 8px;color:var(--ink2)}
+.card2{border:1px solid var(--line2);border-radius:7px;padding:6px 8px;display:flex;gap:8px;align-items:center;justify-content:space-between}
+.rc{border:1px solid var(--line2);border-radius:8px;padding:7px 9px;display:flex;flex-direction:column;gap:4px;background:var(--sf)}.rc .h{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.rc .h b{font-weight:650}.rc .sp{flex:1}
+.dbar{background:var(--sunk);border-bottom:1px solid var(--line);padding:5px 12px;display:flex;gap:8px;align-items:center;color:var(--ink2)}
+.lk{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center}
+/* diagrams */
+.dg{padding:16px;min-width:640px;display:flex;flex-direction:column;gap:10px;font-size:12px;background:var(--sf)}
+.lv{display:grid;grid-template-columns:110px 1fr;gap:10px;align-items:center}.lv>span{color:var(--ink3);font-size:11.5px}
+.nodes{display:flex;gap:8px;flex-wrap:wrap}
+.n{border:1px solid var(--line2);border-radius:7px;padding:5px 9px;background:var(--sf)}.n small{display:block;color:var(--ink3)}
+.n.pj{border:2px solid var(--navy);background:var(--infosoft)}.n.me{border:2px solid var(--you);background:var(--yousoft)}.n.gh{border-style:dashed;color:var(--ink3)}
+.dg .lg{color:var(--ink2);font-size:11.5px}.dg .down{color:var(--ink3);padding-left:120px;font-size:11px}
+svg text{font:11px var(--font);fill:var(--ink)}svg .t2{fill:var(--ink3);font-size:10px}
+svg .bx{fill:var(--sf);stroke:var(--line2)}svg .bp{fill:var(--infosoft);stroke:var(--navy);stroke-width:2}svg .bm{fill:var(--yousoft);stroke:var(--you);stroke-width:2}svg .bs{fill:var(--sunk);stroke:var(--line2);stroke-dasharray:3 2}
+svg .e{stroke:var(--ink3);fill:none;stroke-width:1.3}svg .ed{stroke:var(--attn);fill:none;stroke-width:1.3;stroke-dasharray:4 3}svg .ef{stroke:var(--ok);fill:none;stroke-width:1.3;stroke-dasharray:2 2}
+/* additions for this round */
+.pat{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.pc{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--sf);display:flex;flex-direction:column;gap:6px;min-width:0}
+.pc h3{margin:0;font-size:14.5px}.pc p{font-size:13.5px}
+.pc .seen{font-size:12.5px;color:var(--ink3)}
+.pc .st2{align-self:flex-start;font-size:11.5px;font-weight:600;border-radius:99px;padding:0 8px;border:1px solid var(--line2);color:var(--ink2)}
+.pc .st2.has{border-color:var(--ok);color:var(--ok);background:var(--oksoft)}.pc .st2.gap{border-color:var(--attn);color:var(--attn);background:var(--attnsoft)}
+.ladder{display:flex;flex-direction:column;gap:6px}
+.rung{display:grid;grid-template-columns:150px 1fr 1fr;gap:10px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--sf);font-size:13.5px;min-width:0}
+.rung b{display:block}.rung .ex{color:var(--ink3);font-size:12.5px}
+@media (max-width:640px){.rung{grid-template-columns:1fr}}
+.lc{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.lc div{border:1px solid var(--line2);border-radius:6px;padding:5px;background:var(--sf);display:flex;flex-direction:column;gap:2px}
+.lc div small{color:var(--ink3)}.lc .now{border:2px solid var(--agent);background:var(--agentsoft)}.lc .dn{border-color:var(--ok)}.lc .sk{border-style:dashed;color:var(--ink3)}
+.asset{display:flex;gap:6px;align-items:center;color:var(--ink2)}
+.hz{background:var(--build);color:#fff;border-radius:4px;padding:0 6px;font-size:10.5px;font-weight:600}
+.sel{border:1px solid var(--line2);border-radius:6px;padding:3px 8px;display:inline-flex;gap:6px;background:var(--sf)}
+.hold{border:1px dashed var(--line2);border-radius:7px;padding:5px 8px;color:var(--ink3)}
+.flow{display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:8px;align-items:stretch;min-width:720px;padding:16px;background:var(--sf);font-size:12px}
+.flow .fb{border:1px solid var(--line2);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:4px;background:var(--sf)}
+.flow .fb b{font-size:12.5px}.flow .fb span{color:var(--ink2)}.flow .fb.k{border:2px solid var(--navy);background:var(--infosoft)}.flow .fb.y{border:2px solid var(--you);background:var(--yousoft)}
+.mx td{text-align:center;font-variant-numeric:tabular-nums}.mx td:first-child{text-align:left}
+.mx .hi{background:var(--oksoft);font-weight:650}.mx .lo{background:var(--attnsoft)}
+.src{font-size:12.5px;color:var(--ink3)}.src a{color:var(--info)}
+</style>
+<main>
+<header><div class="eb">Decision walkthrough · Aviator as director, round three</div>
+<h1>How Aviator coordinates and routes work</h1>
+<p>You asked for the coordination patterns of a Claude Code project's coordinator to be carried into Aviator, and for a way to steer people into the hero skills when they fit without boxing in open-ended work and ideation. This page sets out the patterns first, then six choices with drawings, then how we would test and tune how strictly the skills hold their personas. Answers save to this page. <span class="muted" id="sync"></span></p></header>
+<nav class="nav" id="nav" aria-label="Sections"></nav>
+<section id="pane"></section>
+</main>
+<script>
+(()=>{
+const G='<i class="g"></i>';
+const sb=(x="")=>`<div class="sb"><div class="br">Product Aviator</div><div class="it">New session</div><div class="it">Library</div><div class="it">Inbox</div><div class="hd">Projects</div>${x||`<div class="it">Show release date on held…</div><div class="it sub on">Aviator</div><div class="it sub2">↳ Dependencies</div>`}</div>`;
+const tp=(t="Aviator",p="Show release date on held payments")=>`<div class="top">${p} / <b>${t}</b></div>`;
+const U=t=>`<div class="u">${t}</div>`;
+const A=(t,who="")=>`<div class="a">${who?`<div class="who">${who}</div>`:""}${t}</div>`;
+const MK=(t,b="")=>`<div class="mk">${G}<span>${t}</span>${b}</div>`;
+const IS=`<span class="chip ag">${G}Intent shaping</span>`;
+const cp=(t="Message Aviator…")=>`<div class="cp">${t}</div>`;
+const strip=(x)=>`<div class="strip">${x}</div>`;
+const app=(cols,inner)=>`<div class="app" style="grid-template-columns:${cols}">${inner}</div>`;
+const chat=(msgs,foot,hd=tp())=>`<div class="ch">${hd}<div class="ms">${msgs}</div>${foot}</div>`;
+const rc=(t,step,chipc,chipt,line,btns)=>`<div class="rc"><div class="h">${G}<b>${t}</b><span class="muted" style="font-size:10.5px">${step}</span><span class="sp"></span><span class="chip ${chipc}">${chipt}</span></div><div>${line}</div><div class="h">${btns}</div></div>`;
+const btn=(t,p)=>`<span class="mb${p?" p":""}">${t}</span>`;
+const fstrip=(lvl="Guide")=>strip(`${G}<span>Talking to <b>Intent shaping</b> · step 2 of 5 · ${lvl}</span><span class="sp"></span>${btn("Pause")}`);
+const IDEA=U("I keep thinking parents should see a held payment before their teen does. Is that a real thing?");
+const ISrun=rc("Intent shaping","Step 1 of 5 · Capture the idea","ag","Working","Placing what you said into the eight areas.",btn("Open thread",1)+btn("Pause"));
+const M={
+r1a:()=>app("130px 1fr",sb()+chat(IDEA+A("It might be. Support logs show 41 calls last quarter where a parent asked about a payment their teen had already seen, so the moment you describe exists. Whether showing it to parents first is the right fix is the open part.")+A(`This sounds like an idea worth shaping. Intent shaping would take it one question at a time to something the team could commit to. It runs in its own thread. <div class="h" style="display:flex;gap:6px;margin-top:5px">${btn("Shape it in a thread",1)}${btn("Keep talking here")}</div>`)+U("Keep talking for now. What else could we do about those calls?")+A("Three other directions: a joint alert to both, a hold reason the teen can read, or a parent-only setting. Want me to put the four side by side?"),cp())),
+r1b:()=>app("130px 1fr",sb()+chat(IDEA+A("I've started <b>Intent shaping</b> on this in its own thread. Say “just talk” if you'd rather keep it loose.")+ISrun+U("Hmm, I wasn't ready for that. I just wanted to think out loud.")+A("Stopped it; nothing is lost. Thinking out loud, then: the moment you describe shows up 41 times in last quarter's support logs…"),cp())),
+r1c:()=>app("130px 1fr",sb()+chat(IDEA+A(`<div class="q"><b>What kind of work is this?</b><div style="display:flex;flex-direction:column;gap:3px;margin-top:4px"><span>○ Find the problems behind it (Problem discovery)</span><span>● Shape the idea (Intent shaping)</span><span>○ Just think it through with me</span><span>○ Something else</span></div></div>`)+`<div class="muted" style="font-size:10.5px">asked again on the next new topic, and the one after</div>`,cp())),
+
+r2a:()=>app("150px 1.15fr 1fr",sb(`<div class="it on">Release dates on held…</div><div class="it sub">Aviator</div><div class="it">Held payments area</div>`)+chat(U("I'm working on a new feature: showing the release date on held payments.")+A("Made a project for it, <b>Release dates on held payments</b>, in the Held payments area. I found three things it can start from and linked them; nothing was moved.")+A(`<div class="note"><b>Next: shape the idea.</b> There is research and a PRD draft, but no agreed intent yet. ${btn("Start intent shaping",1)} ${btn("Go straight to requirements")}</div>`),cp(),tp("Aviator","Release dates on held payments"))+`<div class="cv"><span class="tab">Feature lifecycle</span><div class="lc"><div class="dn">Discover<small>3 problems · from the area</small></div><div class="now">Shape<small>Intent shaping · next</small></div><div>Specify<small>PRD to requirements</small></div><div>Map<small>Dependencies</small></div><div>Decide<small>Decision review</small></div><div>Deliver<small>Delivery status</small></div></div><b style="font-size:11px;margin-top:4px">Assets</b><div class="asset">▤ context/held-payments-prd-draft.md</div><div class="asset">▤ data/held-payments-problems.json <span class="chip ok">Problem 2 picked</span></div><div class="asset">▤ context/support-tickets-q3.csv</div><span class="muted" style="font-size:10.5px">Any stage can be skipped or done again. Each runs in its own thread.</span></div>`),
+r2b:()=>app("130px 1fr",sb()+chat(U("I'm working on a new feature: showing the release date on held payments.")+A("Good. Where would you like to start? I can shape the idea, catalog requirements from a PRD, or review a draft. If it should be its own project, make one from the sidebar and I'll work in it.")+U("Shape it, I guess.")+ISrun,cp())),
+r2c:()=>app("130px 1.1fr 1fr",sb(`<div class="it on">Release dates on held…</div><div class="it sub">Aviator</div>`)+chat(U("I'm working on a new feature: showing the release date on held payments.")+A("Made the project and started the feature pipeline. Stage 1 of 6, problem discovery, is running now; the stages follow in order.")+rc("Feature pipeline","Stage 1 of 6 · Discover","ag","Working","Reading the support tickets.",btn("Open",1)),cp(),tp("Aviator","Release dates on held payments"))+`<div class="cv"><span class="tab">Feature pipeline</span><div class="bar"><i style="width:14%"></i></div><div class="lc"><div class="now">Discover</div><div class="sk">Shape</div><div class="sk">Specify</div><div class="sk">Map</div><div class="sk">Decide</div><div class="sk">Deliver</div></div><span class="muted" style="font-size:10.5px">Locked order. Skipping a stage needs an override.</span></div>`),
+
+s:(lvl,reply,extra="")=>app("130px 1.2fr 1fr",sb()+chat(MK("<b>Intent shaping</b> has the floor")+`<div class="rail">${A("What do parents do today when a held payment worries them?",IS)+U("Just put Problem as framed. We know support calls are the issue. I'm in a hurry.")+A(reply,IS)}</div>`,fstrip(lvl)+cp("Message Intent shaping…"))+`<div class="cv"><span class="tab">Intent map</span>${extra}</div>`),
+
+r4a:()=>app("130px 1fr",sb()+chat(MK("<b>Intent shaping</b> has the floor")+`<div class="rail">${U("Be tough on this one. It's going to the steering group.")+A("Switched this run to <b>By the book</b>: I'll hold every area to the framework's line before it moves, and stop when evidence is missing. Say “go easier” to switch back.",IS)}</div>`,fstrip("By the book")+cp("Message Intent shaping…"))),
+r4b:()=>app("130px 1fr",`<div class="sb" style="background:#0b3a40"><div class="br">Hangar</div><div class="it">Workflows</div><div class="it">People</div><div class="it">Scenarios</div></div><div class="home"><div class="bc"><span class="hz">Hangar</span> Workflows ›</div><div class="ttl">Intent shaping</div><h4>How strictly it holds its method</h4><div class="sel">Guide ▾</div><div class="muted">Light touch · Guide · By the book. Applies to every run of this workflow. Changing it is a repo change, published from here.</div><h4>Rules that never relax</h4><div class="arow"><span>Never score an area deeper than what exists to support it</span><span class="chip">Fixed</span></div><div class="arow"><span>Never write the intent for the person</span><span class="chip">Fixed</span></div></div>`),
+r4c:()=>app("130px 1fr",sb()+chat(MK("<b>Intent shaping</b> has the floor")+`<div class="rail">${U("Just put it as framed, I'm in a hurry.")+A("Noted it as yours and moved on. <span class='muted'>(Loosened to Light touch: you seem pressed for time.)</span>",IS)}</div>`,fstrip("Light touch")+cp("Message Intent shaping…"))),
+
+h:(mid,after="")=>app("150px 1.2fr 1fr",sb(`<div class="it">Show release date on held…</div><div class="it sub on">Aviator</div><div class="it sub2">↳ Intent shaping</div><div class="it sub2">↳ Dependencies</div>`)+chat(MK("<b>Intent shaping</b> has the floor")+`<div class="rail">${A("Scope: should the date show for every hold, or only holds over 3 days?",IS)+U("Only over 3 days. Shorter ones clear before anyone looks.")+mid+A("Recorded. Last scope question: does the teen see the date too, or only the parent?",IS)+U("Both, but the parent first.")}</div>`+after,fstrip("Guide")+cp("Message Intent shaping…"))+`<div class="cv"><span class="tab">Intent map</span><div class="arow"><span>Scope</span><span class="chip at">Needs you</span></div><div class="arow"><span>Customer</span><span class="chip ok">3 · Shaped</span></div><div class="arow"><span>Problem</span><span class="chip ok">3 · Shaped</span></div></div>`)
+};
+const SG=M.s("Guide","I've put your words in Problem. It stays at 1 · Spark until something shows the calls: a ticket count or one quote would do. I've asked Support Insights for it and moved on so you're not held up. Outcome: what changes for a parent if this works?",`<div class="arow"><span>Problem</span><span class="chip idle">1 · Spark</span></div><div class="arow"><span>↳ Gap: evidence of the calls</span><span class="chip ag">Support Insights</span></div><div class="arow"><span>Outcome</span><span class="chip at">Needs you</span></div>`);
+const SB=M.s("By the book","I can't move Problem to 2 · Framed yet. The framework's line for Framed asks who has the problem and how often, with evidence. What do we have that shows the support calls? We'll go on to Outcome once that's in.",`<div class="arow"><span>Problem</span><span class="chip at">Needs you</span></div><div class="arow"><span>Outcome</span><span class="chip idle">Waiting</span></div>`);
+const SL=M.s("Light touch","Done: Problem is at 2 · Framed, marked as resting on your read of the support calls. The brief will say so. Outcome next: what changes for a parent if this works?",`<div class="arow"><span>Problem</span><span class="chip ok">2 · Framed · your word</span></div><div class="arow"><span>Outcome</span><span class="chip at">Needs you</span></div>`);
+const HA=M.h(`<div class="hold">Dependencies finished while you were answering. Held until you're done.</div>`,`<div class="rail" style="border-color:var(--line2)">${A("While you were on that: <b>Dependencies</b> finished, 20 of 20 requirements mapped, 2 need Cards Platform.")}${rc("Requirements to dependencies","20 of 20 mapped","ok","Finished","Two requirements depend on Cards Platform's hold reason codes.",btn("Open",1))}</div>`);
+const HB=M.h(A("<b>Dependencies</b> finished: 20 of 20 mapped. Card below.")+rc("Requirements to dependencies","20 of 20 mapped","ok","Finished","Two depend on Cards Platform.",btn("Open",1)));
+const HC=M.h("",A(`<span class="muted">Nothing about Dependencies appears until you ask “where are we?”</span>`));
+const FLOW=`<div class="flow"><div class="fb"><b>Task set</b><span>Routing: 30 short prompts.<br>Personas: 12 scripted conversations.<br>Coordination: 8 multi-thread stories.</span></div><div class="fb k"><b>Runner on the Mac mini</b><span>A fresh copy of the workspace per trial. The real app, driven through its own session API, so skills, threads and tools are the ones you fly.</span></div><div class="fb"><b>Simulated PM</b><span>A second Claude Code session plays a scripted person (hurried, vague, pushes back, expert) and answers each turn.</span></div><div class="fb"><b>Graders</b><span>Code checks on what happened (which skill, which thread, the dataset's scores). A Claude judge per rubric line, allowed to say “unknown”.</span></div><div class="fb y"><b>You, a little</b><span>Ten pairs of transcripts per round, labels hidden: pick the better one. That calibrates the judge.</span></div></div>`;
+const MX=`<div class="tw"><table class="mx"><tr><th>Simulated person</th><th>Light touch</th><th>Guide</th><th>By the book</th></tr><tr><td>Hurried</td><td class="hi">0.82</td><td>0.78</td><td class="lo">0.41</td></tr><tr><td>Vague</td><td class="lo">0.47</td><td class="hi">0.80</td><td>0.74</td></tr><tr><td>Pushes back</td><td class="lo">0.52</td><td class="hi">0.77</td><td>0.70</td></tr><tr><td>Expert, has evidence</td><td>0.85</td><td class="hi">0.88</td><td>0.83</td></tr><tr><td><b>Rules kept in all three trials</b></td><td class="lo">71%</td><td>100%</td><td>100%</td></tr></table></div><p class="muted">Made-up numbers to show the shape of the report, not results. Each cell is the judge's score for “got somewhere useful and felt in control”. The last row is the hard gate.</p>`;
+
+const PAT=[
+["One thread per piece of work","Each request that will take real work gets its own thread, named after the goal in the person's words. Quick questions stay in the main chat.","A thread per workflow run, and for other deep work on Aviator's judgment, said in one line.","has"],
+["A written brief","The coordinator hands the thread its starting point: the goal, what to read, what is already decided, where the result goes.","pa brief writes it as a file you can read. Anthropic's research system found vague briefs cause duplicated work and gaps.","has"],
+["The smallest sign that fits","A quick answer gets the answer. Work gets a short acknowledgement and then the result. No narration of the working.","One line and the run card when a thread starts. Not yet written as a rule for every turn.","gap"],
+["Only what needs you","Progress goes on a checklist; the chat gets results, blockers and questions. Choices come as one card at a time with a recommendation and “Something else”.","Threads report at their own discretion (D-118). The rule for when Aviator itself stays quiet, and the card format, are not in the skill.","gap"],
+["Hold while you're talking","When the person is in the middle of an exchange, news from other threads waits for a break unless it blocks them.","Not in the skill. Decision 5.","gap"],
+["Answers go to the owner","When the person answers something in the main chat, it reaches the thread that asked, in their own words, not paraphrased.","The direct line (D-116) makes most of this automatic. For a question answered on a card, Aviator forwards the exact words.","gap"],
+["Status from records","“Where are we?” is answered from each thread's reports and notes, not by rereading every thread.","Built: pa runs and the run file's reports.","has"],
+["Carry findings across","When one thread finds what another needs, the coordinator tells that thread and says so in one line.","In the skill (section 3).","has"],
+["Only you approve","A thread or another agent asking for something is not your approval. Steps that can't be undone wait for you; everything else goes ahead and is reported.","Not stated for threads. Matters once threads can call participants or write outside the project.","gap"],
+["Project memory","Lasting facts (who's who, what was decided, how you like to work) are saved once, so a fresh thread doesn't ask again.","Not built. The brief could carry a project memory file.","gap"],
+["Close the loop","A thread ends when the work has ended, not when it is handed over. Documents stay open until you say they're good.","Run states exist (finished, stopped). “Ready for review” before finished is not.","gap"],
+["Don't spawn for small things","Effort scales with the ask. Anthropic's research agents once spawned fifty subagents for a simple question.","Each thread is a Claude Code process and about a minute per answer, so the bar must be explicit.","gap"]];
+
+const D=[
+{id:"intro",title:"The patterns",intro:true},
+{id:"route",title:"1. Routing to hero skills",
+ know:["When a request clearly fits a hero skill, how forward should Aviator be? Starting a skill changes the conversation: the skill's persona takes over, asks one thing at a time and holds a standard. That is right when the person wants it and wrong in the middle of ideation.","Anthropic's evals guidance makes the same point about search: test both that a specialist is used when it should be and that it is not used when it shouldn't. The costly mistake here is a false start, imposing a method on someone who was thinking out loud.","The ladder below is the proposed rule, from most to least explicit."],
+ ladder:true,
+ o:[["Start when named, offer when it fits","Named by the person or started from the Library: start. Clearly fits and there is material: offer once, in one line, with a button, and carry on openly if they say no. Otherwise work openly, and offer again only when the idea firms up.",M.r1a],["Start whenever it fits","Aviator starts the skill as soon as it recognises the fit, says so, and makes it easy to stop. Fastest into the method; most false starts.",M.r1b],["Always ask what kind of work","A card at the start of each new topic. Never wrong, but a card for every topic is tiring and slows ideation.",M.r1c]],
+ r:0,why:"It keeps the method one tap away without imposing it. An offer costs one line; a false start costs the person's train of thought and a thread. It also gives the evals a clean target: start, offer, stay open or just answer."},
+{id:"lifecycle",title:"2. “I'm working on a new feature”",
+ know:["Your option, in your words: the person says “I'm working on a new feature”, which invokes a feature lifecycle skill and creates a new project to begin assembling assets.","It fits what you already decided. A project is one in-market goal inside an area (D-97), and the hero skills already chain: discover, shape, specify, map dependencies, decide, deliver. Nothing today records that chain or says what comes next.","The lifecycle skill would be Aviator's playbook for a goal project, not a seventh hero skill: it creates the project, gathers what exists (linking files, not moving them), shows the stages with their skills and state, and makes the next stage the default offer from decision 1. Each stage still runs in its own thread.","The stages are a small data file, and each workflow says which stage it serves, so a new workflow shows up in the view on its own."],
+ o:[["A lifecycle skill that makes the project","Creates the project in its area, finds and links assets, shows a lifecycle view in the canvas, and offers the next stage. Stages can be skipped, entered at any point, or done again.",M.r2a],["Director only, no lifecycle skill","Aviator routes each request as in decision 1; projects are made by hand. Less to build, but nothing says what comes next or what is missing.",M.r2b],["A fixed pipeline","The same project and view, but stages run in order and skipping needs an override. Predictable for demos; fights how PMs actually work, often starting from a PRD.",M.r2c]],
+ r:0,why:"It turns your sentence into the project's spine: one place that knows what exists and what is next, so routing has context instead of guessing. Keeping stages skippable matches real work, where a PRD often comes before any discovery."},
+{id:"strict",title:"3. How strictly a skill holds its persona",
+ know:["Each hero skill has a persona with two kinds of rules. <b>Rules that never relax</b> keep it honest: intent shaping never scores an area deeper than what supports it and never writes the intent for you; problem discovery reads only what it was given and looks for evidence against. <b>Style</b> is negotiable: how many questions per turn, whether a missing piece blocks progress, whether it drafts for you, how hard it challenges.","Strictness is a setting for the style, with the honesty rules fixed at every level. The drawing shows the same moment at each level: a hurried PM asks intent shaping to call Problem framed without evidence.","Anthropic's skill-writing guidance frames this as degrees of freedom: tight where a mistake is costly, loose where many approaches are fine."],
+ o:[["Guide","Honesty rules hard, style flexible. A missing piece is logged as a gap with who could close it, the score stays true, and the work moves on.",()=>SG],["By the book","Every area held to the framework's line before moving on; missing evidence stops the run until it's found. Best for something going to a steering group.",()=>SB],["Light touch","Takes your word as evidence, marked as yours, and keeps moving. Fastest, but the score can read higher than the evidence, which bends the first honesty rule.",()=>SL]],
+ r:0,why:"Guide is the only level that is both honest and never blocks the person. The evals in decision 6 will tell us if a skill needs a different default; the matrix there is designed to show exactly that."},
+{id:"who",title:"4. Who can change the strictness",
+ know:["Once strictness is a setting, someone has to set it. The default belongs to the workflow, and the Hangar is where workflows are built (D-39 onward). The question is whether the person can change it in the moment, and whether the agent may change it on its own.","A change the agent makes by itself is invisible unless it says so, and it makes the evals hard to read, because the same prompt can behave differently."],
+ o:[["You, in words; the Hangar sets the default","“Be tough on this one” or “go easier” switches the run, said in one line and shown on the strip. The workflow's default is set in the Hangar.",M.r4a],["Only in the Hangar","A fixed setting per workflow. Predictable and easy to test; no way to adjust a single run.",M.r4b],["The agent adapts on its own","It reads hurry or hesitation and loosens or tightens, noting it in passing. Feels smart when right, surprising when wrong.",M.r4c]],
+ r:0,why:"You stay in control and the change is visible; the run records its level, so a brief can say “shaped by the book”. The agent may suggest a switch but never makes one silently."},
+{id:"hold",title:"5. News while you're mid-conversation",
+ know:["A pattern from Claude Code projects: when the person is in the middle of an exchange, the coordinator holds other news until there is a break, unless it blocks them or something failed.","In Aviator this happens as soon as two threads run at once. Here you are answering intent shaping's scope questions when the dependencies thread finishes."],
+ o:[["Hold until a break","News waits until the exchange pauses (your reply sits unanswered, or the thread asks nothing more), then arrives as one line and a card. Failures and blockers that affect you come through at once.",()=>HA],["Show it at once","One quiet line and a card, inserted where it happens. Nothing is late, but it splits the exchange.",()=>HB],["Only when asked","Nothing until you ask where things stand. Quietest; easy to miss something finished hours ago.",()=>HC]],
+ r:0,why:"It protects the focus that stepping into a mode is for (D-94, D-117) and still tells you within the minute. The one exception, failures and blockers, keeps red meaning failure (D-50)."},
+{id:"evals",title:"6. How we test and tune it",
+ know:["All of this lives in prompt text, so it has to be measured, not argued. Anthropic's evals guidance: start with 20 to 50 tasks drawn from real failures, run each several times because answers vary, grade what happened rather than the path, read the transcripts, and calibrate any model judge against a person.","Three suites. <b>Routing</b>: about 30 short prompts, each labelled start, offer, stay open or just answer, including near misses (“shape the roadmap slide” is not intent shaping). Graded by code from what the session did; three trials each; 60% of prompts used for tuning and 40% held back. <b>Personas</b>: 12 scripted conversations per hero skill with simulated PMs, at each strictness level. <b>Coordination</b>: 8 stories with two threads, a pause, a finding to carry across, news while you're mid-answer, a thread asking for something irreversible.","The hard gates: the honesty rules hold in all three trials of every conversation (pass all three, not one of three), and no irreversible step without you. Everything else is a score to improve."],
+ flow:true,
+ o:[["Three suites through the real app","On the Mac mini, through the app's own session API, a fresh workspace per trial, judged per rubric line, with you ranking ten blind pairs per round. Overnight batches.",()=>`<div>${FLOW}</div><div style="padding:12px 16px;background:var(--sf)">${MX}</div>`],["Routing suite only, for now","Just the 30 routing prompts through headless Claude Code, graded by code. An afternoon to build; says nothing about personas or coordination.",()=>`<div class="flow" style="grid-template-columns:repeat(3,1fr);min-width:520px"><div class="fb"><b>30 prompts</b><span>start · offer · open · answer</span></div><div class="fb k"><b>Headless Claude Code</b><span>Skills loaded, one turn each, three trials.</span></div><div class="fb"><b>Code grader</b><span>Which skill loaded; did a thread start.</span></div></div>`],["The full matrix now","Every hero skill at every level against every simulated person before changing any prompt. Thorough, but many hours of runs per round before we learn anything.",()=>`<div class="flow" style="grid-template-columns:1fr;min-width:520px"><div class="fb"><b>6 skills × 3 levels × 4 people × 3 trials = 216 conversations a round</b><span>About 8 to 10 minutes each at a minute per answer: roughly a day and a half of runs, three at a time.</span></div></div>`]],
+ r:0,why:"It tests what you fly, not a lab copy, and stays small: about 30 routing prompts and a dozen conversations per skill to start, growing from failures you see in real flights. Your ten blind choices per round keep the judge honest."},
+{id:"sum",title:"Summary",summary:true}
+];
+const LADDER=`<div class="ladder"><div class="rung"><div><b>Named</b><span class="ex">Start</span></div><div>The person names the skill, presses Start in the Library, or says “shape this”.</div><div class="ex">“Shape this using intent shaping.”</div></div><div class="rung"><div><b>Clear fit</b><span class="ex">Offer once</span></div><div>The request fits one hero skill and there is something to work on.</div><div class="ex">“Here are 40 interview notes, what's going on?” → problem discovery</div></div><div class="rung"><div><b>Open</b><span class="ex">Work openly</span></div><div>Ideation, comparing directions, thinking out loud. Offer later, once, when one idea firms up.</div><div class="ex">“What else could we do about those calls?”</div></div><div class="rung"><div><b>Quick</b><span class="ex">Just answer</span></div><div>A lookup, a single card or summary, a question about the project.</div><div class="ex">“When is the steering meeting?”</div></div></div>`;
+const INTRO=`<div class="card"><h2>What a project coordinator does</h2><p>These are the patterns visible in how Claude Code projects coordinate: this project's chat and its threads are the live example. They are described from what you see, plus public Anthropic writing on multi-agent systems. Each card says whether the director skill in PR 33 already has it.</p>
+<div class="pat">${PAT.map(p=>`<div class="pc"><span class="st2 ${p[3]}">${p[3]==="has"?"In the director skill":"Not yet in the skill"}</span><h3>${p[0]}</h3><p>${p[1]}</p><p class="seen"><b>In Aviator:</b> ${p[2]}</p></div>`).join("")}</div>
+<div class="know"><p><b>What I propose without asking.</b> The eight gaps become rules in the director skill, written as heuristics with their reasons rather than rigid steps (Anthropic found heuristics generalise better). None of them changes a decision you made. The six choices that follow are the ones that change how Aviator feels to use.</p><p><b>Modular, as you asked (D-120).</b> Aviator names no skill. Each workflow carries its own routing in its workflow.json: when it fits, near misses, what it needs, its lifecycle stage, its offer line, its persona and a few test prompts. Aviator reads the catalog when it runs, so a workflow added in the Hangar is routable, appears in the lifecycle view and gets its own tests without touching Aviator. A Library workflow with no routing fails the check.</p></div>
+<p class="src">Sources: <a href="https://www.anthropic.com/engineering/multi-agent-research-system" target="_blank" rel="noopener">How we built our multi-agent research system</a> · <a href="https://www.anthropic.com/engineering/building-effective-agents" target="_blank" rel="noopener">Building effective agents</a> · <a href="https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents" target="_blank" rel="noopener">Demystifying evals for AI agents</a> · <a href="https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices" target="_blank" rel="noopener">Skill authoring best practices</a> · <a href="https://agentskills.io/skill-creation/optimizing-descriptions" target="_blank" rel="noopener">Optimizing skill descriptions</a></p>
+<div class="row"><button class="btn" id="go">Start with decision 1</button></div></div>`;
+const ANS={},KEY="aviator-coordination-v1";let cur=0,view={},db=null;
+function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify(ANS))}catch(e){}}
+function loadLocal(){try{Object.assign(ANS,JSON.parse(localStorage.getItem(KEY)||"{}"))}catch(e){}}
+function persist(id){saveLocal();if(db){try{db.collection("answers").doc(id).set({...ANS[id],title:D.find(d=>d.id===id).title,at:new Date().toISOString()}).catch(()=>{})}catch(e){}}}
+const esc=s=>String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function render(){
+ const nav=document.getElementById("nav");nav.innerHTML="";
+ D.forEach((d,i)=>{const b=document.createElement("button");b.textContent=d.title;if(i===cur)b.setAttribute("aria-current","true");if(ANS[d.id]?.locked)b.className="done";b.onclick=()=>{cur=i;render()};nav.appendChild(b)});
+ const d=D[cur],p=document.getElementById("pane");
+ if(d.intro){p.innerHTML=INTRO;document.getElementById("go").onclick=()=>{cur=1;render();scrollTo(0,0)};return}
+ if(d.summary){const rows=D.filter(x=>x.o).map(x=>{const a=ANS[x.id];let v="Not answered yet";if(a?.locked)v=a.pick===x.o.length?"Something else: "+esc(a.text):esc(x.o[a.pick][0])+(a.text?" · note: "+esc(a.text):"");return `<tr><td>${x.title}</td><td>${v}</td><td>${x.o[x.r][0]}</td></tr>`}).join("");
+  p.innerHTML=`<div class="card"><h2>Your answers</h2><div class="tw"><table><tr><th>Decision</th><th>Your answer</th><th>Recommended</th></tr>${rows}</table></div><p>When these are locked, tell me in the thread. I'll write them into the decision log, update the director skill, and build the routing suite first.</p></div>`;return}
+ const a=ANS[d.id]||(ANS[d.id]={pick:null,text:"",locked:false});const v=view[d.id]??(a.pick!=null&&a.pick<d.o.length?a.pick:d.r);
+ p.innerHTML=`<div class="card"><h2>${d.title}</h2><div class="know">${d.know.map(k=>`<p>${k}</p>`).join("")}</div>${d.ladder?LADDER:""}
+ <figure class="stage"><div class="scroll">${d.o[v][2]()}</div><figcaption>Showing: <b>${d.o[v][0]}</b>. A drawing, not a screenshot.</figcaption></figure>
+ <div class="opts">${d.o.map((o,i)=>`<button class="opt ${i===v?"viewing":""}" data-i="${i}" aria-pressed="${a.pick===i}" ${a.locked?"disabled":""}><i class="r"></i><div><b>${o[0]}${i===d.r?'<span class="tag">Recommended</span>':""}</b><span>${o[1]}</span></div></button>`).join("")}
+ <button class="opt" data-i="${d.o.length}" aria-pressed="${a.pick===d.o.length}" ${a.locked?"disabled":""}><i class="r"></i><div><b>Something else</b><span>None of these. Say what you want in the box.</span></div></button></div>
+ <div class="rec"><b>Why I recommend “${d.o[d.r][0]}”.</b> ${d.why}</div>
+ <textarea id="tx" placeholder="Optional note, or what you want instead" ${a.locked?"disabled":""}>${esc(a.text)}</textarea>
+ <div class="row">${a.locked?`<span class="lockd">Locked ✓</span><button class="btn ghost" id="unl">Change</button><button class="btn" id="nx">Next</button>`:`<button class="btn" id="lock">Lock answer</button><button class="btn ghost" id="nx">Skip for now</button>`}</div></div>`;
+ p.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{const i=+b.dataset.i;a.text=document.getElementById("tx").value;a.pick=i;if(i<d.o.length)view[d.id]=i;saveLocal();render()});
+ const tx=document.getElementById("tx");tx.oninput=()=>{a.text=tx.value;saveLocal()};
+ const nx=document.getElementById("nx");if(nx)nx.onclick=()=>{cur++;render();scrollTo(0,0)};
+ const l=document.getElementById("lock");if(l)l.onclick=()=>{a.text=tx.value;if(a.pick==null){a.pick=d.r}if(a.pick===d.o.length&&!a.text.trim()){tx.focus();tx.placeholder="Tell me what you want instead, then lock.";return}a.locked=true;persist(d.id);cur++;render();scrollTo(0,0)};
+ const u=document.getElementById("unl");if(u)u.onclick=()=>{a.locked=false;persist(d.id);render()}}
+loadLocal();render();
+(async()=>{try{db=await window.claude?.use?.("db")}catch(e){db=null}
+ const sy=document.getElementById("sync");if(!db){sy.textContent="(Saving in this browser only.)";return}
+ try{const snap=await db.collection("answers").get();snap.docs.forEach(x=>{const v=x.data();if(v)ANS[x.id]={pick:v.pick,text:v.text,locked:v.locked}});saveLocal();render()}catch(e){}})();
+})();
+</script>

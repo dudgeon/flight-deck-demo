@@ -1,0 +1,300 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!-- decision-archive:start -->
+<div style="font:13px/1.45 system-ui,sans-serif;background:Canvas;color:CanvasText;border-bottom:1px solid GrayText;padding:8px 16px">Archived copy of <b>Conversation Participants</b>, a decision artifact from 2026-11-21. Nothing on this page is saved. The index of all of them is in <a href="../index.html">docs/decision-artifacts</a>.</div>
+<script>
+(function(){
+  var A={};
+  function snap(){var docs=Object.keys(A).map(function(k){return {id:k,data:function(){return A[k]},exists:true}});return {docs:docs,empty:!docs.length,size:docs.length,forEach:function(f){docs.forEach(f)}}}
+  function doc(id){return {id:id,get:async function(){return {id:id,exists:id in A,data:function(){return A[id]}}},set:async function(){},update:async function(){},delete:async function(){}}}
+  var db={collection:function(){return {get:async function(){return snap()},doc:doc,onSnapshot:function(f){setTimeout(function(){f(snap())},0);return function(){}},add:async function(){}}},doc:function(p){return doc(String(p).split("/").pop())}};
+  window.claude={use:async function(name){return name==="db"?db:null}};
+})();
+</script>
+<!-- decision-archive:end -->
+
+<title>Conversation Participants</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: a reading column with one instrument, a workspace schematic that redraws per work mode. */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --sunk:#e9edf2; --ink:#0a223d; --ink-2:#44566c; --ink-3:#7a8899;
+  --line:#d3dae3; --navy:#0a223d; --on-navy:#f3f5f8;
+  --you:#c2501f; --you-soft:#fbe6dc;
+  --exists:#2f5d8a; --exists-soft:#dfe9f3; --ours:#17756b; --ours-soft:#d9efec;
+  --extend:#8a6200; --extend-soft:#f6ecd0; --new:#c2501f; --new-soft:#fbe6dc;
+  --ok:#1d7a4f; --warn:#9a6a00; --attn:#b8323c; --idle:#7a8899;
+  --display:"Space Grotesk","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#07172a; --surface:#0e2238; --sunk:#0a1c30; --ink:#e8eef5; --ink-2:#a9b8c9; --ink-3:#74879c;
+  --line:#22384f; --navy:#16385f; --on-navy:#eef3f8;
+  --you:#ff9166; --you-soft:#3a2118;
+  --exists:#8fbbe6; --exists-soft:#15304c; --ours:#6fd0c3; --ours-soft:#103631;
+  --extend:#e6bd55; --extend-soft:#35290c; --new:#ff9166; --new-soft:#3a2118;
+  --ok:#5fcf98; --warn:#e6bd55; --attn:#ff7d86; --idle:#74879c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#07172a; --surface:#0e2238; --sunk:#0a1c30; --ink:#e8eef5; --ink-2:#a9b8c9; --ink-3:#74879c;
+  --line:#22384f; --navy:#16385f; --on-navy:#eef3f8;
+  --you:#ff9166; --you-soft:#3a2118;
+  --exists:#8fbbe6; --exists-soft:#15304c; --ours:#6fd0c3; --ours-soft:#103631;
+  --extend:#e6bd55; --extend-soft:#35290c; --new:#ff9166; --new-soft:#3a2118;
+  --ok:#5fcf98; --warn:#e6bd55; --attn:#ff7d86; --idle:#74879c; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+.wrap{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:56px}
+h1,h2,h3{font-family:var(--display);font-weight:600;text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);line-height:1.08}
+h2{font-size:24px;line-height:1.2}
+h3{font-size:16px}
+p{margin:0;max-width:68ch;color:var(--ink-2)}
+.eyebrow{font:500 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+section{display:flex;flex-direction:column;gap:18px}
+.head{display:flex;flex-direction:column;gap:10px}
+.lede{font-size:17px;color:var(--ink-2)}
+.thesis{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.thesis div{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.thesis b{font-family:var(--display);font-size:15px}
+.thesis span{color:var(--ink-2);font-size:14px}
+
+/* tags */
+.tag{display:inline-flex;align-items:center;gap:6px;font:500 11px/1 var(--mono);padding:4px 7px;border-radius:3px;white-space:nowrap}
+.tag::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.t-exists{color:var(--exists);background:var(--exists-soft)}
+.t-ours{color:var(--ours);background:var(--ours-soft)}
+.t-extend{color:var(--extend);background:var(--extend-soft)}
+.t-new{color:var(--new);background:var(--new-soft)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:13px;color:var(--ink-2)}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+
+</style>
+
+<style>
+:root{--p-risk:#17756b;--p-risk-soft:#d9efec;--p-person:#6b4ea0;--p-person-soft:#ebe4f6}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--p-risk:#6fd0c3;--p-risk-soft:#103631;--p-person:#b9a2ec;--p-person-soft:#2a2140}}
+:root[data-theme="dark"]{--p-risk:#6fd0c3;--p-risk-soft:#103631;--p-person:#b9a2ec;--p-person-soft:#2a2140}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface);flex-wrap:wrap}
+.seg button{font:500 13.5px var(--body);padding:9px 14px;border:0;background:none;color:var(--ink-2);cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--navy);color:var(--on-navy)}
+.seg button:focus-visible{outline:2px solid var(--you);outline-offset:-2px}
+.stage{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+.stage.split{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}
+@media(max-width:820px){.stage.split{grid-template-columns:minmax(0,1fr)}}
+.win{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.winhead{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.winhead b{font:600 14px var(--display)}
+.roster{display:flex;gap:6px;margin-left:auto;align-items:center;flex-wrap:wrap}
+.roster .who{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2);border:1px solid var(--line);border-radius:999px;padding:2px 9px 2px 3px}
+.roster .who.off{opacity:.55}
+.log{padding:16px;display:flex;flex-direction:column;gap:12px}
+.av{width:26px;height:26px;flex:none;display:inline-flex;align-items:center;justify-content:center;font:600 10.5px var(--mono);color:var(--surface);border-radius:7px;background:var(--c)}
+.av.person{border-radius:50%}
+.av.standin{background:none;color:var(--c);border:1.5px dashed var(--c)}
+.av.sm{width:20px;height:20px;font-size:9px;border-radius:5px}.av.sm.person{border-radius:50%}
+.turn{display:flex;gap:10px;align-items:flex-start;min-width:0}
+.turn.me{flex-direction:row-reverse}
+.turn .body{min-width:0;display:flex;flex-direction:column;gap:5px;max-width:640px}
+.turn.me .body{align-items:flex-end}
+.by{display:flex;gap:7px;align-items:baseline;flex-wrap:wrap;font-size:12.5px}
+.by b{font-weight:600;color:var(--c)}
+.by span{color:var(--ink-3)}
+.kind{font:500 10px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);border-radius:3px;padding:2px 4px;color:var(--ink-3)}
+.kind.si{border-style:dashed;border-color:var(--c);color:var(--c)}
+.bub{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:14px;line-height:1.5;color:var(--ink);overflow-wrap:anywhere}
+.turn.me .bub{background:var(--you-soft);border-color:transparent}
+.turn.guest .bub{border-left:3px solid var(--c)}
+.to{font-size:11.5px;color:var(--ink-3)}
+.sys{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink-3)}
+.sys::before,.sys::after{content:"";flex:1;border-top:1px dashed var(--line)}
+.act{font:400 12px var(--mono);color:var(--ink-3)}
+.w{border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden;font-size:13px}
+.w .wh{font:500 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);padding:7px 10px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+.w .row{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:10px;padding:7px 10px;border-top:1px solid var(--line);align-items:baseline}
+.w .row:first-of-type{border-top:0}
+.sev{font:600 10.5px var(--mono);padding:2px 5px;border-radius:3px}
+.sev.h{background:color-mix(in srgb,var(--attn) 16%,transparent);color:var(--attn)}.sev.m{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+.rid{font:500 11.5px var(--mono);color:var(--ink-3)}
+.chip{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:12.5px;color:var(--ink-2);background:var(--surface)}
+.call{border:1px solid var(--line);border-left:3px solid var(--c);border-radius:10px;background:color-mix(in srgb,var(--c) 5%,var(--surface));display:flex;flex-direction:column;min-width:0}
+.call>summary{list-style:none;cursor:pointer;display:flex;gap:9px;align-items:center;padding:9px 12px;font-size:13px;color:var(--ink-2);flex-wrap:wrap}
+.call>summary::-webkit-details-marker{display:none}
+.call>summary b{color:var(--c)}
+.call>summary .res{margin-left:auto;font:500 11.5px var(--mono);color:var(--ink-3)}
+.call .in{padding:4px 12px 12px;display:flex;flex-direction:column;gap:12px;border-top:1px dashed var(--line);padding-top:12px}
+.card{border:1px solid var(--line);border-left:3px solid var(--c);border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13.5px;background:var(--surface)}
+.card .open{margin-left:auto;font:500 12.5px var(--body);border:1px solid var(--line);border-radius:6px;padding:4px 9px;color:var(--ink)}
+.comp{border-top:1px solid var(--line);padding:10px 14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.comp .addr{display:inline-flex;gap:6px;align-items:center;font-size:12.5px;border:1px solid var(--line);border-radius:999px;padding:3px 9px 3px 4px;color:var(--ink-2)}
+.comp .in{flex:1;min-width:120px;color:var(--ink-3);font-size:14px}
+.note{font-size:13.5px;color:var(--ink-2);border-left:3px solid var(--line);padding-left:12px;max-width:70ch}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:13.5px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:500 10.5px/1.2 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+td.g{color:var(--ok);font-weight:600}td.m{color:var(--warn);font-weight:600}td.b{color:var(--attn);font-weight:600}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.box.pick{border-color:var(--you);box-shadow:0 0 0 1px var(--you)}
+.box p{font-size:14px}
+.pill{font:500 10.5px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:4px 6px;border-radius:4px;background:var(--you-soft);color:var(--you);align-self:flex-start}
+.rec{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--you);border-radius:8px;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+pre.code{margin:0;background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:12px 14px;font:400 12.5px/1.55 var(--mono);color:var(--ink);overflow-x:auto;white-space:pre}
+.where{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px}
+.where div{border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--surface);display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:var(--ink-2)}
+.where b{color:var(--ink);font-family:var(--display)}
+.cmt{border-left:3px solid var(--c);padding:4px 0 4px 9px;font-size:12.5px;color:var(--ink)}
+</style>
+<div class="wrap">
+<section><div class="head"><span class="eyebrow">Product Aviator · interaction primitive</span>
+<h1>Other agents and other people, in the same conversation</h1>
+<p class="lede">Today the chat has two voices: you and your Aviator. This page works through how a risk agent, a platform agent or a designer joins that conversation as a participant in their own right, and how the screen says who said and did what.</p></div></section>
+
+<section><div class="head"><span class="eyebrow">Try it</span><h2>One conversation, three ways to show it</h2>
+<p>Your example, played out: you ask for a PRD review, Aviator calls a Risk Review agent, then asks your designer one question. Switch the treatment to compare. Data and names are invented.</p></div>
+<div class="seg" role="group" aria-label="Treatment">
+<button type="button" id="t-a" aria-pressed="false" data-t="a">A · Named turns</button>
+<button type="button" id="t-b" aria-pressed="true" data-t="b">B · Calls as blocks</button>
+<button type="button" id="t-c" aria-pressed="false" data-t="c">C · Side conversation</button>
+</div>
+<p class="note" id="t-note"></p>
+<div class="stage" id="stage"></div>
+</section>
+
+<section><div class="head"><span class="eyebrow">The primitive</span><h2>A participant is a small file</h2>
+<p>Everything on this page hangs off one new thing: a participant. It has a name, a kind, a role, a mark, and a brief that says how it behaves. Agents, platforms and people are all described the same way, so the screen can treat them the same way.</p></div>
+<div class="grid3">
+<pre class="code">participants/risk-review.md
+---
+name: Risk Review
+kind: agent
+role: Risk and compliance
+initials: RR
+source: subagent
+---
+You review product documents for
+regulatory, fraud and conduct risk.
+Quote the passage. Rate each finding.</pre>
+<pre class="code">participants/mara-okafor.md
+---
+name: Mara Okafor
+kind: person
+role: Design
+initials: MO
+stand_in: true
+source: subagent
+---
+Answer as the designer of the card
+controls flows would. Be brief.</pre>
+<div class="box"><h3>What the file buys</h3><p><b>Kind</b> decides the shape of the mark: square for agents, round for people.</p><p><b>stand_in</b> marks a person who is being played by an agent. The screen always shows it, so a demo never passes off a simulated colleague as a real one.</p><p><b>source</b> says where the turns come from. Changing it does not change the screen.</p></div>
+</div></section>
+
+<section><div class="head"><span class="eyebrow">Mechanism</span><h2>Four places a participant's turns can come from</h2>
+<p>The screen needs only one thing from any of them: each turn says which participant it belongs to. That lets a demo start scripted and move to real agents without redesign.</p></div>
+<div class="tw"><table>
+<tr><th>Source</th><th>How it works on your Mac today</th><th>Separate mind</th><th>Can talk with you directly</th><th>Change to the app</th><th>Closest to production</th></tr>
+<tr><td><b>Scripted</b></td><td>Turns written in the scenario's script file and played back.</td><td class="b">No</td><td class="b">No</td><td class="g">None for previews</td><td class="b">No</td></tr>
+<tr><td><b>Voiced by Aviator</b></td><td>Aviator writes the other participant's lines itself, marked with who is speaking.</td><td class="b">No, same context</td><td class="m">Appears to</td><td class="g">Small</td><td class="b">No</td></tr>
+<tr><td><b>Sub-agent with a persona</b></td><td>Aviator starts a sub-agent with the participant's brief and relays what it says, marked as that participant. Follow-up questions go back to the same sub-agent.</td><td class="g">Yes</td><td class="m">Through Aviator</td><td class="g">Small</td><td class="m">Partly</td></tr>
+<tr><td><b>Its own session</b></td><td>The participant is a separate Omnigent session with its own skills, even its own harness. Its turns are merged into your timeline.</td><td class="g">Yes</td><td class="g">Yes</td><td class="b">Large</td><td class="g">Yes</td></tr>
+</table></div>
+<p class="note">Omnigent already has pieces of the last row: sessions can message each other and the chat shows "From @session" above such a message, and a shared session shows another person's avatar on their messages. Neither merges a second agent's replies into your timeline, which is the part that would be new.</p>
+</section>
+
+<section><div class="head"><span class="eyebrow">Beyond the chat</span><h2>Attribution has to follow the work</h2></div>
+<div class="where">
+<div style="--c:var(--p-risk)"><b>Comments in a document</b>Each comment carries its author's mark. Omnigent's comments already have authors, so this is a matter of letting an agent participant be one.<div class="cmt"><b style="color:var(--c)">Risk Review</b> · "No stated limit on how often the amount can change."</div></div>
+<div style="--c:var(--p-risk)"><b>Views in the canvas</b>A view shows who opened it, and the tab carries their mark. A participant's widget in chat sits inside their turn.<span class="chip"><span class="av sm" style="--c:var(--p-risk)">RR</span>Risk register</span></div>
+<div><b>Records in the dataset</b>Each record keeps who created it and who last changed it. Views can then filter to "what Risk Review added" and show the mark beside a finding.</div>
+<div><b>What only you can do</b>Guests propose. Approving, locking and sending stay yours, exactly as now. A guest's change to your records arrives as a suggestion in their color.</div>
+</div></section>
+
+<section><div class="head"><span class="eyebrow">Evaluation</span><h2>How the three treatments compare</h2></div>
+<div class="tw"><table>
+<tr><th></th><th>Who said what, at a glance</th><th>Main thread stays readable</th><th>Guest's widgets and views inline</th><th>Clear who your reply goes to</th><th>Change to Omnigent</th></tr>
+<tr><td><b>A</b> Named turns</td><td class="g">Good</td><td class="b">Degrades with long guest work</td><td class="g">Yes</td><td class="m">Needs an address chip</td><td class="g">Small</td></tr>
+<tr><td><b>B</b> Calls as blocks</td><td class="g">Best</td><td class="g">Yes, blocks fold to one line</td><td class="g">Yes</td><td class="g">Inside a block, it goes to that guest</td><td class="m">Medium</td></tr>
+<tr><td><b>C</b> Side conversation</td><td class="m">Only when opened</td><td class="g">Best</td><td class="b">Not in the main chat</td><td class="g">Separate box</td><td class="g">Small, side chat exists</td></tr>
+</table></div>
+<div class="rec"><span class="eyebrow">Recommendation</span><h2>Named turns always, wrapped in a block when someone is called in</h2>
+<p>Use B as the default, built on A. Every turn that is not yours or Aviator's carries a name and mark. When Aviator calls someone in, their visit is one block with a start, an end and a one-line result, so a twenty-turn risk review folds down and the main thread stays yours.</p>
+<p>Keep C as the overflow: any block can be popped out into the side conversation Omnigent already has, for long back-and-forth.</p>
+<p>For the mechanism, start with scripted turns in the previews and sub-agents with a persona in the live app. Both need the same small change: the app learns to draw a marked turn as a participant. Separate sessions come when the work team builds the real thing.</p></div>
+</section>
+
+<section><div class="head"><span class="eyebrow">Still open</span><h2>Questions this raises</h2></div>
+<p><b>Who may call whom?</b> In the example Aviator proposes the call and makes it. Should it ask first every time, or only for people?</p>
+<p><b>Can a guest see everything?</b> A sub-agent gets what Aviator passes it. A real separate agent would need rules for what context it receives.</p>
+<p><b>Can you call a participant yourself?</b> Typing @Risk Review in the message box is the obvious way, and it would make the roster a place to browse who is available.</p>
+<p><b>How honest must a stand-in be?</b> I have assumed a simulated person is always labelled as one, in every treatment. If a demo needs the illusion, that should be a deliberate switch.</p>
+</section>
+</div>
+<script>
+(function(){
+var P={
+ you:{name:"You",kind:"person",ini:"GD",c:"var(--you)"},
+ av:{name:"Aviator",kind:"agent",role:"Your agent",ini:"AV",c:"var(--navy)"},
+ rr:{name:"Risk Review",kind:"agent",role:"Risk and compliance",ini:"RR",c:"var(--p-risk)"},
+ mo:{name:"Mara Okafor",kind:"person",role:"Design",ini:"MO",c:"var(--p-person)",standin:true}
+};
+var findings='<div class="w"><div class="wh"><span>Risk findings</span><span>3</span></div>'+
+ '<div class="row"><span class="sev h">High</span><span class="rid">R-11</span><span>The decline message must state the reason. The PRD leaves the wording open.</span></div>'+
+ '<div class="row"><span class="sev m">Med</span><span class="rid">R-20</span><span>Consent for card users under 18 has no named owner.</span></div>'+
+ '<div class="row"><span class="sev m">Med</span><span class="rid">R-03</span><span>No limit on how often the amount can change.</span></div></div>';
+var T=[
+ {p:"you",t:"I have finished the Allowances PRD. Please help me review it."},
+ {p:"av",t:"I read it and left four comments in the document. Two things I need from you before going further.",x:'<span class="chip">2 questions · answered</span>'},
+ {p:"you",t:"Answered both. Changes apply right away, and the limit is per card user."},
+ {p:"av",t:"Resolved. This touches card limits and card users under 18, so I would like Risk Review to look at it before you circulate it."},
+ {call:"rr",by:"av",res:"3 findings · 1 question answered",ask:"We have just finished the Allowances PRD. Can you do a risk review? The document and the requirements catalog are attached.",turns:[
+   {p:"rr",a:"Read allowances-prd.md · checked 20 requirements against the conduct and fraud policies",t:"Three findings. I left a comment on each passage in the PRD and opened a risk register in the canvas.",x:findings+'<span class="chip"><span class="av sm" style="--c:var(--p-risk)">RR</span>Risk register · opened in canvas</span>'},
+   {p:"rr",t:"One question for you. On R-20, who records consent for a card user under 18?"},
+   {p:"you",to:"rr",t:"The cardholder does, when they set the allowance up."},
+   {p:"rr",t:"Then R-20 is a documentation gap, not a control gap. I have lowered it and noted the owner. That is everything from me."}
+ ]},
+ {p:"av",t:"One high finding remains: the decline message on R-11. Mara designed that screen. Shall I ask her what it can carry?"},
+ {p:"you",t:"Yes, ask her."},
+ {call:"mo",by:"av",res:"1 answer",ask:"Quick question on the decline screen: can it show a reason specific to allowances?",turns:[
+   {p:"mo",t:"It can, but the reason line holds about 60 characters and one action. I would say \"Over this month's allowance\" and link to the remaining amount."}
+ ]},
+ {p:"av",t:"Added to R-11 as a constraint, credited to Mara, and marked the risk finding as addressed pending your review."}
+];
+function av(k,sm){var p=P[k];return '<span class="av'+(p.kind==="person"?" person":"")+(p.standin?" standin":"")+(sm?" sm":"")+'" style="--c:'+p.c+'" aria-hidden="true">'+p.ini+'</span>';}
+function turn(t){
+ var p=P[t.p],me=t.p==="you",guest=!me&&t.p!=="av";
+ var by=me?(t.to?'<span class="to">to '+P[t.to].name+'</span>':''):'<div class="by" style="--c:'+p.c+'"><b>'+p.name+'</b>'+(guest?'<span class="kind'+(p.standin?' si':'')+'">'+(p.standin?'person · stand-in':p.kind)+'</span><span>'+p.role+'</span>':'')+'</div>';
+ return '<div class="turn'+(me?' me':'')+(guest?' guest':'')+'" style="--c:'+p.c+'">'+(me?'':av(t.p))+'<div class="body">'+by+(t.a?'<div class="act">'+t.a+'</div>':'')+'<div class="bub">'+t.t+'</div>'+(t.x||'')+'</div></div>';
+}
+function roster(){
+ return '<div class="roster">'+["av","rr","mo"].map(function(k){return '<span class="who" style="--c:'+P[k].c+'">'+av(k,true)+P[k].name+'</span>';}).join("")+'</div>';
+}
+function comp(to){return '<div class="comp"><span class="addr">'+av(to,true)+'To '+P[to].name+'</span><span class="in">Message…</span></div>';}
+function win(title,body,to,r){return '<div class="win"><div class="winhead"><b>'+title+'</b>'+(r?roster():'')+'</div><div class="log">'+body+'</div>'+comp(to)+'</div>';}
+var NOTES={
+ a:"Every turn sits in one flat timeline. A guest's turns carry a name, a kind and a mark, and a dashed line shows when they join and leave. Simple, but a long visit pushes your own thread a long way up.",
+ b:"A call is one block: who was called, by whom, and what came of it. Guest turns and their widgets live inside it. Click a block's header to fold it. A reply typed inside a block goes to that guest.",
+ c:"The guest works in a side conversation. The main chat gets a single card with the result. Quietest, but the collaboration is out of sight unless you open it."
+};
+function draw(mode){
+ var main="",side="";
+ T.forEach(function(t){
+  if(!t.call){main+=turn(t);return;}
+  var g=P[t.call],inner=turn({p:t.by,t:t.ask})+t.turns.map(turn).join("");
+  if(mode==="a") main+='<div class="sys">'+P[t.by].name+' called '+g.name+'</div>'+t.turns.map(turn).join("")+'<div class="sys">'+g.name+' left · '+t.res+'</div>';
+  else if(mode==="b") main+='<details class="call" open style="--c:'+g.c+'"><summary>'+av(t.call,true)+'<span><b>'+g.name+'</b> · called by '+P[t.by].name+(g.standin?' · stand-in':'')+'</span><span class="res">'+t.res+'</span></summary><div class="in">'+inner+'</div></details>';
+  else {main+='<div class="card" style="--c:'+g.c+'">'+av(t.call)+'<span><b style="color:'+g.c+'">'+g.name+'</b> '+(g.standin?'(stand-in) ':'')+'worked in a side conversation · '+t.res+'</span><span class="open">Open</span></div>'; if(t.call==="rr") side=inner;}
+ });
+ var st=document.getElementById("stage");
+ st.className="stage"+(mode==="c"?" split":"");
+ st.innerHTML=win("Allowances PRD review",main,"av",true)+(mode==="c"?win("Side conversation · Risk Review",side,"rr",false):"");
+ document.getElementById("t-note").textContent=NOTES[mode];
+ ["a","b","c"].forEach(function(k){document.getElementById("t-"+k).setAttribute("aria-pressed",String(k===mode));});
+}
+document.querySelector(".seg").addEventListener("click",function(e){var b=e.target.closest("button");if(b)draw(b.dataset.t);});
+draw("b");
+})();
+</script>
+
+</body></html>

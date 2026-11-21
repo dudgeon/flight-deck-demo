@@ -16,6 +16,8 @@ Standard library only; nothing here touches the network.
   pa publish person ID                            check it, keep the old version, make it live
   pa history person ID [--restore VERSION]        earlier versions; restore one
   pa uses    person ID                            what depends on them
+  pa log     EVENT k=v ...                        write one event to the usage log
+  pa usage   summary|tail|check|pack|eval|where   read the usage log
 
 A dataset is one JSON file: {"dataset", "title", "updated", "records": [...]}.
 Every record has "id" and "type"; "parent" nests it; "status", "stage",
@@ -35,6 +37,7 @@ import os
 import re
 import sys
 import tempfile
+import time
 from pathlib import Path
 from typing import Any, Iterator
 
@@ -106,7 +109,7 @@ def _save(path: Path, data: dict[str, Any]) -> None:
     data["updated"] = _now()
     _write_atomic(path, json.dumps(data, indent=1, ensure_ascii=False) + "\n")
     if data.get("flow"):
-        _write_flow(data)
+        _write_flow(data, path)
 
 
 # ---------------------------------------------------------------- workflow progress
@@ -134,9 +137,26 @@ def _flow_counts(data: dict[str, Any], count: dict[str, Any] | None) -> dict[str
     }
 
 
-def _write_flow(data: dict[str, Any]) -> None:
-    """Write the small file the Session panel reads to draw the workflow card."""
+RUN_STATES = ("working", "needs-you", "waiting", "paused", "finished", "stopped")
+
+
+def _run_state(flow: dict[str, Any], counts: dict[str, Any] | None) -> str:
+    """Where a run stands. Paused and stopped are the person's word and win;
+    finished comes from the steps; needs-you from the records or the agent."""
+    held = flow.get("state") or "working"
+    if held in ("paused", "stopped"):
+        return held
+    if flow.get("current", 1) > len(flow.get("steps") or []):
+        return "finished"
+    if held == "needs-you" or (counts and counts.get("waiting")):
+        return "needs-you"
+    return "waiting" if held == "waiting" else "working"
+
+
+def _write_flow(data: dict[str, Any], dataset: Path | None = None) -> None:
+    """Write the small file the Session panel and the project page read to draw a run."""
     flow = data["flow"]
+    counts = _flow_counts(data, flow.get("count"))
     out = {
         "workflow": flow.get("workflow", ""),
         "scenario": flow.get("scenario", ""),
@@ -144,8 +164,19 @@ def _write_flow(data: dict[str, Any]) -> None:
         "steps": flow.get("steps", []),
         "current": flow.get("current", 1),
         "note": flow.get("note", ""),
-        "counts": _flow_counts(data, flow.get("count")),
+        "counts": counts,
         "participants": flow.get("participants"),
+        # The run: its state, the note left at a pause, the session it runs in.
+        "state": _run_state(flow, counts),
+        "left_off": flow.get("left_off", ""),
+        "session": flow.get("session", ""),
+        "data": flow.get("data") or (dataset.as_posix() if dataset else ""),
+        "started": flow.get("started", ""),
+        "paused_at": flow.get("paused_at", ""),
+        # Threads (D-89): who started the run, what it was told, what it has reported.
+        "director": flow.get("director", ""),
+        "brief": flow.get("brief", ""),
+        "reports": flow.get("reports") or [],
         "updated": _now(),
     }
     _write_atomic(Path(flow["file"]), json.dumps(out, indent=1, ensure_ascii=False) + "\n")
@@ -153,6 +184,9 @@ def _write_flow(data: dict[str, Any]) -> None:
 
 def cmd_flow(args: argparse.Namespace) -> None:
     path = Path(args.data)
+    moves = [name for name in ("pause", "resume", "stop", "done") if getattr(args, name, False)]
+    if len(moves) > 1:
+        raise PaError(f"pass one of --{', --'.join(moves)}, not several")
     with _locked(path):
         data = _load(path)
         flow = data.get("flow") or {}
@@ -169,7 +203,19 @@ def cmd_flow(args: argparse.Namespace) -> None:
             flow.setdefault("current", 1)
         if not flow.get("steps"):
             raise PaError("no workflow on this dataset yet; pass --scenario <scenario folder> once")
+        flow.setdefault("started", _now())
+        flow["data"] = path.as_posix()
+        if getattr(args, "director", None):
+            flow["director"] = args.director
+        if getattr(args, "brief", None):
+            flow["brief"] = args.brief
+        if getattr(args, "session", None):
+            flow["session"] = args.session
         total = len(flow["steps"])
+        held = flow.get("state") or "working"
+        advancing = args.done or args.step is not None
+        if held == "stopped" and advancing and not args.resume:
+            raise PaError("this run was stopped; pass --resume to pick it up again")
         if args.done:
             flow["current"] = total + 1
         elif args.step is not None:
@@ -184,14 +230,294 @@ def cmd_flow(args: argparse.Namespace) -> None:
             if not 1 <= number <= total:
                 raise PaError(f"step must be 1 to {total}")
             flow["current"] = number
-        if args.note is not None:
-            flow["note"] = args.note
-        elif args.step is not None or args.done:
-            flow["note"] = ""
+        if args.pause or args.stop:
+            if flow["current"] > total:
+                raise PaError("this run is finished; there is nothing to pause or stop")
+            if args.pause and not (args.note or "").strip():
+                raise PaError("a pause needs --note: one or two sentences on where the work was left")
+            flow["state"] = "paused" if args.pause else "stopped"
+            flow["paused_at"] = _now()
+            if args.note is not None:
+                flow["left_off"] = args.note.strip()
+        else:
+            # Doing work on a paused run picks it up; so does --resume.
+            if args.resume or advancing or getattr(args, "state", None):
+                if held in ("paused", "stopped"):
+                    flow["paused_at"] = ""
+                    flow["left_off"] = ""
+                flow["state"] = getattr(args, "state", None) or "working"
+            if args.note is not None:
+                flow["note"] = args.note
+            elif advancing:
+                flow["note"] = ""
         data["flow"] = flow
         _save(path, data)
+    state = _run_state(flow, _flow_counts(data, flow.get("count")))
     where = "done" if flow["current"] > total else f"step {flow['current']} of {total}: {flow['steps'][flow['current'] - 1]}"
-    print(f"{flow['workflow']}: {where}")
+    tail = "" if state in ("working", "finished") else f" ({state})"
+    print(f"{flow['workflow']}: {where}{tail}")
+
+
+def cmd_runs(args: argparse.Namespace) -> None:
+    """List the runs in this workspace: what is in flight and where each was left."""
+    folder = Path(args.dir or FLOW_DIR)
+    runs: list[dict[str, Any]] = []
+    for file in sorted(folder.glob("*.json")) if folder.is_dir() else []:
+        try:
+            run = json.loads(file.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not isinstance(run, dict) or not isinstance(run.get("steps"), list):
+            continue
+        total = len(run["steps"])
+        current = run.get("current", 1)
+        # Files written before runs had a state: finished or working, from the steps.
+        run["state"] = run.get("state") or ("finished" if current > total else "working")
+        run["file"] = file.as_posix()
+        if args.all or run["state"] not in ("finished", "stopped"):
+            runs.append(run)
+    order = {state: i for i, state in enumerate(("needs-you", "paused", "waiting", "working", "stopped", "finished"))}
+    runs.sort(key=lambda r: (order.get(r["state"], 9), r.get("updated", "")))
+    if args.json:
+        print(json.dumps(runs, indent=1, ensure_ascii=False))
+        return
+    if not runs:
+        print("no runs in flight")
+        return
+    for run in runs:
+        total = len(run["steps"])
+        current = run.get("current", 1)
+        step = "finished" if current > total else f"step {current} of {total}: {run['steps'][current - 1]}"
+        print(f"{run['state']:<10} {run.get('workflow', '')}: {run.get('subject', '')} ({step})")
+        note = run.get("left_off") or run.get("note")
+        if note:
+            print(f"           {note}")
+        reports = run.get("reports") or []
+        if reports:
+            last = reports[-1]
+            print(f"           last report ({last.get('kind', 'milestone')}): {last.get('text', '')}")
+        if run.get("session"):
+            print(f"           thread: {run['session']}")
+        if run.get("data"):
+            print(f"           data: {run['data']}")
+
+
+REPORT_KINDS = ("milestone", "progress", "blocker", "done")
+MAX_REPORTS = 20
+BRIEF_DIR = "briefs"
+
+BRIEF = """# Brief: {workflow} on "{subject}"
+
+You are running one workflow in a thread of its own. The person's main
+conversation is with Aviator, the project's director, in session
+`{director}`. Aviator started this thread so the detail of the work stays
+here and out of its own context. Do the work here, with the person, who can
+see and answer everything you say in this thread.
+
+## The work
+
+- Workflow: **{workflow}**. Use the `{skill}` skill and follow it.
+- Subject: {subject}
+- Dataset: `{data}`{exists}
+- Target: {target}
+{ask}
+## Read first
+
+{context}
+
+## Who you may call
+
+{participants}
+
+## What to tell the director
+
+Aviator needs the state of this work, not its transcript. Tell it only:
+a step crossed, real progress worth knowing, a blocker, that you need the
+person, and when you finish. Use your judgment about when; never send
+everything. Each time:
+
+1. `$PA report {data} --kind <milestone|progress|blocker|done> "<one line, pointing at the file>"`
+   (this is what the run card and the project page show).
+2. For a blocker, when you need the person, and when you finish, also wake
+   Aviator: `sys_session_send` with `session_id` `{director}` and the same line.
+
+## Starting, pausing, finishing
+
+- Start the run with `$PA flow {data} --scenario <the skill's folder> --session <your session id> --director {director} --brief {brief}`
+  (your session id is `conversation_id` from `sys_session_get_info`).
+- Keep `$PA flow` true as you go (`--step`, `--state needs-you`).
+- If the person or Aviator says to pause, `$PA flow {data} --pause --note "<where we left off>"`,
+  report it as progress, and stop. Resume and stop work the same way ("Runs" in the `view-kit` skill).
+- When the last step is done: `$PA flow {data} --done`, then report with `--kind done`.
+"""
+
+
+def _slug(text: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+    return slug[:48].strip("-") or "work"
+
+
+def cmd_brief(args: argparse.Namespace) -> None:
+    """Write the brief a director hands a thread, and print the thread's first message."""
+    run = resolve_run(Path(args.workflow))
+    manifest = run["manifest"]
+    wid = str(manifest.get("workflow") or manifest.get("scenario") or Path(args.workflow).name)
+    title = manifest.get("title") or wid
+    subject = args.subject.strip()
+    if not subject:
+        raise PaError("--subject is empty")
+    pattern = (manifest.get("dataset") or {}).get("path") or "data/{slug}.json"
+    data = Path(args.data or pattern.replace("{slug}", _slug(subject)))
+    brief = Path(BRIEF_DIR) / f"{data.stem}--{wid}.md"
+    progress = Path(FLOW_DIR) / f"{data.stem}--{manifest.get('scenario') or wid}.json"
+    cast = manifest.get("participants")
+    if cast:
+        people = ("Only these, with the `participants` skill, when the work needs what they are for: "
+                  + ", ".join(f"`{c}`" for c in cast) + ".")
+    else:
+        people = "Anyone on the roster (`$PA who`), with the `participants` skill, when the work needs them."
+    text = BRIEF.format(
+        workflow=title, skill=wid, subject=subject, director=args.director, data=data.as_posix(),
+        exists=" (it exists; continue it, do not start over)" if data.exists() else " (not started yet)",
+        target=(args.target or "the workflow's usual finish").strip(),
+        ask=f"- From Aviator: {args.ask.strip()}\n" if args.ask else "",
+        context="\n".join(f"- `{c}`" for c in args.context or []) or "- Nothing was handed over. Ask the person for what you need.",
+        participants=people, brief=brief.as_posix(),
+    )
+    _write_atomic(brief, text)
+    if args.json:
+        print(json.dumps({"brief": brief.as_posix(), "data": data.as_posix(), "progress": progress.as_posix(),
+                          "title": f"{title}: {subject}", "workflow": wid}, indent=1))
+        return
+    print(f"Read your brief at `{brief.as_posix()}` and begin. It is repeated here.\n\n{text}")
+    print(f"brief: {brief.as_posix()}\nrun: {progress.as_posix()}\ntitle: {title}: {subject}", file=sys.stderr)
+
+
+# ------------------------------------------------------- projects and links
+
+PROJECTS_DIR = "projects"
+# A link is stored once, on the item it hangs from, and reads the other way
+# from the far end (D-119): "handed-to" there is "came from" here.
+LINK_TYPES = ("handed-to", "started", "relies-on")
+PROJECT_STATES = ("shaping", "in-delivery", "shipped", "slipped", "paused", "stopped")
+_PROJECT_KEYS = ("name", "goal", "area", "team", "state", "state_note")
+
+
+def _project_path(name: str, folder: str | None = None) -> Path:
+    return Path(folder or PROJECTS_DIR) / f"{_slug(name)}.json"
+
+
+def _project_cards(folder: Path | None = None) -> dict[str, dict[str, Any]]:
+    """Every project that has a file, by name: its goal, area, team and state."""
+    folder = folder or Path(PROJECTS_DIR)
+    cards: dict[str, dict[str, Any]] = {}
+    for file in sorted(folder.glob("*.json")) if folder.is_dir() else []:
+        try:
+            raw = json.loads(file.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if isinstance(raw, dict) and isinstance(raw.get("name"), str) and raw["name"].strip():
+            cards[raw["name"].strip()] = {k: raw[k] for k in _PROJECT_KEYS if isinstance(raw.get(k), str) and raw[k]}
+    return cards
+
+
+def cmd_project(args: argparse.Namespace) -> None:
+    """Say what a project is: its goal, the area it lives in, who runs it, how it stands (D-97)."""
+    if not args.name:
+        cards = _project_cards(Path(args.dir) if args.dir else None)
+        if args.json:
+            print(json.dumps(list(cards.values()), indent=1, ensure_ascii=False))
+        elif not cards:
+            print("no projects have a file yet")
+        for card in cards.values() if not args.json else []:
+            where = f" (in {card['area']})" if card.get("area") else ""
+            state = f" [{card['state']}]" if card.get("state") else ""
+            print(f"{card['name']}{where}{state}: {card.get('goal', 'no goal written')}")
+        return
+    path = _project_path(args.name, args.dir)
+    changes = {key: getattr(args, key) for key in ("goal", "area", "team", "state", "state_note") if getattr(args, key) is not None}
+    with _locked(path):
+        try:
+            current = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            current = {}
+        if not isinstance(current, dict):
+            current = {}
+        if not changes and not args.data and not current:
+            raise PaError(f"no project file for {args.name!r} yet; give it a --goal")
+        if changes or not current:
+            card = {**current, "name": args.name.strip(), **changes, "updated": _now()}
+            if "state" in changes and "state_note" not in changes:
+                card.pop("state_note", None)  # the note described the old state
+            path.parent.mkdir(parents=True, exist_ok=True)
+            _write_atomic(path, json.dumps(card, indent=1, ensure_ascii=False) + "\n")
+            current = card
+    for dataset in args.data or []:
+        dpath = Path(dataset)
+        with _locked(dpath):
+            data = _load(dpath)
+            data["project"] = args.name.strip()
+            _save(dpath, data)
+            _render_views(dpath, data)
+    if args.json:
+        print(json.dumps(current, indent=1, ensure_ascii=False))
+    else:
+        print(f"{current['name']}: {current.get('goal', 'no goal written')}" + (f" · in {current['area']}" if current.get("area") else "")
+              + (f" · {current['state']}" if current.get("state") else "") + f" ({path.as_posix()})")
+
+
+def cmd_link(args: argparse.Namespace) -> None:
+    """Hang a typed link to another project from one record (D-119)."""
+    path = Path(args.data)
+    target = args.to.strip()
+    if not target:
+        raise PaError("--to needs the other project's name")
+    with _locked(path):
+        data = _load(path)
+        record = next((r for r in data["records"] if r.get("id") == args.id), None)
+        if record is None:
+            raise PaError(f"no record {args.id} in {path}")
+        links = [l for l in record.get("links") or [] if isinstance(l, dict)]
+        kept = [l for l in links if not (l.get("project") == target and l.get("type") == args.type)]
+        if args.remove:
+            if len(kept) == len(links):
+                raise PaError(f"{args.id} has no {args.type} link to {target!r}")
+        else:
+            kept.append({"type": args.type, "project": target})
+        if kept:
+            record["links"] = kept
+        else:
+            record.pop("links", None)
+        record["updated"] = _now()
+        _save(path, data)
+        views = _render_views(path, data)
+    known = target in _project_cards()
+    print(("removed" if args.remove else "linked") + f" {args.id} {args.type} {target!r}"
+          + ("" if known or args.remove else f"; no project file for it yet (pa project {target!r} --goal ...)")
+          + (f"; redrew {', '.join(views)}" if views else ""))
+
+
+def cmd_report(args: argparse.Namespace) -> None:
+    """One line from a run to its director: a milestone, progress, a blocker, or done (D-118)."""
+    path = Path(args.data)
+    text = " ".join(args.text.split())
+    if not text:
+        raise PaError("a report needs one line of text")
+    if len(text) > 280:
+        raise PaError("a report is one line, at most 280 characters; point at the file for the rest")
+    with _locked(path):
+        data = _load(path)
+        flow = data.get("flow") or {}
+        if not flow.get("steps"):
+            raise PaError("no workflow on this dataset yet; start it with pa flow --scenario first")
+        reports = list(flow.get("reports") or [])
+        reports.append({"at": _now(), "kind": args.kind, "step": flow.get("current", 1), "text": text})
+        flow["reports"] = reports[-MAX_REPORTS:]
+        if args.kind == "blocker" and (flow.get("state") or "working") == "working":
+            flow["state"] = "waiting"
+        data["flow"] = flow
+        _save(path, data)
+    print(f"reported ({args.kind}): {text}")
 
 
 # ---------------------------------------------------------------- values
@@ -267,6 +593,12 @@ def _public(data: dict[str, Any]) -> dict[str, Any]:
         roster = _participants(_roster_dir())
         if roster:
             public["participants"] = {k: _card(v) for k, v in roster.items()}
+    # A linked record shows a chip naming the other project and its state (D-119).
+    linked = {l.get("project") for r in data.get("records") or [] if isinstance(r, dict)
+              for l in r.get("links") or [] if isinstance(l, dict)}
+    if linked:
+        cards = _project_cards()
+        public["projects"] = {name: cards[name] for name in sorted(n for n in linked if isinstance(n, str)) if name in cards}
     return public
 
 
@@ -2211,7 +2543,7 @@ def restore_version(workspace: Path, pid: str, version: str, skills: Path | None
 FOLDER_KINDS = {"scenario": "scenarios", "workflow": "workflows"}
 BUILD_KINDS = ["person", "scenario", "workflow"]
 SCENARIO_KEYS = ("title", "summary", "workflow", "participants", "fixtures", "script", "opening")
-WORKFLOW_KEYS = ("title", "summary", "steps", "participants", "inputs", "launchers", "work_products")
+WORKFLOW_KEYS = ("title", "summary", "steps", "participants", "inputs", "launchers", "work_products", "views")
 _TEXT_SUFFIXES = {".md", ".json", ".txt", ".csv", ".html", ".yaml", ".yml"}
 _MAX_FILE = 1_000_000
 _MAX_SHOWN = 300_000
@@ -2371,6 +2703,17 @@ def edit_folder_draft(workspace: Path, kind: str, fid: str, manifest: dict[str, 
             value = manifest.get(key)
             if value is not None and not (isinstance(value, list) and all(isinstance(v, str) for v in value)):
                 raise PaError(f"{key} must be a list of text")
+        views = manifest.get("views")
+        if views is not None:
+            # A workflow's widgets and views (D-112): a name to a spec file in the folder.
+            if not isinstance(views, dict) or not all(
+                isinstance(k, str) and re.fullmatch(r"[a-z0-9][a-z0-9-]{0,40}", k)
+                and isinstance(v, str) and v.endswith(".json")
+                for k, v in views.items()
+            ):
+                raise PaError("views must map a short lower-case name to a .json spec file")
+            for v in views.values():
+                _safe_rel(v)
         if manifest.get("workflow") and manifest["workflow"] not in list_workflows(workspace):
             raise PaError(f"there is no workflow {manifest['workflow']}")
         path = folder / _manifest_name(kind, folder)
@@ -2704,6 +3047,269 @@ def cmd_uses(args: argparse.Namespace) -> None:
             print(f"{kind[:-1]}: {item}")
 
 
+# ---------------------------------------------------------------- usage log (D-122 to D-127)
+
+def _load_usagelog() -> Any:
+    """``usagelog.py`` beside this file, also when pa is loaded as a module
+    (the server's Hangar routes do) and this folder is not on sys.path."""
+    import importlib.util
+
+    try:
+        import usagelog as module  # type: ignore[import-not-found]
+
+        return module
+    except ImportError:
+        path = Path(__file__).resolve().parent / "usagelog.py"
+        spec = importlib.util.spec_from_file_location("usagelog", path)
+        assert spec and spec.loader
+        module = importlib.util.module_from_spec(spec)
+        sys.modules.setdefault("usagelog", module)
+        spec.loader.exec_module(module)
+        return module
+
+
+usagelog = _load_usagelog()
+
+#: Arguments never worth a column: how the command was called, not what it did.
+_UNLOGGED_ARGS = {"run", "command", "json", "url", "dir", "out"}
+
+
+def _command_context(args: argparse.Namespace) -> dict[str, Any]:
+    context: dict[str, Any] = {}
+    scenario = getattr(args, "scenario", None)
+    if isinstance(scenario, str) and scenario:
+        name = Path(scenario).name
+        folder = Path(scenario)
+        if (folder / "workflow.json").is_file():
+            context["workflow"] = name
+        elif (folder / "scenario.json").is_file():
+            context["scenario"] = name
+            try:
+                context["workflow"] = json.loads((folder / "scenario.json").read_text()).get("workflow")
+            except (OSError, ValueError, AttributeError):
+                pass
+        else:
+            context["workflow"] = name
+    cwd = Path.cwd().as_posix()
+    if "/workspace/demos/" in cwd + "/":
+        context["mode"] = "demo"
+        context.setdefault("scenario", cwd.split("/workspace/demos/", 1)[1].split("/")[0] or None)
+    elif "/.hangar/" in cwd + "/":
+        context["mode"] = "hangar"
+    return context
+
+
+def _log_command(args: argparse.Namespace, code: int, started: float) -> None:
+    """Every pa command is one line in the usage log: what ran, not what it said."""
+    try:
+        command = getattr(args, "command", None)
+        if not command or command in ("usage", "log"):
+            return
+        params: dict[str, Any] = {"exit": code, "duration_ms": int((time.monotonic() - started) * 1000)}
+        for key, value in vars(args).items():
+            if key in _UNLOGGED_ARGS or key.endswith("_command") and key != "review_command":
+                continue
+            if key == "review_command":
+                params["subcommand"] = value
+                continue
+            if value is False or value is None:
+                continue
+            if isinstance(value, str) and key in ("data", "spec", "doc", "folder", "scenario"):
+                value = Path(value).name
+            params[key] = value
+        usagelog.log(
+            f"pa.{command.replace('-', '_')}",
+            source="pa",
+            params=params,
+            context=_command_context(args),
+            session_id=getattr(args, "session", None),
+        )
+    except Exception:
+        pass
+
+
+def cmd_log(args: argparse.Namespace) -> None:
+    params: dict[str, Any] = {}
+    for pair in args.pairs:
+        if "=" not in pair:
+            raise PaError(f"write fields as key=value: {pair!r}")
+        key, value = pair.split("=", 1)
+        params[key] = _parse_value(value)
+    context = {k: getattr(args, k) for k in ("project", "workflow", "run", "scenario", "mode") if getattr(args, k)}
+    try:
+        record = usagelog.make_record(
+            args.event, source="skill", params=params, context=context, session_id=args.session
+        )
+    except ValueError as err:
+        raise PaError(str(err)) from err
+    if not usagelog.enabled():
+        return
+    usagelog.write(record)
+    if args.show:
+        print(json.dumps(record, indent=2))
+
+
+def _parse_value(text: str) -> Any:
+    lowered = text.lower()
+    if lowered in ("true", "yes"):
+        return True
+    if lowered in ("false", "no"):
+        return False
+    try:
+        return int(text)
+    except ValueError:
+        pass
+    try:
+        return float(text)
+    except ValueError:
+        return text
+
+
+def _usage_files(args: argparse.Namespace) -> list[Path]:
+    return usagelog.log_files(include_eval=getattr(args, "eval", False), suite=getattr(args, "suite", None))
+
+
+def _since(args: argparse.Namespace) -> int | None:
+    try:
+        return usagelog.parse_since(getattr(args, "since", None))
+    except ValueError as err:
+        raise PaError(str(err)) from err
+
+
+def cmd_usage_summary(args: argparse.Namespace) -> None:
+    summary = usagelog.summarize(usagelog.read(_usage_files(args), _since(args)))
+    if args.json:
+        print(json.dumps(summary, indent=2))
+    else:
+        print(usagelog.format_summary(summary))
+
+
+def cmd_usage_tail(args: argparse.Namespace) -> None:
+    records = list(usagelog.read(_usage_files(args), _since(args)))[-args.n :]
+    for rec in records:
+        if args.json:
+            print(json.dumps(rec, separators=(",", ":")))
+            continue
+        params = " ".join(f"{k}={v}" for k, v in (rec.get("params") or {}).items())
+        ctx = " ".join(f"{k}={v}" for k, v in (rec.get("context") or {}).items() if k != "eval")
+        print(f"{rec.get('timestamp', '')[:19]}  {rec.get('source', ''):6}  {rec.get('event_name')}  {ctx}  {params}".rstrip())
+
+
+def cmd_usage_check(args: argparse.Namespace) -> None:
+    bad = 0
+    lines = 0
+    for path in usagelog.log_files(include_eval=True):
+        with open(path, encoding="utf-8") as handle:
+            for number, line in enumerate(handle, 1):
+                if not line.strip():
+                    continue
+                lines += 1
+                try:
+                    problems = usagelog.check_record(json.loads(line))
+                except ValueError:
+                    problems = ["not JSON"]
+                if problems:
+                    bad += 1
+                    if bad <= 20:
+                        print(f"{path.name}:{number}: {'; '.join(problems)}")
+    print(f"{lines} lines checked, {bad} with problems")
+    if bad:
+        raise PaError("the usage log has lines that do not match the schema")
+
+
+def _default_pack_path(shape: str) -> Path:
+    desktop = Path.home() / "Desktop"
+    folder = desktop if desktop.is_dir() else usagelog.usage_dir() / "packs"
+    stamp = _dt.datetime.now().strftime("%Y-%m-%d-%H%M")
+    suffix = "-upstream" if shape == "upstream" else ""
+    return folder / f"flight-deck-usage-{usagelog.installation_id()[:8]}-{stamp}{suffix}.jsonl.gz"
+
+
+def cmd_usage_pack(args: argparse.Namespace) -> None:
+    out = Path(args.out).expanduser() if args.out else _default_pack_path(args.shape)
+    result = usagelog.pack(out, _usage_files(args), _since(args), shape=args.shape, fingerprint=args.fingerprint)
+    print(f"packed {result['lines']} lines into {result['path']}")
+    if result["left_out"]:
+        print(f"left out {result['left_out']} lines that failed the privacy check")
+
+
+def cmd_usage_eval(args: argparse.Namespace) -> None:
+    if args.action == "start":
+        if not args.suite:
+            raise PaError("pa usage eval start SUITE [TASK] [TRIAL]")
+        path = usagelog.set_eval_tag(args.suite, args.task or "", args.trial or "")
+        print(f"tagging events as eval {args.suite}/{args.task or ''}/{args.trial or ''} ({path})")
+    elif args.action == "stop":
+        usagelog.clear_eval_tag()
+        print("eval tag cleared")
+    else:
+        tag = usagelog.eval_tag()
+        print(json.dumps(tag) if tag else "no eval in progress")
+
+
+def cmd_usage_where(args: argparse.Namespace) -> None:
+    root = usagelog.usage_dir()
+    state = "on" if usagelog.enabled() else "off"
+    print(f"{root}  (logging {state}, level {usagelog.level()})")
+    for path in usagelog.log_files(include_eval=True)[-10:]:
+        print(f"  {path.relative_to(root)}  {path.stat().st_size:,} bytes")
+
+
+def register_usage(sub: Any) -> None:
+    p = sub.add_parser("log", help="write one event to the usage log (for skills: a step, an offer, an outcome)")
+    p.add_argument("event", help="area.action, lower case, e.g. skill.step or offer.made")
+    p.add_argument("pairs", nargs="*", help="key=value fields: ids, status words and numbers only, never sentences")
+    p.add_argument("--session")
+    p.add_argument("--project")
+    p.add_argument("--workflow")
+    p.add_argument("--run")
+    p.add_argument("--scenario")
+    p.add_argument("--mode", choices=usagelog.MODES)
+    p.add_argument("--show", action="store_true", help="print the line as written")
+    p.set_defaults(run=cmd_log)
+
+    usage = sub.add_parser("usage", help="read the usage log: summary, tail, check, pack, eval tags")
+    usub = usage.add_subparsers(dest="usage_command", required=True)
+
+    def common(q: Any) -> None:
+        q.add_argument("--since", help="7d, 12h, 30m or a date like 2026-11-20")
+        q.add_argument("--eval", action="store_true", help="include eval trials")
+        q.add_argument("--suite", help="only this eval suite")
+
+    q = usub.add_parser("summary", help="counts: sessions, pages, workflows, skills, tools, pa commands")
+    common(q)
+    q.add_argument("--json", action="store_true")
+    q.set_defaults(run=cmd_usage_summary)
+
+    q = usub.add_parser("tail", help="the latest lines")
+    common(q)
+    q.add_argument("-n", type=int, default=20)
+    q.add_argument("--json", action="store_true")
+    q.set_defaults(run=cmd_usage_tail)
+
+    q = usub.add_parser("check", help="every line matches the schema and holds no sentences")
+    q.set_defaults(run=cmd_usage_check)
+
+    q = usub.add_parser("pack", help="copy the log into one file to carry off this machine")
+    common(q)
+    q.add_argument("--out", help="default: a dated file on the Desktop")
+    q.add_argument("--shape", choices=("slim", "upstream"), default="slim",
+                   help="upstream: Omnigent's telemetry gateway records")
+    q.add_argument("--fingerprint", action="store_true",
+                   help="hash every name (files, records, projects) on the way out; counts stay")
+    q.set_defaults(run=cmd_usage_pack)
+
+    q = usub.add_parser("eval", help="tag every event as part of an eval trial, until stopped")
+    q.add_argument("action", choices=("start", "stop", "show"))
+    q.add_argument("suite", nargs="?")
+    q.add_argument("task", nargs="?")
+    q.add_argument("trial", nargs="?")
+    q.set_defaults(run=cmd_usage_eval)
+
+    q = usub.add_parser("where", help="where the log is, and its latest files")
+    q.set_defaults(run=cmd_usage_where)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="pa", description="Product Aviator data and view command")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -2713,8 +3319,59 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--scenario", help="the workflow (or scenario) folder, the first time, to take its steps")
     p.add_argument("--step", help="a step number, or part of its name")
     p.add_argument("--done", action="store_true", help="the workflow is finished")
-    p.add_argument("--note", help="one line on what is happening in this step")
+    p.add_argument("--note", help="one line on what is happening in this step; with --pause, where the work was left")
+    p.add_argument("--pause", action="store_true", help="the person set this run aside; needs --note")
+    p.add_argument("--resume", action="store_true", help="pick a paused or stopped run up again")
+    p.add_argument("--stop", action="store_true", help="the person abandoned this run; the work so far is kept")
+    p.add_argument("--state", choices=["working", "needs-you", "waiting"],
+                   help="needs-you: the run cannot move until the person answers; waiting: on someone else")
+    p.add_argument("--session", help="the id of the session this run is in, so the project page can reopen it")
+    p.add_argument("--director", help="the id of the director session that started this run in a thread")
+    p.add_argument("--brief", help="the path of the brief the thread was handed")
     p.set_defaults(run=cmd_flow)
+
+    p = sub.add_parser("brief", help="write the brief a director hands a workflow's thread, and print the thread's first message")
+    p.add_argument("workflow", help="the workflow (or scenario) folder")
+    p.add_argument("--subject", required=True, help="what the run is about, in the person's words")
+    p.add_argument("--director", required=True, help="the director's session id, so the thread can report to it")
+    p.add_argument("--data", help="the dataset path; default is the workflow's own pattern for the subject")
+    p.add_argument("--context", action="append", help="a file the thread should read first; repeatable")
+    p.add_argument("--target", help="what finished looks like for this run")
+    p.add_argument("--ask", help="anything else the director wants the thread to know")
+    p.add_argument("--json", action="store_true", help="print the paths instead of the message")
+    p.set_defaults(run=cmd_brief)
+
+    p = sub.add_parser("report", help="one line from a run to its director: a milestone, progress, a blocker or done")
+    p.add_argument("data")
+    p.add_argument("text")
+    p.add_argument("--kind", choices=REPORT_KINDS, default="milestone")
+    p.set_defaults(run=cmd_report)
+
+    p = sub.add_parser("project", help="say what a project is: its goal, area, team and state; or list projects")
+    p.add_argument("name", nargs="?")
+    p.add_argument("--goal", help="the one in-market goal, in a line")
+    p.add_argument("--area", help="the lasting problem space it lives in")
+    p.add_argument("--team", help="who runs it, when it is another team's")
+    p.add_argument("--state", choices=PROJECT_STATES)
+    p.add_argument("--state-note", dest="state_note", help='a few words on the state, e.g. "slipped 2 wks"')
+    p.add_argument("--data", action="append", help="a dataset that belongs to this project (repeat)")
+    p.add_argument("--dir", help="the projects folder; default projects/ in the workspace")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(run=cmd_project)
+
+    p = sub.add_parser("link", help="hang a link to another project from one record")
+    p.add_argument("data")
+    p.add_argument("id")
+    p.add_argument("--to", required=True, help="the other project's name")
+    p.add_argument("--type", choices=LINK_TYPES, default="handed-to")
+    p.add_argument("--remove", action="store_true")
+    p.set_defaults(run=cmd_link)
+
+    p = sub.add_parser("runs", help="list the workflow runs in this workspace and where each was left")
+    p.add_argument("--dir", help="the progress folder; default progress/ in the workspace")
+    p.add_argument("--all", action="store_true", help="include finished and stopped runs")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(run=cmd_runs)
 
     p = sub.add_parser("who", help="list the participants the agent can call, or show one")
     p.add_argument("id", nargs="?", help="an id, or part of a name or role")
@@ -2857,13 +3514,25 @@ def main(argv: list[str] | None = None) -> int:
 
     register_review(sub)
 
+    register_usage(sub)
+
     args = parser.parse_args(argv)
+    started = time.monotonic()
+    code = 0
     try:
         args.run(args)
     except (PaError, ReviewError) as err:
         print(f"pa: {err}", file=sys.stderr)
-        return 2
-    return 0
+        code = 2
+    except SystemExit as err:
+        code = err.code if isinstance(err.code, int) else 1
+        raise
+    except BaseException:
+        code = 1
+        raise
+    finally:
+        _log_command(args, code, started)
+    return code
 
 
 if __name__ == "__main__":

@@ -1,0 +1,32 @@
+{
+  "lib-again": {
+    "at": "2026-11-21T18:34:49.174Z",
+    "choice": "One project per demo: Continue or Start over",
+    "note": ""
+  },
+  "lib-fly": {
+    "at": "2026-11-21T18:34:35.052Z",
+    "choice": "Fly, with a Live turns switch",
+    "note": ""
+  },
+  "lib-hero": {
+    "at": "2026-11-21T18:33:51.096Z",
+    "choice": "The steps, without a picture",
+    "note": "Steps won’t always be sequential, so I think about it as much as tasks/outcomes/goals as actual steps, but I think that the steps are the right level of granularity to show. We may want optionality in the future for imagery."
+  },
+  "lib-layout": {
+    "at": "2026-11-21T18:32:28.520Z",
+    "choice": "One big spotlight, then a grid",
+    "note": "I think we will have 4-6 hero skills (like intent shaping, problem discovery, etc), which should be shown, and many many “utility” skills (like persona builder, scenario builder, etc) that will not be shown — so the skills will need some kind of metadata field to show, and another for ordering (they should be shown in rough order of their sequence in the product development lifecycle)"
+  },
+  "lib-templates": {
+    "at": "2026-11-21T18:35:47.118Z",
+    "choice": "Out of the Library, into the Hangar",
+    "note": ""
+  },
+  "lib-work": {
+    "at": "2026-11-21T18:34:13.151Z",
+    "choice": "One per workflow, plus optional extra starters",
+    "note": ""
+  }
+}

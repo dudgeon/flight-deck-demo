@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Participant messages in the Inbox</title>
+<style>
+:root{--font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;--mono:ui-monospace,"SF Mono",Menlo,monospace;
+--bg:#f4f6f9;--surface:#fff;--sunk:#eaeef3;--ink:#0f1e30;--ink-2:#475a70;--ink-3:#71829a;--line:#d6dde6;--line-strong:#b4c0ce;
+--chrome:#0a223d;--chrome-ink:#f2f6fa;--chrome-ink-2:#9fb4cc;--chrome-active:#2a5486;--you:#b0237a;--you-soft:#f8e1ef;
+--agent:#4f46b8;--agent-soft:#e8e6f8;--warn:#8d5a00;--warn-soft:#f9ebcf;--ok:#17794a;--ok-soft:#ddf1e6;--info:#1e6aa6;--info-soft:#ddebf7;
+--a1:#1e6aa6;--a5:#1f6b66;--a7:#a0462f}
+*{box-sizing:border-box}body{margin:0;background:#dfe4ea;font:14px/1.45 var(--font);color:var(--ink);padding:28px}
+h1{font-size:22px;margin:0 0 6px}h2{font-size:17px;margin:38px 0 6px}.lede{color:var(--ink-2);max-width:880px;margin:0 0 14px}
+.frame{display:flex;width:1280px;height:760px;border-radius:12px;overflow:hidden;box-shadow:0 8px 30px rgba(10,34,61,.18);background:var(--surface)}
+.side{width:248px;background:var(--chrome);color:var(--chrome-ink);padding:14px 10px;flex:none}
+.brand{font-weight:650;padding:4px 8px 14px;display:flex;gap:8px;align-items:center}.brand i{width:26px;height:14px;border-radius:7px;background:var(--chrome-ink-2);display:inline-block}
+.nav{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:6px;font-size:14px}.nav.on{background:var(--chrome-active)}
+.badge{margin-left:auto;background:var(--you);color:#fff;border-radius:9px;font-size:11.5px;padding:0 7px;font-weight:600;line-height:18px}
+.sec{color:var(--chrome-ink-2);font-size:12.5px;padding:16px 10px 4px}.row{padding:5px 10px;font-size:13.5px;color:var(--chrome-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--you);margin-right:6px}
+.main{flex:1;padding:26px 40px;overflow:hidden;background:var(--surface)}
+.title{font-size:19px;font-weight:650;letter-spacing:-.015em;margin:0 0 12px}
+.tabs{display:flex;gap:4px;margin-bottom:16px}.tab{padding:6px 12px;border-radius:6px;color:var(--ink-2);font-size:13.5px}.tab.on{background:var(--sunk);color:var(--ink);font-weight:550}
+.tab .n{font-size:11.5px;color:var(--ink-3);margin-left:4px}
+.grp{font-size:12px;color:var(--ink-3);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin:14px 0 6px}
+.card{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:8px;background:var(--surface);position:relative}
+.card.msg{border-left:3px solid var(--c)}
+.card.unread:before{content:"";position:absolute;left:-14px;top:20px;width:7px;height:7px;border-radius:50%;background:var(--you)}
+.hd{display:flex;align-items:center;gap:8px;font-size:13.5px}
+.mark{width:24px;height:24px;border-radius:50%;display:inline-grid;place-items:center;font-size:10.5px;font-weight:700;color:var(--c);background:color-mix(in srgb,var(--c) 14%,white);flex:none}
+.mark.stand{border:1.5px dashed var(--c);background:white}
+.name{font-weight:650}.chip{font:600 10.5px var(--mono);padding:1px 6px;border-radius:4px;letter-spacing:.04em}
+.chip.agent{background:var(--agent-soft);color:var(--agent)}.chip.stand{border:1px dashed var(--warn);color:var(--warn);background:var(--warn-soft)}
+.role{color:var(--ink-3)}.when{margin-left:auto;color:var(--ink-3);font-size:12.5px}
+.about{font-size:12.5px;color:var(--ink-3);margin:4px 0 0 32px}.about b{color:var(--ink-2);font-weight:550}
+.body{margin:6px 0 0 32px;color:var(--ink)}.body.clip{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.acts{display:flex;gap:8px;margin:10px 0 0 32px}.btn{border:1px solid var(--line-strong);border-radius:6px;padding:4px 10px;font-size:12.5px;background:white;color:var(--ink)}
+.btn.pri{background:var(--chrome);border-color:var(--chrome);color:white}.btn.ghost{border-color:transparent;color:var(--ink-2)}
+.icon{width:24px;height:24px;border-radius:6px;display:inline-grid;place-items:center;background:var(--sunk);color:var(--ink-2);font-size:12px;flex:none}
+.reply{margin:10px 0 0 32px;border:1px solid var(--line-strong);border-radius:8px;padding:8px 10px}
+.reply .to{font-size:12px;color:var(--ink-3);margin-bottom:4px}.reply .to b{color:var(--ink-2)}.reply .txt{min-height:38px;color:var(--ink)}
+.reply .bar{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-3)}.reply .bar .btn{margin-left:auto}
+.note{background:var(--info-soft);color:var(--info);border-radius:6px;padding:6px 10px;font-size:12.5px;margin:10px 0 0 32px}
+.cols{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:1280px}
+.opt{background:var(--surface);border-radius:10px;padding:16px;border:2px solid transparent}.opt.rec{border-color:var(--ok)}
+.opt h3{margin:0 0 4px;font-size:15px}.opt .tag{font-size:11px;font-weight:700;color:var(--ok);text-transform:uppercase;letter-spacing:.05em}
+.opt ul{padding-left:18px;margin:8px 0}.opt li{margin:3px 0}.in{color:var(--ok);font-weight:600}.out{color:var(--ink-3)}
+.mini{border:1px solid var(--line);border-radius:8px;padding:8px;margin-top:8px;font-size:12.5px}
+.flow{display:flex;gap:10px;align-items:stretch;width:1280px}
+.step{flex:1;background:var(--surface);border-radius:10px;padding:14px;font-size:13px}.step b{display:block;margin-bottom:4px;font-size:13.5px}
+.arrow{align-self:center;color:var(--ink-3);font-size:20px}
+code{font:12.5px var(--mono);background:var(--sunk);padding:1px 4px;border-radius:4px}
+</style></head><body>
+<!-- decision-archive:start -->
+<div style="font:13px/1.45 system-ui,sans-serif;background:Canvas;color:CanvasText;border-bottom:1px solid GrayText;padding:8px 16px">Archived copy of <b>Participant messages in the Inbox mockup</b>, a decision artifact from 2026-11-21. Nothing on this page is saved. The index of all of them is in <a href="../index.html">docs/decision-artifacts</a>.</div>
+<script>
+(function(){
+  var A={};
+  function snap(){var docs=Object.keys(A).map(function(k){return {id:k,data:function(){return A[k]},exists:true}});return {docs:docs,empty:!docs.length,size:docs.length,forEach:function(f){docs.forEach(f)}}}
+  function doc(id){return {id:id,get:async function(){return {id:id,exists:id in A,data:function(){return A[id]}}},set:async function(){},update:async function(){},delete:async function(){}}}
+  var db={collection:function(){return {get:async function(){return snap()},doc:doc,onSnapshot:function(f){setTimeout(function(){f(snap())},0);return function(){}},add:async function(){}}},doc:function(p){return doc(String(p).split("/").pop())}};
+  window.claude={use:async function(name){return name==="db"?db:null}};
+})();
+</script>
+<!-- decision-archive:end -->
+
+
+<h1>Messages from people and agents, in the Inbox</h1>
+<p class="lede">Proposal for D-60 to D-62. Participants (simulated people and agents from <code>workspace/participants/</code>) can now reach you outside the session you are looking at. Their message shows up in the Inbox under their own name and mark, the same mark they have in chat. Mock data: the Allowances PRD review.</p>
+
+<h2>1. The Inbox with participant messages (recommended design)</h2>
+<p class="lede">A new <b>People</b> tab filters to participant messages. Each message card has a colored left rule and the participant's mark, a chip for <b>AGENT</b> or <b>STAND-IN</b>, their role, and which session it is about. Unread cards have the dot and count toward the sidebar badge. The other Inbox items (an approval, a finished session) stay as they are today.</p>
+<div class="frame">
+ <div class="side">
+  <div class="brand"><i></i>Product Aviator</div>
+  <div class="nav">＋ New session</div><div class="nav">▥ Library</div><div class="nav">◷ Automations</div>
+  <div class="nav on">✉ Inbox <span class="badge">4</span></div>
+  <div class="sec">Projects</div><div class="row">📁 Workspace</div>
+  <div class="row" style="padding-left:26px"><span class="dot"></span>Allowances PRD sections 5 and 7</div>
+  <div class="sec">Sessions</div><div class="row">Weekly metrics pull</div>
+ </div>
+ <div class="main">
+  <div class="title">Inbox</div>
+  <div class="tabs"><span class="tab on">All</span><span class="tab">Unread</span><span class="tab">Awaiting response</span><span class="tab">People <span class="n">2</span></span></div>
+  <div class="grp">Just now</div>
+  <div class="card msg unread" style="--c:var(--a5)">
+   <div class="hd"><span class="mark stand">MO</span><span class="name">Mara Okafor</span><span class="chip stand">STAND-IN</span><span class="role">Design lead, Cards</span><span class="when">2 min ago</span></div>
+   <div class="about">About <b>Allowances PRD sections 5 and 7</b> · messaged you directly</div>
+   <div class="body clip">I went back through the spring interview notes after we talked. Three of the eight teenagers said the decline itself was fine and the embarrassment at the till was the problem. Can I get 20 minutes with you before the Thursday review to agree the wording for 5.2? I don't want to fight it out in front of Risk.</div>
+   <div class="acts"><span class="btn pri">Reply</span><span class="btn">Open conversation</span><span class="btn ghost">Done</span></div>
+  </div>
+  <div class="card msg unread" style="--c:var(--agent)">
+   <div class="hd"><span class="mark">RR</span><span class="name">Risk Review</span><span class="chip agent">AGENT</span><span class="role">Risk and compliance</span><span class="when">4 min ago</span></div>
+   <div class="about">About <b>Allowances PRD sections 5 and 7</b> · follow-up to your call</div>
+   <div class="body clip">7.4 is still open. I can't clear sign-off until I know whose consent is recorded. If it is the parent's, say so in 7.4 and I'll mark it resolved.</div>
+   <div class="acts"><span class="btn pri">Reply</span><span class="btn">Open conversation</span><span class="btn ghost">Done</span></div>
+  </div>
+  <div class="grp">Earlier today</div>
+  <div class="card unread">
+   <div class="hd"><span class="icon">✓</span><span class="name">Weekly metrics pull</span><span class="role">finished</span><span class="when">9:12 AM</span></div>
+   <div class="body" style="margin-left:32px;color:var(--ink-2)">Pulled the week's numbers and updated metrics.md.</div>
+  </div>
+  <div class="card">
+   <div class="hd"><span class="icon">?</span><span class="name">Claude Code wants to run a command</span><span class="when">8:40 AM</span></div>
+   <div class="body" style="margin-left:32px;color:var(--ink-2)"><code>python3 pa.py flow --advance</code> in Allowances PRD sections 5 and 7</div>
+  </div>
+ </div>
+</div>
+
+<h2>2. Replying from the Inbox</h2>
+<p class="lede">Reply opens a box inside the card. What you write goes to the <b>host session</b> as an @mention (<code>@mara-okafor …</code>), so Aviator passes it on and the whole exchange stays in one conversation you can scroll back through. <b>Open conversation</b> takes you to that session, scrolled to their message.</p>
+<div class="frame" style="height:470px">
+ <div class="side">
+  <div class="brand"><i></i>Product Aviator</div>
+  <div class="nav">＋ New session</div><div class="nav">▥ Library</div><div class="nav">◷ Automations</div>
+  <div class="nav on">✉ Inbox <span class="badge">3</span></div>
+ </div>
+ <div class="main">
+  <div class="title">Inbox</div>
+  <div class="tabs"><span class="tab">All</span><span class="tab">Unread</span><span class="tab">Awaiting response</span><span class="tab on">People <span class="n">2</span></span></div>
+  <div class="card msg" style="--c:var(--a5)">
+   <div class="hd"><span class="mark stand">MO</span><span class="name">Mara Okafor</span><span class="chip stand">STAND-IN</span><span class="role">Design lead, Cards</span><span class="when">2 min ago</span></div>
+   <div class="about">About <b>Allowances PRD sections 5 and 7</b> · messaged you directly</div>
+   <div class="body">I went back through the spring interview notes after we talked. Three of the eight teenagers said the decline itself was fine and the embarrassment at the till was the problem. Can I get 20 minutes with you before the Thursday review to agree the wording for 5.2? I don't want to fight it out in front of Risk.</div>
+   <div class="reply"><div class="to">To <b>Mara Okafor</b>, through <b>Allowances PRD sections 5 and 7</b></div>
+    <div class="txt">Yes. Draft the 5.2 message the way you'd want it and put it in the doc as a suggestion. I'll look before Thursday.</div>
+    <div class="bar">An agent is standing in for Mara. Your reply goes to the agent.<span class="btn pri">Send</span></div></div>
+  </div>
+ </div>
+</div>
+
+<h2>3. D-60: Which participant messages land in the Inbox?</h2>
+<div class="cols">
+ <div class="opt rec"><span class="tag">Recommended</span><h3>A. Messages meant for you</h3>
+  <ul><li class="in">They reach out on their own (Mara's note)</li><li class="in">A follow-up after the call ended (Risk Review)</li><li class="out">Replies while the host is relaying the call: stay in chat only</li></ul>
+  The Inbox stays a short list of things a person would message you about. A call's replies already make the session unread, which the Inbox lists today.</div>
+ <div class="opt"><h3>B. Also every call reply you missed</h3>
+  <ul><li class="in">Everything in A</li><li class="in">Each participant reply in a session you are not looking at</li></ul>
+  Nothing gets missed, but a five-person review puts five cards and a session card in the Inbox for one piece of work.</div>
+ <div class="opt"><h3>C. Every participant message</h3>
+  <ul><li class="in">Everything, even in the session you have open</li></ul>
+  The Inbox becomes a full log of who said what. Noisy, and it repeats the chat.</div>
+</div>
+
+<h2>4. D-61: Where does a reply go?</h2>
+<div class="cols">
+ <div class="opt rec"><span class="tag">Recommended</span><h3>A. Through the host session</h3>
+  Your reply is posted in the host session as <code>@mara-okafor …</code>. Aviator relays it and shows her answer as her turn. One conversation holds everything, the same as when you @mention someone in chat.</div>
+ <div class="opt"><h3>B. Straight to their session</h3>
+  Your reply goes to Mara's own background session. Faster, but the host session doesn't see it, so Aviator can lose track of what was agreed.</div>
+ <div class="opt"><h3>C. No inline reply</h3>
+  The card only has Open conversation. Simplest, and you always reply in context, but every answer costs a page change.</div>
+</div>
+
+<h2>5. D-62: How do participants decide to message you?</h2>
+<div class="flow">
+ <div class="step"><b>Scripted (demos)</b>A screenplay step drops a message at a set point, for example <code>inbox: mara-okafor</code> after the call ends. Same every run, good for recordings.</div><div class="arrow">+</div>
+ <div class="step"><b>Live (session-backed)</b>The participant's background session can post with the existing Inbox tool when its brief says to, for example "follow up if a blocker is still open when the call ends". Their file gets a <code>reach_out</code> line saying when.</div><div class="arrow">=</div>
+ <div class="step" style="border:2px solid var(--ok)"><b>Recommended: both, scripted first</b>Same as the call-in decision earlier: build the scripted path so demos work today, then let live participants post with the same card.</div>
+</div>
+<p class="lede" style="margin-top:14px">Under the hood (for the production team): participant messages reuse the Inbox's existing agent-posted items (<code>/v1/inbox/items</code>, the <code>sys_user_inbox_post</code> tool) with a new <code>participant</code> field, so no new store is needed.</p>
+</body></html>

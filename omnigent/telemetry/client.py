@@ -609,6 +609,14 @@ def emit(event: object) -> None:
 
     :param event: A dataclass instance.
     """
+    # omnigent-slim: keep every event in the local usage log first (D-123),
+    # whether or not upstream's own (remote) telemetry is on. It is off here.
+    try:
+        from omnigent.slim_usage import tee_upstream
+
+        tee_upstream(event)
+    except Exception:
+        pass
     try:
         if is_disabled():
             return

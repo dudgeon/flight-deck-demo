@@ -5,6 +5,7 @@ import {
   type ArtifactPromptDetail,
 } from "@/lib/artifactBridge";
 import { clearLocalReviewContexts, usePendingLocalReviewContexts } from "@/lib/localReviewContext";
+import { takePendingPrompt } from "@/lib/pendingPrompt"; // omnigent-slim
 import { buildOutgoingMessage, carriesMessageContext } from "@/lib/outgoingComposerMessage";
 import { SelectionPopup } from "@/components/chat/SelectionPopup";
 import {
@@ -338,6 +339,9 @@ import {
   useSessionHarnessPickerProps,
 } from "@/components/composer/useSessionHarnessPickerProps";
 import { nextTranscriptBottomPin, type TranscriptBottomPin } from "./transcriptBottomPin";
+import { DirectLineStrip } from "@/components/chat/DirectLine";
+import { DirectorBar } from "@/components/chat/DirectorBar";
+import { routeLineMessage } from "@/lib/directLine";
 import { Transcript } from "@/components/chat/Transcript";
 
 /**
@@ -1009,10 +1013,21 @@ export function ChatPage() {
   const sendReconnectsArca = isUnreachable && liveness.kind === "host_offline" && reconnectsArca;
 
   const onSend = useCallback(
-    (text: string, files?: File[], replyDraft?: StoredReplyDraft) => {
+    (typedText: string, files?: File[], replyDraft?: StoredReplyDraft) => {
       if (!agentId) return;
       // No server session yet (still creating) — nothing to POST to.
       if (isTempConvId(urlConvId)) return;
+      // omnigent-slim: while a thread has the floor, the message goes straight
+      // to it (D-116); "@aviator" or the strip's switch keeps it here.
+      const lineRoute = routeLineMessage(urlConvId ?? null, typedText);
+      if (lineRoute.threadId) {
+        void useChatStore.getState().send(lineRoute.text, lineRoute.agentId ?? agentId, files, {
+          replyDraft,
+          pinnedConversationId: lineRoute.threadId,
+        });
+        return;
+      }
+      const text = lineRoute.text;
       // An unbound coding clone (fork-source label) needs a directory before
       // it can run: open the picker and stash this message to replay after
       // the bind. Pin the prompt to THIS session so it replays here, never
@@ -1663,6 +1678,25 @@ const MainAgentSurface = memo(function MainAgentSurfaceImpl({
     window.addEventListener(ARTIFACT_PROMPT_EVENT, onArtifactPrompt);
     return () => window.removeEventListener(ARTIFACT_PROMPT_EVENT, onArtifactPrompt);
   }, []);
+  // omnigent-slim: text another page left for this session's message box, e.g.
+  // the project page's Resume button (D-96). The composer may mount a moment
+  // after the page, so try a few times before giving up.
+  useEffect(() => {
+    if (!conversationId) return;
+    const text = takePendingPrompt(conversationId);
+    if (!text) return;
+    let tries = 0;
+    const timer = window.setInterval(() => {
+      tries += 1;
+      if (composerRef.current) {
+        composerRef.current.appendDraftText(text);
+        window.clearInterval(timer);
+      } else if (tries >= 20) {
+        window.clearInterval(timer);
+      }
+    }, 100);
+    return () => window.clearInterval(timer);
+  }, [conversationId]);
   // omnigent-slim: a state change made in an artifact (`omnigent.act()`) is sent
   // as a message at once. The bridge wrote the text itself from validated state
   // values, so this is the only artifact text that skips the composer.
@@ -1915,6 +1949,8 @@ const MainAgentSurface = memo(function MainAgentSurfaceImpl({
           {/* The scrolling transcript column owns every streaming-hot store
           subscription and the bubble pipeline, so an SSE frame re-renders it
           alone — this surface's composer and chrome below bail out. */}
+          {/* omnigent-slim: on a thread's page the director folds to a bar on top (D-117). */}
+          <DirectorBar conversationId={conversationId} />
           <EditSentMessageContext.Provider value={composerReadOnly ? null : editSentMessage}>
             <Transcript
               hostId={hostId}
@@ -1947,6 +1983,8 @@ const MainAgentSurface = memo(function MainAgentSurfaceImpl({
             />
           )}
 
+          {/* omnigent-slim: who the message box is talking to (D-90, D-116). */}
+          <DirectLineStrip directorId={conversationId} />
           <Composer
             ref={composerRef}
             disabled={disabled}

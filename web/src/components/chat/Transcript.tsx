@@ -42,6 +42,14 @@ import {
   SandboxActionBanner,
 } from "@/pages/ChatIndicators";
 import { CHAT_COLUMN_WIDTH } from "@/pages/chatLayout";
+// omnigent-slim: the direct line to a thread (D-116).
+import {
+  DirectLineRow,
+  type LineRail,
+  lineRailFor,
+  useDirectLineBubbles,
+} from "@/components/chat/DirectLine";
+import { mergeLineBubbles } from "@/lib/directLine";
 import {
   type ConversationScroller,
   BubbleView,
@@ -391,6 +399,28 @@ function TranscriptImpl({
     () => liveCandidateAssistantIndex(display.streamBubbles),
     [display.streamBubbles],
   );
+  // omnigent-slim: while a thread has the floor, its turns show here inside a
+  // rail, in the order they happened (D-116). Only the rendered rows change:
+  // the turn rail, the working state and the elicitation tray stay the
+  // director's own.
+  const directLine = useDirectLineBubbles(conversationId);
+  const lineBubbles = useMemo(
+    // Agent-to-agent messages (the brief, the director's nudges) stay out.
+    () => visibleTranscriptBubbles(directLine.bubbles, true),
+    [directLine.bubbles],
+  );
+  const lineRail = useMemo(
+    () => lineRailFor(directLine, lineBubbles, bubbleKey),
+    [directLine, lineBubbles],
+  );
+  const listBubbles = useMemo(
+    () => (lineRail ? mergeLineBubbles(display.streamBubbles, lineBubbles) : display.streamBubbles),
+    [lineRail, display.streamBubbles, lineBubbles],
+  );
+  const listLastAssistantIndex = useMemo(() => {
+    if (listBubbles === display.streamBubbles || lastAssistantIndex < 0) return lastAssistantIndex;
+    return listBubbles.indexOf(display.streamBubbles[lastAssistantIndex]!);
+  }, [listBubbles, display.streamBubbles, lastAssistantIndex]);
 
   // Cmd+Alt+↑/↓ (Ctrl+Alt on win/linux) user-turn navigation.
   useEffect(() => {
@@ -471,9 +501,10 @@ function TranscriptImpl({
                 {/* Older pages prepend here while their request is in flight. */}
                 {display.loadingMoreHistory && <HistoryLoadingIndicator />}
                 <VirtualBubbleList
-                  bubbles={display.streamBubbles}
+                  bubbles={listBubbles}
+                  lineRail={lineRail}
                   scrollEl={scroller?.el ?? null}
-                  lastAssistantIndex={lastAssistantIndex}
+                  lastAssistantIndex={listLastAssistantIndex}
                   showsWorking={display.showsWorking}
                   sessionIdle={sessionStatus === "idle"}
                   conversationId={display.conversationId}
@@ -719,7 +750,10 @@ export function VirtualBubbleList({
   disableVirtualization,
   messageId,
   onGeometryChange,
+  lineRail,
 }: {
+  /** omnigent-slim: the rows that belong to the thread with the floor (D-116). */
+  lineRail?: LineRail | null;
   bubbles: Bubble[];
   scrollEl: HTMLElement | null;
   lastAssistantIndex: number;
@@ -1221,14 +1255,20 @@ export function VirtualBubbleList({
       <div className="flex w-full flex-col" style={{ rowGap: ROW_GAP_PX }}>
         {bubbles.map((bubble, index) => (
           <div key={rowKey(bubble)} className="relative">
-            <BubbleView
-              bubble={bubble}
-              isLastAssistant={index === lastAssistantIndex}
-              showsWorking={showsWorking && index === lastAssistantIndex}
-              actionsPersistent={
-                index === lastMessageIndex && bubble.kind === "assistant" && actionsPersist
-              }
-            />
+            <DirectLineRow
+              rail={lineRail}
+              rowKey={bubbleKey(bubble)}
+              startsGroup={!lineRail?.keys.has(index > 0 ? bubbleKey(bubbles[index - 1]!) : "")}
+            >
+              <BubbleView
+                bubble={bubble}
+                isLastAssistant={index === lastAssistantIndex}
+                showsWorking={showsWorking && index === lastAssistantIndex}
+                actionsPersistent={
+                  index === lastMessageIndex && bubble.kind === "assistant" && actionsPersist
+                }
+              />
+            </DirectLineRow>
           </div>
         ))}
       </div>
@@ -1261,14 +1301,22 @@ export function VirtualBubbleList({
             ref={measureRow}
             className="relative"
           >
-            <BubbleView
-              bubble={bubble}
-              isLastAssistant={item.index === lastAssistantIndex}
-              showsWorking={showsWorking && item.index === lastAssistantIndex}
-              actionsPersistent={
-                item.index === lastMessageIndex && bubble.kind === "assistant" && actionsPersist
+            <DirectLineRow
+              rail={lineRail}
+              rowKey={bubbleKey(bubble)}
+              startsGroup={
+                !lineRail?.keys.has(item.index > 0 ? bubbleKey(bubbles[item.index - 1]!) : "")
               }
-            />
+            >
+              <BubbleView
+                bubble={bubble}
+                isLastAssistant={item.index === lastAssistantIndex}
+                showsWorking={showsWorking && item.index === lastAssistantIndex}
+                actionsPersistent={
+                  item.index === lastMessageIndex && bubble.kind === "assistant" && actionsPersist
+                }
+              />
+            </DirectLineRow>
           </div>
         );
       })}

@@ -1,0 +1,273 @@
+# Modes, runs, projects and the intent graph
+
+Status: **mostly decided; the first two slices are built.** Raised by Geoff on
+2026-11-21. He answered the first walkthrough the same day
+(https://claude.ai/artifact/HRgpJURjcqasGSCmd3894d): D-89 to D-99. He then
+answered all four questions in the second
+(https://claude.ai/artifact/YQcb4HDRGMnn6YW82uFNZd, answers in its database,
+collection `answers`): D-116 to D-119. Nothing is open; the intent graph's
+detail is held on purpose (D-98). All are summarised under "Decided" below. The sections "Proposed shape" and "What
+it would touch" were written before his answers and describe modes inside one
+chat; read them together with "The director model", which replaces that part.
+
+## What was asked
+
+> Hero skills (like intent shaping) implicitly put the flight deck into their
+> given "mode": the sequence of tasks will show, sometimes artifacts will
+> show. Responses from the agent in that mode should be attributed to that
+> mode. A user can always back out of a mode ("pause intent shaping, let me
+> come back to that later"). A project should also show which in-flight
+> workflows/modes there are and allow a user to come back to them. We need to
+> address what a project is and what granularity of intent it relates to. I
+> think most projects are a given in-market goal, like a feature or
+> enhancement to ship. They will need some connectivity to parent or sibling
+> features. We will likely need some representation of the graph of various
+> intents. This does not need to be user facing.
+
+## Vocabulary
+
+Five words, deliberately different things.
+
+| Word | What it is | Exists today |
+|---|---|---|
+| **Workflow** | A kind of work, built in the Hangar (`skills/<id>/workflow.json`). | Yes |
+| **Run** | One workflow started on one subject. It has a step, a state, its dataset and a where-we-left-off note. It outlives the session it started in. | Half. The dataset's `flow` block and the `progress/` file hold the steps and current step; there is no state, no note and no link to a project. |
+| **Mode** | What a session is in while a run has the floor. It is what the person sees: a strip, a rail, the steps. | No. The Session panel's workflow card (D-16) is the only sign. |
+| **Project** | The goal the runs serve. | Only as a folder with sessions (Workspace, Hangar, one per flown demo, D-59 and D-76). |
+| **Intent graph** | How goals relate to each other, kept behind the scenes. | No |
+
+"Hero" describes how a skill is presented in the Library. Whether something
+makes a mode depends on it being a workflow, not on being featured (proposed;
+see "Smaller calls").
+
+## What upstream Omnigent already has
+
+Geoff asked for this to be checked before he reviewed the design (2026-11-21).
+All of it is in the code this fork carries.
+
+| Upstream has | What it is | Where | What it means here |
+|---|---|---|---|
+| **Projects** | A name, an icon and an opaque `config` of default session settings. Flat, private to the owner, no access list. A session belongs to at most one (`project_id` on the conversation). No goal, parent or links. | `omnigent/entities/project.py`, `omnigent/stores/project_store/`, `omnigent/server/routes/projects.py` | What a project *is about* is ours to define. Keep it in a file beside the project, never in upstream's table, so the fork stays compatible. |
+| **Project board** | The project page: sessions as cards in lanes Draft, Needs attention, Working, Unread, Done. | `web/src/projectHome/` | The "In flight" view can be built on it. Run states map onto the lanes; Paused would be new. |
+| **Session families** | Related sessions grouped under one sidebar row and one board card (`family_id`). | `web/src/lib/sessionFamilies.ts` | A run resumed in a new session can stay one card. |
+| **Child sessions** | A session started by another (`kind: sub_agent`, `parent_conversation_id`, `root_conversation_id`), with a trail back to the parent and a panel and graph listing them. | `omnigent/entities/conversation.py`, `web/src/shell/Subagents*.tsx` | Already how participants run (D-19). Right for one agent per item. |
+| **Side chats** | `/side`, or "Ask in side chat" on selected text, forks the conversation into a child that opens as a tab in the right-hand rail. The main transcript is not touched. | `web/src/lib/sideChat.ts`, `web/src/components/chat/SideChatPane.tsx` | The ready-made thread. It shares the right-hand area with the canvas, so a thread and a canvas view are tabs of the same space. |
+| **Forks** | A copy of a session up to a chosen point (`POST /v1/sessions/{id}/fork`). Not available on a child or side chat. | `omnigent/server/API.md` | "Resume in a new session", "try another direction". |
+| **Saved workflows** | A different thing with the same name: a saved plan run as a session (`/workflows`). Not linked from the slim sidebar. | `web/src/pages/WorkflowsPage.tsx` | A naming clash to settle before production. |
+
+## Why this needs designing
+
+- **A mode is invisible most of the time.** The workflow card is in the
+  Session panel, which is a popover whenever the canvas is open (D-14).
+- **A mode is not a participant.** A participant is *who* is speaking; a mode
+  is *what work* a turn belongs to. Aviator is still Aviator in a mode, and
+  Risk Review can speak inside one. Attribution to the mode must sit beside
+  participant attribution (D-17), not replace it.
+- **The app cannot understand "pause".** With no Claude API (D-02), only the
+  agent can interpret the sentence. The agent must record the pause somewhere
+  the app reads, the way `pa flow` writes the progress file today.
+- **Runs outlive sessions.** A paused intent shaping must be resumable next
+  week, possibly in a new session. That works only if the state is in files
+  (D-07 already puts it there) plus a short note written at the moment of
+  pausing.
+- **Discovery happens before a feature exists.** If a project is a feature to
+  ship, problem discovery (which studies a problem space and yields several
+  problems) needs a home that is not a feature.
+- **The four kinds of work already chain** (discovery, shaping, decisions,
+  delivery; see features.md). Nothing records that chain. It lives in the
+  invented fixtures.
+
+## Proposed shape (the recommended options, for orientation)
+
+None of this is decided. It is written down so the production team can see
+the reasoning behind whichever answers are locked.
+
+**Where a mode's conversation lives.** In place: the main line of a mode
+stays in the chat where it was started. Things that branch off it get a
+thread (upstream's side chat): a long discussion of one item, a consult, a
+side question that grows. The whole mode is not put in a side tab, because a
+mode needs the chat and its canvas view at once and a side chat takes the
+canvas's place.
+
+**Threads on items.** A thread can hang off a record (a decision, a risk, a
+requirement), the way a comment thread hangs off text in a document. It opens
+from the item's row, the row carries a count, and participants can be brought
+in. Participants' own work and one-agent-per-item work keep their child
+sessions.
+
+**Modes.** A one-line strip on the message box names the mode and step and
+carries Pause. A thin rail runs beside every turn made in the mode, with a
+marker in the transcript where it starts, pauses and resumes. Side questions
+are answered outside the rail and do not end the mode. One mode has the floor
+at a time; starting a second pauses the first and offers to return.
+
+**Leaving.** Three endings that must not be confused: pause (come back),
+finish (the work product is written) and stop (not worth pursuing; data
+kept). Pause is said in plain language or pressed; the agent records it and
+writes a "where we left off" note (done, pending question, who has not
+answered). An unanswered view in the chat freezes as "Paused" instead of
+"Answered" (extends D-53). Only stop asks for confirmation.
+
+**Runs and resuming.** Run states: working, needs you (amber, D-50), paused,
+waiting on someone, finished, stopped. The project page leads with an "In
+flight" section, one card per run with Resume. Resume reopens the original
+session if it still exists; otherwise a new session starts from the note and
+the dataset.
+
+**Projects.** A project is one in-market goal: a feature or enhancement that
+ships and then ends. It belongs to one **area**, a lasting problem space
+where problem discovery and shared context live. A problem marked "worth
+solving" in an area can start a goal project that carries the problem brief.
+The project page shows a "part of" trail and a Related card (parent,
+siblings with their state, what this goal needs). Area context is inherited
+by its goals and labelled with where it came from (extends D-15).
+
+**Intent graph.** A node per area and goal with `part-of`, `came-from` and
+`needs` links, and each run attached to its goal. The graph points at
+datasets and does not copy their records. Stored as one small file per
+project and assembled on demand, so it works from a ZIP (as with the Hangar,
+D-52) and can later be replaced by a service.
+
+## What it would touch, if the recommended options are chosen
+
+| Area | Change |
+|---|---|
+| `pa flow` (`skills/view-kit/scripts/pa.py`) | New states and `--pause`, `--resume`, `--stop` with `--note`; the progress file gains `state`, `note`, `session`, `project`, `parent_run`. |
+| Workflow skills | One shared rule (in `view-kit/SKILL.md` and `workspace/CLAUDE.md`): how to recognise pause, finish, stop and a side question, and what to write. |
+| Chat (`web/src/components/chat/`) | The mode rail and start/pause/resume markers; "Paused" state on `ChatViewBlock`. |
+| Composer | The mode strip, with Pause as a direct action (D-11, D-12: a state change, so allowed). |
+| Project home (`web/src/projectHome/`) | "In flight" section above the sessions board; trail and Related card. |
+| Projects | A folder per project (as demos have under `workspace/demos/`), with a small manifest naming its goal, level, parent and links. |
+| Server | A read-only endpoint listing runs per project, modelled on `slim_library.py`. |
+| Threads | Upstream's side chat, labelled with the record it is about; a count on the row in the view kit; `pa` reads and writes that label. |
+| Hangar | Workflow pages show how the mode looks; no new shelf. |
+
+## Decided (2026-11-21)
+
+| | Question | Geoff's answer | Decision |
+|---|---|---|---|
+| M-10 | Where a mode's conversation lives | None of the drawn options. Aviator is a project director; modes run in threads with their own context; agents message each other; the person stays with the director and clicks into a thread as needed. | D-89 |
+| M-1 | How a mode shows | A strip on the message box. | D-90 |
+| M-2 | Marking replies as the mode's | A rail, with start, pause and resume markers. | D-91 |
+| M-3 | Side questions | Answered outside the rail; the mode stays on. | D-92 |
+| M-4 | Leaving a mode | Say it or press it; three endings; a where-we-left-off note; only stop confirms. | D-93 |
+| M-5 | A second mode | One has the floor at a time, with a way back. | D-94 |
+| M-11 | Threads on single items | Any item can have a thread. | D-95 |
+| M-6 | Finding what is in flight | An "In flight" section on the project page. | D-96 |
+| M-7 | What a project is | A goal that ships, inside an area that lasts. Caveat: may need to be more graph-like; a requirement handed to another team becomes that team's project. | D-97 |
+| M-9 | Detail of the intent graph | Held until it blocks something. | D-98 |
+| M-12 | How the director shows a mode | A direct line: the thread's questions appear in the director's chat inside the rail, and the person's messages go straight to the thread while it has the floor. | D-116 |
+| M-13 | Where a thread opens when you step in | In place of the chat, with the director folded to a bar and the canvas kept. Not the recommended tab: a side pane steals space from the canvas, and stepping in is a choice to focus. | D-117 |
+| M-14 | What a thread tells the director | Milestones, progress, blockers and state; the workflow's agent decides when and what, and never sends everything. | D-118 |
+| M-8 | A project's connections | Sent back in round one to be rethought as a graph, not a tree. Round two: a chip on the linked item, and a Connections card on the project page grouped by what the link means. | D-119 |
+
+## The director model (D-89)
+
+Geoff's direction, in his words: "the main session should act like a project
+director/orchestrator, with threads used to isolate context for a given
+workflow... a sub-session, running the skill, is opened for deep work that
+will require or benefit from context window isolation. The director can use
+agent-to-agent messaging to coordinate between the main thread and
+sub-threads. The user should be able to stay in the Aviator/director session
+and only click into the sub-thread as needed... Main/Aviator sessions should
+feel like a Claude Code project, and modes should be powered by threads. We
+still need to resolve how the Aviator thread shows a mode for the high-level
+interactions."
+
+What this means, and what it reuses:
+
+- **A run's thread is a child session** (upstream `parent_conversation_id`),
+  started and messaged the way participants already are (`sys_session_create`,
+  `sys_session_send`, `sys_read_inbox`; see `skills/participants/`). Upstream
+  already lists children under their parent and opens one as a tab in the
+  right-hand area, with a control to make it full size
+  (`web/src/shell/SubagentTab.tsx`).
+- **Why threads.** The workflow's working (reading the framework, scoring,
+  calling participants) stays out of the director's context, so the director
+  can keep the whole project in view for a long time.
+- **What it costs.** Each thread is another Claude Code process: seconds to
+  start, and its own usage. A thread knows only what the director hands it,
+  so the hand-over brief matters. A called session was measured answering in
+  about a minute, so any design that puts two agents in the path of every
+  turn is felt.
+- **The tension to resolve (M-12).** A mode such as intent shaping is a
+  conversation with the person, one question at a time. If the person stays
+  with the director, something must carry the thread's questions to them and
+  their answers back.
+
+How the round-one answers carry over (proposed; "How it fits together" tab of
+the second walkthrough):
+
+- A project has one standing Aviator chat, pinned, with threads under it.
+  Plain extra sessions are still allowed.
+- Every workflow run gets a thread. Aviator may open one for other deep work
+  on its own judgment and says so (as with participants, D-23). Quick asks,
+  single cards and lookups stay with the director.
+- The director hands a thread a written brief, kept as a file: the subject,
+  what to read, the target, who may be called.
+- D-94's "one at a time" means one thread has the floor. Others keep working
+  and show as cards.
+- Pausing a mode (D-93) pauses its thread, which writes the note and stops.
+  Resume wakes the same thread if it exists, else starts a fresh one from the
+  note and the data.
+- Item threads (D-95) hang off the run's thread, and their conclusions are
+  written to the record.
+- Participants do not change.
+
+## Open decisions
+
+None. The intent graph's level of detail is held until something needs it
+(D-98); do not ask again before then.
+
+## Proposed build order
+
+1. **Runs that can pause.** Run state and the where-we-left-off note in the
+   progress file (`pa flow --pause | --resume | --stop`, `--note`). **Built**;
+   see "Runs and the In flight section" in [features.md](features.md).
+2. **In flight on the project page** (D-96): run cards above upstream's
+   board, Resume, the sidebar count. **Built.**
+3. **Aviator as director**: a skill telling Aviator how to start a workflow
+   in a thread, write the brief and read milestones; a live run card in the
+   director's chat. **Built**, opt-in until flown with a live agent; see
+   "Aviator as director" in [features.md](features.md).
+4. **Stepping into a thread** (D-117): the thread in place of the chat, the
+   director folded to a bar that leads back and shows what else is in
+   flight. **Built.**
+   **The direct line**: strip, rail and the thread's turns in the director's
+   chat, the person's messages straight to the thread (D-90 to D-92, D-116).
+   **Built**, not yet flown with a live agent; start, pause and resume
+   markers still to do.
+5. **Threads on items** (D-95). After step 3.
+6. **Projects with a goal** (D-97, D-119, D-121): a project names its goal
+   and area; the Connections card; the chip on linked items. **Built.** An
+   area page is not built.
+
+### Smaller calls from round one (accepted, D-99)
+
+- Every workflow makes a mode, not only the ones featured in the Library.
+- A mode has no color of its own; the rail and strip use the existing
+  "agent at work" token and the workflow's name.
+- Starting a mode never asks first; the start marker carries a quiet Undo.
+- Resume returns to the same session when it exists, else a new one; Resume
+  also offers "in a new session".
+- A run belongs to one project; work that spans goals is a run in the area.
+- Threads reuse upstream's side chats and child sessions; nothing new is
+  invented for them.
+- Demo projects (D-76) stay as they are, and runs show in them the same way.
+
+### Not yet explored
+
+- What an area page looks like, and whether "area" is the right word for
+  Geoff's company.
+- A project's own life cycle (idea, shaped, specified, in delivery, in
+  market) and whether the project page shows it. The intent framework's depth
+  (D-34, D-54) is a candidate for the early part.
+- How a change upstream reaches the person: a sibling slipping, a parent
+  intent being reworded. The Inbox (D-68) is the likely place.
+- How much of the parent chain an agent is given when a run starts. This is
+  the agent half of progressive disclosure (the open item from D-54).
+- Whether a record in one goal's dataset may point at another goal (the seam
+  left by M-9's recommended option).
+- More than one person on a project, and who may pause or stop a run.
+- How projects and the graph map onto what upstream Omnigent has (projects,
+  saved workflows, tasks), so the production team can keep the interfaces.
