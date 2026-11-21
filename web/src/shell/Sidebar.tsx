@@ -64,6 +64,7 @@ import {
   ChevronRightIcon,
   ClockIcon,
   LibraryBigIcon,
+  WarehouseIcon,
   ClockPlusIcon,
   CircleAlertIcon,
   CircleStopIcon,
@@ -1704,6 +1705,24 @@ function SidebarImpl({
             </div>
           </>
         )}
+        {/* omnigent-slim: the quiet way into the Hangar, builder mode (D-41). */}
+        <div className={cn("shrink-0 px-2 pt-1", SIDEBAR_ROW_MOBILE_INSET)}>
+          <Link
+            to="/hangar"
+            onClick={onNavClick}
+            componentId="sidebar.hangar"
+            data-testid="hangar-switch"
+            title="Open the Hangar, where people, workflows and views are defined"
+            className={cn(
+              SIDEBAR_ROW,
+              "flex w-full items-center gap-2 rounded-md border border-dashed border-current/35 px-2 text-sm text-muted-foreground",
+              "transition-colors hover:border-current/70 hover:text-foreground",
+            )}
+          >
+            <WarehouseIcon aria-hidden="true" className="ui-icon" />
+            Hangar
+          </Link>
+        </div>
         {/* Profile and Settings stay pinned below either sidebar body. Native
             shells add their existing server-switching actions to its menu. */}
         <SidebarServerPicker />

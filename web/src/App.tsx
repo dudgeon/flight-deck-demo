@@ -65,6 +65,12 @@ const LibraryPage = withPageView(
   "library",
   lazy(() => import("@/pages/LibraryPage").then((m) => ({ default: m.LibraryPage }))),
 );
+// omnigent-slim: the Hangar (builder mode) draws its own whole frame, so it
+// sits outside AppShell (D-40).
+const HangarPage = withPageView(
+  "hangar",
+  lazy(() => import("@/hangar/HangarPage").then((m) => ({ default: m.HangarPage }))),
+);
 const InboxPage = withPageView(
   "inbox",
   lazy(() => import("@/pages/InboxPage").then((m) => ({ default: m.InboxPage }))),
@@ -225,6 +231,7 @@ function AppRoutes({ basename }: AppProps) {
             </FeatureGatedPage>
           }
         />
+        <Route path={`${prefix}/hangar/*`} element={<HangarPage />} />
         <Route element={<AppShell />}>
           <Route path={prefix || "/"} element={<ChatPage />} />
           <Route path={`${prefix}/c/:conversationId`} element={<ChatPage />} />

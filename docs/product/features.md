@@ -319,13 +319,26 @@ values. When a corporate palette replaces ours, swap the values but keep the
 meanings, in particular one hue reserved for the person's own marks and red
 only for failures (decisions D-48 to D-50).
 
-## The Hangar (builder mode): designed, not yet built
+## The Hangar (builder mode): look-around version built
 
 **Intent.** Defining people, workflows, views and scenarios should happen in
 the app, by product managers, without being able to break what others use.
 The app therefore has two modes that cannot be mistaken for each other:
 flying (using it) and the Hangar (defining what others fly). Building is
 itself a guided workflow, drafts are the only thing ever edited, and Publish
-is a strict gate with a way back (D-39 to D-47).
+is a strict gate with a way back (D-39 to D-47, D-51, D-52).
 
-**Where.** The full design is in `hangar.md`.
+**What exists now (slice 1, read-only).** A dashed "Hangar" switch at the foot
+of the flying sidebar opens `/hangar`: a teal band, a paper sidebar with a
+dashed edge and a drafting grid. Shelves for people and agents, workflows,
+views, scenarios, skills, starters and frameworks show each thing the way a
+user meets it, with a health chip from `pa check`. Inspect pages show how it
+looks when flying (a real participant turn, views and templates drawn over
+sample data, the scenario player) beside what it is made of, with every "uses"
+and "used in" as a link. A hover-only wrench on participant turns, the
+workflow card and Library cards jumps to the same thing in the Hangar (D-51).
+Nothing in the Hangar writes a file yet: drafts, trial and publish are slice 2.
+
+**Where.** Design in `hangar.md`. Server: `omnigent/server/routes/slim_hangar.py`
+(`GET /v1/slim/hangar`, plus rendered views, templates and scenario players).
+Web: `web/src/hangar/`. Colors: the `build` and `hangar-*` tokens.

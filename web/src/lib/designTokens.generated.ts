@@ -59,7 +59,13 @@ export const PA_TOKENS = {
     "author-8": "#3d5a99",
     "comment": "#f5c518",
     "comment-strong": "#d29e00",
-    "shadow": "#0a223d"
+    "shadow": "#0a223d",
+    "build": "#0d6e78",
+    "build-soft": "#d9f0f1",
+    "on-build": "#ffffff",
+    "hangar-bg": "#edf4f6",
+    "hangar-grid": "#d3e3e7",
+    "hangar-paper": "#fbfdfd"
   },
   "dark": {
     "bg": "#071526",
@@ -106,6 +112,12 @@ export const PA_TOKENS = {
     "author-8": "#9fb3ef",
     "comment": "#f5c518",
     "comment-strong": "#d29e00",
-    "shadow": "#000000"
+    "shadow": "#000000",
+    "build": "#58c9d3",
+    "build-soft": "#0c3237",
+    "on-build": "#04262a",
+    "hangar-bg": "#081d24",
+    "hangar-grid": "#12333b",
+    "hangar-paper": "#0b252d"
   }
 } as const;

@@ -141,6 +141,7 @@ from omnigent.server.routes.extension_assets import create_extension_assets_rout
 from omnigent.server.routes.extensions import create_extensions_router
 from omnigent.server.routes.harnesses import create_harnesses_router
 from omnigent.server.routes.slim_library import create_slim_library_router
+from omnigent.server.routes.slim_hangar import create_slim_hangar_router  # omnigent-slim
 from omnigent.server.routes.imports import create_imports_router
 from omnigent.server.routes.inbox_items import create_inbox_items_router
 from omnigent.server.routes.memory import create_memory_router
@@ -4413,6 +4414,12 @@ def create_app(
     )
     app.include_router(
         create_slim_library_router(auth_provider=auth_provider),
+        prefix="/v1",
+        tags=["slim"],
+    )
+    # omnigent-slim: the read-only Hangar catalog (builder mode, slice 1).
+    app.include_router(
+        create_slim_hangar_router(auth_provider=auth_provider),
         prefix="/v1",
         tags=["slim"],
     )
