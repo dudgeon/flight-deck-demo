@@ -184,6 +184,7 @@ decided but nothing is built yet.
 | D-116 | The director shows a mode through a direct line to its thread; Aviator is not in the path | Geoff | Decided, not built |
 | D-117 | Stepping into a thread puts it in place of the chat, the director folded to a bar, the canvas kept | Geoff | Decided, not built |
 | D-118 | A thread reports milestones, progress, blockers and state, at its own discretion, never everything | Geoff | Decided, not built |
+| D-119 | A project's connections: a chip on the linked item and a Connections card on the project page | Geoff | Decided, not built |
 
 
 ## Backfilled (decided earlier, logged on 21 Nov)
@@ -200,8 +201,5 @@ decided but nothing is built yet.
 
 ## Open questions not yet numbered
 
-- One modes question is still unanswered (M-8 in
-  [modes-and-projects.md](modes-and-projects.md)): how a project's
-  connections show. It takes the next free number when Geoff answers.
 - Progressive complexity (D-54).
 - D-24 for production.
