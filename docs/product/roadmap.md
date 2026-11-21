@@ -328,6 +328,9 @@ strictly as the moment needs, measured by evals rather than argued.
   patterns checked against the `director` skill (four present, eight gaps),
   a routing ladder, Geoff's "I'm working on a new feature" lifecycle skill,
   three strictness levels with fixed honesty rules, and three eval suites.
+- **Constraint (Geoff).** Modular: adding a workflow never means editing
+  Aviator. Routing, lifecycle stage, persona and eval examples ship in each
+  workflow's `workflow.json`; Aviator reads them with `pa workflows`.
 - **Next.** Once answered: the eight gaps as director rules; the routing eval
   suite and its runner on the Mac mini, before any tuning; then persona
   blocks and strictness; then the lifecycle skill.

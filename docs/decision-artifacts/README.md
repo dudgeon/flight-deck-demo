@@ -39,7 +39,7 @@ by hand. Generated from `artifacts.json`; do not edit this table directly.
 | 2026-11-21 | Modes and Projects | Decision walkthrough | Modes, pausing, In flight, what a project is, the intent graph (M-1 to M-11) | D-89 to D-99 | Answered (12) | [2026-11-21-modes-and-projects](2026-11-21-modes-and-projects/index.html) |
 | 2026-11-21 | Director and Threads | Decision walkthrough | How the director shows a mode, where a thread opens, what a thread reports, a project's connections (M-8, M-12 to M-14) | None yet | Open | [2026-11-21-director-and-threads](2026-11-21-director-and-threads/index.html) |
 | 2026-11-21 | Person Builder Icons | Design round | Five directions for avatars of people and agents | None yet (PR 25 held) | Paused by Geoff | [2026-11-21-person-builder-icons](2026-11-21-person-builder-icons/index.html) |
-| 2026-11-21 | Aviator Coordination and Routing | Decision walkthrough | Coordination patterns for the director, routing to hero skills, the feature lifecycle, persona strictness and how to test it (AV-1 to AV-6) | None yet | Open | [2026-11-21-aviator-coordination](2026-11-21-aviator-coordination/index.html) |
+| 2026-11-21 | Aviator Coordination and Routing | Decision walkthrough | Coordination patterns for the director, routing to hero skills, the feature lifecycle, persona strictness and how to test it (AV-1 to AV-6) | D-120 | Open | [2026-11-21-aviator-coordination](2026-11-21-aviator-coordination/index.html) |
 
 ## Notes
 

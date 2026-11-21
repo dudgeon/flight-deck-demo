@@ -260,7 +260,7 @@
       "title": "Aviator Coordination and Routing",
       "kind": "Decision walkthrough",
       "about": "Coordination patterns for the director, routing to hero skills, the feature lifecycle, persona strictness and how to test it (AV-1 to AV-6)",
-      "decisions": "None yet",
+      "decisions": "D-120",
       "status": "Open"
     }
   ]

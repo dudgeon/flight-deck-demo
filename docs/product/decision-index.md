@@ -181,6 +181,7 @@ decided but nothing is built yet.
 | D-97 | A project is one in-market goal inside a lasting area | Geoff | Decided, not built |
 | D-98 | The intent graph's detail is held until it blocks something | Geoff | Decided, not built |
 | D-99 | The smaller calls stand (every workflow makes a mode, no mode color, and so on) | Claude, accepted by Geoff | Decided, not built |
+| D-120 | Routing is modular: each workflow carries its own routing, stage and persona; Aviator reads them with `pa workflows` (PR 34) | Geoff asked, Claude chose | Decided, not built |
 
 
 ## Backfilled (decided earlier, logged on 21 Nov)

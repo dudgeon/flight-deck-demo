@@ -1,6 +1,6 @@
 # Aviator as director: coordination, skill routing and persona strictness
 
-Status: **proposed, nothing decided, nothing built.** Asked for by Geoff on
+Status: **proposed; one rule decided (D-120, modular routing); nothing built.** Asked for by Geoff on
 2026-11-21. Put to him as a walkthrough,
 https://claude.ai/artifact/La4Qa5THk5JhwQBQGcVY7d (answers in its database,
 collection `answers`; offline copy in
@@ -92,6 +92,52 @@ takes over, asks one thing at a time and holds a standard. That is right when
 the person wants it and wrong in the middle of ideation. The costly mistake
 is a **false start**; the cheap one is a missed offer.
 
+### Modular by design (D-120)
+
+Geoff's requirement: adding a hero or workflow skill must never mean editing
+Aviator. So neither the director skill nor the lifecycle skill names any
+workflow. Everything they route on is data that ships with each workflow:
+
+- **Each workflow describes its own routing** in an optional `routing` block
+  in its `workflow.json`, beside the `library` block it already has (D-83):
+
+  ```json
+  "routing": {
+    "when": ["The person has an idea, hunch or opportunity and wants to shape it or asks if it is ready"],
+    "not_when": ["Shaping a slide, a roadmap or a document's layout", "A quick question about an intent already written"],
+    "needs": "An idea in a sentence, or a problem picked in discovery",
+    "stage": "shape",
+    "offer": "This sounds like an idea worth shaping. Intent shaping takes it one question at a time to something the team could commit to.",
+    "examples": {"start": ["Shape this into an intent: ..."], "offer": ["Parents should see held payments first. Is that a real thing?"], "open": ["What else could we do about those calls?"]},
+    "persona": {"strictness": "guide", "invariants": ["..."], "flexes": {"...": "..."}}
+  }
+  ```
+
+- **Aviator reads the catalog at run time.** A new `pa workflows` command lists
+  every workflow from `skills/` and `workspace/.claude/skills/` (a Hangar
+  workflow replaces a shipped one with the same id, D-72) with its title,
+  summary and routing block. The director skill says only "run
+  `pa workflows` and route by the ladder below"; it holds the method, never the
+  list. Claude Code's own skill matching (the `description` line) still starts
+  a skill the person names.
+- **Lifecycle stages are data too.** The stage list (Discover, Shape, Specify,
+  Map, Decide, Deliver) lives in one small file in `frameworks/`, and each
+  workflow says which stage it serves. A new workflow for an existing stage
+  appears in the lifecycle view by itself; a new stage is one line in that
+  file. Two workflows on one stage are offered side by side.
+- **The Hangar edits it and `pa check` guards it.** The workflow editor gains
+  the routing fields, and `pa check` fails a workflow shown in the Library
+  that has no `when`, no `stage` or no examples, so a new hero skill cannot
+  ship unroutable.
+- **The evals grow with the catalog.** The routing suite takes each
+  workflow's `examples` as tasks, alongside a hand-written set of near misses
+  across workflows, so adding a workflow adds its own tests and the next eval
+  run shows whether it steals prompts from its neighbours.
+
+What stays in Aviator is only what is true of every workflow: the ladder, the
+offer-once rule, strictness levels and how to change them, and the honesty
+rule that invariants never relax.
+
 ### The routing ladder (AV-1, recommended)
 
 | Rung | When | What Aviator does | Example |
@@ -163,7 +209,8 @@ Strictness is a setting for the style; the honesty rules hold at every level.
 | **Guide** (recommended default, AV-3) | Honesty rules hard, style flexible: a missing piece becomes a gap with who could close it, the score stays true, work moves on | Problem stays 1 · Spark; a gap is sent to Support Insights; on to Outcome. |
 | By the book | Every area held to the framework's line before moving on; missing evidence stops the run | Problem needs you; Outcome waits. |
 
-Proposed shape in the workflow manifest (not built; names provisional):
+Each workflow declares its own persona in the `routing.persona` block of its
+`workflow.json` (see "Modular by design"; not built, names provisional):
 
 ```json
 "persona": {
@@ -172,6 +219,9 @@ Proposed shape in the workflow manifest (not built; names provisional):
   "flexes": {"questions_per_turn": [1, 2], "missing_evidence": ["assume-marked", "gap-and-continue", "block"]}
 }
 ```
+
+The levels themselves are defined once, in the view kit, so every workflow
+means the same thing by "Guide".
 
 **Who changes it (AV-4, recommended):** the person, in words, per run ("be
 tough on this one", "go easier"); the switch is said in one line, shown on the
@@ -248,8 +298,9 @@ about personas); the full matrix before any change.
 
 ## Build order once answered
 
-1. Director skill rules for the eight pattern gaps, and the routing ladder
-   (needs AV-1, AV-5).
+1. `pa workflows` and the `routing` block, filled in for the six hero
+   workflows, with `pa check` enforcing it; director skill rules for the eight
+   pattern gaps and the routing ladder, naming no workflow (needs AV-1, AV-5).
 2. Routing suite and runner on the Mac mini (needs AV-6). Build it before
    tuning anything else, so every later change is measured.
 3. Persona blocks in each hero workflow's manifest, strictness on the strip
