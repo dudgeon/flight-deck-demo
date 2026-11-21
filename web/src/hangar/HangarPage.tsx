@@ -25,7 +25,7 @@ import {
   WarehouseIcon,
   WrenchIcon,
 } from "lucide-react";
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { Route, Routes } from "react-router-dom";
 import { useResolvedThemeMode } from "@/components/theme/useResolvedThemeMode";
 import { ParticipantTurnBlock } from "@/components/chat/ParticipantTurn";
@@ -40,7 +40,10 @@ import {
   BUILD_STEPS,
   builderSessionLink,
   buildPrompts,
+  type CastKind,
+  type CastSet,
   type HangarDraft,
+  type PersonEdit,
   hangarPath,
   lineDiff,
   participantSlug,
@@ -53,6 +56,7 @@ import {
   useHangarVersion,
   viewPagePath,
 } from "./hangarApi";
+import { AviatorPopover } from "./AviatorPopover";
 import "./hangar.css";
 
 // ---------------------------------------------------------------- the frame
@@ -561,6 +565,8 @@ function PersonPage({ hangar }: { hangar: Hangar }) {
   // A chat turn only knows the name, so its wrench links by name.
   const person = hangar.people.find((p) => p.id === id || participantSlug(p.name) === id);
   if (!person) return <NotHere />;
+  const editing = hangar.drafts.find((d) => d.id === person.id && d.action !== "remove");
+  if (editing) return <PersonEditor key={editing.id} hangar={hangar} draft={editing} />;
   const workflows = byId(hangar.workflows);
   const starters = byId(hangar.starters);
   const isPerson = person.kind === "person";
@@ -573,7 +579,7 @@ function PersonPage({ hangar }: { hangar: Hangar }) {
         <KindChip person={person} />
         <Health problems={person.problems} />
         <span className="sp" />
-        <PersonActions hangar={hangar} id={person.id} name={person.name} />
+        <PersonActions hangar={hangar} id={person.id} />
       </div>
       <div className="halves">
         <div className="flex flex-col gap-3.5">
@@ -1438,16 +1444,67 @@ function draftStepLabel(draft: HangarDraft): string {
 }
 const ACTION_LABEL = { new: "New", change: "Change", remove: "Removal" } as const;
 
-function NewPersonButton() {
+/** Ask for a name, start a draft, and open it as the editor. */
+function NameForm({
+  label,
+  duplicateOf,
+  testId,
+  primary = true,
+}: {
+  label: string;
+  duplicateOf?: string;
+  testId?: string;
+  primary?: boolean;
+}) {
+  const navigate = useNavigate();
+  const { create } = useHangarActions();
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  if (!open) {
+    return (
+      <button
+        type="button"
+        className={cn("hangar-btn", primary && "pri")}
+        onClick={() => setOpen(true)}
+        data-testid={testId}
+      >
+        {label}
+      </button>
+    );
+  }
   return (
-    <Link
-      to={builderSessionLink(buildPrompts.create())}
-      className="hangar-btn pri"
-      data-testid="hangar-new-person"
+    <form
+      className="row"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!name.trim()) return;
+        create.mutate(
+          { name: name.trim(), duplicateOf },
+          { onSuccess: (draft) => navigate(hangarPath.draft(draft.id)) },
+        );
+      }}
     >
-      New person or agent
-    </Link>
+      <input
+        className="hangar-input"
+        autoFocus
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder={duplicateOf ? "Name of the copy" : "Their name, e.g. Fraud Ops"}
+        aria-label="Name"
+      />
+      <button type="submit" className="hangar-btn pri" disabled={!name.trim() || create.isPending}>
+        Create draft
+      </button>
+      <button type="button" className="hangar-btn quiet" onClick={() => setOpen(false)}>
+        Cancel
+      </button>
+      <ActionError error={create.error} />
+    </form>
   );
+}
+
+function NewPersonButton() {
+  return <NameForm label="New person or agent" testId="hangar-new-person" />;
 }
 
 function DraftCard({ draft }: { draft: HangarDraft }) {
@@ -1474,19 +1531,17 @@ function ActionError({ error }: { error: unknown }) {
 }
 
 /** Edit, duplicate, retire and history for a live person. Edits always open a draft. */
-function PersonActions({ hangar, id, name }: { hangar: Hangar; id: string; name: string }) {
+function PersonActions({ hangar, id }: { hangar: Hangar; id: string }) {
   const navigate = useNavigate();
   const { startDraft } = useHangarActions();
   const existing = hangar.drafts.find((d) => d.id === id);
   const person = hangar.people.find((p) => p.id === id);
   const inUse = person ? person.used_in.workflows.length + person.used_in.starters.length : 0;
+  // Edit turns this page into the editor (D-63); a removal has its own page.
   const open = (remove: boolean) =>
     startDraft.mutate(
       { id, remove },
-      {
-        onSuccess: () =>
-          navigate(remove ? hangarPath.draft(id) : builderSessionLink(buildPrompts.edit(id, name))),
-      },
+      { onSuccess: () => (remove ? navigate(hangarPath.draft(id)) : undefined) },
     );
   return (
     <div className="row">
@@ -1505,9 +1560,7 @@ function PersonActions({ hangar, id, name }: { hangar: Hangar; id: string; name:
           Edit
         </button>
       )}
-      <Link to={builderSessionLink(buildPrompts.duplicate(id, name))} className="hangar-btn">
-        Duplicate
-      </Link>
+      <NameForm label="Duplicate" duplicateOf={id} primary={false} />
       <Link to={hangarPath.history(id)} className="hangar-btn">
         History{person && person.history.length > 0 ? ` · ${person.history.length}` : ""}
       </Link>
@@ -1566,6 +1619,514 @@ function Diff({ before, after }: { before: string; after: string }) {
   );
 }
 
+// ------------------------------------------------------------- the editor
+//
+// D-63 to D-66: Edit turns the page itself into the editor. Every change saves
+// to the draft as you type; Publish is the only step that makes it live. The
+// writing help and "Try them" are in the Aviator pop-over.
+
+interface PersonForm {
+  name: string;
+  role: string;
+  kind: "agent" | "person";
+  backing: "session" | "script";
+  call_for: string;
+  skills: string[];
+  brief: string;
+  cast: CastSet;
+}
+
+/** Unwrap a person file's brief for the diff, keeping its frontmatter one field per line. */
+function unwrapBody(text: string): string {
+  const m = /^(---\n[\s\S]*?\n---\n)([\s\S]*)$/.exec(text);
+  return m ? m[1] + unwrap(m[2]) : unwrap(text);
+}
+
+function formOf(draft: HangarDraft): PersonForm {
+  const p = draft.person;
+  return {
+    name: p?.name ?? "",
+    role: p?.role ?? "",
+    kind: p?.kind ?? "agent",
+    backing: p?.backing ?? "session",
+    call_for: p?.call_for ?? "",
+    skills: p?.skills ?? [],
+    // Shown and saved as flowing paragraphs, which read and edit better than hard wraps.
+    brief: unwrap(draft.brief ?? ""),
+    cast: draft.cast,
+  };
+}
+
+function editOf(form: PersonForm): PersonEdit {
+  return {
+    fields: {
+      name: form.name,
+      role: form.role,
+      kind: form.kind,
+      backing: form.backing,
+      call_for: form.call_for,
+      skills: form.skills,
+    },
+    brief: form.brief,
+    cast: form.cast,
+  };
+}
+
+function Seg<T extends string>({
+  value,
+  options,
+  onChange,
+  label,
+}: {
+  value: T;
+  options: [T, string][];
+  onChange: (v: T) => void;
+  label: string;
+}) {
+  return (
+    <div className="seg" role="radiogroup" aria-label={label}>
+      {options.map(([v, text]) => (
+        <button
+          key={v}
+          type="button"
+          role="radio"
+          aria-checked={value === v}
+          onClick={() => onChange(v)}
+        >
+          {text}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function SkillPicker({
+  hangar,
+  value,
+  onChange,
+}: {
+  hangar: Hangar;
+  value: string[];
+  onChange: (skills: string[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const known = byId(hangar.skills);
+  const rest = hangar.skills.filter((s) => !value.includes(s.id));
+  return (
+    <>
+      <div className="row tags">
+        {value.map((s) => (
+          <span key={s} className="tag" title={known.get(s)?.description}>
+            {s}
+            <button
+              type="button"
+              aria-label={`Remove ${s}`}
+              onClick={() => onChange(value.filter((k) => k !== s))}
+            >
+              ×
+            </button>
+          </span>
+        ))}
+        <button
+          type="button"
+          className="addtag"
+          onClick={() => setOpen(!open)}
+          aria-expanded={open}
+          data-testid="hangar-add-skill"
+        >
+          + Add a skill
+        </button>
+      </div>
+      {open && (
+        <div className="menu" role="listbox" aria-label="Skills">
+          {rest.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              role="option"
+              aria-selected={false}
+              onClick={() => {
+                onChange([...value, s.id]);
+                setOpen(false);
+              }}
+            >
+              <b>{s.id}</b>
+              <small>{s.description}</small>
+            </button>
+          ))}
+        </div>
+      )}
+      <span className="lab">
+        {value.length === 0
+          ? "None picked: they answer from their brief alone."
+          : "The session that plays them is told to use these when they answer."}
+      </span>
+    </>
+  );
+}
+
+const CAST_GROUPS: { kind: CastKind; label: string }[] = [
+  { kind: "workflows", label: "Workflows" },
+  { kind: "scenarios", label: "Scenarios" },
+  { kind: "starters", label: "Starters" },
+];
+
+function CastPicker({
+  hangar,
+  value,
+  onChange,
+}: {
+  hangar: Hangar;
+  value: CastSet;
+  onChange: (cast: CastSet) => void;
+}) {
+  const items: Record<CastKind, { id: string; title: string }[]> = {
+    workflows: hangar.workflows.map((w) => ({ id: w.id, title: w.title })),
+    scenarios: hangar.scenarios.map((s) => ({ id: s.id, title: s.title })),
+    starters: hangar.starters.map((s) => ({ id: s.id, title: s.title })),
+  };
+  return (
+    <div className="castpick">
+      {CAST_GROUPS.map(({ kind, label }) => (
+        <fieldset key={kind}>
+          <legend className="lab">{label}</legend>
+          {items[kind].map((item) => {
+            const on = value[kind].includes(item.id);
+            return (
+              <label key={item.id}>
+                <input
+                  type="checkbox"
+                  checked={on}
+                  onChange={() =>
+                    onChange({
+                      ...value,
+                      [kind]: on
+                        ? value[kind].filter((i) => i !== item.id)
+                        : [...value[kind], item.id],
+                    })
+                  }
+                />
+                <span>{item.title}</span>
+              </label>
+            );
+          })}
+        </fieldset>
+      ))}
+    </div>
+  );
+}
+
+type SaveState = "idle" | "saving" | "saved" | "error";
+
+function PersonEditor({ hangar, draft }: { hangar: Hangar; draft: HangarDraft }) {
+  const navigate = useNavigate();
+  const { edit, publish, discard } = useHangarActions();
+  const [form, setForm] = useState<PersonForm>(() => formOf(draft));
+  const [summary, setSummary] = useState("");
+  const [save, setSave] = useState<SaveState>("idle");
+  const [pinned, setPinned] = useState(false);
+  const dirty = useRef(false);
+  const known = useRef(draft.text);
+
+  // Someone else (Aviator) changed the draft: show it, unless an edit is in flight.
+  useEffect(() => {
+    if (draft.text !== known.current && !dirty.current) setForm(formOf(draft));
+    known.current = draft.text;
+  }, [draft]);
+
+  function change(patch: Partial<PersonForm>) {
+    dirty.current = true;
+    setForm((f) => ({ ...f, ...patch }));
+  }
+
+  // Save to the draft a moment after the last keystroke.
+  const editMutate = edit.mutateAsync;
+  useEffect(() => {
+    if (!dirty.current) return;
+    setSave("saving");
+    const timer = window.setTimeout(() => {
+      editMutate({ id: draft.id, edit: editOf(form) })
+        .then((saved) => {
+          known.current = saved.text;
+          dirty.current = false;
+          setSave("saved");
+        })
+        .catch(() => setSave("error"));
+    }, 600);
+    return () => window.clearTimeout(timer);
+  }, [form, draft.id, editMutate]);
+
+  const isNew = draft.action === "new";
+  const blocked = draft.problems.length > 0 || save === "saving";
+  const initials = form.name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join("");
+  const person = { ...form, initials, stand_in: form.kind === "person" };
+  const live = hangar.people.find((p) => p.id === draft.id);
+  const workflows = byId(hangar.workflows);
+  const scenarios = byId(hangar.scenarios);
+  const starters = byId(hangar.starters);
+  const title = (kind: CastKind, id: string) =>
+    (kind === "workflows"
+      ? workflows.get(id)?.title
+      : kind === "scenarios"
+        ? scenarios.get(id)?.title
+        : starters.get(id)?.title) ?? id;
+  const path = (kind: CastKind, id: string) =>
+    kind === "workflows"
+      ? hangarPath.workflow(id)
+      : kind === "scenarios"
+        ? hangarPath.scenario(id)
+        : hangarPath.starter(id);
+  const castAll = CAST_GROUPS.flatMap(({ kind }) =>
+    draft.cast[kind].map((id) => ({
+      to: path(kind, id),
+      label: title(kind, id),
+      note: kind.slice(0, -1),
+    })),
+  );
+
+  return (
+    <div className={cn("editor", pinned && "with-aviator")} data-testid="hangar-editor">
+      <Crumb shelf="people" label={form.name || "New person or agent"} />
+      <div className="row">
+        <Mark person={person} />
+        <h1>{form.name || "Unnamed"}</h1>
+        <span className="chip build">{isNew ? "New" : "Change"} · draft</span>
+        {draft.problems.length > 0 ? (
+          <span className="chip fail">✕ {draft.problems.length} to fix before publishing</span>
+        ) : (
+          <span className="chip ok">✓ Ready to publish</span>
+        )}
+        <span className="sp" />
+        <span className="lab" aria-live="polite" data-testid="hangar-saved">
+          {save === "saving"
+            ? "Saving…"
+            : save === "saved"
+              ? "Draft saved"
+              : save === "error"
+                ? "Not saved: check the connection"
+                : ""}
+        </span>
+        {live && (
+          <Link to={hangarPath.history(draft.id)} className="hangar-btn quiet">
+            History{live.history.length > 0 ? ` · ${live.history.length}` : ""}
+          </Link>
+        )}
+      </div>
+      <p className="sub">
+        Edits save to this draft as you type. Nobody flying sees them until you publish, and
+        sessions already running keep what they started with.
+      </p>
+      <div className="halves">
+        <div className="flex flex-col gap-3.5">
+          <section className="card editing">
+            <span className="lab">Who they are</span>
+            <div className="grid2">
+              <label className="field">
+                <span>Name</span>
+                <input
+                  className="hangar-input"
+                  value={form.name}
+                  onChange={(e) => change({ name: e.target.value })}
+                  data-testid="hangar-field-name"
+                />
+              </label>
+              <label className="field">
+                <span>Role</span>
+                <input
+                  className="hangar-input"
+                  value={form.role}
+                  onChange={(e) => change({ role: e.target.value })}
+                  placeholder="Design lead, Cards"
+                  data-testid="hangar-field-role"
+                />
+              </label>
+              <div className="field">
+                <span>Kind</span>
+                <Seg
+                  label="Kind"
+                  value={form.kind}
+                  options={[
+                    ["person", "Person"],
+                    ["agent", "Agent"],
+                  ]}
+                  onChange={(kind) => change({ kind })}
+                />
+                <span className="lab">
+                  {form.kind === "person"
+                    ? "A person is always shown as a stand-in."
+                    : "An agent speaks as itself."}
+                </span>
+              </div>
+              <div className="field">
+                <span>How they answer</span>
+                <Seg
+                  label="How they answer"
+                  value={form.backing}
+                  options={[
+                    ["session", "Live session"],
+                    ["script", "Script"],
+                  ]}
+                  onChange={(backing) => change({ backing })}
+                />
+                <span className="lab">
+                  {form.backing === "session"
+                    ? "A background session plays them from the brief."
+                    : "Fixed answers from a ## Script section."}
+                </span>
+              </div>
+            </div>
+            <label className="field">
+              <span>Call them for</span>
+              <input
+                className="hangar-input"
+                value={form.call_for}
+                onChange={(e) => change({ call_for: e.target.value })}
+                placeholder="what Aviator should call them in for"
+                data-testid="hangar-field-call"
+              />
+            </label>
+          </section>
+          <section className="card editing">
+            <div className="row">
+              <span className="lab">
+                {form.backing === "script"
+                  ? "Brief and script"
+                  : "Brief · what the session playing them is told"}
+              </span>
+              <span className="sp" />
+              <span className="lab">{form.brief.split(/\s+/).filter(Boolean).length} words</span>
+            </div>
+            <textarea
+              className="hangar-input brief"
+              value={form.brief}
+              onChange={(e) => change({ brief: e.target.value })}
+              spellCheck
+              aria-label="Brief"
+              data-testid="hangar-field-brief"
+            />
+          </section>
+          <section className="card editing">
+            <span className="lab">Skills they bring</span>
+            <SkillPicker
+              hangar={hangar}
+              value={form.skills}
+              onChange={(skills) => change({ skills })}
+            />
+          </section>
+          <section className="card editing">
+            <span className="lab">Where they can be called</span>
+            <CastPicker hangar={hangar} value={form.cast} onChange={(cast) => change({ cast })} />
+          </section>
+        </div>
+        <div className="flex flex-col gap-3.5">
+          <Section title="How they will appear when flying">
+            <ParticipantTurnBlock
+              hangarLink={false}
+              turn={{
+                name: form.name || "Unnamed",
+                kind: form.kind,
+                role: form.role,
+                standIn: form.kind === "person",
+                sessionId: null,
+                body: "",
+              }}
+            >
+              <span className="lab">
+                {form.call_for ? `Called for ${form.call_for}.` : "No call-for line yet."}
+              </span>
+            </ParticipantTurnBlock>
+          </Section>
+          <Section title="Checks">
+            <Checks problems={draft.problems} passed="Every check passes." />
+          </Section>
+          <Section title={isNew ? "The new file" : "What changes"}>
+            {isNew ? (
+              <pre className="text">{draft.text}</pre>
+            ) : (
+              <Diff before={unwrapBody(draft.live ?? "")} after={unwrapBody(draft.text ?? "")} />
+            )}
+            {draft.cast_changes.length > 0 && (
+              <ul className="plain" data-testid="hangar-cast-changes">
+                {draft.cast_changes.map((c) => (
+                  <li key={`${c.kind}/${c.id}`}>
+                    <span className={c.change === "add" ? "add" : "del"}>
+                      {c.change === "add" ? "+ Added to " : "− Taken out of "}
+                    </span>
+                    <Link className="link" to={path(c.kind, c.id)}>
+                      {title(c.kind, c.id)}
+                    </Link>
+                    <span className="lab"> · {c.kind.slice(0, -1)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <span className="path">
+              {draft.path} → {draft.target}
+            </span>
+          </Section>
+          <Section title="Where they will be called">
+            <Links
+              items={castAll}
+              empty="Nowhere in particular. Any session can still call them."
+            />
+          </Section>
+        </div>
+      </div>
+      <div className="pubbar">
+        <span className="chip build">Draft</span>
+        <input
+          className="hangar-input"
+          value={summary}
+          onChange={(e) => setSummary(e.target.value)}
+          placeholder="One line on what changed (kept in History)"
+          aria-label="What changed"
+        />
+        <button
+          type="button"
+          className="hangar-btn pri"
+          disabled={blocked || publish.isPending}
+          title={draft.problems.length > 0 ? "Fix every check first" : undefined}
+          data-testid="hangar-publish"
+          onClick={() =>
+            publish.mutate(
+              { id: draft.id, summary: summary || (isNew ? `added ${form.name}` : "") },
+              { onSuccess: () => navigate(hangarPath.person(draft.id)) },
+            )
+          }
+        >
+          Publish
+        </button>
+        <button
+          type="button"
+          className="hangar-btn quiet"
+          disabled={discard.isPending}
+          onClick={() =>
+            discard.mutate(draft.id, {
+              onSuccess: () =>
+                navigate(isNew ? hangarPath.shelf("people") : hangarPath.person(draft.id)),
+            })
+          }
+        >
+          Discard draft
+        </button>
+        <ActionError error={publish.error ?? discard.error} />
+      </div>
+      <AviatorPopover
+        draft={draft}
+        name={form.name || "this person"}
+        workspace={hangar.workspace_dir}
+        pinned={pinned}
+        onPinnedChange={setPinned}
+      />
+    </div>
+  );
+}
+
 function DraftPage({ hangar }: { hangar: Hangar }) {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -1585,9 +2146,11 @@ function DraftPage({ hangar }: { hangar: Hangar }) {
       <NotHere />
     );
   }
+  if (draft.action !== "remove")
+    return <PersonEditor key={draft.id} hangar={hangar} draft={draft} />;
   const workflows = byId(hangar.workflows);
   const starters = byId(hangar.starters);
-  const removal = draft.action === "remove";
+  const removal = true;
   const blocked = draft.problems.length > 0;
   const name = draftName(draft);
   const affected = draft.uses.workflows.length + draft.uses.starters.length;

@@ -315,6 +315,8 @@ def _participant(path: Path) -> dict[str, Any]:
     if not meta.get("initials"):
         meta["initials"] = "".join(w[0] for w in str(meta["name"]).split()[:2]).upper()
     meta["stand_in"] = bool(meta.get("stand_in", meta["kind"] == "person"))
+    if isinstance(meta.get("skills"), str):
+        meta["skills"] = [s.strip() for s in meta["skills"].split(",") if s.strip()]
     meta["brief"] = body.strip()
     return meta
 
@@ -367,7 +369,7 @@ has called you in. Aviator passes your replies on word for word, shown under you
 ## Who you are
 
 {brief}
-
+{skills}
 ## How this works
 
 {conversation}- Stay in character as {name} for the whole session. Speak in the first person.
@@ -408,8 +410,14 @@ def opening_message(person: dict[str, Any], ask: str, conversation: str | None =
             f"  `sys_session_get_history` (conversation_id `{conversation}`), before anything else, and read it\n"
             "  again each time you are asked something new, because it will have moved on.\n"
         )
+    skills = ""
+    if person.get("skills"):
+        names = ", ".join(f"`{s}`" for s in person["skills"])
+        skills = (f"\n## Skills you bring\n\nUse these skills when they fit what you are asked: {names}. "
+                  "Read a skill's SKILL.md before you rely on it, and answer from what it says.\n")
     return OPENING.format(name=person["name"], role=person.get("role", ""), id=person["id"], brief=person["brief"],
-                          standin=standin, conversation=seen, ask=ask or "Introduce yourself in one sentence and wait.")
+                          standin=standin, conversation=seen, skills=skills,
+                          ask=ask or "Introduce yourself in one sentence and wait.")
 
 
 def cmd_who(args: argparse.Namespace) -> None:
@@ -1366,7 +1374,29 @@ def draft_info(workspace: Path, pid: str, skills: Path | None = None) -> dict[st
                 problems.append(f"this draft: missing {key.replace('_', ' ')}")
         if action == "new" and live is not None:
             problems.append(f"someone called {pid} is already on the roster; pick another name")
-        unchanged = live is not None and live.strip() == text.strip()
+    cast_changes = _cast_changes(workspace, pid, meta, uses) if action != "remove" else []
+    if action != "remove":
+        name = (person or {}).get("name") or pid
+        for change in cast_changes:
+            if change["kind"] == "scenarios" and change["change"] == "remove" and _speaks_in(workspace, change["id"], name):
+                problems.append(f"{name} speaks in the scenario {change['id']}'s script; change the script before taking them out")
+        for change in cast_changes:
+            if change["kind"] == "workflows" and change["change"] == "remove":
+                for sid, folder in list_scenarios(workspace).items():
+                    data = _read_json(folder / SCENARIO_FILE)
+                    if data.get("workflow") == change["id"] and pid in (data.get("participants") or []) \
+                            and not any(c == {"kind": "scenarios", "id": sid, "change": "remove"} for c in cast_changes):
+                        problems.append(f"the scenario {sid} of {change['id']} casts {name}; take them out of it too")
+        workflows = list_workflows(workspace)
+        added_wf = {c["id"] for c in cast_changes if c["kind"] == "workflows" and c["change"] == "add"}
+        for change in cast_changes:
+            if change["kind"] == "scenarios" and change["change"] == "add":
+                wid = _read_json(list_scenarios(workspace)[change["id"]] / SCENARIO_FILE).get("workflow")
+                folder = workflows.get(str(wid))
+                allowed = _read_json(workflow_manifest_path(folder)).get("participants") if folder else None
+                if allowed and pid not in allowed and wid not in added_wf:
+                    problems.append(f"the scenario {change['id']} runs {wid}, which does not call on {name}; tick {wid} too")
+        unchanged = live is not None and live.strip() == (text or "").strip() and not cast_changes
         if unchanged:
             problems.append("nothing has changed yet")
     return {
@@ -1383,6 +1413,10 @@ def draft_info(workspace: Path, pid: str, skills: Path | None = None) -> dict[st
         "live": live,
         "problems": problems,
         "uses": uses,
+        "cast": {k: sorted(set(uses.get(k, [])) - {c["id"] for c in cast_changes if c["kind"] == k and c["change"] == "remove"}
+                          | {c["id"] for c in cast_changes if c["kind"] == k and c["change"] == "add"}) for k in CAST_KINDS},
+        "cast_changes": cast_changes,
+        "aviator": meta.get("aviator"),
         "path": f"{HANGAR_DIR}/drafts/people/{pid}.md",
         "target": f"{PARTICIPANTS_DIR}/{pid}.md",
     }
@@ -1437,8 +1471,17 @@ def start_draft(workspace: Path, *, pid: str | None = None, name: str | None = N
     return new_id
 
 
-def edit_draft(workspace: Path, pid: str, fields: dict[str, Any], brief: str | None = None, step: str | None = None) -> None:
-    """Change fields of a draft. A person is always a stand-in; the id never changes."""
+CAST_KINDS = ("workflows", "scenarios", "starters")
+
+
+def edit_draft(workspace: Path, pid: str, fields: dict[str, Any], brief: str | None = None, step: str | None = None,
+               cast: dict[str, list[str]] | None = None, aviator: str | None = None) -> None:
+    """Change fields of a draft. A person is always a stand-in; the id never changes.
+
+    `cast` is where they should be called once published: the full list of
+    workflows, scenarios and starters for each kind given. `aviator` remembers
+    the builder session working on this draft.
+    """
     text_path, meta_path = _draft_paths(workspace, _checked_id(pid))
     info = _read_meta(meta_path)
     if not info:
@@ -1452,14 +1495,78 @@ def edit_draft(workspace: Path, pid: str, fields: dict[str, Any], brief: str | N
         raise PaError(f"kind must be one of {', '.join(PARTICIPANT_KINDS)}")
     if fields.get("backing") not in (None, *PARTICIPANT_BACKINGS):
         raise PaError(f"backing must be one of {', '.join(PARTICIPANT_BACKINGS)}")
+    if cast is not None:
+        known = {"workflows": set(list_workflows(workspace)), "scenarios": set(list_scenarios(workspace)),
+                 "starters": {p.stem for p in (workspace / "templates" / "sessions").glob("*.md")}}
+        wanted = dict(info.get("cast") or {})
+        for kind, ids in cast.items():
+            if kind not in CAST_KINDS:
+                raise PaError(f"cast is by {', '.join(CAST_KINDS)}, not {kind}")
+            bad = sorted(set(ids) - known[kind])
+            if bad:
+                raise PaError(f"there is no {kind[:-1]} {', '.join(bad)}")
+            wanted[kind] = sorted(set(ids))
+        info["cast"] = wanted
+    if aviator is not None:
+        info["aviator"] = aviator
     person = _participant(text_path)
     meta = {**_meta_of(person), **fields}
     if meta.get("kind") == "person":
         meta["stand_in"] = True
     if "name" in fields and "initials" not in fields:
         meta["initials"] = "".join(w[0] for w in str(meta["name"]).split()[:2]).upper()
+    if isinstance(meta.get("skills"), str):
+        meta["skills"] = [s.strip() for s in meta["skills"].split(",") if s.strip()]
     _write_draft(workspace, pid, meta, person_text(meta, person["brief"] if brief is None else brief),
                  {**info, **({"step": step} if step else {})})
+
+
+def _cast_changes(workspace: Path, pid: str, info: dict[str, Any], uses: dict[str, list[str]]) -> list[dict[str, str]]:
+    changes = []
+    for kind, ids in (info.get("cast") or {}).items():
+        now = set(uses.get(kind, []))
+        changes += [{"kind": kind, "id": i, "change": "add"} for i in sorted(set(ids) - now)]
+        changes += [{"kind": kind, "id": i, "change": "remove"} for i in sorted(now - set(ids))]
+    return changes
+
+
+def _speaks_in(workspace: Path, sid: str, name: str) -> bool:
+    folder = list_scenarios(workspace).get(sid)
+    if not folder:
+        return False
+    rel = _read_json(folder / SCENARIO_FILE).get("script") or "script.md"
+    path = folder / rel
+    return path.is_file() and re.search(rf"^\*\*{re.escape(name)}:\*\*", path.read_text(encoding="utf-8"), re.M) is not None
+
+
+def _apply_cast(workspace: Path, pid: str, changes: list[dict[str, str]]) -> None:
+    """Add or take someone out of workflows, scenarios and starters, as the draft asks."""
+    workflows, scenarios = list_workflows(workspace), list_scenarios(workspace)
+    for change in changes:
+        kind, cid, add = change["kind"], change["id"], change["change"] == "add"
+        if kind in ("workflows", "scenarios"):
+            path = workflow_manifest_path(workflows[cid]) if kind == "workflows" else scenarios[cid] / SCENARIO_FILE
+            data = _read_json(path)
+            ids = [i for i in data.get("participants") or [] if i != pid]
+            if add:
+                ids.append(pid)
+            data["participants"] = ids
+            _write_atomic(path, json.dumps(data, indent=1, ensure_ascii=False) + "\n")
+        else:
+            path = workspace / "templates" / "sessions" / f"{cid}.md"
+            text = path.read_text(encoding="utf-8")
+            line = re.compile(r"(participants for this session:\s*)([^\n]*)", re.I)
+            found = line.search(text)
+            ids = [i.strip().rstrip(".") for i in found.group(2).split(",") if i.strip()] if found else []
+            ids = [i for i in ids if i != pid] + ([pid] if add else [])
+            new = ", ".join(ids) + "." if ids else ""
+            if found:
+                text = text[:found.start(2)] + new + text[found.end(2):]
+                if not ids:
+                    text = line.sub("", text, count=1).rstrip() + "\n"
+            elif ids:
+                text = text.rstrip() + f"\n\nParticipants for this session: {new}\n"
+            _write_atomic(path, text)
 
 
 def discard_draft(workspace: Path, pid: str) -> None:
@@ -1495,6 +1602,7 @@ def publish_draft(workspace: Path, pid: str, summary: str = "", skills: Path | N
     else:
         live_path.parent.mkdir(parents=True, exist_ok=True)
         _write_atomic(live_path, info["text"])
+        _apply_cast(workspace, pid, info["cast_changes"])
     discard_draft(workspace, pid)
     return {"id": pid, "action": info["action"], "kept": kept}
 
@@ -1543,8 +1651,13 @@ def cmd_draft(args: argparse.Namespace) -> None:
         if isinstance(fields.get(key), str):
             fields[key] = fields[key].lower() in ("true", "yes", "1")
     brief = Path(args.brief_file).read_text(encoding="utf-8") if args.brief_file else args.brief
-    if fields or brief is not None or args.step:
-        edit_draft(workspace, pid, fields, brief, args.step)
+    cast = None
+    for item in args.cast:
+        kind, _, ids = item.partition("=")
+        cast = cast or {}
+        cast[kind.strip()] = [i.strip() for i in ids.split(",") if i.strip()]
+    if fields or brief is not None or args.step or cast is not None:
+        edit_draft(workspace, pid, fields, brief, args.step, cast)
     info = draft_info(workspace, pid)
     if args.json:
         print(json.dumps({k: v for k, v in info.items() if k not in ("live",)}, indent=1, ensure_ascii=False))
@@ -1678,6 +1791,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--brief", help="replace the brief or script")
     p.add_argument("--brief-file", help="replace the brief or script with this file")
     p.add_argument("--step", help="which step of the guided build the draft is at, for the Hangar")
+    p.add_argument("--cast", action="append", default=[],
+                   help="where they are called once published: workflows=a,b or scenarios=a or starters=a (the full list)")
     p.add_argument("--discard", action="store_true")
     p.add_argument("--list", action="store_true", help="list every draft as JSON")
     p.add_argument("--json", action="store_true")

@@ -178,8 +178,8 @@ you ask a participant to work on a document, say so in what you ask. See the
 `participants/` is the one roster for the whole workspace. A demo or a session
 can narrow it:
 
-- **A workflow.** A scenario's `scenario.json` may list `participants`, the ids
-  that may take part in it. While you are running that workflow, use
+- **A workflow.** A workflow's `workflow.json` (and a scenario's
+  `scenario.json`) may list `participants`, the ids that may take part in it. While you are running that workflow, use
   `$PA who --scenario <scenario folder>` instead of `$PA who`.
 - **A session.** If the user's opening message names who is available
   ("Participants for this session: risk-review, mara-okafor"), that is the

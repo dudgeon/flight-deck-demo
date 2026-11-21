@@ -226,8 +226,10 @@ The Session panel (Outputs, Context, People and agents) is
 `workspace/participants/` is the one roster of agents and people the session's
 agent can call into a conversation. Add a file to add someone, or ask the
 agent to; `workspace/participants/README.md` is the guide for people and the
-`participants` skill is the guide for the agent. A scenario narrows the roster
-by listing ids under `participants` in its `scenario.json`. `backing: session` plays them in
+`participants` skill is the guide for the agent. A workflow or scenario narrows the roster
+by listing ids under `participants` in its `workflow.json` or `scenario.json`
+(the Hangar's person page sets these, D-65). A person's `skills` field names
+skills the session playing them is told to use. `backing: session` plays them in
 a background session from their brief, `backing: script` answers from text in
 the file. Their turns are drawn by `web/src/components/chat/ParticipantTurn.tsx`
 from a fenced block described in `web/src/lib/participantTurn.ts`.

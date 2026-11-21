@@ -522,6 +522,42 @@ def start_person_draft(pid: str, remove: bool = False) -> dict[str, Any]:
     return draft_detail(pid)
 
 
+_EDITABLE = ("name", "kind", "role", "initials", "backing", "call_for", "skills")
+
+
+def edit_person_draft(pid: str, body: dict[str, Any]) -> dict[str, Any]:
+    """Save edits made on the Hangar page into the draft (fields, brief, cast)."""
+    pa = _pa()
+    fields = {k: body["fields"][k] for k in _EDITABLE if k in (body.get("fields") or {})}
+    brief = body.get("brief")
+    cast = body.get("cast")
+    if brief is not None and not isinstance(brief, str):
+        raise HTTPException(status_code=422, detail="brief must be text")
+    if cast is not None and not (
+        isinstance(cast, dict)
+        and all(isinstance(v, list) and all(isinstance(i, str) for i in v) for v in cast.values())
+    ):
+        raise HTTPException(status_code=422, detail="cast must map a kind to a list of ids")
+    aviator = body.get("aviator")
+    _pa_call(
+        pa.edit_draft,
+        workspace_dir(),
+        pid,
+        fields,
+        brief,
+        None,
+        cast,
+        str(aviator) if aviator else None,
+    )
+    return draft_detail(pid)
+
+
+def new_person_draft(name: str, duplicate_of: str | None = None) -> dict[str, Any]:
+    pa = _pa()
+    pid = _pa_call(pa.start_draft, workspace_dir(), name=name, duplicate_of=duplicate_of)
+    return draft_detail(pid)
+
+
 def publish_person(pid: str, summary: str) -> dict[str, Any]:
     pa = _pa()
     return _pa_call(pa.publish_draft, workspace_dir(), pid, summary, slim_skills_dir())
@@ -649,6 +685,20 @@ def create_slim_hangar_router(*, auth_provider: AuthProvider | None = None) -> A
     ) -> dict[str, Any]:
         require_user(request, auth_provider)
         return start_person_draft(pid, remove=bool((body or {}).get("remove")))
+
+    @router.patch("/slim/hangar/drafts/person/{pid}")
+    async def patch_draft(request: Request, pid: str, body: dict[str, Any]) -> dict[str, Any]:
+        require_user(request, auth_provider)
+        return edit_person_draft(pid, body)
+
+    @router.post("/slim/hangar/drafts/person")
+    async def post_new_draft(request: Request, body: dict[str, Any]) -> dict[str, Any]:
+        require_user(request, auth_provider)
+        name = str(body.get("name") or "").strip()
+        if not name:
+            raise HTTPException(status_code=422, detail="a new person needs a name")
+        duplicate = body.get("duplicate_of")
+        return new_person_draft(name[:80], str(duplicate) if duplicate else None)
 
     @router.delete("/slim/hangar/drafts/person/{pid}")
     async def delete_draft(request: Request, pid: str) -> dict[str, Any]:

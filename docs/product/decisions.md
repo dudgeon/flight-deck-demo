@@ -312,6 +312,45 @@ dedicated trial strip from the mockup can come later without changing files.*
 project (created at startup next to Workspace), so building never mixes into
 the flying session list. *Matches D-39's two modes without a second app.*
 
+**D-63 · 2026-11-21 · Geoff asked, Claude chose.** In the Hangar, a person's
+page *is* their editor. Edit starts a draft and stays on the same page; the
+name, role, kind, how they answer, call-for line, brief, skills and where they
+are called are form fields that save to the draft as you type (about half a
+second after you stop). Nothing goes live until Publish. *Geoff found that
+Edit threw him back into flying mode and a new session ("clunky, opaque,
+mysterious"); simple values like the brief should just be editable.*
+Walkthrough: https://claude.ai/artifact/3w9xwsyNFs5P7zA4sT5dSt
+
+**D-64 · 2026-11-21 · Claude.** Aviator helps from a pop-over at the bottom
+right of the Hangar page, which can be pinned as a column, instead of opening
+a session in flying mode. It is a real session in the Hangar project working
+on the open draft; its id is kept on the draft so reopening the page finds the
+same conversation, and its edits show on the page as it works. "Try them"
+lives in the same pop-over. This replaces D-58's jump to a builder session.
+*Keeps the person in the Hangar while still letting Aviator make several
+changes at once.*
+
+**D-65 · 2026-11-21 · Claude.** Where someone can be called is set on their
+own page with tick boxes for workflows, scenarios and starters. Publish writes
+those changes into each `workflow.json` and `scenario.json` cast and each
+starter's participant line. Checks block taking someone out of a scenario
+whose script has them speak, and warn when a scenario is ticked but its
+workflow is not. *Casting was the hidden step in slice 2 (the skill told you
+which file to change); it belongs with the person.*
+
+**D-66 · 2026-11-21 · Claude.** A person can bring skills: the `skills` field
+in their roster file, picked from the Skills shelf. The session that plays
+them is told to use those skills (a "Skills you bring" section in its opening
+message). *Geoff could not see how to give a character skills.*
+
+**D-67 · 2026-11-21 · Claude.** D-42 is built: a workflow's manifest is now
+`skills/<id>/workflow.json` (no fixtures or script), and each scenario is
+`workspace/scenarios/<id>/` with `scenario.json` (naming its `workflow`, the
+cast, fixtures and script), `fixtures/` and `script.md`. The seven demos keep
+their ids. `pa` still reads the old one-folder layout. *Lets one workflow have
+several scenarios, and lets the scenario builder (slice 3) edit demo data
+without touching the workflow.*
+
 ## Open
 
 - Progressive complexity (from D-54): how a workflow shows less at first and
