@@ -280,6 +280,8 @@ export function useBrowserAgentRelay(conversationId: string | null | undefined):
     let cancelled = false;
     const handler = async (evt: BrowserActionRequestEvent, sourceConversationId: string | null) => {
       if (!sourceConversationId) return; // no delivering session — nothing to target
+      // omnigent-slim: canvas_* actions belong to the viewer frame (lib/canvasRelay.ts).
+      if (evt.action.startsWith("canvas_")) return;
       const desktop = getBrowserDesktop();
       if (!desktop) return; // no browser-capable shell — nothing to claim
       // Usually loaded already. Before the deadline: the server's wait starts

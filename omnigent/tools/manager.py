@@ -576,6 +576,11 @@ class ToolManager:
 
         self._tools[SysSessionRenameTool.name()] = SysSessionRenameTool()
         self._tools[UiOpenFileTool.name()] = UiOpenFileTool()
+        # omnigent-slim: tools that read and drive the artifact open in the canvas.
+        from omnigent.tools.builtins.canvas import CANVAS_TOOL_CLASSES
+
+        for _canvas_cls in CANVAS_TOOL_CLASSES:
+            self._tools[_canvas_cls.name()] = _canvas_cls()
 
     def _register_agent_mgmt_tools(self) -> None:
         """

@@ -334,6 +334,13 @@ _BUILTIN_REGISTRY: dict[str, _BuiltinFactory | None] = {
     "browser_screenshot": None,
     **dict.fromkeys(sorted(ADVANCED_BROWSER_TOOL_NAMES)),
     "ui_open_file": None,
+    # omnigent-slim: canvas tools, runner-dispatched like ui_open_file.
+    "canvas_read": None,
+    "canvas_click": None,
+    "canvas_type": None,
+    "canvas_set_content": None,
+    "canvas_press_key": None,
+    "canvas_eval": None,
 }
 
 # Hindsight long-term memory (optional ``hindsight`` extra). Registered only

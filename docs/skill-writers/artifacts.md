@@ -70,8 +70,47 @@ The library folder (`workspace/templates/` by default) holds:
 A template needs a `<title>` and `<meta name="description">`; the Library page
 lists it by those. See the repository README for the full format.
 
-## Checking an artifact works
+## Reading and operating the canvas (omnigent-slim)
 
-Claude can't see or click the viewer, and omnigent-slim has no browser tool. To
-check an artifact: read the code carefully, run any pure logic with a quick
-script (e.g. `node -e`), then ask the user to try it.
+Claude can see and drive the artifact open in the viewer with the `canvas_*`
+tools (MCP server `omnigent`, e.g. `mcp__omnigent__canvas_read`). They act on
+the frame the user is looking at, in their own browser tab, so the user watches
+each click happen.
+
+| Tool | Does |
+| --- | --- |
+| `canvas_read` | Returns the full live DOM (current input values included) and a PNG screenshot of the whole rendered page. `{"dom": false}` or `{"screenshot": false}` skips one; `{"selector": "#form"}` returns one element's DOM. |
+| `canvas_click` | Clicks by CSS selector (`{"selector": "#go"}`) or by visible text (`{"text": "7"}`); `index` picks among several matches. |
+| `canvas_type` | Types into an input, textarea, select or contenteditable, firing `input` and `change`. `clear: false` appends; `press_enter: true` presses Enter. |
+| `canvas_set_content` | Replaces any element's contents with `html` or `text` (for fields, sets the value). Changes the live page only, not the file. |
+| `canvas_press_key` | Sends keydown/keypress/keyup (`{"key": "Enter"}`) to the focused element or a selector. |
+| `canvas_eval` | Runs JavaScript in the frame and returns the JSON result (promises awaited). |
+
+The click, type, set-content and key tools return the page's visible text
+afterwards, so a skill can check the effect without a screenshot. Actions run
+one at a time in the order they were sent, so a batch of clicks is safe.
+
+Rules:
+
+- Open the file with `ui_open_file` first, as an HTML preview. With nothing
+  open (or the session not open in a browser tab) the tools fail at once with
+  "nothing is open in the canvas".
+- Don't use Claude in Chrome, computer use or any other browser for the
+  canvas: they open a different copy of the page that the user can't see.
+- Screenshots are drawn inside the frame from the DOM (an SVG
+  `foreignObject`), so they match the page closely but skip CSS pseudo-element
+  content and cross-origin images. Chrome and Edge support it; if a browser
+  refuses, `canvas_read` still returns the DOM and says why there's no image.
+- The tools need approval like any other tool unless the session's permission
+  mode allows them (Auto usually does).
+
+A good check after building an artifact: `canvas_read`, a couple of
+`canvas_click`s on the main controls, then `canvas_read` again.
+
+How it works: the runner sends each call through the server's action relay
+(`/v1/sessions/<id>/browser/action_request`, the same route Omnigent's desktop
+browser tools use, with `canvas_*` action names). The web UI tab showing that
+session's canvas claims it (`web/src/lib/canvasRelay.ts`) and posts it into the
+sandboxed frame, where the artifact bridge runs it
+(`web/src/lib/canvasFrameRuntime.ts`). Nothing leaves this machine and the frame
+keeps its sandbox and Content Security Policy.

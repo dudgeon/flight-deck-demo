@@ -185,7 +185,11 @@ Logs are in `~/.omnigent-slim/logs/`.
   `OMNIGENT_SLIM_CLAUDE_EFFORT` or `OMNIGENT_SLIM_CLAUDE_PERMISSION_MODE`
   before `./start.sh` to change that. Tool approvals appear in
   the web UI. The only pre-allowed tool is `ui_open_file` (shows a file in the
-  viewer); Claude may also read, but not change, the templates folder.
+  viewer); Claude may also read, but not change, the templates folder. The
+  `canvas_*` tools (read the canvas's DOM and a screenshot, click, type, set an
+  element's contents, run JavaScript in it) are not pre-allowed; they act only
+  inside the viewer's sandboxed frame in your browser tab
+  (see `docs/skill-writers/artifacts.md`).
 - **Project MCP servers are not auto-approved.** If a workspace has a
   `.mcp.json`, Claude asks in the session's terminal.
 - **Only Claude Code.** Other harnesses, cloud sandboxes, Databricks and

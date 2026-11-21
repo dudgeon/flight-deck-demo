@@ -145,6 +145,7 @@ from omnigent.tools.builtins.timer import (
     # schema advertises.
     validate_timer_set_args,
 )
+from omnigent.tools.builtins.canvas import CANVAS_TOOL_CLASSES, CANVAS_TOOL_NAMES
 from omnigent.tools.builtins.ui import OpenFileRequest, UiOpenFileTool
 from omnigent.tools.builtins.update_comment import UpdateCommentTool
 from omnigent.tools.builtins.upload_file import UploadFileTool, safe_resolve
@@ -365,7 +366,8 @@ _PROJECT_TOOLS = frozenset(
         SysProjectUpdateTool.name(),
     }
 )
-_UI_TOOLS = frozenset({UiOpenFileTool.name()})
+# omnigent-slim: ``canvas_*`` tools drive the artifact open in the web UI's viewer.
+_UI_TOOLS = frozenset({UiOpenFileTool.name()}) | CANVAS_TOOL_NAMES
 
 # The title bound the rename tool advertises to the LLM — read once from the
 # tool schema so the dispatcher can never drift from the published contract.
@@ -698,6 +700,7 @@ def build_native_relay_tool_schemas(spec: AgentSpec | None) -> list[_JsonObject]
             SysSessionUpdateTool,
             SysProjectUpdateTool,
             UiOpenFileTool,
+            *CANVAS_TOOL_CLASSES,  # omnigent-slim
             SysAgentGetTool,
             SysAgentListTool,
             SysAgentDownloadTool,
@@ -7405,6 +7408,77 @@ async def _open_file_via_rest(
         return json.dumps({"error": f"ui_open_file failed: {exc}"})
 
 
+# omnigent-slim: the canvas tools ride the server's claim-first action relay
+# (the same route as the desktop ``browser_*`` tools) with ``canvas_*`` action
+# names; the web UI tab showing the artifact claims and runs them in its frame.
+_CANVAS_NOT_OPEN_ERROR = (
+    "nothing is open in the canvas: open the artifact with ui_open_file first (as an HTML "
+    "preview), and make sure this session is open in the Omnigent web UI. Do not use Chrome "
+    "or another browser for the canvas."
+)
+
+
+async def _execute_canvas_tool(
+    tool_name: str,
+    args: _JsonObject,
+    *,
+    server_client: httpx.AsyncClient | None,
+    conversation_id: str | None,
+) -> str:
+    """Run one ``canvas_*`` action in the web UI's viewer frame and shape its result."""
+    if server_client is None or not conversation_id:
+        return json.dumps({"error": f"{tool_name} requires server access and a session id"})
+    try:
+        resp = await server_client.post(
+            f"{_session_url(conversation_id)}/browser/action_request",
+            json={"action": tool_name, "args": args},
+            timeout=_BROWSER_ACTION_TIMEOUT,
+        )
+    except httpx.ReadTimeout:
+        return json.dumps({"error": f"{tool_name} timed out waiting for the canvas"})
+    except (httpx.HTTPError, ValueError) as exc:
+        return json.dumps({"error": f"{tool_name} failed: {type(exc).__name__}: {exc}"})
+    if resp.status_code >= 400:
+        return json.dumps({"error": f"{tool_name} returned {resp.status_code}: {resp.text[:200]}"})
+    try:
+        result = resp.json()
+    except ValueError:
+        return resp.text
+    if not isinstance(result, dict):
+        return resp.text
+    error = result.get("error")
+    if result.get("ok") is not True:
+        if error == "no browser renderer is connected":
+            error = _CANVAS_NOT_OPEN_ERROR
+        elif isinstance(error, str) and "timed out" in error:
+            error = f"{tool_name} timed out waiting for the canvas (is the session still open?)"
+        return json.dumps({"error": error or f"{tool_name} failed"})
+    data = result.get("data") if isinstance(result.get("data"), dict) else {}
+    data_url = result.get("data_url")
+    image = None
+    if isinstance(data_url, str):
+        match = re.fullmatch(r"data:(image/[a-zA-Z0-9.+-]+);base64,([\s\S]+)", data_url)
+        if match is not None:
+            media_type, raw = match.groups()
+            canonical = native_image_payload(raw, media_type)
+            if canonical is not None:
+                image = (media_type, canonical)
+    # The DOM goes out as plain text, not JSON-escaped, so it reads like the page.
+    dom = data.pop("dom", None) if isinstance(data, dict) else None
+    text = json.dumps(data)
+    if isinstance(dom, str):
+        text = f"{text}\n\nDOM:\n{dom}"
+    if image is None:
+        return text
+    return encode_mcp_image_result(
+        [
+            {"type": "text", "text": text},
+            {"type": "image", "mimeType": image[0], "data": image[1]},
+        ],
+        is_error=False,
+    )
+
+
 async def _rename_current_session_via_rest(
     args: _JsonObject,
     conversation_id: str | None,
@@ -8338,6 +8412,10 @@ async def execute_tool(
                 publish_event=publish_event,
                 agent_spec=agent_spec,
                 runner_workspace=runner_workspace,
+            )
+        elif tool_name in CANVAS_TOOL_NAMES:  # omnigent-slim
+            output = await _execute_canvas_tool(
+                tool_name, args, server_client=server_client, conversation_id=conversation_id
             )
         elif tool_name in _UI_TOOLS:
             output = await _open_file_via_rest(args, conversation_id, server_client)

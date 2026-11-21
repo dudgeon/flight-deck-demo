@@ -1107,6 +1107,7 @@ export function CodeViewer({
         // A different file, or the same path in another conversation, starts at 100% zoom.
         key={`${conversationId}:${path}`}
         conversationId={conversationId}
+        path={path} // omnigent-slim: reported by the canvas tools
         scrollKey={conversationId && path ? `html-preview:${conversationId}:${path}` : null}
         content={content}
         truncated={truncated}

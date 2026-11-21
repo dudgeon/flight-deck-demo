@@ -29,6 +29,17 @@ To make one:
 
 To update an artifact, edit its JSON in place and call `ui_open_file` again.
 
+### Seeing and using the canvas
+
+You can read and operate the artifact open in the viewer yourself with the
+`canvas_*` tools: `canvas_read` (full live DOM and a screenshot),
+`canvas_click` (by CSS selector or visible text), `canvas_type`,
+`canvas_set_content` (replace any element's contents in the live page),
+`canvas_press_key` and `canvas_eval`. They act in the viewer the user is
+watching. Use them to check an artifact works before saying so, and whenever the
+user asks you to use what's on the canvas. Never use Claude in Chrome or any
+other browser for the canvas.
+
 ### Talking back from an artifact
 
 Inside the viewer every artifact has `window.omnigent.prompt(text)`. It puts

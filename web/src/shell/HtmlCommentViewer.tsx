@@ -10,6 +10,7 @@
 // trust model.
 
 import { handleArtifactMessage, injectArtifactBridge } from "@/lib/artifactBridge";
+import { handleCanvasResult, registerCanvasFrame } from "@/lib/canvasRelay";
 import { createPortal } from "react-dom";
 import { ADD_COMMENT_BUTTON_CLASS_NAME } from "./addCommentButtonStyles";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -46,6 +47,8 @@ const ZOOM_BADGE_MS = 1_500;
 
 interface HtmlCommentViewerProps {
   conversationId: string;
+  /** omnigent-slim: workspace path of the file, reported by the canvas tools. */
+  path?: string | null;
   /** Cache key for the preview's scroll offset (null disables persistence). */
   scrollKey: string | null;
   /** Raw HTML source — rendered in the iframe and searched for comment anchors. */
@@ -95,6 +98,7 @@ function activePayload(content: string, sel: ActiveSelection | null) {
 
 export function HtmlCommentViewer({
   conversationId,
+  path = null,
   scrollKey,
   content,
   truncated,
@@ -133,11 +137,17 @@ export function HtmlCommentViewer({
     const onMessage = (event: MessageEvent) => {
       const frame = iframeRef.current?.contentWindow;
       if (!frame || event.source !== frame) return;
+      if (handleCanvasResult(event.data)) return;
       handleArtifactMessage(event.data);
     };
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
   }, []);
+  // omnigent-slim: this frame is the session's canvas for the canvas_* tools.
+  useEffect(() => {
+    if (!conversationId) return;
+    return registerCanvasFrame(conversationId, () => iframeRef.current?.contentWindow, path);
+  }, [conversationId, path]);
   const portRef = useRef<MessagePort | null>(null);
   const channelRef = useRef<MessageChannel | null>(null);
   const readyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

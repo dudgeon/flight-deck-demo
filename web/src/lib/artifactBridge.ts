@@ -5,6 +5,11 @@
 //
 // The iframe is sandboxed with an opaque origin, so postMessage is the only way
 // out; the host accepts messages only from the frame it rendered.
+//
+// The same runtime answers the canvas tools (canvas_read, canvas_click, ...):
+// see canvasFrameRuntime.ts and canvasRelay.ts.
+
+import { CANVAS_FRAME_RUNTIME } from "./canvasFrameRuntime";
 
 /** Tag on every message an artifact posts to the host. */
 export const ARTIFACT_BRIDGE_SOURCE = "omnigent-slim-artifact";
@@ -21,9 +26,10 @@ const MAX_PROMPT_CHARS = 20_000;
 
 const RUNTIME = `<script data-omnigent-artifact-bridge>(function () {
   if (window.omnigent) return;
+  var SOURCE = ${JSON.stringify(ARTIFACT_BRIDGE_SOURCE)};
   function post(type, text) {
     window.parent.postMessage(
-      { source: ${JSON.stringify(ARTIFACT_BRIDGE_SOURCE)}, type: type, text: String(text == null ? "" : text) },
+      { source: SOURCE, type: type, text: String(text == null ? "" : text) },
       "*"
     );
   }
@@ -31,6 +37,7 @@ const RUNTIME = `<script data-omnigent-artifact-bridge>(function () {
     /** Put text in the session composer for the user to review and send. */
     prompt: function (text) { post("prompt", text); }
   };
+${CANVAS_FRAME_RUNTIME}
 })();</script>`;
 
 /** Insert the `window.omnigent` runtime at the top of an artifact's HTML. */
