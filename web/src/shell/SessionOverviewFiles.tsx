@@ -6,6 +6,9 @@
 //   workspace's `context/` folder. Tick some and "Add to message" writes file
 //   mentions into the composer; nothing is sent until the user presses Send.
 //
+// - Workflow: where a structured workflow is, i.e. one card per small JSON
+//   file in the workspace's `progress/` folder (written by `pa flow`): its
+//   steps, the current one, and how many items are done.
 // - People and agents: who the agent can call into the conversation, i.e. the
 //   files in the workspace's `participants/` folder. Click one and a request
 //   to check in with them lands in the composer.
@@ -27,6 +30,7 @@ import { useFileViewer } from "./FileViewerContext";
 export const OUTPUTS_FOLDER = "artifacts";
 export const CONTEXT_FOLDER = "context";
 export const PARTICIPANTS_FOLDER = "participants";
+export const PROGRESS_FOLDER = "progress";
 
 const MAX_ENTRIES = 200;
 const POLL_MS = 5_000;
@@ -237,6 +241,191 @@ function Context({ sessionId }: { sessionId: string }) {
   );
 }
 
+/** What a `progress/*.json` file says about one workflow. */
+export interface WorkflowProgress {
+  path: string;
+  workflow: string;
+  subject: string;
+  steps: string[];
+  /** 1-based; past the last step means the workflow is finished. */
+  current: number;
+  note: string;
+  counts: { done: number; total: number; noun: string; label: string; waiting: number } | null;
+}
+
+/**
+ * Read a progress file's text.
+ *
+ * :param path: Workspace path of the file, e.g. ``"progress/allowances--document-review.json"``.
+ * :param text: Its JSON text.
+ * :returns: The progress, or ``null`` when the text is not a workflow with steps.
+ */
+export function parseWorkflowProgress(path: string, text: string): WorkflowProgress | null {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(text);
+  } catch {
+    return null;
+  }
+  if (typeof raw !== "object" || raw === null) return null;
+  const data = raw as Record<string, unknown>;
+  const steps = Array.isArray(data.steps)
+    ? data.steps.filter((step): step is string => typeof step === "string").slice(0, 12)
+    : [];
+  if (steps.length === 0) return null;
+  const label = (value: unknown) => (typeof value === "string" ? value.slice(0, 120) : "");
+  const count = (value: unknown) =>
+    typeof value === "number" && Number.isFinite(value) ? Math.max(0, Math.round(value)) : 0;
+  const rawCounts =
+    typeof data.counts === "object" && data.counts !== null
+      ? (data.counts as Record<string, unknown>)
+      : null;
+  return {
+    path,
+    workflow: label(data.workflow) || "Workflow",
+    subject: label(data.subject),
+    steps,
+    current: Math.min(steps.length + 1, Math.max(1, count(data.current) || 1)),
+    note: label(data.note),
+    counts:
+      rawCounts && count(rawCounts.total) > 0
+        ? {
+            done: Math.min(count(rawCounts.done), count(rawCounts.total)),
+            total: count(rawCounts.total),
+            noun: label(rawCounts.noun) || "items",
+            label: label(rawCounts.label) || "done",
+            waiting: count(rawCounts.waiting),
+          }
+        : null,
+  };
+}
+
+/** Workflows this session has moved, most recently moved first. */
+function useWorkflows(sessionId: string): WorkflowProgress[] {
+  const { session } = useSession(sessionId);
+  const since = session?.createdAt ?? 0;
+  const files = useFolderFiles(sessionId, PROGRESS_FOLDER).filter(
+    (file) => file.name.endsWith(".json") && (file.modified_at ?? 0) >= since,
+  );
+  const key = files.map((file) => `${file.path}:${file.modified_at ?? 0}`).join("|");
+  const { data } = useQuery({
+    queryKey: ["slim-session-workflows", sessionId, key],
+    queryFn: async ({ signal }) => {
+      const entries = await Promise.all(
+        files.map(async (file) => {
+          try {
+            const content = await workspaceSidebarSource().readFile(sessionId, file.path, signal);
+            const text = fileContentText(content);
+            return text === null ? null : parseWorkflowProgress(file.path, text);
+          } catch {
+            return null;
+          }
+        }),
+      );
+      return entries.filter((entry): entry is WorkflowProgress => entry !== null);
+    },
+    enabled: files.length > 0,
+    // The folder listing only changes when a file's time does; keep the last cards meanwhile.
+    placeholderData: (previous) => previous,
+    retry: false,
+  });
+  return files.length > 0 ? (data ?? []) : [];
+}
+
+function WorkflowCard({ flow }: { flow: WorkflowProgress }) {
+  const finished = flow.current > flow.steps.length;
+  const counts = flow.counts;
+  return (
+    <div className="flex flex-col gap-1.5" data-testid="session-workflow">
+      <p className="leading-tight">
+        <span className="font-medium">{flow.workflow}</span>
+        {flow.subject && <span className="text-muted-foreground"> · {flow.subject}</span>}
+      </p>
+      <ol className="flex flex-col gap-0.5">
+        {flow.steps.map((step, index) => {
+          const number = index + 1;
+          const state = number < flow.current ? "done" : number === flow.current ? "current" : "todo";
+          return (
+            <li
+              key={step}
+              data-state={state}
+              aria-current={state === "current" ? "step" : undefined}
+              className="flex items-baseline gap-2"
+            >
+              <span
+                aria-hidden="true"
+                className={
+                  state === "done"
+                    ? "w-4 shrink-0 text-center text-emerald-600"
+                    : state === "current"
+                      ? "w-4 shrink-0 text-center font-mono text-xs font-bold"
+                      : "w-4 shrink-0 text-center font-mono text-xs text-muted-foreground"
+                }
+              >
+                {state === "done" ? "✓" : number}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span
+                  className={
+                    state === "current"
+                      ? "font-medium"
+                      : state === "done"
+                        ? "text-muted-foreground"
+                        : "text-muted-foreground/80"
+                  }
+                >
+                  {step}
+                </span>
+                {state === "current" && flow.note && (
+                  <span className="block text-xs text-muted-foreground">{flow.note}</span>
+                )}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+      {counts && (
+        <div className="flex flex-col gap-1">
+          <div
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={counts.total}
+            aria-valuenow={counts.done}
+            aria-label={`${counts.done} of ${counts.total} ${counts.noun} ${counts.label}`}
+            className="h-1.5 overflow-hidden rounded-full bg-muted"
+          >
+            <div
+              className="h-full rounded-full bg-emerald-600"
+              style={{ width: `${(counts.done / counts.total) * 100}%` }}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {counts.done} of {counts.total} {counts.noun} {counts.label}
+            {counts.waiting > 0 && ` · ${counts.waiting} waiting on you`}
+            {finished && " · finished"}
+          </p>
+        </div>
+      )}
+      {!counts && finished && <p className="text-xs text-muted-foreground">Finished</p>}
+    </div>
+  );
+}
+
+/** Where each structured workflow of this session is. Hidden when there is none. */
+function Workflows({ sessionId }: { sessionId: string }) {
+  const flows = useWorkflows(sessionId);
+  if (flows.length === 0) return null;
+  return (
+    <Section title="Workflow">
+      <div className="flex flex-col gap-3">
+        {flows.map((flow) => (
+          <WorkflowCard key={flow.path} flow={flow} />
+        ))}
+      </div>
+    </Section>
+  );
+}
+
 /** The roster: one entry per readable file in `participants/`, by name. */
 function useRoster(sessionId: string): RosterEntry[] {
   const files = useFolderFiles(sessionId, PARTICIPANTS_FOLDER).filter(
@@ -314,6 +503,7 @@ function Roster({ sessionId }: { sessionId: string }) {
 export function SessionOverviewFiles({ sessionId }: { sessionId: string }) {
   return (
     <>
+      <Workflows sessionId={sessionId} />
       <Outputs sessionId={sessionId} />
       <Context sessionId={sessionId} />
       <Roster sessionId={sessionId} />

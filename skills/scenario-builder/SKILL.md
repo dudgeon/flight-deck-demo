@@ -74,6 +74,11 @@ Do not ask about field names, colors or layout. Propose them and show them.
    (view-kit skill, "Building a new view").
 5. Write `SKILL.md` for the live agent. It must say what to do for every
    action id in the views.
+   Give `scenario.json` a `steps` list (three to six short names for the
+   stages of the work, as the person would say them) and a `progress` entry
+   that says which records count and which statuses mean done. Have `SKILL.md`
+   call `$PA flow` at each stage, as the reference scenarios do, so the
+   Session panel shows where the work is.
 6. Write `script.json`. Step kinds: `pm` and `agent` (chat lines), `task` (the
    progress line), `doc` (open a document), `canvas` and `widget` (show a
    view), `reveal`, `status`, `restore` and `patch` (make data appear or

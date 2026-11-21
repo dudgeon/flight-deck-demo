@@ -68,6 +68,12 @@ Context. Ticking context files adds `@context/...` mentions to the message box.
 A skill should write what it makes to `artifacts/` and look for the user's
 documents in `context/`.
 
+A Workflow card appears in the panel for each small JSON file in the
+workspace's `progress/` folder: `{"workflow", "subject", "steps": [...],
+"current": <1-based; past the end means done>, "note", "counts": {"done",
+"total", "noun", "label", "waiting"}}`. `pa flow` writes it from a scenario's
+`steps` and keeps the counts current as records change.
+
 ## This session
 
 | Tool | Use it to |

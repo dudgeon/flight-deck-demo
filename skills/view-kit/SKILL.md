@@ -40,6 +40,7 @@ PA="python3 <this skill's folder>/scripts/pa.py"     # standard library only
 | `$PA get data/x.json [ids] [--where ...] [--fields a,b] [--count-by field]` | Read records, one JSON object per line. Read this instead of the whole file. |
 | `$PA render spec.json --data data/x.json --out artifacts/x.html` | Draw a view. It is then redrawn on every `add` and `set`. `--host chat` for the compact form, `--record R-01` for a detail view. |
 | `$PA refresh data/x.json` | Redraw every view of a dataset. |
+| `$PA flow <data> --scenario <folder>`, then `--step <n or name> [--note "..."]`, `--done` | Record which step of a workflow the work is at. The Session panel draws it as a card with the steps and how many items are done. |
 | `$PA who [id]` | List the participants in `participants/` (other agents and people), or show one. See the `participants` skill. |
 | `$PA check <scenario folder>` | Validate a scenario's specs, schemas and fixtures. |
 | `$PA preview <scenario folder> --out demo.html` | Build a standalone click-through of a scenario from its fixtures. |

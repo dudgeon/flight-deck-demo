@@ -45,6 +45,20 @@ Use `status: needs-you` with a `question` only when the user alone can settle
 it. Open `artifacts/<slug>-review.html` with `ui_open_file`, say in two lines
 what you found, and ask what needs asking.
 
+
+## Show where the work is
+
+The Session panel shows this workflow's steps and how far along it is. Tell it
+as you go. Right after `init`:
+
+```bash
+$PA flow data/<slug>-review.json --scenario SKILL_DIR
+```
+
+Then `$PA flow data/<slug>-review.json --step <number> --note "<what is happening, a few words>"`
+when you move to another step, and `--done` when the workflow is finished.
+The steps: 1 first read, 2 call in others, 3 their reviews, 4 the user's decisions, 5 wrap up. The count of items done updates itself.
+
 ## 3. Ask who else should look
 
 Run `$PA who`. If the user already named people, call them. Otherwise suggest

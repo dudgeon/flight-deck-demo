@@ -7,6 +7,8 @@
   { "name": "platform map", "kind": "markdown", "hint": "What the platform offers. Looks in context/ first." }
  ],
  "dataset": { "path": "data/{slug}.json", "adds": ["dependency", "option"], "status_field": "explore_status" },
+ "steps": ["Set up the board", "Explore each requirement", "Your review", "Summary"],
+ "progress": {"records": {"type": "requirement"}, "field": "explore_status", "done": ["reviewed"], "noun": "requirements", "label": "reviewed"},
  "schemas": "schemas/records.json",
  "views": { "board": "views/board.json", "summary": "views/summary.json", "review": "views/review-card.json" },
  "work_products": [ { "name": "Dependency board", "view": "board", "out": "artifacts/{slug}-dependencies.html" } ],

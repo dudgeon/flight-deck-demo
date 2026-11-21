@@ -101,6 +101,92 @@ def _load(path: Path) -> dict[str, Any]:
 def _save(path: Path, data: dict[str, Any]) -> None:
     data["updated"] = _now()
     _write_atomic(path, json.dumps(data, indent=1, ensure_ascii=False) + "\n")
+    if data.get("flow"):
+        _write_flow(data)
+
+
+# ---------------------------------------------------------------- workflow progress
+
+FLOW_DIR = "progress"
+
+
+def _flow_counts(data: dict[str, Any], count: dict[str, Any] | None) -> dict[str, Any] | None:
+    """How many of the workflow's items are done, e.g. 12 of 20 requirements reviewed."""
+    if not count:
+        return None
+    field = count.get("field", "status")
+    done_values = [count["done"]] if isinstance(count.get("done"), str) else list(count.get("done") or ["reviewed"])
+    items = [r for r in data.get("records", []) if _matches(r, count.get("records") or {})]
+    by: dict[str, int] = {}
+    for record in items:
+        key = str(record.get(field) or "none")
+        by[key] = by.get(key, 0) + 1
+    return {
+        "label": count.get("label", "reviewed"),
+        "noun": count.get("noun", "items"),
+        "done": sum(n for k, n in by.items() if k in done_values),
+        "total": len(items),
+        "waiting": by.get("needs-you", 0),
+    }
+
+
+def _write_flow(data: dict[str, Any]) -> None:
+    """Write the small file the Session panel reads to draw the workflow card."""
+    flow = data["flow"]
+    out = {
+        "workflow": flow.get("workflow", ""),
+        "scenario": flow.get("scenario", ""),
+        "subject": data.get("title", ""),
+        "steps": flow.get("steps", []),
+        "current": flow.get("current", 1),
+        "note": flow.get("note", ""),
+        "counts": _flow_counts(data, flow.get("count")),
+        "updated": _now(),
+    }
+    _write_atomic(Path(flow["file"]), json.dumps(out, indent=1, ensure_ascii=False) + "\n")
+
+
+def cmd_flow(args: argparse.Namespace) -> None:
+    path = Path(args.data)
+    with _locked(path):
+        data = _load(path)
+        flow = data.get("flow") or {}
+        if args.scenario:
+            manifest = _read_json(Path(args.scenario) / "scenario.json")
+            steps = manifest.get("steps") or []
+            if not steps:
+                raise PaError(f"{args.scenario}/scenario.json has no steps")
+            flow.update({
+                "workflow": manifest.get("title", ""), "scenario": manifest.get("scenario", ""),
+                "steps": steps, "count": manifest.get("progress"),
+                "file": f"{FLOW_DIR}/{path.stem}--{manifest.get('scenario', 'flow')}.json",
+            })
+            flow.setdefault("current", 1)
+        if not flow.get("steps"):
+            raise PaError("no workflow on this dataset yet; pass --scenario <scenario folder> once")
+        total = len(flow["steps"])
+        if args.done:
+            flow["current"] = total + 1
+        elif args.step is not None:
+            step = args.step
+            if step.isdigit():
+                number = int(step)
+            else:
+                found = [i for i, label in enumerate(flow["steps"], 1) if step.lower() in label.lower()]
+                if len(found) != 1:
+                    raise PaError(f"no single step matches {step!r}; steps: {', '.join(flow['steps'])}")
+                number = found[0]
+            if not 1 <= number <= total:
+                raise PaError(f"step must be 1 to {total}")
+            flow["current"] = number
+        if args.note is not None:
+            flow["note"] = args.note
+        elif args.step is not None or args.done:
+            flow["note"] = ""
+        data["flow"] = flow
+        _save(path, data)
+    where = "done" if flow["current"] > total else f"step {flow['current']} of {total}: {flow['steps'][flow['current'] - 1]}"
+    print(f"{flow['workflow']}: {where}")
 
 
 # ---------------------------------------------------------------- values
@@ -170,7 +256,7 @@ def _escape(text: str) -> str:
 
 
 def _public(data: dict[str, Any]) -> dict[str, Any]:
-    public = {k: v for k, v in data.items() if k != "views"}
+    public = {k: v for k, v in data.items() if k not in ("views", "flow")}
     if "participants" not in public:
         # Views name who made a record with `"as": "who"`; give them the roster.
         roster = _participants(Path.cwd() / PARTICIPANTS_DIR)
@@ -669,6 +755,14 @@ def cmd_preview(args: argparse.Namespace) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="pa", description="Product Aviator data and view command")
     sub = parser.add_subparsers(dest="command", required=True)
+
+    p = sub.add_parser("flow", help="record which step of a workflow the work is at, for the Session panel")
+    p.add_argument("data")
+    p.add_argument("--scenario", help="the scenario folder, the first time, to take its steps")
+    p.add_argument("--step", help="a step number, or part of its name")
+    p.add_argument("--done", action="store_true", help="the workflow is finished")
+    p.add_argument("--note", help="one line on what is happening in this step")
+    p.set_defaults(run=cmd_flow)
 
     p = sub.add_parser("who", help="list the participants the agent can call, or show one")
     p.add_argument("id", nargs="?", help="an id, or part of a name or role")

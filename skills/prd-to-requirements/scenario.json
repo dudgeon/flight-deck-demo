@@ -4,6 +4,8 @@
  "summary": "Turn a requirements document into a catalog of testable requirements the product manager can review, edit and lock.",
  "inputs": [ { "name": "document", "kind": "markdown", "hint": "A PRD or similar. Looks in context/ first." } ],
  "dataset": { "path": "data/{slug}.json", "adds": ["capability", "requirement"], "status_field": "status" },
+ "steps": ["Read the document", "Agree how to catalog", "Build the catalog", "Your review"],
+ "progress": {"records": {"type": "requirement"}, "field": "status", "done": ["reviewed"], "noun": "requirements", "label": "reviewed"},
  "schemas": "schemas/records.json",
  "views": { "scope": "views/scope-form.json", "catalog": "views/catalog.json", "summary": "views/summary.json" },
  "work_products": [ { "name": "Requirements catalog", "view": "catalog", "out": "artifacts/{slug}-requirements.html" } ],

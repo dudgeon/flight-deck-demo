@@ -72,6 +72,20 @@ The record shapes are in `schemas/records.json`. Rules for good records:
 Every `add` and `set` redraws the open view. You do not need to call
 `ui_open_file` again.
 
+
+## Show where the work is
+
+The Session panel shows this workflow's steps and how far along it is. Tell it
+as you go. Right after `init`:
+
+```bash
+$PA flow data/<slug>.json --scenario SKILL_DIR
+```
+
+Then `$PA flow data/<slug>.json --step <number> --note "<what is happening, a few words>"`
+when you move to another step, and `--done` when the workflow is finished.
+The steps: 1 read the document, 2 agree how to catalog, 3 build the catalog, 4 the user's review. The count of items done updates itself.
+
 ## 4. Report
 
 Two or three lines in chat: how many requirements in how many groups, how many

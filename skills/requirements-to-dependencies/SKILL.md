@@ -50,6 +50,20 @@ start explorations until asked.
 This stage keeps its own status in `explore_status`, so it never disturbs the
 `status` the requirements already carry from the catalog.
 
+
+## Show where the work is
+
+The Session panel shows this workflow's steps and how far along it is. Tell it
+as you go. Once the board is set up:
+
+```bash
+$PA flow data/<slug>.json --scenario SKILL_DIR
+```
+
+Then `$PA flow data/<slug>.json --step <number> --note "<what is happening, a few words>"`
+when you move to another step, and `--done` when the workflow is finished.
+The steps: 1 set up the board, 2 explore each requirement, 3 the user's review, 4 summary. The count of items done updates itself.
+
 ## 3. Start explorations
 
 For each requirement you are asked to start:
