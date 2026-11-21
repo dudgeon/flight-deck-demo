@@ -293,6 +293,44 @@ with `omnigent-slim:` comments; `GET /v1/slim/directors/{session}`;
 `omnigent/server/routes/slim_runs.py`;
 the rule in `workspace/CLAUDE.md` ("Threads").
 
+## Routing to workflows, and what the director remembers
+
+**Intent.** Aviator should reach for the right workflow when an ask fits one,
+and stay out of the way when the person is thinking out loud (D-128). Adding
+a workflow must never mean editing Aviator (D-120), so every workflow carries
+its own routing, and the director reads the catalog at run time. A director
+also runs for days, across compactions and new sessions, so what it must not
+lose is written down where the person can see and correct it (D-134).
+
+**Behaviour.**
+
+- Each `workflow.json` has a `routing` block: when it fits, when it does
+  not, what it needs, its lifecycle stage, the one-line offer, example prompts
+  (start, offer, open; the routing evals use them) and its persona (default
+  strictness and the rules that never relax). The stages are
+  `workspace/frameworks/lifecycle.json`.
+- `pa workflows` lists every workflow by stage with that block (`--json` adds
+  the examples); `pa check` fails a Library or shipped workflow without one
+  (D-136).
+- The director skill routes by the ladder: named means start; a clear fit
+  gets one offer as a "Start it in a thread" / "Not now" question; open work
+  is done directly; quick questions are answered. It holds other threads'
+  news while the person is mid-exchange, except failures and blockers
+  (D-132), and changes strictness only when the person says so (D-131).
+- Director memory: a short charter beside the skill, `director/state.md`
+  (rewritten at checkpoints) and `director/memory.md` (`pa remember`), all
+  printed by `pa recap`, which `workspace/CLAUDE.md` tells a director to run
+  after a compaction (D-135).
+- **Director's notes** on the project page show both files, folded, once a
+  director has written; the person edits either in place, and a save that
+  would overwrite the director's newer text is refused (D-137).
+
+**Where.** `skills/*/workflow.json`, `skills/director/` (`SKILL.md`,
+`charter.md`), `skills/view-kit/scripts/pa.py` (`workflows`, `recap`,
+`remember`), `omnigent/server/routes/slim_director.py`,
+`web/src/projectHome/DirectorNotes.tsx`. Spec:
+[director-coordination.md](director-coordination.md).
+
 ## Projects with a goal, and their connections
 
 **What it is for.** A project is one in-market goal that ships and then ends,

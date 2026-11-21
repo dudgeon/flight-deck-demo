@@ -70,5 +70,37 @@
    "on": "any",
    "prompt": "Update the delivery status for {path}."
   }
- ]
+ ],
+ "routing": {
+  "when": [
+   "The person wants a status update, or to know whether a date still holds and what is at risk"
+  ],
+  "not_when": [
+   "Mapping platform capabilities for requirements",
+   "A one-line answer about a single milestone already known"
+  ],
+  "needs": "The plan: a document, a dataset of milestones, or a list in the chat",
+  "stage": "deliver",
+  "offer": "I can check the plan against what is actually happening, ask the owners, project a new date if something moved, and write the update.",
+  "examples": {
+   "start": [
+    "Update the delivery status for the held payments launch.",
+    "Run delivery status for steering."
+   ],
+   "offer": [
+    "Is the March date still real? I need to tell my director."
+   ],
+   "open": [
+    "How do other teams usually report slips?"
+   ]
+  },
+  "persona": {
+   "strictness": "guide",
+   "invariants": [
+    "Never invent a date or capacity",
+    "Never choose a recovery option for the person",
+    "Always include accepting the new date as an option"
+   ]
+  }
+ }
 }

@@ -734,6 +734,113 @@ assembled on request work from a ZIP and are easy to replace with a service
 when the intent graph is designed (D-98). Another team's project has to be
 describable, because that is exactly Geoff's example in D-97.*
 
+Geoff's answers to the Aviator coordination walkthrough
+(https://claude.ai/artifact/La4Qa5THk5JhwQBQGcVY7d, questions AV-1 to AV-7 in
+[director-coordination.md](director-coordination.md)), locked 2026-11-21.
+
+**D-128 · 2026-11-21 · Geoff.** Aviator routes to workflows by a ladder:
+start one when the person names it or presses Start in the Library; when a
+request clearly fits one and there is material to work on, offer it once, in
+one line with a button, and carry on openly if declined; otherwise work
+openly and offer once later, when one idea firms up; answer quick questions
+directly. Never start a workflow silently. *An offer costs one line; a false
+start imposes a method on someone thinking out loud and costs a thread. It
+also gives the routing evals four clear outcomes to grade.*
+
+**D-129 · 2026-11-21 · Geoff.** "I'm working on a new feature" invokes a
+feature lifecycle skill. It is not a hero skill (not featured in the Library;
+it is part of how Aviator directs). It first looks for an existing project
+that fits and uses it; if the work is truly new, it creates the project and,
+where it is related to existing ones, links them (D-119, D-121). It then
+gathers what exists by linking files, shows the stages (from a data file,
+D-120) with each stage's workflows and state, and offers the next stage.
+Stages can be skipped, entered at any point or repeated; each runs in its own
+thread. Geoff: "Should be paired with a project retrieval function... if a
+project actually exists that is relevant, find and use, or associate (with
+cross links) if the thing is truly new but related." *It makes the project the
+spine routing works from, and avoids a new project every time someone
+mentions a feature that already has one.*
+
+**D-130 · 2026-11-21 · Geoff.** A workflow's persona has rules that never
+relax (honesty and the person's agency) and a style whose strictness is a
+setting: light touch, guide or by the book. The default is guide: a missing
+piece becomes a gap with who could close it, the score stays true, and the
+work moves on. *Guide is the only level that is both honest and never blocks
+the person; the evals decide whether any workflow needs another default.*
+
+**D-131 · 2026-11-21 · Geoff.** The person changes strictness for a run in
+words ("be tough on this one", "go easier"); the change is said in one line,
+shown on the mode strip (D-90) and recorded in the run. The Hangar sets each
+workflow's default. The agent may suggest a change but never makes one
+silently. *The person stays in control and the change is visible; a brief
+can say how strictly it was shaped.*
+
+**D-132 · 2026-11-21 · Geoff.** While the person is in an exchange with one
+thread, news from other threads is held until the exchange pauses, then given
+as one line and the run card. Failures and blockers that affect the person
+come through at once. *It protects the focus that stepping into a mode is for
+(D-94, D-117) and keeps red for failures (D-50).*
+
+**D-133 · 2026-11-21 · Geoff asked, Claude chose.** Aviator is tested in
+three suites (routing, personas, coordination including long-haul stories
+with a forced compaction) through the real app on the Mac mini, with a fresh
+workspace per trial, code graders, a Claude judge per rubric line, and Geoff
+choosing the better of ten blind transcript pairs per round. Geoff: "Use a
+light model, Sonnet or Haiku; I need to preserve usage for further dev."
+Claude's reading: the simulated person and the judge run on Haiku; Aviator
+and its threads run on Sonnet in routine eval rounds; an Opus run is made
+only when Geoff asks, to check that a tuned prompt holds on the model he
+flies (Opus, the session default). *Usage on the Mac mini is shared with
+development. Sonnet still behaves enough like the flown model for routing and
+coordination to be meaningful, which Haiku may not; the judge's agreement with
+Geoff's blind choices shows whether Haiku is good enough to grade.*
+
+**D-134 · 2026-11-21 · Geoff.** The director remembers across sessions and
+compactions in three layers: a short charter in the director session's
+startup instructions (it survives compaction), the director skill reloaded
+after a compaction or in a new session, and state in files written as the
+work goes (`state.md`, `memory.md`) added back as one recap. What it holds and
+remembers shows on the project page as "Director's notes", readable and
+editable. *A memory the person cannot see cannot be trusted, and a wrong one
+does damage for weeks; editing in place is the quickest fix.*
+
+Choices made while building D-120 and D-128 to D-134:
+
+**D-135 · 2026-11-21 · Claude.** The director's charter
+(`skills/director/charter.md`) reaches a director through a short paragraph in
+`workspace/CLAUDE.md` that tells a session that has been directing to run
+`pa recap` after a compaction or in a new session; `pa recap` prints the
+charter, `director/state.md`, `director/memory.md` and the runs. This refines
+D-134, which put the charter in the director session's startup instructions.
+*The app has no server-side record of which session is directing, so the
+bridge cannot pick the right session; Claude Code re-reads the root
+`CLAUDE.md` after every compaction, so the pointer survives without any change
+to upstream's bridge. If the evals show directors skipping the recap, the
+bridge route is the next step.*
+
+**D-136 · 2026-11-21 · Claude.** `pa check` fails a workflow shown in the
+Library (`library.show`) or shipped in `skills/` that has no routing `when`,
+`stage` or examples, and checks the shape of any routing block. A Hangar
+workflow without one still passes, and `pa workflows` lists it as "start only
+when named". The lifecycle stages are `workspace/frameworks/lifecycle.json`;
+document review sits on Specify beside PRD to requirements. Strictness levels
+are defined once, in `pa.py`, and printed by `pa workflows`. A clear-fit offer
+is one `AskUserQuestion` with "Start it in a thread" and "Not now". *Shipped
+workflows must stay routable even when hidden from the Library
+(requirements-to-dependencies), while a half-built Hangar workflow should not
+be blocked; a question card is the one-press answer Claude Code already
+draws.*
+
+**D-137 · 2026-11-21 · Claude.** Director's notes live in
+`workspace/director/` (one director per workspace, gitignored like runs). The
+files start as headings only; what to write and when is in the skill, so the
+person reads the project, not instructions. A save from the project page
+names the version it edited and is refused if the director rewrote the file
+meanwhile, with the newest text shown. The section appears only once a
+director has written something, folded. *The notes are for checking and
+correcting, not for every visit, and nobody's words should be lost to a
+silent overwrite.*
+
 ## Usage logging
 
 Spec: [usage-logging.md](usage-logging.md). Open questions UL-1 to UL-3 are

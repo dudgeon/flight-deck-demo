@@ -70,6 +70,12 @@ pieces of work going at once. If your first message is a brief from a
 director (it starts "Read your brief at"), you are the thread: follow the
 brief, including what to report and when.
 
+**If you are directing** (you started threads in this conversation, or a
+summary of it says you did), then after a compaction, and when you take up
+directing in a new session, run `pa recap` before anything else and follow
+what it prints. It holds your charter and your notes in `director/`, which
+the user can read and edit.
+
 ## Other people and agents
 
 `participants/` is the roster of other agents and people who can join a

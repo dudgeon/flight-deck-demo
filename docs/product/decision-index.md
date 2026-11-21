@@ -190,6 +190,16 @@ decided but nothing is built yet.
 | D-119 | A project's connections: a chip on the linked item and a Connections card on the project page | Geoff | Built |
 | D-120 | Routing is modular: each workflow carries its own routing, stage and persona; Aviator reads them with `pa workflows` (PR 34) | Geoff asked, Claude chose | Decided, not built |
 | D-121 | A project is a file (`projects/<slug>.json`); a link is one line on its record, read both ways | Claude | Built |
+| D-128 | Routing ladder: start when named, offer once on a clear fit, otherwise work openly; quick asks answered (AV-1) | Geoff | Decided, not built |
+| D-129 | "I'm working on a new feature": a lifecycle skill (not a hero skill) that finds or creates and links the project, then offers the next stage (AV-2) | Geoff | Decided, not built |
+| D-130 | Persona strictness: honesty rules fixed; light touch, guide, by the book; guide by default (AV-3) | Geoff | Decided, not built |
+| D-131 | The person changes strictness per run in words, shown and recorded; the Hangar sets the default (AV-4) | Geoff | Decided, not built |
+| D-132 | Other threads' news is held while the person is mid-exchange, except failures and blockers (AV-5) | Geoff | Decided, not built |
+| D-133 | Three eval suites on the Mac mini, on light models (Sonnet under test, Haiku as person and judge) (AV-6) | Geoff asked, Claude chose | Decided, not built |
+| D-134 | Director memory: charter, reloaded skill, state files; Director's notes on the project page, editable (AV-7) | Geoff | Decided, not built |
+| D-135 | The charter reaches a director through `workspace/CLAUDE.md` (re-read after compaction) and `pa recap`, not per-session startup instructions; refines D-134 | Claude | Built |
+| D-136 | `pa check` requires routing on a Library or shipped workflow; a Hangar one without it is listed "start only when named"; offers are a one-press question | Claude | Built |
+| D-137 | Director's notes live in `workspace/director/` (gitignored); a save is refused if the director wrote meanwhile; folded until opened | Claude | Built |
 
 
 ## Usage logging
@@ -221,8 +231,5 @@ Spec: [usage-logging.md](usage-logging.md).
 
 - Usage logging (UL-1 to UL-3 in [usage-logging.md](usage-logging.md)):
   put to Geoff 2026-11-21; built to the recommendations meanwhile.
-- Aviator coordination, skill routing and persona strictness (AV-1 to
-  AV-6 in [director-coordination.md](director-coordination.md)): put to
-  Geoff 2026-11-21; numbered when answered.
 - Progressive complexity (D-54).
 - D-24 for production.

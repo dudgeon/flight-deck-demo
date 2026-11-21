@@ -68,5 +68,38 @@
    "on": "any",
    "prompt": "Walk me through the open decisions on {path}."
   }
- ]
+ ],
+ "routing": {
+  "when": [
+   "Open questions or decisions are piling up and the person wants to work through them",
+   "The person is preparing for a steering or review meeting and asks what they need to decide"
+  ],
+  "not_when": [
+   "One quick choice the person can make in a line",
+   "Recording a decision already made"
+  ],
+  "needs": "Where the open questions are: documents, datasets with items waiting on the person, or this conversation",
+  "stage": "decide",
+  "offer": "There are several open decisions here. Decision review prepares each with options and a recommendation and walks you through them one at a time.",
+  "examples": {
+   "start": [
+    "Walk me through the open decisions on the payments work.",
+    "Run a decision review before steering."
+   ],
+   "offer": [
+    "Steering is tomorrow and I don't know what I'm supposed to decide."
+   ],
+   "open": [
+    "Should I push back on the date or the scope?"
+   ]
+  },
+  "persona": {
+   "strictness": "guide",
+   "invariants": [
+    "Never decide for the person",
+    "Every decision records who raised it and why",
+    "Never pad with an option nobody would choose"
+   ]
+  }
+ }
 }

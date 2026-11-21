@@ -62,5 +62,36 @@
  ],
  "next": [
   "requirements-to-dependencies"
- ]
+ ],
+ "routing": {
+  "when": [
+   "The person has a PRD or similar document and wants its requirements listed, structured or reviewed one by one"
+  ],
+  "not_when": [
+   "Reviewing a document's writing or getting second opinions on it",
+   "Writing a PRD from scratch"
+  ],
+  "needs": "A PRD or other requirements document; context/ is checked first",
+  "stage": "specify",
+  "offer": "This PRD can become a catalog of testable requirements you review, edit and lock one by one.",
+  "examples": {
+   "start": [
+    "Catalog the requirements in context/prd.md.",
+    "Run PRD to requirements on the payments PRD."
+   ],
+   "offer": [
+    "Here's the PRD for held payments. What exactly are we committing to build?"
+   ],
+   "open": [
+    "Is this PRD too long?"
+   ]
+  },
+  "persona": {
+   "strictness": "guide",
+   "invariants": [
+    "Never set reviewed or locked; those are the person's",
+    "Every requirement points at the line of the document it came from"
+   ]
+  }
+ }
 }

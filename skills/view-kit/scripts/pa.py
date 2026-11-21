@@ -258,9 +258,8 @@ def cmd_flow(args: argparse.Namespace) -> None:
     print(f"{flow['workflow']}: {where}{tail}")
 
 
-def cmd_runs(args: argparse.Namespace) -> None:
-    """List the runs in this workspace: what is in flight and where each was left."""
-    folder = Path(args.dir or FLOW_DIR)
+def load_runs(folder: Path, include_done: bool = False) -> list[dict[str, Any]]:
+    """The runs in a progress folder, the ones needing the person first."""
     runs: list[dict[str, Any]] = []
     for file in sorted(folder.glob("*.json")) if folder.is_dir() else []:
         try:
@@ -274,13 +273,14 @@ def cmd_runs(args: argparse.Namespace) -> None:
         # Files written before runs had a state: finished or working, from the steps.
         run["state"] = run.get("state") or ("finished" if current > total else "working")
         run["file"] = file.as_posix()
-        if args.all or run["state"] not in ("finished", "stopped"):
+        if include_done or run["state"] not in ("finished", "stopped"):
             runs.append(run)
     order = {state: i for i, state in enumerate(("needs-you", "paused", "waiting", "working", "stopped", "finished"))}
     runs.sort(key=lambda r: (order.get(r["state"], 9), r.get("updated", "")))
-    if args.json:
-        print(json.dumps(runs, indent=1, ensure_ascii=False))
-        return
+    return runs
+
+
+def _print_runs(runs: list[dict[str, Any]]) -> None:
     if not runs:
         print("no runs in flight")
         return
@@ -300,6 +300,90 @@ def cmd_runs(args: argparse.Namespace) -> None:
             print(f"           thread: {run['session']}")
         if run.get("data"):
             print(f"           data: {run['data']}")
+
+
+def cmd_runs(args: argparse.Namespace) -> None:
+    """List the runs in this workspace: what is in flight and where each was left."""
+    runs = load_runs(Path(args.dir or FLOW_DIR), args.all)
+    if args.json:
+        print(json.dumps(runs, indent=1, ensure_ascii=False))
+        return
+    _print_runs(runs)
+
+
+# ------------------------------------------------------------------ director memory
+#
+# A director runs for days, across compactions and new sessions (D-134). What
+# it must not lose is in three places: a short charter that ships with the
+# director skill, and two files of its own in the workspace, written at
+# checkpoints: state.md (what is in flight and what it is waiting on, rewritten
+# whole) and memory.md (lasting facts, one dated line each). `pa recap` prints
+# all three with the runs, so one command re-orients a director after a
+# compaction. The person reads and edits both files as "Director's notes".
+
+DIRECTOR_DIR = "director"
+DIRECTOR_STATE = "state.md"
+DIRECTOR_MEMORY = "memory.md"
+CHARTER_FILE = KIT_DIR.parent.parent / "director" / "charter.md"
+# Only headings: what to write when is in the director skill and its charter,
+# so the person reading these notes sees the project, not instructions.
+STATE_TEMPLATE = """# Where the project stands
+
+## Working on now
+
+## Waiting on the person
+
+## Decided here
+
+## Next
+"""
+MEMORY_TEMPLATE = """# What to remember
+"""
+
+
+def director_paths(workspace: Path | None = None) -> tuple[Path, Path]:
+    folder = (workspace or Path.cwd()) / DIRECTOR_DIR
+    return folder / DIRECTOR_STATE, folder / DIRECTOR_MEMORY
+
+
+def ensure_director_files(workspace: Path | None = None) -> tuple[Path, Path]:
+    state, memory = director_paths(workspace)
+    state.parent.mkdir(parents=True, exist_ok=True)
+    for path, template in ((state, STATE_TEMPLATE), (memory, MEMORY_TEMPLATE)):
+        if not path.is_file():
+            path.write_text(template, encoding="utf-8")
+    return state, memory
+
+
+def cmd_recap(args: argparse.Namespace) -> None:
+    """Everything a director needs after a compaction or in a new session, in one read."""
+    workspace = Path(args.workspace) if args.workspace else Path.cwd()
+    state, memory = ensure_director_files(workspace)
+    if CHARTER_FILE.is_file():
+        print(CHARTER_FILE.read_text(encoding="utf-8").strip())
+        print(f"\nThe full director skill: {CHARTER_FILE.parent / 'SKILL.md'}. Read it again if its steps are not in view.")
+    print(f"\n---\n\n{DIRECTOR_DIR}/{DIRECTOR_STATE}:\n")
+    print(state.read_text(encoding="utf-8").strip())
+    print(f"\n---\n\n{DIRECTOR_DIR}/{DIRECTOR_MEMORY}:\n")
+    print(memory.read_text(encoding="utf-8").strip())
+    print("\n---\n\nRuns (pa runs):\n")
+    _print_runs(load_runs(workspace / FLOW_DIR))
+
+
+def cmd_remember(args: argparse.Namespace) -> None:
+    """Add one lasting fact to the director's memory, dated."""
+    text = " ".join(args.fact).strip()
+    if not text:
+        raise PaError("say what to remember")
+    _, memory = ensure_director_files(Path(args.workspace) if args.workspace else None)
+    body = memory.read_text(encoding="utf-8")
+    line = f"- {_dt.date.today().isoformat()}: {text}"
+    if line in body.splitlines():
+        print(f"already remembered: {text}")
+        return
+    first = not any(l.startswith("- ") for l in body.splitlines())
+    memory.write_text(body.rstrip("\n") + ("\n\n" if first else "\n") + line + "\n", encoding="utf-8")
+    print(f"remembered in {DIRECTOR_DIR}/{DIRECTOR_MEMORY}: {text}")
 
 
 REPORT_KINDS = ("milestone", "progress", "blocker", "done")
@@ -1721,9 +1805,159 @@ def _scenario(folder: Path) -> tuple[dict[str, Any], list[str]]:
     return run["manifest"], _workflow_problems(run) + run["problems"]
 
 
+def _workspace_for_checks(run: dict[str, Any]) -> Path:
+    sdir = run.get("scenario_dir")
+    return _workspace_of_scenario(sdir) if sdir is not None else default_workspace()
+
+
+# ------------------------------------------------------------------ routing
+#
+# Each workflow says when it fits in a `routing` block of its manifest, so the
+# director routes from data and never names a workflow (D-120). The stages a
+# workflow can serve live in the workspace's frameworks/lifecycle.json; the
+# strictness levels are defined once, here (D-130).
+
+LIFECYCLE_FILE = Path("frameworks") / "lifecycle.json"
+STRICTNESS = {
+    "light": "Light touch: follows the person's lead, one nudge where the method would differ, skips steps they wave off.",
+    "guide": "Guide: keeps the method's order and asks for what is missing, but bends on pace, wording and how many questions at once.",
+    "by-the-book": "By the book: every step in order, nothing skipped without the person saying so, gaps block the next step.",
+}
+ROUTING_EXAMPLE_KINDS = ("start", "offer", "open")
+
+
+def lifecycle_stages(workspace: Path | None = None) -> list[dict[str, Any]]:
+    """The lifecycle stages in order, or [] when the workspace has no lifecycle file."""
+    path = (workspace or default_workspace()) / LIFECYCLE_FILE
+    if not path.is_file():
+        return []
+    stages = _read_json(path).get("stages")
+    return [s for s in stages if isinstance(s, dict) and s.get("id")] if isinstance(stages, list) else []
+
+
+def _strings(value: Any) -> bool:
+    return isinstance(value, list) and bool(value) and all(isinstance(v, str) and v.strip() for v in value)
+
+
+def routing_problems(workflow: dict[str, Any], name: str, stages: list[str], required: bool) -> list[str]:
+    """What is wrong with a manifest's routing block. Required for a workflow people are shown."""
+    routing = workflow.get("routing")
+    if routing is None:
+        return [f"{name}: missing routing (when it fits, its stage and examples), so Aviator cannot offer it"] if required else []
+    if not isinstance(routing, dict):
+        return [f"{name}: routing must be an object"]
+    where, problems = f"{name}: routing", []
+    if not _strings(routing.get("when")):
+        problems.append(f"{where}.when must list at least one situation it fits")
+    if "not_when" in routing and not _strings(routing["not_when"]):
+        problems.append(f"{where}.not_when must be a list of sentences")
+    for key in ("needs", "offer"):
+        if key in routing and not (isinstance(routing[key], str) and routing[key].strip()):
+            problems.append(f"{where}.{key} must be a sentence")
+    stage = routing.get("stage")
+    if not (isinstance(stage, str) and stage.strip()):
+        problems.append(f"{where}.stage is missing")
+    elif stages and stage not in stages:
+        problems.append(f"{where}.stage {stage!r} is not a lifecycle stage ({', '.join(stages)})")
+    examples = routing.get("examples")
+    if not isinstance(examples, dict) or not any(_strings(examples.get(k)) for k in ROUTING_EXAMPLE_KINDS):
+        problems.append(f"{where}.examples needs prompts under start, offer or open")
+    else:
+        for kind, prompts in examples.items():
+            if kind not in ROUTING_EXAMPLE_KINDS:
+                problems.append(f"{where}.examples.{kind}: use start, offer or open")
+            elif not _strings(prompts):
+                problems.append(f"{where}.examples.{kind} must be a list of prompts")
+    persona = routing.get("persona")
+    if persona is not None:
+        if not isinstance(persona, dict):
+            problems.append(f"{where}.persona must be an object")
+        else:
+            if persona.get("strictness", "guide") not in STRICTNESS:
+                problems.append(f"{where}.persona.strictness must be one of {', '.join(STRICTNESS)}")
+            if "invariants" in persona and not _strings(persona["invariants"]):
+                problems.append(f"{where}.persona.invariants must be a list of rules")
+    return problems
+
+
+def _routing_required(workflow: dict[str, Any], wdir: Path) -> bool:
+    """Shown in the Library (D-83), or shipped with the app: both must be routable (D-120)."""
+    library = workflow.get("library")
+    if isinstance(library, dict) and library.get("show"):
+        return True
+    return wdir.resolve().parent == KIT_DIR.parent.parent.resolve()
+
+
+def workflow_catalog(workspace: Path | None = None) -> list[dict[str, Any]]:
+    """Every workflow with what the director routes on, in lifecycle order."""
+    workspace = workspace or default_workspace()
+    order = {s["id"]: n for n, s in enumerate(lifecycle_stages(workspace))}
+    out = []
+    for wid, folder in list_workflows(workspace).items():
+        path = workflow_manifest_path(folder)
+        try:
+            manifest = _read_json(path) if path else {}
+        except PaError:
+            continue
+        routing = manifest.get("routing") if isinstance(manifest.get("routing"), dict) else None
+        out.append({
+            "id": wid,
+            "title": manifest.get("title") or wid,
+            "summary": manifest.get("summary") or "",
+            "folder": str(folder),
+            "source": "shipped" if is_builtin(workspace, folder) else "hangar",
+            "after": manifest.get("needs") or [],
+            "next": manifest.get("next") or [],
+            "routing": routing,
+        })
+    out.sort(key=lambda w: (order.get((w["routing"] or {}).get("stage"), len(order)), w["id"]))
+    return out
+
+
+def cmd_workflows(args: argparse.Namespace) -> None:
+    workspace = Path(args.workspace).resolve() if args.workspace else default_workspace()
+    catalog = workflow_catalog(workspace)
+    stages = lifecycle_stages(workspace)
+    if args.stage:
+        catalog = [w for w in catalog if (w["routing"] or {}).get("stage") == args.stage]
+    if args.json:
+        print(json.dumps({"stages": stages, "strictness": STRICTNESS, "workflows": catalog}, indent=1))
+        return
+    titles = {s["id"]: s.get("title") or s["id"] for s in stages}
+    stage_now = None
+    for w in catalog:
+        r = w["routing"] or {}
+        stage = r.get("stage")
+        if stage != stage_now:
+            stage_now = stage
+            print(f"\n## {titles.get(stage, stage) if stage else 'Not routed: start only when the person names it'}")
+        print(f"\n{w['id']}: {w['title']} ({w['source']}, {w['folder']})")
+        if not r:
+            print(f"  {w['summary']}")
+            continue
+        print("  When: " + " / ".join(r.get("when") or []))
+        if r.get("not_when"):
+            print("  Not when: " + " / ".join(r["not_when"]))
+        if r.get("needs"):
+            print(f"  Needs: {r['needs']}")
+        if w["after"]:
+            print(f"  Comes after: {', '.join(w['after'])}")
+        if r.get("offer"):
+            print(f"  Offer: {r['offer']}")
+        persona = r.get("persona") or {}
+        if persona.get("invariants"):
+            print(f"  Always ({persona.get('strictness', 'guide')} by default): " + "; ".join(persona["invariants"]))
+    if not args.stage:
+        print("\n## Strictness levels")
+        for text in STRICTNESS.values():
+            print(f"  {text}")
+
+
 def _workflow_problems(run: dict[str, Any]) -> list[str]:
     workflow, wdir, name = run["workflow"], run["workflow_dir"], run["workflow_file"].name
     problems = []
+    stages = [s["id"] for s in lifecycle_stages(_workspace_for_checks(run))]
+    problems += routing_problems(workflow, name, stages, _routing_required(workflow, wdir))
     for key in ("title", "summary", "views"):
         if not workflow.get(key):
             problems.append(f"{name}: missing {key}")
@@ -3071,7 +3305,7 @@ def _load_usagelog() -> Any:
 usagelog = _load_usagelog()
 
 #: Arguments never worth a column: how the command was called, not what it did.
-_UNLOGGED_ARGS = {"run", "command", "json", "url", "dir", "out"}
+_UNLOGGED_ARGS = {"run", "command", "json", "url", "dir", "out", "workspace", "fact"}
 
 
 def _command_context(args: argparse.Namespace) -> dict[str, Any]:
@@ -3372,6 +3606,21 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--all", action="store_true", help="include finished and stopped runs")
     p.add_argument("--json", action="store_true")
     p.set_defaults(run=cmd_runs)
+
+    p = sub.add_parser("workflows", help="list every workflow with when it fits, by lifecycle stage (for routing)")
+    p.add_argument("--stage", help="only the workflows that serve this stage")
+    p.add_argument("--workspace", help="the workspace; default the current one")
+    p.add_argument("--json", action="store_true", help="everything, including example prompts, as JSON")
+    p.set_defaults(run=cmd_workflows)
+
+    p = sub.add_parser("recap", help="for a director: its charter, state, memory and the runs, after a compaction or in a new session")
+    p.add_argument("--workspace", help="the workspace; default the current folder")
+    p.set_defaults(run=cmd_recap)
+
+    p = sub.add_parser("remember", help="for a director: add one lasting fact to director/memory.md")
+    p.add_argument("fact", nargs="+")
+    p.add_argument("--workspace", help="the workspace; default the current folder")
+    p.set_defaults(run=cmd_remember)
 
     p = sub.add_parser("who", help="list the participants the agent can call, or show one")
     p.add_argument("id", nargs="?", help="an id, or part of a name or role")

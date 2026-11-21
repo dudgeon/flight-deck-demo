@@ -30,7 +30,7 @@ in the same pull request.
 | [Dock launcher](#dock-launcher) | Done |
 | [Branding](#branding) | Done; repository renamed (D-114) |
 | [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | D-89 to D-99 and D-116 to D-119 decided; runs and In flight built (PR 24) |
-| [Aviator coordination and skill routing](#aviator-coordination-and-skill-routing) | Designed; six questions (AV-1 to AV-6) with Geoff; nothing built |
+| [Aviator coordination and skill routing](#aviator-coordination-and-skill-routing) | Routing, director rules and director memory built (D-120, D-128 to D-137); evals, strictness on the strip and lifecycle skill next |
 
 ---
 
@@ -336,12 +336,23 @@ strictly as the moment needs, measured by evals rather than argued.
 - **Constraint (Geoff).** Modular: adding a workflow never means editing
   Aviator. Routing, lifecycle stage, persona and eval examples ship in each
   workflow's `workflow.json`; Aviator reads them with `pa workflows`.
-- **Next.** Once answered: the eight gaps as director rules; the routing eval
-  suite and its runner on the Mac mini, before any tuning; then persona
-  blocks and strictness; then the lifecycle skill.
-- **Open.** AV-1 routing, AV-2 the lifecycle skill, AV-3 default strictness,
-  AV-4 who changes it, AV-5 news while the person is mid-conversation, AV-6
-  how to test. They take D-numbers when answered.
+- **Built (PR 37).** A `routing` block in every shipped workflow's
+  manifest (when, not when, needs, stage, offer, examples, persona), the
+  lifecycle stages in `frameworks/lifecycle.json`, `pa workflows`, and
+  `pa check` failing an unroutable Library or shipped workflow (D-136). The
+  director skill gained the ladder, the coordination rules and strictness by
+  words, still naming no workflow. Director memory: `charter.md`,
+  `director/state.md` and `memory.md`, `pa recap`, `pa remember`, a pointer in
+  `workspace/CLAUDE.md` (D-135), and Director's notes on the project page,
+  editable (D-137). Not yet run in a live director session on the Mac mini.
+- **Next.** The routing eval suite and its runner on the Mac mini, before
+  any tuning; then strictness on the strip and in the run; then the
+  lifecycle skill.
+- **Decided.** Geoff answered all seven on 2026-11-21, as recommended:
+  D-128 routing ladder, D-129 lifecycle skill with project retrieval (not a
+  hero skill), D-130 guide by default, D-131 strictness changed in words,
+  D-132 hold news while the person is mid-exchange, D-133 evals on light
+  models, D-134 director memory with editable Director's notes. Nothing open.
 - **Read.** [director-coordination.md](director-coordination.md); walkthrough
   at https://claude.ai/artifact/La4Qa5THk5JhwQBQGcVY7d.
 
