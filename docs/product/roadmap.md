@@ -5,13 +5,30 @@ A snapshot of every workstream in Flight Deck (the fork) and Product Aviator
 what is still to be decided, and where to read more. Written for the
 production team and for whoever picks the work up next.
 
-Snapshot taken 2026-11-21, after pull requests 1 to 5 were merged. Decision
+Snapshot refreshed 2026-11-21 evening, after pull requests 1 to 16, 18, 20
+and 21 were merged; 17 and 19 are open. Where each decision stands is in
+[decision-index.md](decision-index.md); the story so far is in
+[../history.md](../history.md). Decision
 numbers (D-nn) refer to [decisions.md](decisions.md); feature intent is in
 [features.md](features.md). When a workstream moves, update its section here
 in the same pull request.
 
 | Workstream | State |
 |---|---|
+| [Hangar (builder mode)](#hangar-builder-mode) | Built: all three slices, pictures, config in the repo |
+| [Demos and the Library](#demos-and-the-library) | In open PRs 17 and 19 |
+| [Design language and tokens](#design-language-and-tokens) | Built; colors locked |
+| [Views in the chat](#views-in-the-chat) | Built |
+| [Collaborative markdown editor](#collaborative-markdown-editor) | Built; two known gaps |
+| [Participants and personas](#participants-and-personas) | Built, scripted and live, with Inbox messages; some gaps |
+| [The four kinds of work](#the-four-kinds-of-work) | Built as previews; two run live so far |
+| [Work-Mac setup from a ZIP](#work-mac-setup-from-a-zip) | Setup script not built yet |
+| [Canvas tools across several tabs](#canvas-tools-across-several-tabs) | Done |
+| [Dock launcher](#dock-launcher) | Done |
+| [Branding](#branding) | Done; one naming question open |
+| [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | D-89 to D-99 decided; four questions open; nothing built |
+
+---|---|
 | [Hangar (builder mode)](#hangar-builder-mode) | Designed and decided; slice 1 of 3 being built |
 | [Design language and tokens](#design-language-and-tokens) | Built; three colors and two other questions waiting on Geoff |
 | [Collaborative markdown editor](#collaborative-markdown-editor) | Built; two known gaps |
@@ -21,6 +38,7 @@ in the same pull request.
 | [Canvas tools across several tabs](#canvas-tools-across-several-tabs) | Done |
 | [Dock launcher](#dock-launcher) | Done |
 | [Branding](#branding) | Done; one naming question open |
+| [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | Partly decided (D-89 to D-99); four decisions open; nothing built |
 
 ---
 
@@ -28,31 +46,41 @@ in the same pull request.
 
 The Hangar is a second mode of the app where people, workflows, views,
 scenarios and skills are defined, clearly distinct from "flying" (using the
-app). Building is a guided workflow on a draft copy, with a strict publish
-gate and a way back.
+app). Building happens on a draft copy, with a strict publish gate and a way
+back.
 
-- **Done.** Design, clickable mockup and all seven decisions locked by Geoff
-  (D-39 to D-47). The in-flight "Open in Hangar" link must be a tiny wrench
-  icon, shown only on hover or focus, so it never shows up in demo recordings
-  (D-41).
-- **In progress.** Slice 1, the look-around Hangar: sidebar switch, the
-  Hangar frame and its own teal color token, a read-only catalog endpoint,
-  shelves and inspect pages, and the hover-only wrench links (D-45).
-- **Next.**
-  - Slice 2, the person builder: drafts, checks, trial, publish, dated
-    history snapshots, used-by guard, and the optional `skills` line in
-    participant files (D-46, D-47).
-  - Slice 3, scenario and workflow builders, including the split of each
-    scenario into its own folder (proposed `workspace/scenarios/<name>/`)
-    and moving the seven existing demos there (D-42). This touches `pa check`,
-    `pa preview` and the Session panel's workflow card.
-  - New `pa` commands: `draft`, `publish`, `history`, `uses`. Builder skills:
-    `build-person`, `build-workflow`, `build-scenario`, `build-skill`.
-- **Open.** Nothing for slices 1 and 2. Left for later by design: sharing a
-  workflow or scenario with another PM as one file, and a second person's
-  approval before publishing (a production feature, D-44).
-- **Read.** [hangar.md](hangar.md) (the spec); D-39 to D-47; mockup at
+- **Done.** Design and all decisions (D-39 to D-47, D-51, D-52). Slice 1, the
+  read-only look-around (PR 9). Slice 2, the person builder with drafts,
+  checks, publish, history and the used-by guard (PR 11, D-56 to D-59).
+  Editing people in place with the Aviator pop-over, casting and skills from
+  the person's page (PR 13, D-63 to D-66). The scenario folder split (D-42,
+  D-67). Slice 3, scenario and workflow builders (PR 14, D-71 to D-73).
+  Pictures for people and agents, and configuration that travels with the
+  repo (PR 15, D-74, D-75). `pa draft|publish|history|uses`.
+- **In an open PR.** "◆ Fly this" on a scenario page (PR 17, see below).
+- **Next.** Builder skills for workflows and skills (`build-workflow`,
+  `build-skill`) beyond `build-person` and `scenario-builder`.
+- **Open.** Left for later by design: sharing a workflow or scenario with
+  another PM as one file, and a second person's approval before publishing (a
+  production feature, D-44).
+- **Read.** [hangar.md](hangar.md); features.md "The Hangar"; mockup at
   https://claude.ai/artifact/9M4JGs5WuxigJz1jiJ9QVr.
+
+## Demos and the Library
+
+A scenario you build becomes a demo you fly, and the Library is where real
+work and demos start.
+
+- **In open PRs.** PR 17: flying a scenario makes a "◆ Demo · <title>" project
+  with its own folder; each screenplay turn is canned or live; Reset to the
+  start or Keep going (D-76 to D-81). PR 19, stacked on 17: the Library shows
+  four to six featured skills generated from `workflow.json`, then a card per
+  scenario with Fly and a Live turns switch; canned sessions retired and
+  templates moved to the Hangar (D-82 to D-88).
+- **Next.** Merge 17, then 19. Then run each demo end to end on the work Mac.
+- **Open.** D-87 does not record who decided it.
+- **Read.** The two pull requests; design round at
+  https://claude.ai/artifact/5XhbdjSKp7i2t1ChoxqS6Z.
 
 ## Design language and tokens
 
@@ -60,36 +88,29 @@ One set of design tokens for the app, the chat widgets and canvas views (the
 view kit), the preview player and the artifact templates, so the product
 looks like one product and a change is made once (D-37, D-38).
 
-- **Done (PR 4).** `design/tokens.json` is the only source;
-  `design/build_tokens.py` writes it into the app, `pa-kit.css`,
-  `harness.html` and every template (`--check` finds anything out of date).
-  The canvas injects the current tokens and light or dark mode into every
-  artifact, old ones included. The `product-aviator-design` skill holds the
-  rules and the vendored `frontend-design` skill gives general guidance
-  (D-36). The collab editor's author colors and the app's status colors use
-  the tokens.
-- **Partial.** The colors shipped are the *recommended* answers, not yet
-  confirmed. Upstream Omnigent's Settings → Appearance palettes still exist
+- **Done.** `design/tokens.json` is the only source; `design/build_tokens.py`
+  writes it everywhere (`--check` finds anything out of date). The canvas
+  injects the tokens and light or dark mode into every artifact. Colors
+  locked by Geoff (PR 8): navy frame (D-48), magenta reserved for the person
+  (D-49), amber for needs-you and red only for failures (D-50).
+- **Partial.** Upstream Omnigent's Settings → Appearance palettes still exist
   and override the default palette in one browser.
-- **Next.** Apply Geoff's answers when they come in. That is a token edit, a
-  rebuild of the generated files, and a web UI rebuild; no component changes.
-- **Open.** In the "Design Decisions Two" walkthrough
-  (https://claude.ai/artifact/QNjXRLU3GYPA26N2qsH42y), none answered yet:
-  1. Where navy lives: navy sidebar (recommended, shipped), navy accents, or
-     a navy header band.
-  2. Color for the person's own marks: magenta (recommended, shipped) or rust.
-  3. Color for "needs you": amber (recommended, shipped, red kept for
-     failures) or red.
-  4. Where agent-drawn views appear: questions and single cards in the chat
-     with big views in the canvas (recommended), canvas only (today),
-     anything in the chat with an expand button, or snapshots in the chat.
-     Building the recommended option is moderate work in the chat renderer.
-  5. The intent framework draft: keep it as drafted (recommended), fewer
-     depths, or fewer areas.
-- **Read.** D-35 to D-38; features.md "Design language and tokens";
-  `skills/product-aviator-design/`; docs/customizing.md "One look
-  everywhere"; first proposal at
-  https://claude.ai/artifact/7YzXdsPux416J5qdkVuAea.
+- **Next.** None scheduled. When a corporate palette arrives, change the
+  values and keep the meanings.
+- **Open.** None.
+- **Read.** D-35 to D-38, D-48 to D-50; [../architecture.md](../architecture.md)
+  "Design tokens"; `skills/product-aviator-design/`.
+
+## Views in the chat
+
+- **Done (PR 10).** Questions, pick-ones, single cards and summaries are drawn
+  in the conversation and fold to "Answered"; catalogs, boards and documents
+  stay in the canvas (D-53). The canvas greys while a chat view waits, as an
+  exploration (D-55). Tested live with intent shaping.
+- **Not done.** Participants cannot put a view in their own turn; the preview
+  player does not fold its chat widgets.
+- **Open.** Progressive complexity (D-54).
+- **Read.** features.md "Views in the chat".
 
 ## Collaborative markdown editor
 
@@ -119,7 +140,7 @@ reply.
   "text removed"); live co-typing would need a CRDT and a server change and
   should wait for the production design.
 - **Open.** None.
-- **Read.** D-26; features.md "Collaborative markdown editor";
+- **Read.** D-26, D-104; features.md "Collaborative markdown editor";
   `skills/document-collaboration/`; upstream's feature map
   `feature-map/markdown-editor.md` (in the upstream repository).
 
@@ -139,7 +160,7 @@ own background session, and later real agents and people.
   in on Aviator's own judgment with a note saying so (D-23). People and
   agents card in the Session panel. Two live participants called in parallel
   replied in about a minute each.
-- **Done (this PR).** Participants reach the user through the Inbox (D-68 to
+- **Done (PR 16).** Participants reach the user through the Inbox (D-68 to
   D-70): `pa tell` puts a participant's message, or their invitation into a
   session of their own, in the Inbox under their name and mark, with a People
   tab. Cards open the conversation; there is no reply from the Inbox.
@@ -153,8 +174,8 @@ own background session, and later real agents and people.
   - A live turn is a single named block, not the foldable call block the
     previews show.
 - **Next.** Revisit "a participant sees the whole conversation" for
-  production (D-24). The Hangar's person builder (slice 2) becomes the way
-  to add someone.
+  production (D-24). The Hangar's person builder (built) is now the way to
+  add someone.
 - **Open.** D-24 is explicitly a demo-only choice.
 - **Read.** D-17 to D-26, D-68 to D-70; features.md "Participants";
   `workspace/participants/README.md`; `skills/participants/`.
@@ -171,18 +192,18 @@ Their invented material chains into one story, and each also stands alone.
   decisions put to him (D-33). The intent framework is a swappable markdown
   file, `workspace/frameworks/intent.md` (D-34).
 - **Partial.**
-  - Only delivery status has been run live with an agent (once, 21 Nov,
-    about 90 seconds). It worked, and showed that a participant only knows
+  - Delivery status (about 90 seconds) and intent shaping (views in the chat)
+    have been run live with an agent. It worked, and showed that a participant only knows
     what their file says, so a convincing live demo needs each scenario to
-    give its cast that scenario's facts (the D-42 scenario folders). Until
-    then Cards Platform's script carries a load-test answer. Decision
-    review, problem discovery and intent shaping have not been run live.
-  - The intent framework is a notional draft written by us. Geoff will
-    correct it after seeing it run (walkthrough question 5 above).
+    give its cast that scenario's facts; the scenario folders (D-67) and
+    `cast/` notes (D-79, PR 17) provide that. Decision review and problem
+    discovery have not been run live.
+  - The intent framework is a notional draft; Geoff kept it as drafted
+    (D-54) and wants progressive complexity next.
 - **Next.** Run the other three live in the app and fix what breaks,
   starting with decision review (it reuses the most). Then let Geoff react to intent
   shaping live, and swap in the real company framework when there is one.
-- **Open.** The framework's shape (question 5 in the design walkthrough).
+- **Open.** Progressive complexity (D-54).
 - **Read.** D-31, D-33, D-34; features.md, one section per kind of work;
   `skills/decision-review/`, `skills/problem-discovery/`,
   `skills/delivery-status/`, `skills/intent-shaping/`;
@@ -191,21 +212,22 @@ Their invented material chains into one story, and each also stands alone.
 ## Work-Mac setup from a ZIP
 
 The work Mac cannot clone repositories outside the company, so the app
-arrives as a ZIP of `main`, downloaded in a browser, and has to be set up by
-someone who is not technical.
+arrives as a ZIP of `main` and has to be set up by someone who is not
+technical (D-100).
 
 - **Done.** Everything is vendored (Python, wheels, tmux, the built web UI).
   `start.sh` detects a quarantined copy and says so. The README walks through
   a download with `curl`, which avoids quarantine.
-- **In progress.** A one-step setup script for a browser-downloaded ZIP,
-  approved by Geoff: plain-language steps, and failures that say what broke
-  and what to send back. Not yet in a pull request.
-- **Next.** Merge it to `main` (Geoff downloads the `main` ZIP), then Geoff
-  tests it on the work Mac.
+- **Not built.** The one-step setup script for a browser-downloaded ZIP,
+  approved by Geoff on 21 Nov: plain-language steps, and failures that say
+  what broke and what to send back. Its thread has not opened a pull request.
+- **Next.** Build it, merge it to `main` (Geoff downloads the `main` ZIP), and
+  have Geoff test it on the work Mac.
 - **Open.** How the quarantine flag is cleared on a browser download. The
   README tells people to ask IT rather than bypass it; the setup script must
   not bypass it either.
-- **Read.** README "Quick start"; D-02.
+- **Read.** README "Quick start"; D-02, D-100; [../architecture.md](../architecture.md)
+  "Setup on the work Mac".
 
 ## Canvas tools across several tabs
 
@@ -219,7 +241,7 @@ browser tab, with nothing pre-approved.
   page again. The tabs are not mirrored: each keeps its own copy of the
   page's state, by design.
 - **Next / open.** None.
-- **Read.** `docs/skill-writers/artifacts.md`;
+- **Read.** D-101; `docs/skill-writers/artifacts.md`;
   `omnigent/server/routes/sessions/routes_browser.py`.
 
 ## Dock launcher
@@ -230,7 +252,7 @@ browser tab, with nothing pre-approved.
   default browser. `--add-to-dock` pins it. Built on the machine, so nothing
   is downloaded or quarantined. Run it again after moving the folder.
 - **Next / open.** None.
-- **Read.** README "Step 2".
+- **Read.** D-103; README "Step 2".
 
 ## Branding
 
@@ -241,11 +263,39 @@ browser tab, with nothing pre-approved.
 - **Open.** Whether to rename the repository `dudgeon/omnigent-slim`.
   Folders, commands and code identifiers keep `omnigent-slim` until Geoff
   says otherwise (D-35).
-- **Read.** D-35; README.
+- **Read.** D-35, D-102; README.
+
+## Modes, projects and the intent graph
+
+Starting a workflow such as intent shaping puts the session into that
+workflow's mode, visibly; replies made in the mode are marked as its own; the
+person can pause in plain language and come back later from the project; and
+a project means something (a goal to ship) and knows its relatives.
+
+- **Done.** Two design walkthroughs with drawings (2026-11-21). Geoff answered
+  the first: D-89 to D-99. The headline is D-89: Aviator is a project
+  director and modes run in threads. Nothing is built.
+- **Exists already and would be reused.** The workflow card and `pa flow`
+  progress files (D-16), direct actions for state changes (D-11), views in
+  the chat (D-53), amber for needs-you (D-50), a project per flown demo
+  (D-76). From upstream: the project board, child sessions and their tabs,
+  agent-to-agent messages, side chats.
+- **Next.** Two slices need no further decision and can be built now: run
+  state with pause and resume in `pa flow`, and the "In flight" section on
+  the project page. The rest waits on the second walkthrough. Build order is
+  in modes-and-projects.md.
+- **Open.** Four decisions (M-12 how the director shows a mode, M-13 where a
+  thread opens, M-14 what a thread reports, M-8 a project's connections). The
+  intent graph's detail is deliberately held (D-98). When answered, they take
+  D-107 onward.
+- **Read.** [modes-and-projects.md](modes-and-projects.md); D-89 to D-99;
+  walkthroughs at https://claude.ai/artifact/HRgpJURjcqasGSCmd3894d and
+  https://claude.ai/artifact/YQcb4HDRGMnn6YW82uFNZd.
 
 ---
 
 ## Also still open
 
 - Ignore the production build for now; the local demo is the product (D-29).
-- Views inside the chat: see question 4 under design language.
+- Progressive complexity (D-54).
+- Whether to rename the repository (D-35).

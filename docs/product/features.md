@@ -39,15 +39,16 @@ view specs.
 with an agent doing it, and as a click-through that needs no agent, for
 showing people and for designing before building (D-06, D-08, D-09).
 
-**Behaviour.** A scenario is a skill folder: instructions for the live agent,
-the record shapes, view specs, invented fixture data and a markdown screenplay
-(D-21). `pa preview` turns it into one HTML file that plays the screenplay
+**Behaviour.** A workflow is a skill folder: instructions for the live agent,
+the record shapes and view specs. A scenario is its own folder in
+`workspace/scenarios/<id>/` with invented fixture data, the cast and a
+markdown screenplay (D-21, D-42, D-67); many scenarios can run one workflow. `pa preview` turns it into one HTML file that plays the screenplay
 over the fixtures with the real views. `pa check` validates the package.
 Since D-42 the story lives in `workspace/scenarios/<id>/`, with `context/`
 documents and `cast/` notes beside the fixtures (D-79); flying it is below.
 
-**Where.** `skills/prd-to-requirements/`, `skills/requirements-to-dependencies/`,
-`skills/document-review/`; how to make one in `skills/scenario-builder/`; the
+**Where.** Workflows in `skills/<id>/` (for example `skills/document-review/`),
+scenarios in `workspace/scenarios/<id>/`; how to make one in `skills/scenario-builder/`; the
 screenplay format in `skills/view-kit/references/script.md`; the player in
 `skills/view-kit/kit/harness.html`.
 
@@ -370,7 +371,7 @@ values. When a corporate palette replaces ours, swap the values but keep the
 meanings, in particular one hue reserved for the person's own marks and red
 only for failures (decisions D-48 to D-50).
 
-## The Hangar (builder mode): look-around and person builder built
+## The Hangar (builder mode)
 
 **Intent.** Defining people, workflows, views and scenarios should happen in
 the app, by product managers, without being able to break what others use.

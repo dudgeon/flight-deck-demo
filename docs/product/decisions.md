@@ -5,6 +5,14 @@ never edited after the fact; a later entry may replace an earlier one and says
 so. "Geoff" is the product owner. "Claude" marks a choice made by the agent
 while building, which Geoff later accepted as a group (D-27).
 
+Where each decision stands now (built, replaced, pending, open) is in
+[decision-index.md](decision-index.md), with a one-line reason for every
+entry. Entries are grouped by topic, so numbers are not always in order.
+D-60 to D-62 were never assigned. To add a decision, follow "Decisions" in
+the repository's `CLAUDE.md`: claim the next number after the highest one on
+`main` *and* in open pull requests, and say in the pull request which numbers
+it uses.
+
 ## Foundations
 
 **D-01 · 2026-11-20 · Geoff.** Product Aviator is a cut-down fork of Omnigent,
@@ -456,8 +464,142 @@ https://claude.ai/artifact/7gbkDmURSuwhWGWVzyBtU6): the page as the editor with
 autosave (D-63), the pinnable Aviator pop-over with "Try them" (D-64), casting
 from the person's page (D-65) and skills passed to the session (D-66).
 
+## Modes, runs and projects
+
+Geoff's answers of 2026-11-21 to the walkthrough at
+https://claude.ai/artifact/HRgpJURjcqasGSCmd3894d (questions M-1 to M-11 in
+[modes-and-projects.md](modes-and-projects.md)). Numbers start at D-89 because
+D-76 to D-88 are taken by work in open pull requests.
+
+**D-89 · 2026-11-21 · Geoff.** The main Aviator session acts as a project
+director, and modes are powered by threads. Deep work that benefits from its
+own context window (a workflow such as intent shaping) runs in a sub-session
+that runs the skill; the director coordinates with it by agent-to-agent
+messages. The person can stay in the director session and click into a thread
+only when needed. The approach is dynamic: the director decides when work
+earns a thread. A main session should feel like a Claude Code project. *His
+words: "for context reasons, the main session should act like a project
+director/orchestrator, with threads used to isolate context for a given
+workflow." He chose this over all three drawn options (in place with threads
+for branches, every mode in its own session, everything in one chat).* Still
+open, and his to decide: how the director session shows a mode for the
+high-level interactions (M-12).
+
+**D-90 · 2026-11-21 · Geoff.** A mode shows as a one-line strip on the message
+box: the workflow, the step, and Pause. Not a band under the header, and not
+only the Session panel card. *Always in view whether the canvas or the panel
+is open, and clearly lighter than the Hangar's frame change (D-40).*
+
+**D-91 · 2026-11-21 · Geoff.** Replies that belong to a mode are marked by a
+thin rail beside them, with a marker in the transcript where the mode starts,
+pauses and resumes. Participants keep their own names inside the rail. *Who
+is speaking stays separate from what work a turn belongs to.*
+
+**D-92 · 2026-11-21 · Geoff.** A side question during a mode is answered
+outside the rail and the mode stays on. It does not end or pause the mode.
+
+**D-93 · 2026-11-21 · Geoff.** Leaving a mode: say it in plain language or
+press Pause. There are three endings, kept distinct: pause (come back), finish
+(the work product is written) and stop (not worth pursuing; what exists is
+kept). On pause the agent writes a "where we left off" note and a Resume
+control, and an unanswered question is frozen as Paused. Only stop asks for
+confirmation.
+
+**D-94 · 2026-11-21 · Geoff.** One mode has the floor at a time. Starting a
+second pauses the first and remembers it, and the agent offers to return when
+the second ends. *Chosen when modes were drawn inside one chat. Under D-89
+several threads can be in flight at once; what this fixes is that the
+person's message always has one obvious destination.*
+
+**D-95 · 2026-11-21 · Geoff.** Any item (a decision, a risk, a requirement)
+can have its own thread, attached to the record, opened from its row, with a
+count on the row. Aviator may start one when a discussion of one item runs
+long, and says so. *Keeps each item's reasoning with the item.*
+
+**D-96 · 2026-11-21 · Geoff.** In-flight work is found on the project page: an
+"In flight" section with a card per run (step, state, where it left off,
+Resume), sessions below, and a count of runs that need the person in the
+sidebar. Built on upstream's project board.
+
+**D-97 · 2026-11-21 · Geoff.** A project is one in-market goal that ships and
+then ends. It sits inside an area, a lasting problem space where problem
+discovery and shared context live; a problem marked worth solving starts a
+goal project. *His caveat, recorded as a constraint on what follows: this may
+need to become more graph-like and less hierarchical. "If project A has 20
+requirements, and implementing one of them is delegated to a different team,
+that would become project B for them." So the area is a home, not the only
+kind of link, and a record must be able to point at another project.*
+
+**D-98 · 2026-11-21 · Geoff.** The level of detail of the intent graph is not
+decided yet, on purpose: "too early for me to decide; hold decision until it
+blocks something." Nothing is built for a graph beyond what D-97 needs (a
+project names its goal and its area). *The likely first thing to force it is
+his own example in D-97, a requirement handed to another team's project.*
+
+**D-99 · 2026-11-21 · Claude, accepted by Geoff.** The smaller calls listed
+in the walkthrough stand: every workflow makes a mode, not only the ones
+featured in the Library; a mode has no color of its own (it uses the "agent
+at work" token); starting a mode never asks first; a run belongs to one
+project; threads reuse upstream's side chats and child sessions; demo
+projects (D-76) stay as they are. "Resume returns to the same session" is
+carried over as "Resume returns to the run's own thread".
+
+## Backfilled
+
+Decisions Geoff made on 20 and 21 November that were acted on but never
+logged. Recorded on 21 November from the walkthroughs and threads where he
+made them, with the date he made them.
+
+**D-100 · 2026-11-21 · Geoff.** The work Mac gets Flight Deck as a ZIP of the
+whole repository downloaded from GitHub, unzipped, and set up by running one
+script. The script must fail in ways that say what broke and what to send
+back. A `curl` command is fine only if a person runs it, with instructions a
+non-technical PM can follow. *The work Mac blocks cloning repositories outside
+the company's own namespace, and the people setting it up are not
+engineers.* Not built yet: `start.sh` detects a quarantined copy, but the
+one-step setup script is still to come.
+
+**D-101 · 2026-11-21 · Geoff.** When a session is open in several browser
+tabs, one tab is the active canvas and the others offer "Use this tab". The
+canvas is not mirrored between tabs. *One active tab is enough for a demo, and
+mirroring the page's state would be a lot of machinery for no visible gain.*
+
+**D-102 · 2026-11-21 · Geoff.** The sidebar shows the Product Aviator emblem
+with the name as text beside it, at the top left. The new-session screen has
+no logo and no heading. *The full logo would be acceptable, but its spacing
+and alignment were poor at sidebar size.*
+
+**D-103 · 2026-11-21 · Geoff.** The Dock launcher uses icon A (the current
+emblem), and it is pinned to the Dock (`scripts/make_dock_app.sh
+--add-to-dock`). *One click to start the demo on the work Mac.*
+
+**D-104 · 2026-11-21 · Geoff.** In a document, the main agent's behaviour
+depends on how it is asked: "make a change" edits directly (the edit is
+highlighted until seen), "propose changes" makes tracked suggestions. Every
+other agent only suggests (D-26). *The person stays in control of what lands,
+without making every small fix a suggestion to accept.*
+
+**D-105 · 2026-11-21 · Geoff.** Every question card put to him includes a
+"Something else" option. Extends D-32. *The real answer is often not one of
+the options offered.*
+
+**D-106 · 2026-11-21 · Geoff.** Two choices the agent made overnight stand
+(confirming them under D-27): a view is redrawn by rewriting its HTML file,
+and the reviewed and locked states of a record belong to the person, never
+set by the agent. *Rewriting the file is what makes old artifacts and the
+canvas reload work; reviewed and locked are the person's judgment.*
+
 ## Open
 
 - Progressive complexity (from D-54): how a workflow shows less at first and
   more on demand, to the person and to the agent. Not designed yet.
-
+- From the modes and projects work (see
+  [modes-and-projects.md](modes-and-projects.md)), put to Geoff with drawings
+  at https://claude.ai/artifact/YQcb4HDRGMnn6YW82uFNZd:
+  - M-12: how the director session shows a mode for the high-level
+    interactions (left open by D-89).
+  - M-13: where a thread opens when the person steps into it.
+  - M-14: what a thread reports back to the director.
+  - M-8, sent back by Geoff to be rethought as a graph, not a tree: how a
+    project's connections show.
+- The intent graph's level of detail is deliberately held (D-98).
