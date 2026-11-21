@@ -41,6 +41,22 @@ download is the Terminal version of macOS's own "Open Anyway", and sending
 people to IT for it would stall every install. This replaces the earlier
 advice in the README to ask IT.*
 
+**D-111 · 2026-11-21 · Geoff asked, Claude chose.** The app lives in one
+fixed folder, `~/flight-deck` (Geoff chose the name). Setup copies a download
+into it, and a newer download updates it without overwriting anything the
+person made or changed: their own files are untouched, their edits to shipped
+workspace files win (the new version is saved under `updates/`), files they
+deleted stay deleted, and app code outside `workspace/` is always replaced
+(their copy saved). A manifest of the last install's file hashes tells the
+cases apart. `sh ~/flight-deck/setup.sh` finds the newest download in
+~/Downloads by itself, so nobody navigates folders in Terminal, and the
+Workspace and Hangar projects follow the app when it moves out of a download
+folder. *Geoff asked that a re-download keep the files he added rather than
+overwrite them, and said navigating in the command line is hard. One fixed
+folder in the home folder, outside iCloud and OneDrive sync, gives updates a
+place to find, and comparing against what was shipped is the only way to
+tell his edits from ours.*
+
 ## Structured work
 
 **D-05 · 2026-11-20 · Geoff.** One template system serves both the chat
@@ -189,6 +205,17 @@ from a preview.
 **Flight Deck**. Product Aviator stays the name of the user interface. The
 repository, folders and code identifiers keep `omnigent-slim` unless Geoff
 says otherwise. *He liked the name when it came up for the design direction.*
+
+**D-114 · 2026-11-21 · Geoff.** The GitHub repository is renamed from
+`dudgeon/omnigent-slim` to `dudgeon/flight-deck-demo`. This refines D-35 for
+the repository only: local folders (the Mac mini checkout, `~/flight-deck` on
+the work Mac), the `~/.omnigent-slim` data folder, commands and code
+identifiers keep their names. The download ZIP and its folder are now
+`flight-deck-demo-main`; `setup.sh` finds downloads under either name.
+*Geoff wanted the repository to carry the product's name. Renaming a local
+checkout would break its Python environment and Dock launcher, which hold the
+folder's path, and would separate the folder from its Claude Code session
+history, so the folders stay put; GitHub redirects the old name.*
 
 **D-36 · 2026-11-21 · Geoff.** Anthropic's `frontend-design` skill is
 vendored into `skills/` (Apache 2.0, unchanged), so every session has it,
