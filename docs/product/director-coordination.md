@@ -270,6 +270,13 @@ hidden; agreement with the judge is tracked and the judge's rubric is fixed
 when they disagree. Scenarios already have `script.md`; good flights can
 become tasks, and every failure seen in a real flight should become one.
 
+**Evidence for code graders.** The usage log (D-126,
+[usage-logging.md](usage-logging.md)) records what a trial did: `tool.used`
+with the skill loaded, `pa.brief` and `pa.flow` for threads and runs,
+`upstream.turn_end` for failed turns. The runner tags each trial with
+`pa usage eval start <suite> <task> <trial>` and the graders read that
+trial's lines from `logs/usage/eval/<suite>/`.
+
 **Tuning loop:** change one thing (a skill description, a rule in the director
 skill, a strictness definition), run the suite, read the failing transcripts,
 keep the change if the held-out score rises and no hard gate drops. Report:

@@ -48,6 +48,7 @@ person in the conversation, from the roster in `workspace/participants/`.
 | `tests/` | `test_slim_*.py` pytest suites |
 | `vendor/` | Python runtime, wheels, tmux, and `scripts/build_vendor.sh` |
 | `scripts/` | `sync_upstream.sh`, `make_dock_app.sh`, build helpers |
+| `logs/usage/` | The usage log (D-122): one JSON line per event, per day; gitignored, never shipped. `skills/view-kit/scripts/usagelog.py` writes it; `pa usage` reads it |
 | `start.sh`, `stop.sh` | Start and stop everything (macOS, Apple silicon) |
 | `UPSTREAM` | The upstream commit this fork is synced to |
 
@@ -212,6 +213,7 @@ writing down intent is part of every change.
 ## Things not to do
 
 - Don't add network calls, CDN assets or unvendored dependencies.
+- Don't put content in the usage log: write events through `usagelog.log` or `pa log` with ids, status words and numbers only, never a sentence (D-124). See `docs/product/usage-logging.md`.
 - Don't hand-edit generated files: the token blocks between
   `pa-tokens:begin` and `pa-tokens:end`, `web/src/*.generated.css`, or the
   built web UI.

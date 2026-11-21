@@ -144,6 +144,8 @@ from omnigent.server.routes.slim_library import create_slim_library_router
 from omnigent.server.routes.slim_hangar import create_slim_hangar_router  # omnigent-slim
 from omnigent.server.routes.slim_runs import create_slim_runs_router  # omnigent-slim
 from omnigent.server.routes.slim_projects import create_slim_projects_router  # omnigent-slim
+from omnigent.server.routes.slim_usage import create_slim_usage_router  # omnigent-slim
+from omnigent.slim_usage import route_event as _slim_route_event  # omnigent-slim
 from omnigent.server.routes.slim_participant_inbox import (  # omnigent-slim
     create_slim_participant_inbox_router,
 )
@@ -4434,6 +4436,26 @@ def create_app(
         prefix="/v1",
         tags=["slim"],
     )
+    # omnigent-slim: the usage log's web feed and summary (D-122 to D-127).
+    app.include_router(
+        create_slim_usage_router(auth_provider=auth_provider),
+        prefix="/v1",
+        tags=["slim"],
+    )
+
+    # omnigent-slim: one usage-log line per change made through a slim route (D-125).
+    @app.middleware("http")
+    async def _slim_usage_writes(request: Request, call_next: _FastAPICallNext) -> Response:
+        started = time.monotonic()
+        response = await call_next(request)
+        if request.method not in ("GET", "HEAD", "OPTIONS") and "/v1/slim/" in request.url.path:
+            path = request.url.path[request.url.path.index("/v1/slim/") :]
+            elapsed = int((time.monotonic() - started) * 1000)
+            await asyncio.to_thread(
+                _slim_route_event, request.method, path, response.status_code, elapsed
+            )
+        return response
+
     # omnigent-slim: the runs in flight in a project, for its "In flight" section (D-96).
     app.include_router(
         create_slim_runs_router(
