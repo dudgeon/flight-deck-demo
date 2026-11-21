@@ -501,10 +501,25 @@ scenario|workflow`, which the scenario-builder skill now uses. *Why:* so a PM
 can make a new demo, or adjust a kind of work for their team, without editing
 files or breaking what others fly, in the same way they edit a person.
 
+**Widgets and views (D-112).** A workflow's page groups what people see into
+"Widgets · in the chat" (forms, single-record cards, summaries the agent puts
+in the conversation) and "Views · in the canvas", each drawn over the
+scenario's sample data. "Edit widgets and views" on the workflow, or "Edit" on
+one view's page, opens the workflow draft at that widget: its small line,
+heading, form questions, button labels and what each button says in the chat
+are fields, the whole spec is a JSON box, and the drawing beside it follows
+every save. "Add a widget or view" starts from a blank form, a blank summary or
+a copy, and writes the `SKILL.md` line that tells the agent when and how to
+show it. Publishing goes through the usual checks and lands in the workflow's
+workspace copy, so it travels with the repo. *Why:* the widgets are most of
+what a person sees of a workflow, and Geoff wants to shape them where he
+shapes everything else, without hand-editing files.
+
 **Where.** Design in `hangar.md`. Server: `omnigent/server/routes/slim_hangar.py`
 (`GET /v1/slim/hangar`, rendered views, templates and scenario players, and the
 draft, publish, history and restore routes for people, scenarios and
-workflows). Folder drafts: the "workflows and scenarios" builder section of
+workflows, and `GET /v1/slim/hangar/drafts/workflow/<id>/views/<view>` for a
+draft's widget). Widget editor: `web/src/hangar/WidgetsCard.tsx`. Folder drafts: the "workflows and scenarios" builder section of
 `skills/view-kit/scripts/pa.py`. Web: `FolderEditor.tsx` beside the person
 editor. Builder skill: `skills/build-person/`.
 Web: `web/src/hangar/`. Colors: the `build` and `hangar-*` tokens.

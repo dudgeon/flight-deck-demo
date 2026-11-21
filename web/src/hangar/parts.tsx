@@ -19,6 +19,12 @@ export const SHELF_LABELS: Record<string, string> = {
   frameworks: "Frameworks",
 };
 
+export const layoutLabel = (layout: string) =>
+  ({ "tree-table": "Table", board: "Board", detail: "Card", form: "Form", summary: "Summary" })[
+    layout
+  ] ?? layout;
+export const hostLabel = (host: string) => (host === "chat" ? "in the chat" : "in the canvas");
+
 export function Checks({ problems, passed }: { problems: string[]; passed: string }) {
   return (
     <ul className="checks" data-testid="hangar-checks">

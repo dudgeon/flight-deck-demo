@@ -907,3 +907,71 @@
 .hangar .avatarpick input[type="file"] {
   display: none;
 }
+
+/* A workflow's widgets and views in its editor (D-112). */
+.hangar .widgets-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 6px;
+}
+.hangar .widgets {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.hangar .widget {
+  border: 1px solid var(--pa-line-strong);
+  border-radius: var(--pa-r);
+  background: var(--pa-hangar-paper);
+  padding: 6px 10px;
+  scroll-margin-top: 16px;
+}
+.hangar .widget .filename {
+  font-family: var(--pa-font);
+  font-size: var(--pa-text-sm);
+  font-weight: 600;
+  color: var(--pa-build);
+  background: none;
+  border: 0;
+  padding: 2px 0;
+  cursor: pointer;
+  text-align: left;
+}
+.hangar .widget.on {
+  border-color: var(--pa-build);
+}
+.hangar .widget-edit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  gap: 14px;
+  padding: 8px 0 4px;
+}
+@media (max-width: 1100px) {
+  .hangar .widget-edit {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.hangar .widget-button {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--pa-line-strong);
+}
+.hangar .widgets-add {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--pa-build);
+}
+.hangar .widgets-add .row > input {
+  flex: 1;
+}
+.hangar .lab.x {
+  color: var(--pa-fail);
+}

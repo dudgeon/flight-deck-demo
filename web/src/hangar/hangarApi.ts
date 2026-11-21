@@ -92,6 +92,8 @@ export interface HangarView {
   host: "canvas" | "chat";
   actions: number;
   path: string;
+  /** The spec's path inside the workflow folder, e.g. views/card.json. */
+  file?: string;
 }
 
 export interface HangarRecordType {
@@ -197,6 +199,8 @@ export interface FolderDraft {
   uses: { scenarios: string[]; starters: string[] };
   path: string;
   target: string;
+  /** A workflow draft's widgets and views, placed as they show when flying. */
+  views?: HangarView[];
 }
 
 export interface FolderEdit {
@@ -387,6 +391,9 @@ export function useFolderDraft(kind: FolderKind, id: string) {
   });
 }
 
+/** One view of a workflow draft, drawn over its scenario's sample data. */
+export const draftViewPath = (id: string, view: string) =>
+  `/v1/slim/hangar/drafts/workflow/${encodeURIComponent(id)}/views/${encodeURIComponent(view)}`;
 export const folderPreviewPath = (kind: FolderKind, id: string) => `${folderApi(kind, id)}/preview`;
 
 /** The same moves as people, for scenarios and workflows. */
