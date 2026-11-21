@@ -31,6 +31,16 @@ medium effort.
 managers: unstructured work with context files and generated artifacts,
 alternating with templated structured flows.
 
+**D-107 · 2026-11-21 · Geoff.** The setup script (D-100) clears the macOS
+download flag (quarantine) itself, from its own folder only, after explaining
+it and waiting for the person to press Return. A `curl` download, which never
+gets the flag, stays in the README as the other way. Setup always writes a
+report, on the Desktop, to send back when it stops. *A browser ZIP is the
+main way onto the work Mac. Clearing the flag on files the person chose to
+download is the Terminal version of macOS's own "Open Anyway", and sending
+people to IT for it would stall every install. This replaces the earlier
+advice in the README to ask IT.*
+
 ## Structured work
 
 **D-05 · 2026-11-20 · Geoff.** One template system serves both the chat

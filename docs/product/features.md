@@ -298,6 +298,26 @@ tells Claude to read the page again.
 `web/src/lib/canvasFrameRuntime.ts`; for skill writers,
 `docs/skill-writers/artifacts.md`.
 
+## Setup from a ZIP
+
+**Intent.** Someone who is not technical gets the app running on a locked-down
+work Mac from a browser download, with one command, and when it can't finish
+they get a plain explanation and a file to send back (D-100, D-107).
+
+**Behaviour.** `sh setup.sh` in the unzipped folder checks the Mac (macOS 13+,
+Apple silicon, not under Rosetta, disk space), that the folder is complete,
+and that Claude Code is installed (it finds it in the usual places when
+Terminal's PATH misses it). It clears the browser's quarantine flag from its
+own folder after asking, restores execute bits an unzip dropped, checks the
+bundled tmux runs, then runs `start.sh` and confirms the app answers on port
+6767 (or says which port it took). It never downloads or installs anything.
+Every run writes `setup-report.txt` in the folder and
+`flight-deck-setup-report.txt` on the Desktop; a failure names the problem,
+the fix, and that file. `tests/setup_sim/simulate_zip_setup.sh` rehearses the
+whole flow in a Linux container.
+
+**Where.** `setup.sh`, `start.sh`, `tests/setup_sim/`, README "Quick start".
+
 ## Dock launcher
 
 **Intent.** On the work Mac, starting the demo should be one click, not a
