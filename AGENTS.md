@@ -2,7 +2,8 @@
 
 Flight Deck is a cut-down fork of [Omnigent](https://github.com/omnigent-ai/omnigent)
 for prototyping an agent workspace for product managers on a locked-down work
-Mac. Its user interface is **Product Aviator**. The repository, folders,
+Mac. Its user interface is **Product Aviator**. The repository is
+`dudgeon/flight-deck-demo` (D-114, renamed from `omnigent-slim`); folders,
 commands and code identifiers keep the name `omnigent-slim` (D-35). It drives
 Claude Code as a terminal program, runs offline, and is fully vendored.
 
@@ -47,6 +48,7 @@ person in the conversation, from the roster in `workspace/participants/`.
 | `tests/` | `test_slim_*.py` pytest suites |
 | `vendor/` | Python runtime, wheels, tmux, and `scripts/build_vendor.sh` |
 | `scripts/` | `sync_upstream.sh`, `make_dock_app.sh`, build helpers |
+| `logs/usage/` | The usage log (D-122): one JSON line per event, per day; gitignored, never shipped. `skills/view-kit/scripts/usagelog.py` writes it; `pa usage` reads it |
 | `start.sh`, `stop.sh` | Start and stop everything (macOS, Apple silicon) |
 | `UPSTREAM` | The upstream commit this fork is synced to |
 
@@ -56,6 +58,10 @@ person in the conversation, from the roster in `workspace/participants/`.
   starts the server and opens `http://127.0.0.1:6767/library`. If 6767 is busy
   it takes the next free port and prints it. `./start.sh --no-open` skips the
   browser. `./stop.sh` stops it. Session data is in `~/.omnigent-slim`.
+- On the work Mac, `sh setup.sh` installs into `~/flight-deck` and updates it
+  from newer downloads without overwriting the person's files (D-107, D-111).
+  Changing the install or update rules: `scripts/install_sync.py`, then run
+  `tests/setup_sim/simulate_zip_setup.py` and `tests/test_slim_install_sync.py`.
 - `start.sh` is macOS-only. In a Linux container, use a plain venv:
   `pip install -e sdks/python-client -e sdks/ui -e .`, then `omnigent start`.
   On a machine with internet, `uv sync` and `uv run omnigent start` also work.
@@ -87,6 +93,8 @@ not in the repo.
   images, telemetry, update checks or downloads. Python runs behind
   `omnigent/_offline_guard.py`; never weaken it or reintroduce uvloop.
   Artifacts are single self-contained HTML files.
+  The one exception is the Hangar's "Send to repo" (D-113): a `git push` (and
+  `gh pr create`) that runs only when a person presses it, on a git copy.
 - **Everything is vendored.** Nothing is installed at work. A new Python or
   npm dependency must be vendored: rebuild with `vendor/scripts/build_vendor.sh`
   and commit `vendor/wheels/`. Prefer the standard library (`pa.py` uses
@@ -161,6 +169,11 @@ writing down intent is part of every change.
 - **When you add or change a feature,** update its section in
   `docs/product/features.md` with what it is for, not only what it does, and
   move its workstream in `docs/product/roadmap.md`, in the same pull request.
+- **Decision artifacts.** Every walkthrough, design round or proposal page
+  put to Geoff gets an offline copy in `docs/decision-artifacts/` (D-115).
+  The `docs-refresh` skill (`.claude/skills/docs-refresh/`) fetches, archives
+  and indexes them, and runs the docs pass; use it when docs need bringing
+  up to date.
 - **Asking Geoff.** One question at a time as a decision card, never a list in
   prose (D-32); always with a "Something else" option (D-105); never blind:
   context, real options with consequences, the actual visuals, and a
@@ -200,10 +213,12 @@ writing down intent is part of every change.
 ## Things not to do
 
 - Don't add network calls, CDN assets or unvendored dependencies.
+- Don't put content in the usage log: write events through `usagelog.log` or `pa log` with ids, status words and numbers only, never a sentence (D-124). See `docs/product/usage-logging.md`.
 - Don't hand-edit generated files: the token blocks between
   `pa-tokens:begin` and `pa-tokens:end`, `web/src/*.generated.css`, or the
   built web UI.
 - Don't write live roster, scenario or workflow files from code other than
   `pa publish` and the Hangar's publish routes; drafts go in `.hangar/`.
-- Don't rename the repository, folders or identifiers to Flight Deck until
-  Geoff says so (D-35).
+- Don't rename folders or code identifiers to Flight Deck until Geoff says
+  so (D-35). The repository itself is renamed (D-114). Don't rename a local
+  checkout's folder either: its `.venv` and the Dock launcher hold its path.

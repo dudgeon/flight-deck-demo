@@ -1,0 +1,522 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!-- decision-archive:start -->
+<div style="font:13px/1.45 system-ui,sans-serif;background:Canvas;color:CanvasText;border-bottom:1px solid GrayText;padding:8px 16px">Archived copy of <b>Twelve Open Decisions</b>, a decision artifact from 2026-11-21. It shows the answers recorded on 2026-11-21; changes made here are not saved. The index of all of them is in <a href="../index.html">docs/decision-artifacts</a>.</div>
+<script>
+(function(){
+  var A={"inb-how": {"at": "2026-11-21T17:07:40.899Z", "choice": "Both, scripted first", "note": ""}, "inb-reply": {"at": "2026-11-21T17:07:57.649Z", "choice": "No inline reply", "note": ""}, "inb-which": {"at": "2026-11-21T17:07:35.046Z", "choice": "Messages meant for you", "note": "imagine this: just as we can send messages to others, imagine the other person receiving such a message; the inbox is where they would see our message. and we will have scenarios where our demo user is pulled into sessions -- not just ones where we pull others into our sessions. I can explain further if that does not make sense."}, "lib-live": {"at": "2026-11-21T17:02:42.671Z", "choice": "Open a demo project", "note": "optional: add some prefix or icon so it is obvious that a given project/session is a demo. unclear the distinction between a project and a session, but my sense is that most demos should be projects. I also think that demos and scenarios are actually the same thing -- we've just used different wording. and a demo/scenario could be an initial setup, where the user interacts with it, or a fully scripted scenario -- perhaps that's the distinction. but they are two types of the same thing."}, "lib-name": {"at": "2026-11-21T17:03:10.403Z", "choice": "Something else", "note": "read my answers to questions 1, 2 and let me know if this is still an open question."}, "lib-where": {"at": "2026-11-21T17:00:25.806Z", "choice": "Something else", "note": "Demos should feel like you are flying -- there is a decision about where you should go to invoke them, the hangar or the library section -- but. the whole point of a demo is to demonstrate flying in a given scenario."}, "per-casting": {"at": "2026-11-21T17:06:18.982Z", "choice": "Yes, tick workflows, demos and starters here", "note": ""}, "per-chat": {"at": "2026-11-21T17:05:37.434Z", "choice": "Pop-over, can be pinned", "note": ""}, "per-entry": {"at": "2026-11-21T17:05:01.822Z", "choice": "The page itself becomes the editor", "note": "we also need to be able to select icons/avatars for each participant (person/agent); when selected (e.g. from a file in my desktop), they should be added to the repo. config, like personas, harness skills, workflows, scenarios should all travel with the repo. user sessions don't need to but can."}, "per-save": {"at": "2026-11-21T17:05:09.467Z", "choice": "Every edit saves to the draft at once", "note": ""}, "per-skills": {"at": "2026-11-21T17:06:07.660Z", "choice": "Skills they bring to their answers", "note": ""}, "per-try": {"at": "2026-11-21T17:05:49.032Z", "choice": "A Try them tab in the Aviator pop-over", "note": ""}, "r2-launch": {"at": "2026-11-21T17:43:01.784Z", "choice": "Both", "note": ""}, "r2-name": {"at": "2026-11-21T17:45:03.649Z", "choice": "Scenario you build, demo you fly", "note": "yes and a demo can be fully scripted or not very scripted, with each turn either triggering the next canned turn or handing it over to a real agent call"}};
+  function snap(){var docs=Object.keys(A).map(function(k){return {id:k,data:function(){return A[k]},exists:true}});return {docs:docs,empty:!docs.length,size:docs.length,forEach:function(f){docs.forEach(f)}}}
+  function doc(id){return {id:id,get:async function(){return {id:id,exists:id in A,data:function(){return A[id]}}},set:async function(){},update:async function(){},delete:async function(){}}}
+  var db={collection:function(){return {get:async function(){return snap()},doc:doc,onSnapshot:function(f){setTimeout(function(){f(snap())},0);return function(){}},add:async function(){}}},doc:function(p){return doc(String(p).split("/").pop())}};
+  window.claude={use:async function(name){return name==="db"?db:null}};
+})();
+</script>
+<!-- decision-archive:end -->
+
+<title>Twelve Open Decisions</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* One reading column. A sequence map up top, then three parts in dependency order, each decision a card with context, visuals, options and a saved pick. Product Aviator tokens. */
+:root{
+  --bg:#f4f6f9;--surface:#fff;--sunk:#eaeef3;--ink:#0f1e30;--ink-2:#475a70;--ink-3:#71829a;--line:#d6dde6;--line-strong:#b4c0ce;
+  --navy:#0a223d;--chrome-ink:#f2f6fa;--chrome-ink-2:#9fb4cc;--chrome-active:#2a5486;
+  --build:#0d6e78;--build-soft:#d9f0f1;--on-build:#fff;--hangar-bg:#edf4f6;--hangar-grid:#d3e3e7;--hangar-paper:#fbfdfd;
+  --ok:#17794a;--ok-soft:#ddf1e6;--attn:#8d5a00;--attn-soft:#f9ebcf;--fail:#b3261e;--fail-soft:#f9dedc;
+  --agent:#4f46b8;--agent-soft:#e8e6f8;--you:#b0237a;--new:#c99a00;
+  --f-body:"Inter",-apple-system,"Segoe UI",system-ui,sans-serif;--f-head:"Space Grotesk","Inter",system-ui,sans-serif;--f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#071526;--surface:#0c1e33;--sunk:#091a2d;--ink:#e6edf5;--ink-2:#a6b6c8;--ink-3:#71849a;--line:#1e3550;--line-strong:#3a5676;
+  --navy:#0d2138;--chrome-ink:#f2f6fa;--chrome-ink-2:#8ea6c2;--chrome-active:#1f4470;
+  --build:#5cc3cc;--build-soft:#0f3337;--on-build:#04262a;--hangar-bg:#0a1c26;--hangar-grid:#13303b;--hangar-paper:#0c2029;
+  --ok:#5bcb93;--ok-soft:#0f3123;--attn:#e9b44c;--attn-soft:#362808;--fail:#ff8a80;--fail-soft:#3d1715;--agent:#a9a3f5;--agent-soft:#221f4a;--you:#f07cc0;--new:#f5c518;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#071526;--surface:#0c1e33;--sunk:#091a2d;--ink:#e6edf5;--ink-2:#a6b6c8;--ink-3:#71849a;--line:#1e3550;--line-strong:#3a5676;
+  --navy:#0d2138;--chrome-ink:#f2f6fa;--chrome-ink-2:#8ea6c2;--chrome-active:#1f4470;
+  --build:#5cc3cc;--build-soft:#0f3337;--on-build:#04262a;--hangar-bg:#0a1c26;--hangar-grid:#13303b;--hangar-paper:#0c2029;
+  --ok:#5bcb93;--ok-soft:#0f3123;--attn:#e9b44c;--attn-soft:#362808;--fail:#ff8a80;--fail-soft:#3d1715;--agent:#a9a3f5;--agent-soft:#221f4a;--you:#f07cc0;--new:#f5c518;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;margin:0}
+.wrap{max-width:1000px;margin:0 auto;padding-block:40px 120px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:40px}
+h1,h2,h3{font-family:var(--f-head);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:34px;line-height:1.15}h2{font-size:26px}h3{font-size:19px;line-height:1.3}
+p{margin:0;max-width:70ch}
+.lede{font-size:17px;color:var(--ink-2)}
+.muted{color:var(--ink-2)}.small{font-size:13px}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+code{font-family:var(--f-mono);font-size:.85em;background:var(--sunk);padding:1px 5px;border-radius:4px}
+section{display:flex;flex-direction:column;gap:18px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px 22px;display:flex;flex-direction:column;gap:12px}
+.panel ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.scroll{overflow-x:auto}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;padding:1px 8px;border-radius:99px;white-space:nowrap}
+.pill.rec{background:var(--ok-soft);color:var(--ok)}
+.pill.built{background:var(--build-soft);color:var(--build)}
+.pill.warn{background:var(--attn-soft);color:var(--attn)}
+.pill.agent{background:var(--agent-soft);color:var(--agent)}
+
+/* sequence map */
+.seq{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.part{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:14px;display:flex;flex-direction:column;gap:8px}
+.part h4{margin:0;font-family:var(--f-head);font-size:15px}
+.part ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
+.part li a{display:flex;gap:8px;align-items:baseline;color:var(--ink);text-decoration:none;font-size:13.5px;padding:3px 6px;border-radius:6px}
+.part li a:hover{background:var(--sunk)}
+.part li .n{font-family:var(--f-mono);font-size:12px;color:var(--ink-3);width:18px;flex:none}
+.part li .st{margin-left:auto;font-size:11px;color:var(--ink-3);white-space:nowrap}
+.part li .st.done{color:var(--ok);font-weight:600}
+@media (max-width:760px){.seq{grid-template-columns:1fr}}
+
+/* dependency diagram */
+.dia{min-width:760px}
+.dia text{font-family:var(--f-body);font-size:12.5px;fill:var(--ink)}
+.dia .h{font-family:var(--f-head);font-weight:600;font-size:13px}
+.dia .s{font-size:11px;fill:var(--ink-2)}
+.dia .z{font-size:10.5px;font-weight:600;letter-spacing:.07em;fill:var(--ink-3)}
+.dia .box{fill:var(--surface);stroke:var(--line-strong);stroke-width:1.2}
+.dia .zone{fill:var(--sunk)}
+.dia .ln{stroke:var(--build);stroke-width:1.5;fill:none}
+.dia .num{fill:var(--build);font-family:var(--f-mono);font-size:11px;font-weight:600}
+
+/* decision card */
+.dec{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:16px;scroll-margin-top:16px}
+.dec.answered{border-color:var(--ok)}
+.dhead{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.dnum{font-family:var(--f-mono);font-size:13px;color:var(--build);font-weight:600}
+.deps{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.deps div{font-size:13px;color:var(--ink-2);background:var(--bg);border-radius:8px;padding:8px 10px}
+.deps b{color:var(--ink);font-weight:600}
+.ctx{display:flex;flex-direction:column;gap:10px}
+.shot{border:1px solid var(--line-strong);border-radius:10px;overflow:hidden;background:var(--sunk)}
+.shot img{display:block;width:100%;height:auto}
+.cap{font-size:12.5px;color:var(--ink-3);padding:8px 12px;background:var(--surface);border-top:1px solid var(--line)}
+.opts{display:grid;gap:10px}
+.opt{border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;grid-template-columns:20px minmax(0,1fr);gap:10px;cursor:pointer;background:var(--bg)}
+.opt:has(input:checked){border-color:var(--build);background:var(--build-soft);box-shadow:inset 0 0 0 1px var(--build)}
+.opt input{margin-top:5px;accent-color:var(--build)}
+.opt .t{font-family:var(--f-head);font-weight:600;font-size:15px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.opt p{font-size:13.5px;color:var(--ink-2)}
+.opt .pc{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-top:4px}
+.opt ul{margin:0;padding-left:16px;font-size:12.5px}
+.opt ul.pro li::marker{content:"+  ";color:var(--ok)}
+.opt ul.con li::marker{content:"–  ";color:var(--fail)}
+@media (max-width:620px){.opt .pc{grid-template-columns:1fr}}
+.why{font-size:13.5px;color:var(--ink-2);border-left:3px solid var(--ok);padding-left:10px}
+.dec textarea{font:inherit;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:8px;padding:8px 10px;min-height:56px;resize:vertical;width:100%}
+.dec textarea:focus-visible,.opt input:focus-visible{outline:2px solid var(--build);outline-offset:1px}
+.status{font-size:12.5px;color:var(--ink-3);min-height:1em}
+.status.ok{color:var(--ok)}
+
+/* wire thumbnails */
+.thumbs{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.th{display:flex;flex-direction:column;gap:5px}
+.th .lab{font-size:12px;color:var(--ink-2);font-weight:600}
+.w{border:1px solid var(--line-strong);border-radius:7px;display:grid;grid-template-columns:52px 1fr;height:120px;overflow:hidden;font-size:9.5px;line-height:1.3;position:relative;background:var(--bg)}
+.w .s{background:var(--navy);padding:6px 4px;display:flex;flex-direction:column;gap:3px;color:var(--chrome-ink-2)}
+.w .s i{font-style:normal;padding:1px 3px;border-radius:3px;white-space:nowrap;overflow:hidden}
+.w .s i.on{background:var(--chrome-active);color:var(--chrome-ink)}
+.w .s i.hot{outline:1.5px dashed var(--new)}
+.w .s i.sub{padding-left:8px;font-size:8.5px}
+.w .m{padding:6px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.w .m b{font-size:10px;color:var(--ink)}
+.w .r{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
+.w .r span{height:15px;background:var(--surface);border:1px solid var(--line);border-radius:3px}
+.w .r span.d{background:var(--agent-soft);border-color:var(--agent)}
+.w.hg{background:var(--hangar-bg)}
+.w.hg .s{background:var(--hangar-paper);border-right:1px dashed var(--build);color:var(--ink-2)}
+.w.hg .s i.on{background:var(--build-soft);color:var(--build)}
+.w .f{display:flex;flex-wrap:wrap;gap:3px}
+.w .f span{font-family:var(--f-mono);font-size:8px;background:var(--surface);border:1px solid var(--line);border-radius:3px;padding:0 3px}
+.w .f span.inv{border-color:var(--fail);color:var(--fail)}
+.w .blk{background:var(--surface);border:1px solid var(--line);border-radius:3px}
+.w .ch{position:absolute;background:var(--surface);border:1.5px solid var(--navy);border-radius:4px}
+.w .ch::before{content:"";position:absolute;inset:0 0 auto;height:8px;background:var(--navy)}
+.w .ed{border:1px dashed var(--build);background:var(--surface);border-radius:3px}
+.mini{border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:10px 12px;font-size:13px;display:flex;flex-direction:column;gap:6px}
+.tag{font-size:12px;padding:2px 9px;border-radius:99px;background:var(--build-soft);color:var(--build);display:inline-block}
+.tag.add{background:transparent;border:1px dashed var(--build)}
+table.cmp{border-collapse:collapse;width:100%;font-size:13.5px;min-width:520px}
+table.cmp th,table.cmp td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+table.cmp th{font-size:11.5px;color:var(--ink-3);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.yes{color:var(--ok);font-weight:600}.no{color:var(--ink-3)}
+.flow{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}
+.flow .box{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13px}
+.flow .box b{display:block;font-family:var(--f-head)}
+.flow .arr{color:var(--ink-3);font-size:18px}
+@media (max-width:620px){.flow{grid-template-columns:1fr}.flow .arr{display:none}}
+
+.tally{position:sticky;bottom:12px;align-self:center;background:var(--navy);color:var(--chrome-ink);border-radius:99px;padding:8px 18px;font-size:13.5px;box-shadow:0 8px 24px rgba(10,34,61,.3);display:flex;gap:12px;align-items:center;z-index:5}
+.tally a{color:var(--chrome-ink);font-weight:600}
+.bar{width:120px;height:6px;border-radius:3px;background:var(--chrome-active);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok);width:0;transition:width .3s}
+</style>
+
+<div class="wrap">
+
+<header style="display:flex;flex-direction:column;gap:12px">
+  <div class="eyebrow">Flight Deck · combined walkthrough · 21 Nov 2026</div>
+  <h1>Twelve open decisions, in the order they depend on each other</h1>
+  <p class="panel" style="border-color:var(--build);max-width:none"><b>Update, 1:10 PM:</b> F1 is rewritten after checking upstream: it now asks what the Library should be for. F2 is unchanged. Everything else has gone to the threads building it.</p>
+  <p class="lede">This page brings together three walkthroughs: how demos relate to the Library, how you edit a person in the Hangar, and how messages from participants reach your Inbox. Each decision has its context, pictures, every option, my recommendation and a "Something else" choice. Your picks and notes save as you make them, and I'll pass each one to the thread building it.</p>
+</header>
+
+<section class="panel">
+  <div class="eyebrow">Why this order</div>
+  <p><b>The demo model comes first because the other two parts build on it.</b> Whether a demo can run live decides whether a cast member needs to know a story, and that changes what you edit on a person and where you cast them. The Inbox comes last because participants who message you on their own get that behaviour from their brief, which you set in the person editor, and scripted messages come from a demo's screenplay.</p>
+  <div class="scroll">
+  <svg class="dia" viewBox="0 0 960 250" width="100%" role="img" aria-label="Dependency map of the twelve decisions">
+    <rect class="zone" x="6" y="6" width="290" height="238" rx="10"/><text class="z" x="20" y="28">PART 1 · DEMOS AND THE LIBRARY</text>
+    <rect class="zone" x="330" y="6" width="300" height="238" rx="10"/><text class="z" x="344" y="28">PART 2 · EDITING A PERSON</text>
+    <rect class="zone" x="664" y="6" width="290" height="238" rx="10"/><text class="z" x="678" y="28">PART 3 · INBOX MESSAGES</text>
+
+    <rect class="box" x="20" y="44" width="262" height="50" rx="7"/><text class="num" x="32" y="64">1</text><text class="h" x="48" y="64">Where demos live while flying</text><text class="s" x="48" y="82">is there a flying home for demos at all?</text>
+    <rect class="box" x="20" y="108" width="262" height="50" rx="7"/><text class="num" x="32" y="128">2</text><text class="h" x="48" y="128">What Run live does</text><text class="s" x="48" y="146">do cast members need story facts?</text>
+    <rect class="box" x="20" y="172" width="262" height="50" rx="7"/><text class="num" x="32" y="192">3</text><text class="h" x="48" y="192">What we call them</text><text class="s" x="48" y="210">the word on every later screen</text>
+
+    <rect class="box" x="344" y="44" width="272" height="40" rx="7"/><text class="num" x="356" y="68">4–5</text><text class="h" x="384" y="68">What Edit does · how edits save</text>
+    <rect class="box" x="344" y="94" width="272" height="40" rx="7"/><text class="num" x="356" y="118">6–7</text><text class="h" x="384" y="118">Where Aviator sits · where to try</text>
+    <rect class="box" x="344" y="144" width="272" height="40" rx="7"/><text class="num" x="356" y="168">8</text><text class="h" x="384" y="168">What skills on a person mean</text>
+    <rect class="box" x="344" y="194" width="272" height="40" rx="7"/><text class="num" x="356" y="218">9</text><text class="h" x="384" y="218">Casting from the person's page</text>
+
+    <rect class="box" x="678" y="44" width="262" height="50" rx="7"/><text class="num" x="690" y="64">10</text><text class="h" x="712" y="64">Which messages land</text><text class="s" x="712" y="82">what counts as "meant for you"</text>
+    <rect class="box" x="678" y="108" width="262" height="50" rx="7"/><text class="num" x="690" y="128">11</text><text class="h" x="712" y="128">How participants decide to write</text><text class="s" x="712" y="146">scripted, live, or both</text>
+    <rect class="box" x="678" y="172" width="262" height="50" rx="7"/><text class="num" x="690" y="192">12</text><text class="h" x="712" y="192">Where your reply goes</text><text class="s" x="712" y="210">host session or theirs</text>
+
+    <path class="ln" d="M151 94 V108"/><path class="ln" d="M151 158 V172"/>
+    <path class="ln" d="M282 133 C312 133 312 214 344 214"/>
+    <path class="ln" d="M282 197 C314 197 314 214 344 214"/>
+    <path class="ln" d="M480 84 V94"/>
+    <path class="ln" d="M282 54 C306 54 306 37 330 37 L648 37 C668 37 662 128 678 128"/>
+    <path class="ln" d="M616 164 C646 164 650 133 678 133"/>
+    <path class="ln" d="M809 94 V108"/><path class="ln" d="M809 158 V172"/>
+  </svg>
+  </div>
+  <p class="small muted">Lines read "this one shapes that one". Decision 1 feeds 11 because a scripted message only exists in a demo's screenplay. Decisions 2 and 3 feed 9 because casting lists demos by name and gives each cast member that story's facts. Decision 8 feeds 11 because a live participant's urge to reach out sits in their brief, next to their skills.</p>
+</section>
+
+<section class="panel">
+  <div class="eyebrow">Before you start</div>
+  <ul>
+    <li><b>Part 2 is already built</b>, with my recommended options, and merged in PR #13. You've seen it in the Hangar. Picking a different option there means changing working code, not a mockup. I show the real screenshots so you can judge what exists.</li>
+    <li><b>Parts 1 and 3 are not built yet.</b> Both are waiting on you. The folder changes for demos are safe either way and are going ahead.</li>
+    <li><b>Two threads both claimed decision numbers D-60 to D-62.</b> The demo questions keep D-60 to D-62. The Inbox questions become D-68 to D-70, the next free numbers. Part 2 is D-63 to D-67.</li>
+  </ul>
+</section>
+
+<section>
+  <div class="eyebrow">Your progress</div>
+  <div class="seq" id="seq"></div>
+</section>
+
+<div id="parts" style="display:flex;flex-direction:column;gap:40px"></div>
+
+<section class="panel">
+  <div class="eyebrow">When you're done</div>
+  <p>Tell me in the thread when you've finished, or just stop: every pick is already saved. I'll send each part's answers to the thread that's building it, and anything you pick differently from what's built goes into that thread's next change.</p>
+  <p class="small muted" id="dbNote"></p>
+</section>
+
+<div class="tally" id="tally"><span id="tallyText">0 of 12 answered</span><span class="bar"><i id="tallyBar"></i></span><a href="#" id="nextLink">Next open</a></div>
+</div>
+
+<script>
+(() => {
+const $ = (id) => document.getElementById(id);
+const IMG = (src, cap, alt) => `<figure class="shot" style="margin:0"><img src="${src}" alt="${alt||cap}" loading="lazy"><figcaption class="cap">${cap}</figcaption></figure>`;
+const TH = (lab, inner, cls) => `<div class="th"><div class="lab">${lab}</div><div class="w ${cls||''}">${inner}</div></div>`;
+const SIDE = (items) => `<div class="s">${items.map(([t,c])=>`<i class="${c||''}">${t}</i>`).join('')}</div>`;
+
+const PARTS = [
+ { id:"p0", title:"Follow-up · Two questions your notes left open", intro:"Your notes on decisions 1 to 3 settled the big things. A demo always runs as flying, never with the Hangar on screen. Run live opens a project of its own, marked as a demo. And a demo and a scenario are the same thing, in two types: a <b>setup</b> you then fly live, or a <b>fully scripted</b> run. Two things are still open: what the Library is for (you asked me to check upstream first), and what to call the thing. Your other ten answers have gone to the threads building them.",
+  decs:[
+  { id:"r2-library", num:"F1", q:"What should the Library be for?",
+    dependsOn:"Your notes on 1 and 2: a demo always runs as flying, in a demo project of its own.", unlocks:"Where demos start, and whether starters stay where they are.",
+    ctx:`<p><b>What I found: upstream Omnigent has no Library.</b> It's our own addition. We added it when we set up the fork, to hold canned sessions and artifact templates, so that "a demo, or a PM new to the tool, starts from a good prompt rather than a blank box". Our README already calls it out as one of the few places we changed the UI, and says it should move into an Omnigent extension once that is possible. So nothing was removed that we could restore.</p>
+      <p>Upstream does have three things close to it. All three are still in our fork:</p>
+      <div class="scroll"><table class="cmp"><tr><th>Upstream feature</th><th>What it's for</th><th>In our fork today</th></tr>
+      <tr><td><b>Workflows</b> page</td><td>Saved, reusable plans. You plan one with the agent, save it, then <b>Run</b> it (each run is a new session), <b>Clone</b> or <b>Share</b> it. An automation can run it on a schedule. Off by default upstream: it needs the <code>workflows</code> feature switched on.</td><td>Present but switched off, so you've never seen it</td></tr>
+      <tr><td><b>Automations</b> → Templates tab</td><td>A gallery of ready-made automations (Jira, Slack, GitHub, schedules) to copy and adjust.</td><td>On, mostly useless offline</td></tr>
+      <tr><td>Skills in the composer</td><td>Type <code>/</code> to pick a skill when starting a session.</td><td>On</td></tr></table></div>
+      <p><b>One thing to watch:</b> upstream's "Workflow" means a saved plan you run. Our Hangar's "Workflow" means a kind of work with steps, records and views. If the production team switches upstream Workflows on, the same word would mean two things. That doesn't need deciding today, but it argues against bringing upstream Workflows into this prototype casually.</p>
+      <div class="thumbs">`+
+      TH("A · Library for real work only", SIDE([["New"],["Library","on"],["Automations"],["Inbox"]])+`<div class="m"><b>Start work</b><div class="r"><span></span><span></span><span></span></div><b>Templates</b><div class="r"><span></span><span></span><span></span></div></div>`)+
+      TH("B · Library plus a Demos shelf", SIDE([["New"],["Library","on"],["Automations"],["Inbox"]])+`<div class="m"><b>Start work</b><div class="r"><span></span><span></span><span></span></div><b style="outline:1.5px dashed var(--new);align-self:start">Demos</b><div class="r"><span class="d"></span><span class="d"></span><span></span></div></div>`)+
+      TH("C · Upstream Workflows page instead", SIDE([["New"],["Automations"],["Workflows","on hot"],["Inbox"]])+`<div class="m"><b>Workflows</b><div class="blk" style="padding:3px;font-size:8.5px">Walk me through open decisions <span style="float:right">Run · Clone</span></div><div class="blk" style="padding:3px;font-size:8.5px">Update delivery status <span style="float:right">Run · Clone</span></div></div>`)+
+      TH("D · No Library: starters on New session", SIDE([["New","on"],["Automations"],["Inbox"]])+`<div class="m"><b>What are you working on?</b><div class="blk" style="height:20px"></div><div class="f"><span>Open decisions</span><span>Delivery status</span><span>Interview me</span></div></div>`)+
+      `</div><p class="small muted">In every option a demo runs as flying, in a project marked "◆ Demo". In A, C and D it starts from a "Fly this" button on the scenario's Hangar page, pressed before you start recording. Only B adds a demo entry point you'd see on camera.</p>`,
+    opts:[
+      ["Keep the Library, for real work only","Start work (today's canned sessions) and Templates stay. Demos start from \"Fly this\" in the Hangar.",["The smallest change, and it ends the demo confusion","Recordings of the Library show only the real product","A known, isolated difference from upstream, already documented"],["Still a page upstream doesn't have"],true],
+      ["Keep the Library and add a Demos shelf","As first proposed: Start work, Demos and Templates on one page.",["One click from the page the app opens on"],["A Demos shelf shows whenever you record the Library"]],
+      ["Replace it with upstream's Workflows page","Switch on upstream Workflows. Starters become saved workflows with Run, Clone and Share. Templates move into the composer.",["Closest to what the production team may run","Starters gain sharing and scheduling"],["An upstream workflow is a saved plan, not a prompt with blanks, so starters need rework","Clashes with the Hangar's meaning of \"workflow\"","Off by default upstream, less proven"]],
+      ["Drop the Library: starters on the New session page","Starters show as suggestions under the composer. Templates are picked from the composer.",["One less page","Starting work happens where you type"],["Edits an upstream page we've kept untouched","No room to browse templates"]],
+    ],
+    why:"Nothing upstream needs restoring, and keeping the Library for real work alone removes the confusion at the lowest cost. If the production team turns on upstream Workflows later, we can map starters onto them then." },
+
+  { id:"r2-name", num:"F2", q:"What should we call the thing you build, its two types, and a run?",
+    dependsOn:"Your note that demos and scenarios are one thing with two types.", unlocks:"Labels on the Hangar shelf, the casting tick boxes (decision 9) and the demo marker.",
+    ctx:`<p>You wrote that the whole point of a demo is "to demonstrate flying in a given scenario". That sentence already splits the words: the <b>scenario</b> is what you build, and the <b>demo</b> is what happens when you fly it. Here's how each option reads on screen:</p>
+      <div class="scroll"><table class="cmp"><tr><th></th><th>Hangar shelf</th><th>The two types</th><th>A run shows up as</th></tr>
+      <tr><td><b>A · Scenario you build, demo you fly</b></td><td>Scenarios</td><td>Setup · Scripted</td><td>◆ Demo · Steering prep</td></tr>
+      <tr><td><b>B · Demo everywhere</b></td><td>Demos</td><td>Live demo · Scripted demo</td><td>◆ Demo · Steering prep</td></tr>
+      <tr><td><b>C · Scenario everywhere</b></td><td>Scenarios</td><td>Setup · Scripted</td><td>◆ Scenario · Steering prep</td></tr></table></div>
+      <p class="small muted">"Setup" means the story's documents, data and cast are loaded and you fly from there live. "Scripted" means the screenplay plays itself, the same every time. Folder names stay <code>scenarios/</code> whatever you pick.</p>`,
+    opts:[
+      ["Scenario you build, demo you fly","The Hangar shelf says Scenarios, with Setup and Scripted types. Flying one makes a project marked \"Demo\".",["Matches your own sentence","D-42 and the docs already say scenario","\"Demo\" on a project tells any viewer it isn't real work"],["Two words, even though each has one job"],true],
+      ["Demo, everywhere","The shelf, the types and the project all say Demo.",["One word"],["\"Live demo\" vs \"Scripted demo\" is wordier","The docs need renaming"]],
+      ["Scenario, everywhere","The shelf, the types and the project all say Scenario.",["One word, no renaming"],["\"Scenario\" on a project says less clearly that it's a demo"]],
+    ],
+    why:"It's how you described it: you build a scenario and fly a demo of it. The Demo marker is what flags the project as not real." },
+ ]},
+ { id:"p1", title:"Part 1 · Demos and the Library", intro:"Today a story built in the Hangar (a \"scenario\") can't be reached while flying, and the Library's \"canned sessions\" look like demos but run on your real files. The proposal: a scenario is a demo. It appears in the Library with Play (the click-through) and Run live (a real session on the story). Starters stay separate, for real work on your own material. Full proposal: <a href=\"https://claude.ai/artifact/HdV1FMs4tD5so8kcAVHNmm\">Demos, starters and the Library</a>.",
+  decs:[
+  { id:"lib-where", num:"1 · D-60", q:"Where should demos live while flying?",
+    dependsOn:"Nothing. This is the foundation.", unlocks:"2 (Run live needs a button somewhere), 11 (scripted Inbox messages only exist inside a demo).",
+    ctx:`<p>Right now the only place a story can be played is inside the Hangar. This is today's scenario page:</p>`+
+      IMG("img/scenario-today.jpg","Today: the scenario player exists only in the Hangar. D-41 says Hangar framing must never show in a demo recording.")+
+      `<p>The app opens on the Library, so the Library is the front door while flying. The three options, as they would look:</p>
+      <div class="thumbs">`+
+      TH("A · Demos section in the Library", SIDE([["New"],["Library","on"],["Workspace"]])+`<div class="m"><b>Start work</b><div class="r"><span></span><span></span><span></span></div><b style="outline:1.5px dashed var(--new);align-self:start">Demos</b><div class="r"><span class="d"></span><span class="d"></span><span></span></div><b>Templates</b></div>`)+
+      TH("B · Its own sidebar item", SIDE([["New"],["Library"],["Demos","on hot"],["Workspace"]])+`<div class="m"><b>Demos</b><div class="r"><span class="d"></span><span class="d"></span><span class="d"></span></div><div class="r"><span class="d"></span><span class="d"></span><span></span></div></div>`)+
+      TH("C · Only in the Hangar", SIDE([["People"],["Workflows"],["Scenarios","on"]])+`<div class="m"><b>Scenarios</b><div class="r"><span class="d"></span><span class="d"></span><span class="d"></span></div></div>`,"hg")+
+      `</div><p class="small muted">Purple tiles are demos. The yellow dashes mark what's new.</p>`,
+    opts:[
+      ["A Demos section in the Library","Demos sit beside Start work and Templates on the page the app opens to. A starter whose workflow has a demo gets a quiet \"See the demo\" link.",["One front door you already open on","Starters point to their demo","Nothing new visible in recordings"],["The Library page gets longer as demos grow"],true],
+      ["Their own sidebar item","A separate Demos page in the sidebar.",["Easy for a presenter to find"],["A \"Demos\" item shows in every recording","Starters and their demos sit apart"]],
+      ["Only in the Hangar","No change while flying. You present from the Hangar.",["Nothing to build"],["The Hangar frame shows on camera, which D-41 rules out","Most of decisions 2 and 11 fall away"]],
+    ],
+    why:"One front door, the app already opens on the Library, and it adds nothing visible to recordings." },
+
+  { id:"lib-live", num:"2 · D-61", q:"What should Run live do with the story's documents and data?",
+    dependsOn:"1. If demos only live in the Hangar, there's nowhere to put Run live.", unlocks:"9 (whether each cast member gets per-story facts), 11 and 12 (live participants need a live host session).",
+    ctx:`<p>Today, invented files like <code>allowances-prd.md</code> already sit in your real context folder next to your own work, and three skills copy demo files in when you give them nothing. In the one live run so far (delivery status, this morning), the stand-ins had nothing to say about the story, because their briefs don't contain it.</p>
+    <div class="thumbs">`+
+      TH("A · A demo project of its own", SIDE([["Library"],["Workspace"],["your PRD","sub"],["Allowances demo","hot"],["● live run","sub"]])+`<div class="m"><b>Context in this project</b><div class="f"><span class="inv">allowances-prd.md</span><span class="inv">platform-map.md</span><span class="inv">decisions.json</span></div><b>Workspace</b><div class="f"><span>your-own.md</span></div></div>`)+
+      TH("B · Into the project you're in", SIDE([["Library"],["Workspace","on"],["your PRD","sub"]])+`<div class="m"><b>Workspace context</b><div class="f"><span>your-own.md</span><span class="inv">allowances-prd.md</span><span class="inv">platform-map.md</span><span class="inv">decisions.json</span></div><b style="color:var(--fail)">mixed together</b></div>`)+
+      TH("C · No live runs", SIDE([["Library","on"],["Workspace"]])+`<div class="m"><b>Demos</b><div class="blk" style="padding:4px">Allowances: steering prep<br><span style="color:var(--ink-3)">▶ Play only</span></div></div>`)+
+    `</div><p class="small muted">Red file names are invented for the story. Context is already per project (D-15), so option A reuses something that exists.</p>`,
+    opts:[
+      ["Open a demo project","Each demo runs in a new project loaded with the story. The cast get the story's facts for that project only. The opening line is put in the composer for you.",["Your real work never sees invented files","Reset is easy: rebuild the project","Uses per-project context we already have"],["One more project in the sidebar per demo you've run"],true],
+      ["Load into the current project","The story's files are copied into whatever project you're in.",["No new projects"],["Invented PRDs and data sit beside yours","Hard to undo after a run"]],
+      ["No live runs","Demos are click-through only. Live work only starts from a starter.",["Least to build"],["No way to show the real agent on a known story","Cast never learn their part"]],
+    ],
+    why:"Keeps invented files out of real work, makes reset easy, and reuses per-project context (D-15)." },
+
+  { id:"lib-name", num:"3 · D-62", q:"What should we call a story people can play or run?",
+    dependsOn:"1 and 2, so you know what the thing is before naming it.", unlocks:"9 (the casting tick boxes list these by name) and the labels in Part 3.",
+    ctx:`<div class="scroll"><table class="cmp"><tr><th></th><th>Hangar shelf</th><th>Library section</th><th>A live run is</th></tr>
+      <tr><td><b>A · "Demo" everywhere</b></td><td>Demos</td><td>Demos</td><td>a demo session</td></tr>
+      <tr><td><b>B · "Scenario" everywhere</b></td><td>Scenarios</td><td>Scenarios</td><td>a scenario run</td></tr>
+      <tr><td><b>C · Split by mode</b></td><td>Scenarios</td><td>Demos</td><td>a demo session</td></tr></table></div>
+      <p class="small muted">Whatever you pick, folder and file names stay <code>scenarios/</code>, the same way the repository kept its old name under Flight Deck (D-35). Today's \"Canned sessions\" becomes \"Start work\" either way, to match the Hangar's Starters shelf.</p>`,
+    opts:[
+      ["\"Demo\", everywhere","Both the Hangar shelf and the Library section say Demos.",["It's the word you already use","One name in both modes"],["The docs and D-42 say \"scenario\" and need updating"],true],
+      ["\"Scenario\", everywhere","Both say Scenarios, matching D-42 and the docs.",["No renaming"],["Reads oddly to a PM in the Library"]],
+      ["Scenario in the Hangar, Demo while flying","Each audience gets its own word.",["Reads well to each audience"],["One thing has two names again, like Canned sessions and Starters today"]],
+    ],
+    why:"It's your word for these already, and one name in both modes avoids the confusion that started this." },
+ ]},
+
+ { id:"p2", title:"Part 2 · Editing a person in the Hangar", intro:"You found that editing a character threw you out of the Hangar into a new session. Now the person's page is the editor, changes save to a draft as you type, Aviator sits in a pop-over, and you set skills and casting on the page. This is built (PR #13, merged). Each decision asks whether to keep what's built. Original walkthrough with a clickable mockup: <a href=\"https://claude.ai/artifact/3w9xwsyNFs5P7zA4sT5dSt\">Editing in the Hangar</a>.",
+  decs:[
+  { id:"per-entry", num:"4 · D-63", q:"What should Edit do?", built:true,
+    dependsOn:"Nothing in this list.", unlocks:"5, 6 and 7 all assume a page you edit in place.",
+    ctx:IMG("img/edit-person.jpg","Built: after Edit, Mara's page itself becomes the form. Dashed frames mark what's a draft, the preview and checks stay on the right, and the Publish bar sits at the bottom.")+
+      `<div class="thumbs">`+TH("A · The page becomes the editor",SIDE([["People","on"],["Workflows"]])+`<div class="m"><b>Mara Okafor · draft</b><div class="r" style="grid-template-columns:1.3fr 1fr"><span class="ed" style="height:56px"></span><span style="height:56px"></span></div><div class="blk" style="height:10px;border-style:dashed;border-color:var(--build)"></div></div>`,"hg")+
+      TH("B · A separate editor page",SIDE([["People","on"],["Workflows"]])+`<div class="m"><b>Edit Mara Okafor</b><div class="ed" style="height:16px"></div><div class="ed" style="height:16px"></div><div class="ed" style="height:30px"></div></div>`,"hg")+`</div>`,
+    opts:[
+      ["The page itself becomes the editor","Fields turn into inputs with a dashed draft frame. Same address, preview and checks alongside.",["You stay where you were reading","Preview, checks and changes sit next to the fields"],["The page carries both a reading and an editing state"],true],
+      ["Open a separate editor page","A dedicated form page for editing.",["Cleaner split between reading and editing"],["One more place to learn","Preview is on another page"]],
+    ],
+    why:"Editing on the page you're reading keeps you oriented, and it's what's built." },
+
+  { id:"per-save", num:"5 · D-64", q:"How should edits be kept?", built:true,
+    dependsOn:"4.", unlocks:"Nothing else here.",
+    ctx:`<div class="thumbs"><div class="mini"><b>A · Autosave to the draft</b><div style="display:flex;justify-content:space-between;align-items:center"><span>Role: Design director, Cards</span><span class="small muted">Draft saved</span></div><div class="small muted">Publish is still the only step that makes it live.</div></div>
+      <div class="mini"><b>B · A Save draft button</b><div style="display:flex;justify-content:space-between;align-items:center"><span>Role: Design director, Cards</span><span class="pill warn">Unsaved</span></div><div><span class="tag">Save draft</span></div></div></div>`,
+    opts:[
+      ["Every edit saves to the draft at once","A quiet \"Draft saved\" note. Nobody flying sees anything until you publish.",["You never lose work","No extra step"],["Half-finished thoughts are kept until you discard them"],true],
+      ["A Save draft button","Edits stay on screen until you press Save draft.",["You choose when a draft changes"],["One more step","Work can be lost if you leave the page"]],
+    ],
+    why:"Nothing reaches anyone flying until Publish, so saving every change to the draft is safe." },
+
+  { id:"per-chat", num:"6 · D-65", q:"Where should the Aviator chat live in the Hangar?", built:true,
+    dependsOn:"4.", unlocks:"7 (the Try tab lives wherever the chat lives).",
+    ctx:IMG("img/edit-pinned.jpg","Built: the Aviator pop-over pinned as a third column, working on Mara's draft. Unpinned, it floats at the bottom right over the page.")+
+      `<div class="thumbs">`+
+      TH("A · Pop-over you can pin",SIDE([["People","on"]])+`<div class="m"><div class="r" style="grid-template-columns:1.3fr 1fr"><span style="height:80px"></span><span style="height:80px"></span></div></div><div class="ch" style="right:6px;bottom:6px;width:38%;height:58%"></div>`,"hg")+
+      TH("B · Always a third column",SIDE([["People","on"]])+`<div class="m"><div class="r" style="grid-template-columns:1fr 1fr"><span style="height:80px"></span><span style="height:80px"></span></div></div><div class="ch" style="right:6px;top:6px;width:30%;bottom:6px"></div>`,"hg")+
+      TH("C · Half-screen slide-over",SIDE([["People","on"]])+`<div class="m"><div class="r" style="grid-template-columns:1.3fr 1fr"><span style="height:80px"></span><span style="height:80px"></span></div></div><div class="ch" style="right:0;top:0;width:50%;bottom:0"></div>`,"hg")+
+      `</div>`,
+    opts:[
+      ["Pop-over, can be pinned","A button at the bottom right opens a chat over the page. Pin turns it into a third column.",["Full width for the form most of the time","Room for long sessions when pinned"],["Two states to understand"],true],
+      ["Always a third column","The chat is always on the right while editing.",["Nothing to open"],["Less room for the form and preview"]],
+      ["Half-screen slide-over","Slides over half the page, like a drawer.",["Roomy for chat"],["Hides the preview while open"]],
+    ],
+    why:"Most edits are typing and picking, so the chat is an occasional helper. You suggested a pop-over yourself." },
+
+  { id:"per-try", num:"7 · D-66", q:"Where should you try someone out?", built:true,
+    dependsOn:"6.", unlocks:"Nothing else here.",
+    ctx:`<p>You can see the built version in the screenshot above: the "Try them" tab sits next to "Change with Aviator", and the draft answers as a real participant turn. Nothing is published.</p>
+      <div class="thumbs"><div class="mini"><b>A · Try them tab in the pop-over</b><div class="small"><span class="tag">Change with Aviator</span> <span class="tag" style="background:var(--build);color:var(--on-build)">Try them</span></div><div class="small muted">You: What would you cut from the decline screen?</div><div class="small"><b>Mara Okafor</b> <span class="pill warn">STAND-IN</span> The second paragraph…</div></div>
+      <div class="mini"><b>B · A test box on the page</b><div class="small muted">Ask one question</div><div style="border:1px solid var(--line-strong);border-radius:5px;height:22px;background:var(--surface)"></div><div class="small muted">One answer appears below.</div></div></div>`,
+    opts:[
+      ["A Try them tab in the Aviator pop-over","You ask, and the draft answers from its real background session.",["The honest test: a real turn","Sits next to the chat that changes them"],["One more click to open"],true],
+      ["A small test box on the page","Ask one question from the right column and see one answer.",["Quicker"],["Less like how they behave in a session"]],
+    ],
+    why:"A real turn from the real background session is the honest test." },
+
+  { id:"per-skills", num:"8 · D-67", q:"What should skills on a person mean?", built:true,
+    dependsOn:"Nothing in this list.", unlocks:"11 (a live participant's reach-out rule lives in the same person file).",
+    ctx:`<p>You noticed you couldn't tell how to give a person skills. That was because a person file could list skills, but nothing ever read that line. It's now real: the skills you pick are passed to the session that plays them.</p>
+      <div class="mini"><b>Skills they bring</b><div><span class="tag">frontend-design ×</span> <span class="tag add">+ Add a skill</span></div><div class="small muted">The session that plays them is told to use these when they answer.</div></div>`,
+    opts:[
+      ["Skills they bring to their answers","Picked from the Skills shelf. The background session that plays them is told to use those skills.",["Risk Review can apply the intent framework, for example","A small change, already built"],["One more thing to keep tidy per person"],true],
+      ["Drop the field for now","A person is only their brief until we need more.",["Simpler"],["You'd have to write skill guidance into each brief by hand"]],
+    ],
+    why:"Making it real was small, and it answers what you were looking for." },
+
+  { id:"per-casting", num:"9", q:"Can you change where someone is called from their own page?", built:true,
+    dependsOn:"2 and 3. If demos run live, casting someone into a demo also needs their facts for that story, and the boxes are labelled with the name from 3.", unlocks:"Nothing else here.",
+    ctx:`<div class="thumbs"><div class="mini"><b>A · Tick boxes on the person's page</b>
+      <label class="small"><input type="checkbox" checked disabled> Decision review <span class="muted">workflow</span></label>
+      <label class="small"><input type="checkbox" checked disabled> Allowances: steering prep <span class="muted">demo</span> <span class="small" style="color:var(--build)">· edit what Mara knows</span></label>
+      <label class="small"><input type="checkbox" disabled> Delivery status update <span class="muted">workflow</span></label>
+      <label class="small"><input type="checkbox" checked disabled> Review a document with others <span class="muted">starter</span></label></div>
+      <div class="mini"><b>B · Read-only here, cast from each workflow or demo</b><div class="small">Called in: Decision review, Allowances: steering prep, Review a document with others</div><div class="small muted">To change it, open that workflow or demo.</div></div></div>
+      <p class="small muted">With option A and a live demo (decision 2, option A), ticking a demo opens a short "what Mara knows in this story" note. That note is stored with the demo, not in her brief, so her brief stays the same across stories.</p>`,
+    opts:[
+      ["Yes, tick workflows, demos and starters here","Ticking adds them to that cast. Unticking is blocked if a demo's script still has them speak.",["The natural place to ask \"where does Mara show up?\"","Changes go into the same draft and publish together"],["Casting can also be changed from the workflow side, so two places edit one list"],true],
+      ["Show it here, change it on the workflow or demo","The person page stays about the person.",["One place edits each cast"],["You jump pages to cast one person"]],
+    ],
+    why:"It's where you look when you think about a person, and it all goes through the same draft and checks." },
+ ]},
+
+ { id:"p3", title:"Part 3 · Messages from participants in the Inbox", intro:"Participants, both simulated people and agents, need a way to reach you outside the session you're looking at. The proposed design adds a People tab to the Inbox. Each card shows the person's name and mark, an AGENT or STAND-IN chip, and the session it's about. Each card has Reply, Open conversation and Done. (The phantom badge you saw is fixed separately in PR #12.)",
+  decs:[
+  { id:"inb-which", num:"10 · D-68", q:"Which participant messages should land in the Inbox?",
+    dependsOn:"Nothing in Part 3, but it assumes participants can be live (decision 2).", unlocks:"11 and 12.",
+    ctx:IMG("img/inbox.jpg","Proposed: the Inbox with two participant messages. Mara reached out on her own; Risk Review followed up after a call.")+
+      `<div class="scroll"><table class="cmp"><tr><th>Message</th><th>A</th><th>B</th><th>C</th></tr>
+      <tr><td>A participant reaches out on their own</td><td class="yes">Inbox</td><td class="yes">Inbox</td><td class="yes">Inbox</td></tr>
+      <tr><td>A follow-up after a call has ended</td><td class="yes">Inbox</td><td class="yes">Inbox</td><td class="yes">Inbox</td></tr>
+      <tr><td>A reply during a call, in a session you're not looking at</td><td class="no">chat only, session shows unread</td><td class="yes">Inbox</td><td class="yes">Inbox</td></tr>
+      <tr><td>A reply in the session you have open</td><td class="no">chat only</td><td class="no">chat only</td><td class="yes">Inbox</td></tr></table></div>`,
+    opts:[
+      ["Messages meant for you","Only when a participant reaches out on their own or follows up after a call.",["The Inbox stays a short list of things a person would message you about","Missed call replies already mark the session unread"],["You open the session to see call replies"],true],
+      ["Also call replies you missed","Adds each participant reply in a session you aren't looking at.",["Nothing missed"],["A five-person review makes five or more cards for one piece of work"]],
+      ["Every participant message","A full log of who said what, even in the open session.",["Complete record"],["Noisy, and it repeats the chat"]],
+    ],
+    why:"Keeps the Inbox a short list of things a person would message you about." },
+
+  { id:"inb-how", num:"11 · D-69", q:"How should participants decide to message you?",
+    dependsOn:"1 (scripted messages live in a demo's screenplay) and 8 (a live participant's rule for reaching out lives in their person file).", unlocks:"12.",
+    ctx:`<div class="flow"><div class="box"><b>Scripted (demos)</b>A screenplay step drops a message at a set point, for example <code>inbox: mara-okafor</code> after the call ends. The same every run, which is good for recordings.</div><div class="arr">+</div>
+      <div class="box"><b>Live (background session)</b>The participant's session posts when its brief says to, for example \"follow up if a blocker is still open when the call ends\". Their file gets a <code>reach_out</code> line, which you'd edit in the person editor.</div></div>
+      <p class="small muted">You made the same call for calling people in earlier: build the scripted path first so demos work, then let live participants use the same card.</p>`,
+    opts:[
+      ["Both, scripted first","Screenplay steps drop messages for demos now. Live participants post later when their brief says to.",["Demos work right away","Live participants reuse the same card"],["Two paths to maintain"],true],
+      ["Scripted only","Messages only arrive at set points in a screenplay.",["Repeatable, never surprising"],["No real participant ever reaches out"]],
+      ["Live only","Background sessions post on their own judgment from their brief.",["Realistic"],["Varies each run, so it's risky in recordings"]],
+    ],
+    why:"It matches your earlier call-in choice: demos work today, and live participants reuse the same card." },
+
+  { id:"inb-reply", num:"12 · D-70", q:"Where should a reply from the Inbox go?",
+    dependsOn:"10 and 11.", unlocks:"Nothing. This is the last one.",
+    ctx:IMG("img/inbox-reply.jpg","Proposed: replying inside the card. The line above the box says the reply goes to Mara through the host session, and that an agent is standing in for her.")+
+      `<div class="flow"><div class="box"><b>A · Through the host session</b>Your reply is posted as <code>@mara-okafor …</code> in the session it's about. Aviator relays it and shows her answer as her turn.</div><div class="arr">vs</div><div class="box"><b>B · Straight to her session</b>Your reply goes to Mara's own background session. The host session never sees it.</div></div>`,
+    opts:[
+      ["Through the host session","Posted in the host session as an @mention. Aviator relays it and shows their answer as their turn.",["One conversation holds everything","Aviator never loses track of what was agreed"],["A little slower: it passes through Aviator"],true],
+      ["Straight to their session","Goes to the participant's own background session.",["Faster"],["The host session doesn't see it"]],
+      ["No inline reply","The card only opens the conversation. You always reply in context.",["Simplest"],["Every answer costs a page change"]],
+    ],
+    why:"One conversation keeps everything, the same as @mentioning someone in chat." },
+ ]},
+];
+
+const ALL = PARTS.flatMap(p => p.decs);
+const parts = $("parts");
+const esc = (s) => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+PARTS.forEach(p => {
+  const sec = document.createElement("section");
+  sec.innerHTML = `<div class="eyebrow">${esc(p.title.split(" · ")[0])}</div><h2>${esc(p.title.split(" · ")[1])}</h2><p class="muted">${p.intro}</p>`;
+  p.decs.forEach(dc => {
+    const box = document.createElement("div"); box.className = "dec"; box.id = dc.id;
+    let h = `<div class="dhead"><span class="dnum">${esc(dc.num)}</span>${dc.built ? '<span class="pill built">Built with A</span>' : '<span class="pill warn">Waiting on you</span>'}</div>
+      <h3>${esc(dc.q)}</h3>
+      <div class="deps"><div><b>Depends on:</b> ${esc(dc.dependsOn)}</div><div><b>Shapes:</b> ${esc(dc.unlocks)}</div></div>
+      <div class="ctx">${dc.ctx}</div><div class="opts">`;
+    dc.opts.concat([["Something else","Tell me in the note below what you'd rather do.",[],[]]]).forEach(([label, text, pro, con, rec], j) => {
+      h += `<label class="opt"><input type="radio" name="d-${dc.id}" value="${esc(label)}"><div>
+        <div class="t">${String.fromCharCode(65+j)} · ${esc(label)} ${rec ? '<span class="pill rec">Recommended</span>' : ''}</div>
+        <p>${esc(text)}</p>
+        ${(pro.length||con.length) ? `<div class="pc"><ul class="pro">${pro.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><ul class="con">${con.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>` : ''}
+      </div></label>`;
+    });
+    h += `</div><div class="why"><b>Why I recommend A:</b> ${esc(dc.why)}</div>
+      <textarea id="n-${dc.id}" placeholder="A note, if you have one" aria-label="Note on ${esc(dc.q)}"></textarea>
+      <div class="status" id="st-${dc.id}"></div>`;
+    box.innerHTML = h;
+    sec.append(box);
+  });
+  parts.append(sec);
+});
+
+// sequence list
+const seq = $("seq");
+PARTS.forEach(p => {
+  const d = document.createElement("div"); d.className = "part";
+  d.innerHTML = `<h4>${esc(p.title.split(" · ")[1])}</h4><ol>${p.decs.map(dc => `<li><a href="#${dc.id}"><span class="n">${esc(dc.num.split(" ")[0])}</span><span>${esc(dc.q)}</span><span class="st" id="sq-${dc.id}">open</span></a></li>`).join('')}</ol>`;
+  seq.append(d);
+});
+
+const answers = {};
+function refresh() {
+  let n = 0, next = null;
+  ALL.forEach(dc => {
+    const a = answers[dc.id]; const done = !!(a && a.choice);
+    if (done) n++; else if (!next) next = dc.id;
+    const s = $("sq-" + dc.id); s.textContent = done ? "✓ " + (a.choice.length > 18 ? a.choice.slice(0, 17) + "…" : a.choice) : "open"; s.classList.toggle("done", done);
+    $(dc.id).classList.toggle("answered", done);
+  });
+  $("tallyText").textContent = n + " of " + ALL.length + " answered";
+  $("tallyBar").style.width = (100 * n / ALL.length) + "%";
+  const nl = $("nextLink"); if (next) { nl.hidden = false; nl.href = "#" + next; } else { nl.hidden = true; $("tallyText").textContent = "All " + ALL.length + " answered. Thank you."; }
+}
+
+let db = null;
+function status(id, t, ok) { const s = $("st-" + id); s.textContent = t; s.classList.toggle("ok", !!ok); }
+async function save(id) {
+  const c = document.querySelector(`input[name="d-${id}"]:checked`);
+  const body = { choice: c ? c.value : "", note: $("n-" + id).value, at: new Date().toISOString() };
+  answers[id] = body; refresh();
+  if (!db) { status(id, "Not saved: open this page on claude.ai while signed in."); return; }
+  status(id, "Saving…");
+  try { await db.doc("answers/" + id).set(body); status(id, "Saved", true); }
+  catch (e) { status(id, "Couldn't save (" + ((e && e.code) || "error") + "). Try again."); }
+}
+ALL.forEach(dc => {
+  document.querySelectorAll(`input[name="d-${dc.id}"]`).forEach(r => r.addEventListener("change", () => save(dc.id)));
+  let t; $("n-" + dc.id).addEventListener("input", () => { clearTimeout(t); t = setTimeout(() => save(dc.id), 800); });
+});
+refresh();
+
+(async () => {
+  try { db = window.claude && window.claude.use ? await window.claude.use("db") : null; } catch { db = null; }
+  if (!db) { $("dbNote").textContent = "Picks save when this page is opened on claude.ai while signed in."; return; }
+  const timer = setTimeout(() => { $("dbNote").textContent = "Saved picks can't be reached yet. New picks will still try to save."; }, 10000);
+  db.collection("answers").onSnapshot((snap) => {
+    clearTimeout(timer); $("dbNote").textContent = "";
+    snap.docs.forEach(doc => {
+      const v = doc.data() || {}; const id = doc.id; if (!$(id)) return;
+      answers[id] = v;
+      const r = [...document.querySelectorAll(`input[name="d-${id}"]`)].find(x => x.value === v.choice); if (r) r.checked = true;
+      const ta = $("n-" + id); if (document.activeElement !== ta) ta.value = v.note || "";
+      if (v.choice || v.note) status(id, "Saved", true);
+    });
+    refresh();
+  }, () => { clearTimeout(timer); $("dbNote").textContent = "Saved picks can't be reached right now."; });
+})();
+})();
+</script>
+
+</body></html>

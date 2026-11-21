@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collaborative document · mockup</title>
+<meta name="description" content="Clickable mockup of the collaborative markdown editor. Invented data, no agent running.">
+<style>
+:root {
+  --bg:#e9edf2; --surface:#fff; --sunk:#f3f5f8; --ink:#0a223d; --ink-2:#44566c; --ink-3:#77879a; --line:#d3dae3;
+  --navy:#0a223d; --on-navy:#f3f5f8; --you:#c2501f; --you-soft:#fbe6dc;
+  --claude:#6b4fbb; --claude-soft:#ece6fa; --agent:#2f5d8a; --agent-soft:#dfe9f3; --person:#1d7a4f; --person-soft:#dcf0e6;
+  --del:#b3261e; --font:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg:#04101e; --surface:#0e2238; --sunk:#07172a; --ink:#e8eef5; --ink-2:#a9b8c9; --ink-3:#74879c; --line:#22384f; --navy:#0a1c30; --on-navy:#e8eef5;
+  --you:#ff9166; --you-soft:#3a2118; --claude:#b9a4f5; --claude-soft:#2a2148; --agent:#8fb8e0; --agent-soft:#17324e; --person:#7fd0a6; --person-soft:#153a2a; --del:#ff8a80; color-scheme:dark; }
+}
+*{box-sizing:border-box} html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--font);display:flex;flex-direction:column}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--you);outline-offset:2px}
+.note{background:var(--navy);color:var(--on-navy);padding:8px 16px;font-size:13px}
+.note b{font-weight:600}
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line)}
+.bar h1{font-size:15px;margin:0 8px 0 0;font-weight:600}
+.path{font:12px var(--mono);color:var(--ink-3)}
+.spacer{flex:1}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:5px 11px;font-size:13px}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--surface)}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 11px;font-size:13px}
+.btn.primary{background:var(--navy);color:var(--on-navy);border-color:var(--navy)}
+.btn:hover{border-color:var(--ink-3)}
+.faces{display:flex;gap:4px}
+.face{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:600;color:#fff;position:relative}
+.face.dim{opacity:.45}
+.face .dot{position:absolute;right:-1px;bottom:-1px;width:9px;height:9px;border-radius:50%;background:#2ea043;border:2px solid var(--surface)}
+.main{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 340px;min-height:0}
+.docwrap{overflow:auto;padding:28px 16px 80px}
+.doc{max-width:720px;margin:0 auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:36px 48px;min-height:600px;position:relative}
+.doc:focus{outline:none}
+.doc h1{font-size:24px;margin:0 0 4px} .doc h2{font-size:17px;margin:24px 0 6px}
+.doc p,.doc li{font-size:15px;line-height:1.65}
+.doc .meta{color:var(--ink-3);font-size:13px;margin-bottom:12px}
+ins.chg{text-decoration:none;border-bottom:2px solid currentColor;padding:0 1px}
+del.chg{text-decoration:line-through;text-decoration-thickness:2px}
+.chg{position:relative;cursor:pointer}
+.by-you{color:var(--you);background:var(--you-soft)}
+.by-claude{color:var(--claude);background:var(--claude-soft)}
+.by-risk{color:var(--agent);background:var(--agent-soft)}
+.by-mara{color:var(--person);background:var(--person-soft)}
+.fresh{background:var(--claude-soft);box-shadow:inset 0 -2px 0 var(--claude);border-radius:2px;transition:background 1.2s,box-shadow 1.2s}
+.hide-fresh .fresh{background:transparent;box-shadow:none}
+.hide-changes ins.chg{color:inherit;background:none;border:0}
+.hide-changes del.chg{display:none}
+mark.cmt{background:#f6e7a6;color:inherit;border-radius:2px;cursor:pointer}
+@media (prefers-color-scheme: dark){mark.cmt{background:#5a4a12}}
+mark.cmt.active{outline:2px solid #d2a500}
+.caret{display:inline-block;width:2px;height:1.1em;vertical-align:-2px;background:var(--claude);position:relative;animation:blink 1s steps(1) infinite}
+.caret::after{content:attr(data-name);position:absolute;top:-17px;left:0;background:var(--claude);color:#fff;font:600 10px var(--font);padding:1px 5px;border-radius:4px;white-space:nowrap}
+@keyframes blink{50%{opacity:.35}}
+.pop{position:absolute;z-index:20;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:8px 10px;font-size:12.5px;width:240px}
+.pop .who{font-weight:600} .pop .row{display:flex;gap:6px;margin-top:8px}
+.side{border-left:1px solid var(--line);background:var(--sunk);display:flex;flex-direction:column;min-height:0}
+.tabs{display:flex;border-bottom:1px solid var(--line);background:var(--surface)}
+.tabs button{flex:1;border:0;background:none;padding:9px 6px;font-size:13px;border-bottom:2px solid transparent}
+.tabs button[aria-selected=true]{border-color:var(--ink);font-weight:600}
+.panel{flex:1;overflow:auto;padding:12px}
+.thread{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px}
+.thread.active{border-color:#d2a500;box-shadow:0 0 0 2px #f6e7a6}
+.thread.resolved{opacity:.55}
+.quote{font-size:12px;color:var(--ink-3);border-left:3px solid #e0c34a;padding-left:6px;margin-bottom:6px}
+.msg{display:flex;gap:8px;margin-top:8px}
+.msg .face{width:22px;height:22px;font-size:10px;flex:none}
+.msg .name{font-weight:600;font-size:12.5px}
+.msg .tag{font-size:10.5px;color:var(--ink-3);border:1px solid var(--line);border-radius:4px;padding:0 4px;margin-left:4px}
+.msg .body{font-size:13px}
+.mention{color:var(--agent);font-weight:600}
+.typing{font-size:12px;color:var(--ink-3);margin-top:8px;font-style:italic}
+.reply{display:flex;gap:6px;margin-top:8px;position:relative}
+.reply input,.newc textarea{flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font:inherit;font-size:13px;background:var(--surface);color:var(--ink)}
+.newc{background:var(--surface);border:1px dashed var(--ink-3);border-radius:10px;padding:10px;margin-bottom:10px;position:relative}
+.newc textarea{width:100%;min-height:56px;resize:vertical}
+.menu{position:absolute;left:10px;top:100%;z-index:30;background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.15);min-width:230px;padding:4px}
+.menu button{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;padding:6px 8px;border-radius:6px;text-align:left;font-size:13px}
+.menu button:hover,.menu button.sel{background:var(--sunk)}
+.menu small{color:var(--ink-3)}
+.chlist .item{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:8px;font-size:13px}
+.chlist .item .row{display:flex;gap:6px;margin-top:6px}
+pre.src{white-space:pre-wrap;font:12px/1.55 var(--mono);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;margin:0 0 12px}
+.src .cm{color:var(--claude);font-weight:600}
+.hint{font-size:12px;color:var(--ink-3);margin:0 0 10px}
+.floatc{position:absolute;z-index:25}
+.empty{color:var(--ink-3);font-size:13px;text-align:center;padding:20px}
+@media (max-width:860px){.main{grid-template-columns:1fr}.side{border-left:0;border-top:1px solid var(--line);min-height:420px}.doc{padding:24px 18px}}
+</style>
+</head>
+<body>
+<!-- decision-archive:start -->
+<div style="font:13px/1.45 system-ui,sans-serif;background:Canvas;color:CanvasText;border-bottom:1px solid GrayText;padding:8px 16px">Archived copy of <b>Collaborative markdown editor mockup</b>, a decision artifact from 2026-11-21. Nothing on this page is saved. The index of all of them is in <a href="../index.html">docs/decision-artifacts</a>.</div>
+<script>
+(function(){
+  var A={};
+  function snap(){var docs=Object.keys(A).map(function(k){return {id:k,data:function(){return A[k]},exists:true}});return {docs:docs,empty:!docs.length,size:docs.length,forEach:function(f){docs.forEach(f)}}}
+  function doc(id){return {id:id,get:async function(){return {id:id,exists:id in A,data:function(){return A[id]}}},set:async function(){},update:async function(){},delete:async function(){}}}
+  var db={collection:function(){return {get:async function(){return snap()},doc:doc,onSnapshot:function(f){setTimeout(function(){f(snap())},0);return function(){}},add:async function(){}}},doc:function(p){return doc(String(p).split("/").pop())}};
+  window.claude={use:async function(name){return name==="db"?db:null}};
+})();
+</script>
+<!-- decision-archive:end -->
+
+<div class="note"><b>Mockup.</b> Invented data, nothing is saved and no agent runs. Try: type in <b>Suggesting</b> mode, click a coloured change, select text and add a comment that @mentions someone, or press <b>Watch Claude edit</b>.</div>
+
+<div class="bar">
+  <h1>Teen debit card · launch brief</h1><span class="path">artifacts/teen-card-brief.md</span>
+  <span class="spacer"></span>
+  <div class="faces" id="faces"></div>
+  <div class="seg" role="group" aria-label="Mode">
+    <button data-mode="edit" aria-pressed="false">Editing</button>
+    <button data-mode="suggest" aria-pressed="true">Suggesting</button>
+    <button data-mode="view" aria-pressed="false">Viewing</button>
+  </div>
+  <label class="btn"><input type="checkbox" id="showChanges" checked> Show changes</label>
+  <button class="btn primary" id="watch">Watch Claude edit</button>
+</div>
+
+<div class="main">
+  <div class="docwrap" id="docwrap">
+    <article class="doc" id="doc" contenteditable="true" spellcheck="false">
+      <h1>Teen debit card launch brief</h1>
+      <div class="meta">Owner: Geoff · Status: draft for review</div>
+      <h2>Problem</h2>
+      <p>Parents want their teens to learn money habits, but today a teen can only spend with a parent's card. <span class="fresh" data-author="claude">In our spring interviews, six of eight parents said they hand over their own card "and hope".</span></p>
+      <h2>Proposal</h2>
+      <p>Offer a debit card for teens aged 13 to 17, managed from the parent's app. Parents set <mark class="cmt" data-thread="t1">weekly spending limits</mark> and get an alert for every purchase<ins class="chg by-risk" data-id="c1"> over the limit they choose</ins>.</p>
+      <p>Declined purchases show the teen a <del class="chg by-mara" data-id="c2">decline code</del><ins class="chg by-mara" data-id="c3">plain reason and what to do next</ins>, so a moment at the till stays calm.</p>
+      <h2>Risks</h2>
+      <ul>
+        <li>Account takeover through a teen's phone.</li>
+        <li id="riskLast">Merchant categories parents may want to block<ins class="chg by-risk" data-id="c4"> (gambling, age-restricted goods)</ins>.</li>
+      </ul>
+      <h2>Launch</h2>
+      <p id="launch">Pilot with employees' families in Q1, then open to all parent customers.</p>
+    </article>
+  </div>
+
+  <aside class="side">
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="comments" aria-selected="true">Comments</button>
+      <button role="tab" data-tab="changes" aria-selected="false">Changes</button>
+      <button role="tab" data-tab="file" aria-selected="false">On disk</button>
+    </div>
+    <div class="panel" id="panel"></div>
+  </aside>
+</div>
+
+<button class="btn floatc" id="addc" hidden>💬 Comment</button>
+
+<script>
+const P = {
+  you:   {name:"Geoff", initials:"G", cls:"you", color:"var(--you)", tag:"You"},
+  claude:{name:"Claude", initials:"C", cls:"claude", color:"var(--claude)", tag:"Agent"},
+  risk:  {name:"Risk review", initials:"RR", cls:"risk", color:"var(--agent)", tag:"Agent", id:"risk-review", role:"Checks fraud, compliance and account safety"},
+  mara:  {name:"Mara Okafor", initials:"MO", cls:"mara", color:"var(--person)", tag:"Stand-in", id:"mara-okafor", role:"Design lead, Cards"},
+  cards: {name:"Cards platform", initials:"CP", cls:"cards", color:"#7a5a00", tag:"Agent", id:"cards-platform", role:"Card issuing and limits APIs"},
+};
+const MENTIONABLE = ["claude","risk","mara","cards"];
+const CANNED = {
+  claude:"Done. I tightened that sentence and left it as a suggestion so you can accept it.",
+  risk:"Alerts on every purchase will be noisy. Recommend alerts on declines and anything over the limit; I've suggested that wording above.",
+  mara:"From the interviews: parents asked for a weekly view, not per purchase. I'd keep weekly limits and add a Sunday summary. Want me to sketch it?",
+  cards:"Weekly limits are supported by the issuing API today. Per-category limits need the v3 limits service, which lands in Q2.",
+};
+let threads = [
+  {id:"t1", quote:"weekly spending limits", resolved:false, msgs:[
+    {by:"you", text:"<span class='mention'>@Cards platform</span> can we do weekly limits at launch, or only monthly?"},
+    {by:"cards", text:"Weekly is supported today. Daily needs a config change, which is small."}]},
+];
+const CHANGES = {
+  c1:{by:"risk", kind:"Added", note:"Every-purchase alerts are noisy; limit them."},
+  c2:{by:"mara", kind:"Removed", note:""},
+  c3:{by:"mara", kind:"Added", note:"Teens don't know decline codes."},
+  c4:{by:"risk", kind:"Added", note:""},
+};
+let mode = "suggest", tab = "comments", activeThread = null, nextId = 10;
+const $ = s => document.querySelector(s), doc = $("#doc"), panel = $("#panel");
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const face = (k, extra="") => `<span class="face ${extra}" style="background:${P[k].color}" title="${P[k].name}">${P[k].initials}</span>`;
+
+function renderFaces(){ $("#faces").innerHTML = ["you","claude","risk","mara","cards"].map(k=>face(k, k==="cards"?"dim":"").replace("</span>", k!=="cards"?'<span class="dot"></span></span>':"</span>")).join(""); }
+
+/* ---------- modes ---------- */
+document.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => {
+  mode = b.dataset.mode;
+  document.querySelectorAll("[data-mode]").forEach(x => x.setAttribute("aria-pressed", x===b));
+  doc.contentEditable = mode !== "view";
+});
+$("#showChanges").onchange = e => doc.classList.toggle("hide-changes", !e.target.checked);
+
+/* ---------- suggesting: wrap typing in <ins>, deletions in <del> ---------- */
+doc.addEventListener("beforeinput", e => {
+  if (mode !== "suggest") return;
+  const sel = getSelection(); if (!sel.rangeCount) return;
+  const r = sel.getRangeAt(0);
+  if (e.inputType === "insertText") {
+    e.preventDefault();
+    if (!r.collapsed) markDeleted(r);
+    const sc = r.startContainer, host = (sc.nodeType === 1 ? sc : sc.parentElement)?.closest("ins.by-you");
+    if (host) { r.insertNode(document.createTextNode(e.data)); r.collapse(false); sel.removeAllRanges(); sel.addRange(r); render(); return; }
+    const ins = document.createElement("ins"); ins.className = "chg by-you"; ins.dataset.id = "c" + (nextId++);
+    ins.textContent = e.data; r.insertNode(ins);
+    CHANGES[ins.dataset.id] = {by:"you", kind:"Added", note:""};
+    const nr = document.createRange(); nr.setStart(ins.firstChild, ins.firstChild.length); nr.collapse(true); sel.removeAllRanges(); sel.addRange(nr);
+    render();
+  } else if (e.inputType.startsWith("delete")) {
+    e.preventDefault();
+    if (r.collapsed) { const back = e.inputType === "deleteContentBackward"; try { sel.modify("extend", back ? "backward" : "forward", "character"); } catch {} }
+    const rr = sel.getRangeAt(0); if (!rr.collapsed) markDeleted(rr);
+    render();
+  } else if (e.inputType !== "insertParagraph") { e.preventDefault(); }
+});
+function markDeleted(r){
+  // own insertions just disappear; everything else is struck through
+  const sc = r.startContainer, insOwn = (sc.nodeType === 1 ? sc : sc.parentElement)?.closest("ins.by-you");
+  if (insOwn && insOwn.contains(r.endContainer)) { r.deleteContents(); if (!insOwn.textContent) insOwn.remove(); return; }
+  const del = document.createElement("del"); del.className = "chg by-you"; del.dataset.id = "c" + (nextId++);
+  try { r.surroundContents(del); } catch { del.appendChild(r.extractContents()); r.insertNode(del); }
+  CHANGES[del.dataset.id] = {by:"you", kind:"Removed", note:""};
+  const sel = getSelection(), nr = document.createRange(); nr.setStartBefore(del); nr.collapse(true); sel.removeAllRanges(); sel.addRange(nr);
+}
+
+/* ---------- click a change: accept / reject ---------- */
+let pop;
+doc.addEventListener("click", e => {
+  closePop();
+  const c = e.target.closest(".chg"); const m = e.target.closest("mark.cmt");
+  if (m) { activeThread = m.dataset.thread; tab = "comments"; render(); return; }
+  if (!c) return;
+  const ch = CHANGES[c.dataset.id] || {by:"you", kind:"Added"};
+  pop = document.createElement("div"); pop.className = "pop";
+  pop.innerHTML = `<div>${face(ch.by)} <span class="who">${P[ch.by].name}</span> · ${ch.kind.toLowerCase()} text</div>${ch.note?`<div style="margin-top:4px">${esc(ch.note)}</div>`:""}
+    <div class="row"><button class="btn primary" data-a="accept">Accept</button><button class="btn" data-a="reject">Reject</button><button class="btn" data-a="ask">Ask why</button></div>`;
+  const rect = c.getBoundingClientRect(), wrap = $("#docwrap").getBoundingClientRect();
+  pop.style.left = (rect.left - wrap.left + $("#docwrap").scrollLeft) + "px"; pop.style.top = (rect.bottom - wrap.top + $("#docwrap").scrollTop + 6) + "px";
+  $("#docwrap").style.position = "relative"; $("#docwrap").appendChild(pop);
+  pop.onclick = ev => { const a = ev.target.dataset.a; if (!a) return; ev.stopPropagation();
+    if (a === "ask") { startThread(c.textContent, `<span class='mention'>@${P[ch.by].name}</span> why this change?`, ch.by); }
+    else resolveChange(c, a === "accept");
+    closePop(); };
+});
+function closePop(){ pop?.remove(); pop = null; }
+function resolveChange(el, accept){
+  const isIns = el.tagName === "INS";
+  if (accept === isIns) el.replaceWith(...el.childNodes); else el.remove();
+  delete CHANGES[el.dataset.id]; render();
+}
+
+/* ---------- selection -> comment ---------- */
+const addc = $("#addc");
+document.addEventListener("selectionchange", () => {
+  const sel = getSelection();
+  if (!sel.rangeCount || sel.isCollapsed || !doc.contains(sel.anchorNode)) { if (!addc.matches(":hover")) addc.hidden = true; return; }
+  const rect = sel.getRangeAt(0).getBoundingClientRect();
+  addc.style.left = (rect.right + 6) + "px"; addc.style.top = (rect.top + scrollY - 4) + "px"; addc.hidden = false;
+});
+addc.onmousedown = e => e.preventDefault();
+addc.onclick = () => {
+  const sel = getSelection(); if (sel.isCollapsed) return;
+  const r = sel.getRangeAt(0), id = "t" + (nextId++);
+  const m = document.createElement("mark"); m.className = "cmt"; m.dataset.thread = id;
+  try { r.surroundContents(m); } catch { m.appendChild(r.extractContents()); r.insertNode(m); }
+  threads.push({id, quote:m.textContent, resolved:false, msgs:[], draft:true});
+  activeThread = id; tab = "comments"; addc.hidden = true; sel.removeAllRanges(); render();
+  setTimeout(() => panel.querySelector(".newc textarea")?.focus(), 0);
+};
+function startThread(quote, html, who){
+  const id = "t" + (nextId++);
+  threads.push({id, quote, resolved:false, msgs:[{by:"you", text:html}]});
+  activeThread = id; tab = "comments"; render(); route(threads.at(-1), [who]);
+}
+
+/* ---------- @mention routing (simulated) ---------- */
+function mentionsIn(text){ return MENTIONABLE.filter(k => text.includes("@" + P[k].name)); }
+function route(t, who){
+  who.forEach((k, i) => {
+    t.typing = (t.typing || []).concat(k); render();
+    setTimeout(() => {
+      t.typing = t.typing.filter(x => x !== k);
+      t.msgs.push({by:k, text:esc(CANNED[k]), via: k==="claude" ? "this chat" : "own session"});
+      if (k === "risk" && !doc.querySelector('[data-id="c90"]')) {
+        const li = document.getElementById("launch");
+        const ins = document.createElement("ins"); ins.className = "chg by-risk"; ins.dataset.id = "c90";
+        ins.textContent = " Gate the pilot on the account-takeover review."; li.appendChild(ins);
+        CHANGES.c90 = {by:"risk", kind:"Added", note:"Suggested from the comment thread."};
+      }
+      render();
+    }, 1600 + i * 1300);
+  });
+}
+function postIn(t, raw){
+  const html = esc(raw).replace(/@(Claude|Risk review|Mara Okafor|Cards platform)/g, "<span class='mention'>@$1</span>");
+  t.msgs.push({by:"you", text:html}); t.draft = false; render();
+  const who = mentionsIn(raw); if (who.length) route(t, who);
+}
+
+/* ---------- mention autocomplete ---------- */
+function attachMention(input){
+  let menu, idx = 0, opts = [];
+  const close = () => { menu?.remove(); menu = null; };
+  input.addEventListener("input", () => {
+    const v = input.value.slice(0, input.selectionStart), m = v.match(/@([\w ]{0,14})$/);
+    close(); if (!m) return;
+    const q = m[1].toLowerCase(); opts = MENTIONABLE.filter(k => P[k].name.toLowerCase().startsWith(q));
+    if (!opts.length) return; idx = 0;
+    menu = document.createElement("div"); menu.className = "menu";
+    const draw = () => menu.innerHTML = opts.map((k,i) => `<button class="${i===idx?"sel":""}" data-k="${k}">${face(k)}<span><b>${P[k].name}</b> <small>${P[k].tag}</small><br><small>${P[k].role || "Works in this session"}</small></span></button>`).join("");
+    draw(); input.parentElement.appendChild(menu);
+    menu.onmousedown = e => { e.preventDefault(); const b = e.target.closest("button"); if (b) pick(b.dataset.k); };
+    input._nav = d => { idx = (idx + d + opts.length) % opts.length; draw(); };
+    input._pick = () => pick(opts[idx]);
+  });
+  function pick(k){
+    const pos = input.selectionStart, before = input.value.slice(0, pos).replace(/@[\w ]{0,14}$/, "@" + P[k].name + " ");
+    input.value = before + input.value.slice(pos); input.focus(); input.selectionStart = input.selectionEnd = before.length; close();
+  }
+  input.addEventListener("keydown", e => {
+    if (menu && (e.key === "ArrowDown" || e.key === "ArrowUp")) { e.preventDefault(); input._nav(e.key === "ArrowDown" ? 1 : -1); }
+    else if (menu && (e.key === "Enter" || e.key === "Tab")) { e.preventDefault(); input._pick(); }
+    else if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); input.closest("[data-t]").querySelector("[data-post]").click(); }
+    else if (e.key === "Escape") close();
+  });
+  input.addEventListener("blur", () => setTimeout(close, 150));
+}
+
+/* ---------- Claude live edit ---------- */
+$("#watch").onclick = async () => {
+  const btn = $("#watch"); btn.disabled = true;
+  const li = document.getElementById("riskLast").parentElement;
+  const item = document.createElement("li"); const span = document.createElement("span"); span.className = "fresh"; span.dataset.author = "claude";
+  const caret = document.createElement("span"); caret.className = "caret"; caret.dataset.name = "Claude";
+  item.append(span, caret); li.appendChild(item);
+  const text = "Teens lose phones more than adults: card freeze must be one tap for the parent.";
+  for (const ch of text) { span.textContent += ch; await new Promise(r => setTimeout(r, 28)); }
+  caret.remove(); btn.disabled = false; btn.textContent = "Watch Claude edit"; render();
+};
+
+/* ---------- side panel ---------- */
+document.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { tab = b.dataset.tab; render(); });
+function render(){
+  document.querySelectorAll("[data-tab]").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === tab));
+  doc.querySelectorAll("mark.cmt").forEach(m => m.classList.toggle("active", m.dataset.thread === activeThread));
+  if (tab === "comments") renderComments(); else if (tab === "changes") renderChanges(); else renderFile();
+}
+function msgHtml(m){ const p = P[m.by]; return `<div class="msg">${face(m.by)}<div><span class="name">${p.name}</span><span class="tag">${p.tag}</span>${m.via?`<span class="tag">via ${m.via}</span>`:""}<div class="body">${m.text}</div></div></div>`; }
+function renderComments(){
+  const fresh = doc.querySelectorAll(".fresh").length;
+  let h = fresh && !doc.classList.contains("hide-fresh") ? `<div class="thread" style="border-color:var(--claude)">${face("claude")} <b>Claude</b> changed ${fresh} passage${fresh>1?"s":""} since you last looked. <div class="row" style="margin-top:6px"><button class="btn" id="seen">Mark as seen</button></div></div>` : "";
+  if (!threads.length) h += `<div class="empty">Select text in the document to comment.</div>`;
+  for (const t of threads) {
+    h += `<div class="thread ${t.id===activeThread?"active":""} ${t.resolved?"resolved":""}" data-t="${t.id}">
+      <div class="quote">${esc(t.quote)}</div>${t.msgs.map(msgHtml).join("")}
+      ${(t.typing||[]).map(k => `<div class="typing">${P[k].name} is reading the document…</div>`).join("")}
+      ${t.draft ? `<div class="newc" style="margin:8px 0 0"><textarea placeholder="Comment, or @ someone to ask them"></textarea><div class="row" style="display:flex;gap:6px;margin-top:6px"><button class="btn primary" data-post>Comment</button><button class="btn" data-cancel>Cancel</button></div></div>`
+        : t.resolved ? `<div class="row" style="margin-top:6px"><button class="btn" data-reopen>Reopen</button></div>`
+        : `<div class="reply"><input placeholder="Reply, or @ someone"><button class="btn" data-post>Reply</button><button class="btn" data-resolve title="Resolve">✓</button></div>`}
+    </div>`;
+  }
+  panel.innerHTML = h;
+  $("#seen") && ($("#seen").onclick = () => { doc.querySelectorAll(".fresh").forEach(f => f.replaceWith(...f.childNodes)); render(); });
+  panel.querySelectorAll("[data-t]").forEach(el => {
+    const t = threads.find(x => x.id === el.dataset.t);
+    el.onclick = e => { if (e.target.closest("button,input,textarea")) return; activeThread = t.id; doc.querySelector(`mark[data-thread="${t.id}"]`)?.scrollIntoView({block:"center", behavior:"smooth"}); render(); };
+    const inp = el.querySelector("input,textarea"); if (inp) attachMention(inp);
+    el.querySelector("[data-post]")?.addEventListener("click", () => { const v = inp.value.trim(); if (v) postIn(t, v); });
+    el.querySelector("[data-cancel]")?.addEventListener("click", () => { const m = doc.querySelector(`mark[data-thread="${t.id}"]`); m?.replaceWith(...m.childNodes); threads = threads.filter(x => x !== t); render(); });
+    el.querySelector("[data-resolve]")?.addEventListener("click", () => { t.resolved = true; render(); });
+    el.querySelector("[data-reopen]")?.addEventListener("click", () => { t.resolved = false; render(); });
+  });
+}
+function renderChanges(){
+  const els = [...doc.querySelectorAll(".chg")];
+  let h = `<p class="hint">Suggested changes from everyone, in document order.</p>`;
+  if (!els.length) h += `<div class="empty">No open suggestions.</div>`;
+  h += `<div class="chlist">` + els.map(el => { const c = CHANGES[el.dataset.id] || {by:"you", kind:"Added"};
+    return `<div class="item" data-c="${el.dataset.id}">${face(c.by)} <b>${P[c.by].name}</b> ${c.kind.toLowerCase()} “${esc(el.textContent.trim().slice(0,60))}”${c.note?`<div style="color:var(--ink-2);margin-top:4px">${esc(c.note)}</div>`:""}
+      <div class="row"><button class="btn primary" data-a="1">Accept</button><button class="btn" data-a="0">Reject</button></div></div>`; }).join("") + `</div>`;
+  if (els.length > 1) h += `<div style="display:flex;gap:6px"><button class="btn" id="accAll">Accept all</button><button class="btn" id="rejAll">Reject all</button></div>`;
+  panel.innerHTML = h;
+  panel.querySelectorAll("[data-c]").forEach(it => it.querySelectorAll("[data-a]").forEach(b => b.onclick = () => resolveChange(doc.querySelector(`[data-id="${it.dataset.c}"]`), b.dataset.a === "1")));
+  $("#accAll") && ($("#accAll").onclick = () => { els.forEach(e => resolveChange(e, true)); });
+  $("#rejAll") && ($("#rejAll").onclick = () => { els.forEach(e => resolveChange(e, false)); });
+}
+/* ---------- what's on disk ---------- */
+function toMd(node){
+  let s = "";
+  for (const n of node.childNodes) {
+    if (n.nodeType === 3) { if (/^\s*$/.test(n.textContent) && /^(ARTICLE|UL)$/.test(node.tagName)) continue; s += n.textContent.replace(/\s+/g, " "); continue; }
+    if (n.nodeType !== 1 || n.classList.contains("caret")) continue;
+    const t = n.tagName, inner = toMd(n);
+    const who = n.classList.contains("chg") ? (CHANGES[n.dataset.id]?.by || "you") : null;
+    const id = who ? (P[who].id || who) : "";
+    if (t === "H1") s += `# ${inner.trim()}\n\n`; else if (t === "H2") s += `## ${inner.trim()}\n\n`;
+    else if (t === "P" || (t === "DIV" && n.classList.contains("meta"))) s += `${inner.trim()}\n\n`;
+    else if (t === "UL") s += inner + "\n"; else if (t === "LI") s += `- ${inner.trim()}\n`;
+    else if (t === "INS") s += `{++${inner}++}{>>@${id}<<}`; else if (t === "DEL") s += `{--${inner}--}{>>@${id}<<}`;
+    else s += inner;
+  }
+  return s;
+}
+function renderFile(){
+  const md = esc(toMd(doc)).replace(/(\{\+\+|\+\+\}|\{--|--\}|\{&gt;&gt;[^}]*&lt;&lt;\})/g, "<span class='cm'>$1</span>");
+  const sidecar = { version: 1, threads: threads.filter(t => !t.draft).map(t => ({ id: t.id, anchor: { quote: t.quote }, resolved: t.resolved,
+    messages: t.msgs.map(m => ({ by: P[m.by].id || m.by, text: m.text.replace(/<[^>]+>/g, ""), ...(m.via ? { via: m.via } : {}) })) })) };
+  panel.innerHTML = `<p class="hint">The document stays plain markdown. Suggestions are CriticMarkup tagged with the participant who made them; any agent can read or write them with normal file tools.</p>
+    <b style="font-size:12px">artifacts/teen-card-brief.md</b><pre class="src">${md}</pre>
+    <b style="font-size:12px">artifacts/teen-card-brief.md.review.json</b><pre class="src">${esc(JSON.stringify(sidecar, null, 2))}</pre>`;
+}
+renderFaces(); render();
+</script>
+</body>
+</html>

@@ -21,7 +21,8 @@ Code's permissions, no open internet and no package installs, so every
 dependency is vendored. It is an Apple silicon Mac that cannot clone
 repositories outside the company's GitHub namespace, so the repository
 arrives as a ZIP (D-100). Development happens on Geoff's Mac mini at home and
-in cloud agent sessions; the public repository is `dudgeon/omnigent-slim`.
+in cloud agent sessions; the public repository is `dudgeon/flight-deck-demo`
+(named `omnigent-slim` until 21 November, D-114).
 
 ## 20 November: a slim, offline fork
 
@@ -133,16 +134,73 @@ inside the app (D-30), the work-Mac ZIP install (D-100).
   The headline: the main Aviator session acts as a project director, and
   workflows run in their own threads. A second walkthrough holds four
   remaining questions.
-- **This documentation pass**: the decision index, this history, the
-  architecture overview, a refreshed roadmap and a root `CLAUDE.md` for
-  contributors' agents.
+- **PR 22** (19:28): a documentation pass: the decision index, this history,
+  the architecture overview, a refreshed roadmap and a root `CLAUDE.md` for
+  contributors' agents. It also backfilled D-100 to D-106, decisions Geoff
+  had made earlier that were never logged.
+- **PR 23** (19:39): `sh setup.sh` takes a browser-downloaded ZIP to a
+  running app, clearing the download flag after asking and writing a report
+  to send back on failure (D-107). Rehearsed end to end in a Linux container.
+- **PR 26** (20:10): updates that keep the person's files. Setup installs into
+  `~/flight-deck`, and `sh ~/flight-deck/setup.sh` updates from the newest
+  download in Downloads without overwriting what the person added, changed or
+  deleted; a changed shipped file's new version goes to `updates/` (D-111).
+  Rehearsed in a simulated Mac: 44 checks.
+- **PR 28** (20:28): the repository is renamed `dudgeon/flight-deck-demo`
+  (D-114). Folders, commands, the data folder and code identifiers keep
+  `omnigent-slim` (D-35), because renaming a checkout breaks its venv, its
+  Dock launcher and its session history. `setup.sh` finds downloads under
+  either name.
+- **Hangar edits and the work Mac** (Geoff, 20:00): edits made on the work
+  Mac only need to survive updates, not reach GitHub. Later the repository
+  will likely be re-committed to a company repository as a fork. This shaped
+  PR 29 (below): the "Send to repo" button only appears on git copies.
+- **Avatars paused** (Geoff, 20:10): he rejected the Solid flat set ("we're
+  still very far off"). PR 25 is held as a draft; a third round of five
+  directions is drawn in the project files.
+
+Merged at about 20:33:
+
+- **PR 24**: runs that pause, resume and stop with a where-we-left-off note
+  (`pa flow`, `pa runs`), and an "In flight" section on the project page with
+  a sidebar count of runs that need the person. The first two slices of the
+  modes build (D-93, D-96); the rest waits on the second walkthrough.
+- **PR 27**: the Hangar shows, edits and adds each workflow's widgets and
+  views (D-112), because Geoff wanted the widgets of a workflow visible and
+  editable in the Hangar.
+- **PR 29**: "Send to repo" on the Hangar Overview commits published
+  configuration to a new branch and opens a pull request (D-113).
+
+Still open:
+
+- **PRs 17 and 19**: still drafts, waiting for Geoff to take them out of
+  draft; both now conflict with `main`.
+- **PR 25**: avatars, held (see above).
+
+After that:
+
+- **PR 30** (20:34): this history, the roadmap and the decision index brought
+  up to PR 29, with a "Not yet verified" list in the roadmap.
+- **Decision artifacts and the docs-refresh skill** (D-115): Geoff asked for
+  the docs pass to become a repeatable skill, and for every decision page to
+  be kept in the repository as offline HTML, so the record and its examples
+  can be seen without his claude.ai account. Nineteen pages were archived in
+  `docs/decision-artifacts/`, with the answers recorded on them; one, a
+  Claude Doc, has no page to copy and is listed with a note.
 
 ## Still waiting
 
-- The one-step setup script for a browser-downloaded ZIP (D-100).
+- Geoff's first install on the work Mac with `setup.sh` (D-100, D-107,
+  D-111).
+- PRs 17 and 19 out of draft, and the Mac mini pulled and restarted (it was
+  still at PR 11).
 - Live runs of decision review and problem discovery.
-- Progressive complexity (D-54) and the remaining modes questions.
-- Whether to rename the repository (D-35), and D-24 for production.
+- Progressive complexity (D-54) and the remaining modes questions (M-8,
+  M-12 to M-14).
+- The avatar direction, and D-24 for production.
+
+The full list of what is built but not yet checked on a real machine is in
+[product/roadmap.md](product/roadmap.md#not-yet-verified).
 
 ## How the work is run
 

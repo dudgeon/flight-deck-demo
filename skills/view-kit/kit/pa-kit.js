@@ -122,12 +122,29 @@
     var s = statusOf(v);
     return '<span class="pa-pill tone-' + s.tone + '">' + icon(s.icon) + esc(s.label) + "</span>";
   }
+  /* A link to another project hangs from the record it is about: the chip names
+     that project and how it stands, so the news is where the person acts on it. */
+  var LINK_WORDS = { "handed-to": "Handed to", "started": "Started", "relies-on": "Relies on" };
+  var PROJECT_STATES = {
+    "shaping": { label: "Shaping", tone: "idle" }, "in-delivery": { label: "In delivery", tone: "agent" },
+    "shipped": { label: "Shipped", tone: "ok" }, "slipped": { label: "Slipped", tone: "attn" },
+    "paused": { label: "Paused", tone: "idle" }, "stopped": { label: "Stopped", tone: "idle" }
+  };
+  function links(rec) {
+    return [].concat(rec.links || []).map(function (l) {
+      if (!l || !l.project) return "";
+      var p = (data.projects || {})[l.project] || {};
+      var st = PROJECT_STATES[p.state];
+      return '<span class="pa-link tone-' + (st ? st.tone : "idle") + '" title="' + esc(LINK_WORDS[l.type] || "Linked to") + ' another project">' +
+        "\u2192 " + esc(l.project) + (p.team ? " \u00b7 " + esc(p.team) : "") + (st ? " \u00b7 " + esc(p.state_note || st.label) : "") + "</span>";
+    }).join("");
+  }
   function flags(rec) {
     var out = "";
     if (val(rec, "locked")) out += '<span class="pa-flag locked" title="Settled. Changes need your say-so.">Locked</span>';
     if (val(rec, "stale")) out += '<span class="pa-flag stale" title="Something this was built from has changed.">Check again</span>';
     if (isEdited(rec)) out += '<span class="pa-flag edited" title="You changed this. Not saved yet.">Edited</span>';
-    return out;
+    return out + links(rec);
   }
 
   /* ---------- cells ---------- */

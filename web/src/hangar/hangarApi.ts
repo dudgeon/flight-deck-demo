@@ -92,6 +92,8 @@ export interface HangarView {
   host: "canvas" | "chat";
   actions: number;
   path: string;
+  /** The spec's path inside the workflow folder, e.g. views/card.json. */
+  file?: string;
 }
 
 export interface HangarRecordType {
@@ -246,6 +248,8 @@ export interface FolderDraft {
   uses: { scenarios: string[]; starters: string[] };
   path: string;
   target: string;
+  /** A workflow draft's widgets and views, placed as they show when flying. */
+  views?: HangarView[];
 }
 
 export interface FolderEdit {
@@ -300,7 +304,30 @@ export interface Hangar {
   /** Drafts of scenarios and workflows. */
   folder_drafts: FolderDraft[];
   /** Published files not yet committed to the repo (D-75). */
-  repo?: { git: boolean; uncommitted: string[]; count?: number };
+  repo?: { git: boolean; uncommitted: string[]; count?: number; sent?: RepoSend | null };
+}
+
+/** The last "Send to repo" from this copy (D-113). */
+export interface RepoSend {
+  branch: string;
+  commit: string;
+  files: number;
+  at: string;
+  /** The pull request `gh` opened, when it is installed. */
+  pull_request: string | null;
+  /** Otherwise, GitHub's page to open one. */
+  open_pr: string | null;
+  summary: string;
+}
+
+/** Commit the published configuration to a new branch and push it (D-113). */
+export function useSendToRepo() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (summary: string) =>
+      send("/v1/slim/hangar/repo/send", "POST", { summary }) as Promise<RepoSend>,
+    onSuccess: () => client.invalidateQueries({ queryKey: ["slim-hangar"] }),
+  });
 }
 
 async function fetchHangar(): Promise<Hangar> {
@@ -436,6 +463,9 @@ export function useFolderDraft(kind: FolderKind, id: string) {
   });
 }
 
+/** One view of a workflow draft, drawn over its scenario's sample data. */
+export const draftViewPath = (id: string, view: string) =>
+  `/v1/slim/hangar/drafts/workflow/${encodeURIComponent(id)}/views/${encodeURIComponent(view)}`;
 export const folderPreviewPath = (kind: FolderKind, id: string) => `${folderApi(kind, id)}/preview`;
 
 /** The same moves as people, for scenarios and workflows. */

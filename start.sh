@@ -27,12 +27,10 @@ die() { echo "omnigent-slim: $*" >&2; exit 1; }
 [ "$(uname -m)" = arm64 ] || die "this build needs an Apple silicon Mac."
 command -v claude >/dev/null 2>&1 || die "Claude Code ('claude') is not on your PATH. Install it and sign in first."
 if xattr -p com.apple.quarantine "$ROOT/vendor/bin/tmux" >/dev/null 2>&1; then
-    die "macOS has quarantined this copy (it was downloaded through a web browser),
-so it won't run the bundled tmux and Python. Download it again from Terminal,
-which doesn't quarantine files (README.md, step 1):
-  curl -fL -o omnigent-slim.zip https://github.com/dudgeon/omnigent-slim/archive/refs/heads/main.zip
-If you can only download through a browser, ask IT how they want you to clear
-the quarantine flag; don't bypass it on your own."
+    die "macOS has flagged this copy as downloaded from the internet, so it won't
+run the bundled tmux and Python. Run the setup script once, which explains the
+flag and clears it from this folder (README, step 2):
+  sh setup.sh"
 fi
 
 # 1. Python runtime and dependencies, rebuilt when the lock or project changes.
@@ -46,7 +44,7 @@ if [ ! -x "$VENV/bin/python" ] || [ "$(cat "$RUNTIME/stamp" 2>/dev/null)" != "$s
     tar -xzf "$tarball" -C "$RUNTIME"
     "$RUNTIME/python/bin/python3" -m venv "$VENV"
     pip_install() {
-        PIP_NO_INDEX=1 PIP_DISABLE_PIP_VERSION_CHECK=1 OMNIGENT_SKIP_WEB_UI=true \
+        PIP_NO_INDEX=1 PIP_DISABLE_PIP_VERSION_CHECK=1 OMNIGENT_SKIP_WEB_UI=true PYTHONWARNINGS=ignore \
             "$VENV/bin/python" -m pip install --quiet --no-index --find-links "$ROOT/vendor/wheels" "$@"
     }
     pip_install setuptools wheel editables "hatchling>=1.27,<1.32.0"

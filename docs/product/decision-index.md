@@ -5,13 +5,13 @@ stands now, and why. The full wording is in [decisions.md](decisions.md),
 which is never edited after the fact; this index is the part that changes.
 Update the status here whenever a decision is built, refined or replaced.
 
-Audit of 2026-11-21: D-01 to D-75 and D-89 to D-99 are on `main`. D-60, D-61 and D-62 were
-never assigned (parallel threads claimed blocks and skipped them); they stay
-unused so no reference can point at the wrong thing. D-76 to D-88 are claimed
-by open pull requests 17 and 19. D-89 to D-99 (modes and projects) are on
-`main` from pull request 21. D-100 to D-106 record decisions Geoff made earlier that were
-never logged (see "Backfilled" in decisions.md); D-107 onward is next. No
-number is used twice.
+Audit of 2026-11-21 (evening): D-01 to D-75, D-89 to D-107 and D-111 to
+D-114 are on `main`. D-60, D-61 and D-62 were never assigned (parallel threads
+claimed blocks and skipped them); they stay unused so no reference can point
+at the wrong thing. Claimed by open pull requests: D-76 to D-81 (PR 17),
+D-82 to D-88 (PR 19), and D-108 to D-110 (PR 25, avatars, held). D-100 to D-106 record decisions Geoff made earlier that
+were never logged (see "Backfilled" in decisions.md). D-116 onward is next;
+check open pull requests first, as `CLAUDE.md` says. No number is used twice.
 
 **Status words.** *Built*: in the code on `main`. *Active*: a rule or
 direction in force, nothing to build. *Refined by* / *replaced by*: a later
@@ -30,6 +30,8 @@ feature notes of the time and marked *(reconstructed)*.
 | D-02 | Claude Code as a terminal, no API, offline, no permission bypass, everything vendored | Geoff | Built (`_offline_guard.py`, `slim_policy.py`, `vendor/`) | The work Mac's constraints. |
 | D-03 | Defaults: Auto permissions, Opus 5.5, medium effort | Geoff | Built | *(reconstructed)* Auto keeps demos flowing without prompts while staying inside Claude Code's own safety checks; Bypass and Don't ask stay removed (D-02). |
 | D-04 | A "product partner" for PMs: unstructured work plus templated flows | Geoff | Active | *(reconstructed)* His vision of PM work: context files and generated artifacts alternating with structured, repeatable flows. |
+| D-107 | Setup clears the download flag on its own folder after asking; curl stays as the other way | Geoff | Built (`setup.sh`) | A browser ZIP is the main way in; this is what "Open Anyway" does, and IT for every install would stall it. |
+| D-111 | App lives in `~/flight-deck`; updates from a newer ZIP never overwrite the person's files or edits | Geoff asked, Claude chose | Built (`setup.sh`, `scripts/install_sync.py`) | A re-download must keep his files, and Terminal navigation is hard: one fixed folder plus a manifest of what was shipped. |
 
 ## Structured work
 
@@ -82,13 +84,15 @@ feature notes of the time and marked *(reconstructed)*.
 | D-31 | Next kinds of work: problem discovery, intent shaping, decision review, delivery status | Geoff | Built as previews; delivery status and intent shaping run live | *(reconstructed)* They cover the PM life cycle beyond requirements. |
 | D-32 | More than one question: decision cards, one at a time | Geoff | Active; extended by D-105 | *(reconstructed)* A list in prose is hard to answer from a phone. |
 | D-33 | Never ask Geoff to decide blind | Geoff | Active; built into decision review | *(reconstructed)* A decision without context, options and visuals is not a decision he can make. |
+| D-115 | Decision artifacts are archived in the repo as offline HTML, kept by the `docs-refresh` skill | Geoff asked, Claude chose | Built (`docs/decision-artifacts/`) | A record anyone can open without his claude.ai account, and examples of how to ask. |
 | D-34 | Intent framework is notional and swappable (`workspace/frameworks/`) | Geoff | Built | *(reconstructed)* The real company framework can replace it without touching the skill. |
 
 ## Name and design language
 
 | D | Decision | Who | Status | Why |
 |---|---|---|---|---|
-| D-35 | The fork is Flight Deck; the UI is Product Aviator; identifiers keep `omnigent-slim` | Geoff | Active; **repo rename open** | He liked the name. |
+| D-35 | The fork is Flight Deck; the UI is Product Aviator; identifiers keep `omnigent-slim` | Geoff | Active; repository renamed by D-114 | He liked the name. |
+| D-114 | Repository renamed `dudgeon/flight-deck-demo`; local folders, data folder and identifiers keep their names | Geoff | Built (README, `setup.sh` accepts both download names) | Repo should carry the product name; renaming checkouts breaks their venv, Dock launcher and session history. |
 | D-36 | Vendor Anthropic's `frontend-design` skill | Geoff | Built (`skills/frontend-design/`) | He asked for it; the work Mac cannot download skills. |
 | D-37 | One design language from shared tokens | Geoff | Built | Four color systems looked like four products. |
 | D-38 | How tokens are built and injected | Claude | Built (`design/`) | The same whichever colors are picked. |
@@ -127,6 +131,8 @@ feature notes of the time and marked *(reconstructed)*.
 | D-73 | A scenario draft plays on its page; `opening` line | Claude | Built | Seeing the demo is the real check. |
 | D-74 | Pictures for people and agents, committed with the repo | Geoff | Built | He asked for avatars chosen from a file. |
 | D-75 | Configuration travels with the repo; a test guards `.gitignore` | Geoff | Built | Personas, skills, workflows and scenarios go to the work Mac. |
+| D-112 | A workflow's widgets and views are shown, edited and added in the Hangar | Geoff asked, Claude chose | Done (PR 27) | He asked that widgets tied to a workflow be visible and editable there. |
+| D-113 | "Send to repo" on git copies: published config to a new branch, pushed, PR opened | Geoff | Done (PR 29) | Hangar edits only shipped once someone committed them by hand. |
 
 ## Views in the chat
 
@@ -140,12 +146,12 @@ feature notes of the time and marked *(reconstructed)*.
 
 | D | Decision | Who | Status |
 |---|---|---|---|
-| D-76 | Scenario you build, demo you fly; one "◆ Demo" project per demo | Geoff | Pending, PR 17 |
-| D-77 | Canned or live is set per turn (`[live]`); `pa demo next` | Geoff | Pending, PR 17 |
-| D-78 | One fly route and `FlyButton`, from the Hangar and the Library | Geoff | Pending, PR 17 |
-| D-79 | Scenario folder adds `context/`, `cast/`, `opening` | Geoff | Pending, PR 17 |
-| D-80 | Workflow skills never copy demo material themselves | Geoff | Pending, PR 17 |
-| D-81 | Flying again: Reset to the start or Keep going | Geoff | Pending, PR 17 |
+| D-76 | Scenario you build, demo you fly; one "◆ Demo" project per demo | Geoff | Built (PR 17) |
+| D-77 | Canned or live is set per turn (`[live]`); `pa demo next` | Geoff | Built (PR 17) |
+| D-78 | One fly route and `FlyButton`, from the Hangar and the Library | Geoff | Built (PR 17) |
+| D-79 | Scenario folder adds `context/`, `cast/`, `opening` | Geoff | Built (PR 17) |
+| D-80 | Workflow skills never copy demo material themselves | Geoff | Built (PR 17) |
+| D-81 | Flying again: Reset to the start or Keep going | Geoff | Built (PR 17) |
 | D-82 | Keep the Library; every card generated from metadata | Geoff | Pending, PR 19 |
 | D-83 | Top half: four to six featured skills (`library` block) | Geoff | Pending, PR 19 |
 | D-84 | Skill card: unnumbered steps, a short form, Start | Geoff | Pending, PR 19 |
@@ -164,24 +170,43 @@ decided but nothing is built yet.
 
 | D | Decision | Who | Status |
 |---|---|---|---|
-| D-89 | Aviator is a project director; modes run in threads with agent-to-agent messages | Geoff | Decided, not built |
-| D-90 | A mode shows as a strip on the message box | Geoff | Decided, not built |
-| D-91 | A mode's replies are marked by a rail with start, pause and resume markers | Geoff | Decided, not built |
-| D-92 | Side questions are answered outside the rail; the mode stays on | Geoff | Decided, not built |
-| D-93 | Leaving: pause, finish and stop are distinct; a where-we-left-off note; only stop confirms | Geoff | Decided, not built |
+| D-89 | Aviator is a project director; modes run in threads with agent-to-agent messages | Geoff | Partly built: director skill, briefs and the run card, opt-in; the direct line is not |
+| D-90 | A mode shows as a strip on the message box | Geoff | Built, not yet flown live |
+| D-91 | A mode's replies are marked by a rail with start, pause and resume markers | Geoff | Built in part (rail; markers to do) |
+| D-92 | Side questions are answered outside the rail; the mode stays on | Geoff | Built, not yet flown live |
+| D-93 | Leaving: pause, finish and stop are distinct; a where-we-left-off note; only stop confirms | Geoff | Partly built: pause, resume and stop with the note; the Pause button waits on D-90 |
 | D-94 | One mode has the floor at a time, with a way back | Geoff | Decided, not built |
 | D-95 | Any record can have its own thread | Geoff | Decided, not built |
-| D-96 | In-flight work shows in an "In flight" section on the project page | Geoff | Decided, not built |
-| D-97 | A project is one in-market goal inside a lasting area | Geoff | Decided, not built |
+| D-96 | In-flight work shows in an "In flight" section on the project page | Geoff | Built |
+| D-97 | A project is one in-market goal inside a lasting area | Geoff | Built in part: goal, area and state on the project page; no area page yet |
 | D-98 | The intent graph's detail is held until it blocks something | Geoff | Decided, not built |
 | D-99 | The smaller calls stand (every workflow makes a mode, no mode color, and so on) | Claude, accepted by Geoff | Decided, not built |
+| D-116 | The director shows a mode through a direct line to its thread; Aviator is not in the path | Geoff | Built, not yet flown live |
+| D-117 | Stepping into a thread puts it in place of the chat, the director folded to a bar, the canvas kept | Geoff | Built |
+| D-118 | A thread reports milestones, progress, blockers and state, at its own discretion, never everything | Geoff | Built (`pa report`), not yet flown with a live agent |
+| D-119 | A project's connections: a chip on the linked item and a Connections card on the project page | Geoff | Built |
+| D-120 | Routing is modular: each workflow carries its own routing, stage and persona; Aviator reads them with `pa workflows` (PR 34) | Geoff asked, Claude chose | Decided, not built |
+| D-121 | A project is a file (`projects/<slug>.json`); a link is one line on its record, read both ways | Claude | Built |
 
+
+## Usage logging
+
+Spec: [usage-logging.md](usage-logging.md).
+
+| D | Decision | Who | Status |
+|---|---|---|---|
+| D-122 | One local usage log: JSON lines per day in `logs/usage/`, one shared writer, on by default, skipped by updates | Geoff asked, Claude chose | Built |
+| D-123 | Fed from upstream's own instrumentation (telemetry emit, web analytics sink, tool observer), in upstream's field names | Claude | Built |
+| D-124 | The writer enforces "ids and words, never sentences"; `<text N>`; fingerprint level; packs re-check | Claude | Built |
+| D-125 | `area.action` names; every `pa` command and slim route write logs itself; reads are not logged; `pa log` for skills | Claude | Built |
+| D-126 | Eval trials are tagged and kept in `eval/<suite>/`; routing graders read them | Claude | Built; no suite uses it yet |
+| D-127 | Logs leave a machine only as a pack a person carries; an `Exporter` interface for a later server | Claude | Built (packs); no remote exporter |
 
 ## Backfilled (decided earlier, logged on 21 Nov)
 
 | D | Decision | Who | Status |
 |---|---|---|---|
-| D-100 | The work Mac gets the repo as a ZIP and runs one setup script that fails helpfully | Geoff | **Open: setup script not built** |
+| D-100 | The work Mac gets the repo as a ZIP and runs one setup script that fails helpfully | Geoff | Built (`setup.sh`); refined by D-107 |
 | D-101 | One active canvas tab per session, not mirrored | Geoff | Built |
 | D-102 | Sidebar brand: emblem plus name as text | Geoff | Built |
 | D-103 | Dock icon A, pinned to the Dock | Geoff | Built |
@@ -191,10 +216,10 @@ decided but nothing is built yet.
 
 ## Open questions not yet numbered
 
-- The modes questions still unanswered (M-8, M-12 to M-14 in
-  [modes-and-projects.md](modes-and-projects.md)): how the director shows a
-  mode, where a thread opens, what a thread reports back, how a project's
-  connections show. They take D-107 onward when Geoff answers.
+- Usage logging (UL-1 to UL-3 in [usage-logging.md](usage-logging.md)):
+  put to Geoff 2026-11-21; built to the recommendations meanwhile.
+- Aviator coordination, skill routing and persona strictness (AV-1 to
+  AV-6 in [director-coordination.md](director-coordination.md)): put to
+  Geoff 2026-11-21; numbered when answered.
 - Progressive complexity (D-54).
-- Whether to rename the repository (D-35).
 - D-24 for production.

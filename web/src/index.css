@@ -3165,3 +3165,21 @@ html[data-chat-asks] [data-testid="file-viewer"]:not(:hover):not(:focus-within) 
     transition: none;
   }
 }
+
+/* omnigent-slim: the folded director bar on a thread's page (D-117). The
+   header floats over the chat, so the bar sits below it and the transcript
+   and the tasks strip give up the room they kept for the header. */
+.pa-director-bar {
+  margin-top: 76px;
+}
+@media (min-width: 768px) {
+  .pa-director-bar {
+    margin-top: 3rem;
+  }
+}
+.pa-director-bar + :not(.session-chat-transcript) {
+  margin-top: 0;
+}
+.pa-director-bar ~ .session-chat-transcript .chat-conversation-content {
+  padding-top: 1rem;
+}

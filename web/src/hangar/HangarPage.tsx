@@ -54,11 +54,29 @@ import {
   useHangar,
   useHangarActions,
   useHangarVersion,
+  useSendToRepo,
   viewPagePath,
 } from "./hangarApi";
 import { AviatorPopover } from "./AviatorPopover";
-import { ActionError, Checks, Crumb, Diff, Links, Rendered, SHELF_LABELS, Section } from "./parts";
-import { FolderActions, FolderDraftPage, FolderHistory, NewScenarioButton } from "./FolderEditor";
+import {
+  ActionError,
+  Checks,
+  Crumb,
+  Diff,
+  Links,
+  Rendered,
+  SHELF_LABELS,
+  Section,
+  hostLabel,
+  layoutLabel,
+} from "./parts";
+import {
+  EditWidgetButton,
+  FolderActions,
+  FolderDraftPage,
+  FolderHistory,
+  NewScenarioButton,
+} from "./FolderEditor";
 import { FlyButton, demoNote } from "./FlyButton";
 import "./hangar.css";
 
@@ -316,36 +334,83 @@ const LAYOUT_GROUPS: { layout: string; label: string }[] = [
   { layout: "form", label: "Forms" },
   { layout: "summary", label: "Summaries" },
 ];
-const layoutLabel = (layout: string) =>
-  ({ "tree-table": "Table", board: "Board", detail: "Card", form: "Form", summary: "Summary" })[
-    layout
-  ] ?? layout;
-const hostLabel = (host: string) => (host === "chat" ? "in the chat" : "in the canvas");
 
 const byId = <T extends { id: string }>(items: T[]) =>
   new Map(items.map((item) => [item.id, item]));
 
 // ----------------------------------------------------------------- overview
 
-/** Published config that is not committed yet would be lost with a fresh download (D-75). */
+/**
+ * Published config that is not committed yet would be lost with a fresh download (D-75).
+ * On a git copy, "Send to repo" commits it to a new branch and pushes it (D-113).
+ */
 function RepoNote({ hangar }: { hangar: Hangar }) {
   const repo = hangar.repo;
-  if (!repo?.git || repo.uncommitted.length === 0) return null;
+  const sendToRepo = useSendToRepo();
+  const [summary, setSummary] = useState("");
+  if (!repo?.git) return null;
+  const sent = sendToRepo.data ?? repo.sent ?? null;
+  if (repo.uncommitted.length === 0 && !sendToRepo.data) return null;
   const count = repo.count ?? repo.uncommitted.length;
+  const link = sent?.pull_request ?? sent?.open_pr ?? null;
   return (
     <Section title="Not in the repo yet">
-      <p className="lab">
-        {count} published file{count === 1 ? " is" : "s are"} in the workspace but not committed.
-        Commit them so they travel with the repo.
-      </p>
-      <ul className="plain" data-testid="hangar-uncommitted">
-        {repo.uncommitted.slice(0, 8).map((path) => (
-          <li key={path} className="path">
-            workspace/{path}
-          </li>
-        ))}
-        {count > 8 && <li className="lab">and {count - 8} more</li>}
-      </ul>
+      {count > 0 && (
+        <>
+          <p className="lab">
+            {count} published file{count === 1 ? " is" : "s are"} in this folder but not committed.
+            Send them to the repo so they travel with it. Your folder stays as it is.
+          </p>
+          <ul className="plain" data-testid="hangar-uncommitted">
+            {repo.uncommitted.slice(0, 8).map((path) => (
+              <li key={path} className="path">
+                workspace/{path}
+              </li>
+            ))}
+            {count > 8 && <li className="lab">and {count - 8} more</li>}
+          </ul>
+          <form
+            className="row"
+            onSubmit={(e) => {
+              e.preventDefault();
+              sendToRepo.mutate(summary.trim(), { onSuccess: () => setSummary("") });
+            }}
+          >
+            <input
+              className="hangar-input"
+              style={{ flex: 1 }}
+              value={summary}
+              onChange={(e) => setSummary(e.target.value)}
+              placeholder="One line on what changed (optional)"
+              aria-label="What changed"
+            />
+            <button
+              type="submit"
+              className="hangar-btn pri"
+              disabled={sendToRepo.isPending}
+              data-testid="hangar-send-to-repo"
+            >
+              {sendToRepo.isPending ? "Sending…" : "Send to repo"}
+            </button>
+          </form>
+          <ActionError error={sendToRepo.error} />
+        </>
+      )}
+      {sent && (
+        <p className="lab" data-testid="hangar-sent">
+          Last sent {new Date(sent.at).toLocaleString()} as{" "}
+          <span className="path">{sent.branch}</span> ({sent.files} file
+          {sent.files === 1 ? "" : "s"}).{" "}
+          {link ? (
+            <a className="link" href={link} target="_blank" rel="noreferrer">
+              {sent.pull_request ? "Open the pull request" : "Open a pull request for it"}
+            </a>
+          ) : (
+            "Merge that branch to bring them into the repo."
+          )}{" "}
+          Once it is merged and this folder is updated (git pull), they drop off this list.
+        </p>
+      )}
     </Section>
   );
 }
@@ -821,18 +886,27 @@ function WorkflowPage({ hangar }: { hangar: Hangar }) {
         )}
       </Section>
       <Section
-        title="Views, drawn from the scenario's sample data"
+        title="Widgets and views, drawn from the scenario's sample data"
         aside={
-          <Link className="link text-xs" to={hangarPath.shelf("views")}>
-            All views
-          </Link>
+          <EditWidgetButton hangar={hangar} workflow={workflow.id} builtin={workflow.builtin} />
         }
       >
-        <div className="grid4">
-          {workflow.views.map((view) => (
-            <ViewThumb key={view.key} view={view} />
-          ))}
-        </div>
+        {(["chat", "canvas"] as const).map((host) => {
+          const views = workflow.views.filter((v) => v.host === host);
+          if (views.length === 0) return null;
+          return (
+            <div key={host} className="flex flex-col gap-1.5" data-testid={`hangar-views-${host}`}>
+              <b className="text-[13px]">
+                {host === "chat" ? "Widgets · in the chat" : "Views · in the canvas"}
+              </b>
+              <div className="grid4">
+                {views.map((view) => (
+                  <ViewThumb key={view.key} view={view} />
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </Section>
       <div className="grid3">
         <Section title="Who can be called">
@@ -986,7 +1060,19 @@ function ViewPage({ hangar }: { hangar: Hangar }) {
       <div className="row">
         <h1>{view.title}</h1>
         <span className="chip">{layoutLabel(view.layout)}</span>
-        <span className="chip">Shown {hostLabel(view.host)}</span>
+        <span className="chip">
+          {view.host === "chat" ? "Widget · in the chat" : "View · in the canvas"}
+        </span>
+        <span className="sp" />
+        {workflow && (
+          <EditWidgetButton
+            hangar={hangar}
+            workflow={workflow.id}
+            view={view.name}
+            builtin={workflow.builtin}
+            label={workflow.builtin ? "Edit a copy" : "Edit"}
+          />
+        )}
       </div>
       <div className="halves" style={{ gridTemplateColumns: "minmax(0, 2fr) minmax(0, 1fr)" }}>
         <Section title="How it looks when flying, over the scenario's sample data">

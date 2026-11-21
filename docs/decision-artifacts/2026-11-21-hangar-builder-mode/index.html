@@ -1,0 +1,653 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!-- decision-archive:start -->
+<div style="font:13px/1.45 system-ui,sans-serif;background:Canvas;color:CanvasText;border-bottom:1px solid GrayText;padding:8px 16px">Archived copy of <b>Hangar Builder Mode</b>, a decision artifact from 2026-11-21. It shows the answers recorded on 2026-11-21; changes made here are not saved. The index of all of them is in <a href="../index.html">docs/decision-artifacts</a>.</div>
+<script>
+(function(){
+  var A={"author": {"at": "2026-11-21T14:28:33.228Z", "choice": "guided", "label": "Guided by Aviator, with a form beside the chat", "note": "", "question": "How does someone actually build or change something?"}, "entry": {"at": "2026-11-21T14:27:38.502Z", "choice": "other", "label": "Something else", "note": "The “open hanger on things” affordance should be extremely subtle; like a wrench icon button or something. It should not distract when we make screen recordings of demos.", "question": "Where is the way in?"}, "first": {"at": "2026-11-21T14:28:53.237Z", "choice": "look", "label": "The look-around Hangar first", "note": "", "question": "What gets built first?"}, "gate": {"at": "2026-11-21T14:28:41.206Z", "choice": "block", "label": "Checks must pass, and a scenario must play through", "note": "", "question": "How strict is Publish?"}, "look": {"at": "2026-11-21T14:26:21.476Z", "choice": "frame", "label": "The whole frame changes", "note": "", "question": "How should the app show that you are in the Hangar?"}, "name": {"at": "2026-11-21T14:27:53.573Z", "choice": "hangar", "label": "Hangar, and flying", "note": "", "question": "What do we call the two modes?"}, "scenario": {"at": "2026-11-21T14:28:14.006Z", "choice": "separate", "label": "A scenario is its own small folder that points at workflows", "note": "", "question": "Is a scenario its own thing, or part of a workflow?"}};
+  function snap(){var docs=Object.keys(A).map(function(k){return {id:k,data:function(){return A[k]},exists:true}});return {docs:docs,empty:!docs.length,size:docs.length,forEach:function(f){docs.forEach(f)}}}
+  function doc(id){return {id:id,get:async function(){return {id:id,exists:id in A,data:function(){return A[id]}}},set:async function(){},update:async function(){},delete:async function(){}}}
+  var db={collection:function(){return {get:async function(){return snap()},doc:doc,onSnapshot:function(f){setTimeout(function(){f(snap())},0);return function(){}},add:async function(){}}},doc:function(p){return doc(String(p).split("/").pop())}};
+  window.claude={use:async function(name){return name==="db"?db:null}};
+})();
+</script>
+<!-- decision-archive:end -->
+
+<title>Hangar Builder Mode</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one column of reading text; the app mockup and decision stages sit in their own wide, scrollable frames. */
+:root{
+  --bg:#f4f6f9; --surface:#ffffff; --sunk:#eaeef3; --ink:#0f1e30; --ink2:#475a70; --ink3:#71829a;
+  --line:#d6dde6; --line2:#b4c0ce; --navy:#0a223d; --navy-hover:#17385f; --navy-active:#2a5486; --on-navy:#f2f6fa; --on-navy2:#9fb4cc;
+  --you:#b0237a; --you-soft:#f8e1ef; --ok:#17794a; --ok-soft:#ddf1e6; --info:#1e6aa6; --info-soft:#ddebf7;
+  --attn:#8d5a00; --attn-soft:#f9ebcf; --fail:#b3261e; --fail-soft:#f9dedc; --agent:#4f46b8; --agent-soft:#e8e6f8;
+  --build:#0d6e78; --build-soft:#d9f0f1; --on-build:#ffffff; --hg-bg:#edf4f6; --hg-grid:#d3e3e7; --hg-paper:#fbfdfd;
+  --display:"Space Grotesk",-apple-system,"Segoe UI",system-ui,sans-serif;
+  --text:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#071526; --surface:#0c1e33; --sunk:#091a2d; --ink:#e6edf5; --ink2:#a6b6c8; --ink3:#7b8da3;
+  --line:#1e3550; --line2:#3a5676; --navy:#0d2138; --navy-hover:#15304f; --navy-active:#1f4470; --on-navy:#f2f6fa; --on-navy2:#8ea6c2;
+  --you:#f26dc3; --you-soft:#3a1530; --ok:#5bcb93; --ok-soft:#0f3123; --info:#7db7ea; --info-soft:#12304d;
+  --attn:#e9b44c; --attn-soft:#362808; --fail:#ff8a80; --fail-soft:#3d1715; --agent:#a59cff; --agent-soft:#211d47;
+  --build:#58c9d3; --build-soft:#0c3237; --on-build:#04262a; --hg-bg:#081d24; --hg-grid:#12333b; --hg-paper:#0b252d; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#071526; --surface:#0c1e33; --sunk:#091a2d; --ink:#e6edf5; --ink2:#a6b6c8; --ink3:#7b8da3;
+  --line:#1e3550; --line2:#3a5676; --navy:#0d2138; --navy-hover:#15304f; --navy-active:#1f4470; --on-navy:#f2f6fa; --on-navy2:#8ea6c2;
+  --you:#f26dc3; --you-soft:#3a1530; --ok:#5bcb93; --ok-soft:#0f3123; --info:#7db7ea; --info-soft:#12304d;
+  --attn:#e9b44c; --attn-soft:#362808; --fail:#ff8a80; --fail-soft:#3d1715; --agent:#a59cff; --agent-soft:#211d47;
+  --build:#58c9d3; --build-soft:#0c3237; --on-build:#04262a; --hg-bg:#081d24; --hg-grid:#12333b; --hg-paper:#0b252d; color-scheme:dark }
+
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--text);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 80px}
+*{box-sizing:border-box}
+.wrap{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:44px}
+.prose{max-width:68ch}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:-.015em}
+h1{font-size:34px;line-height:1.1;font-weight:700}
+h2{font-size:23px;font-weight:600}
+h3{font-size:16px;font-weight:600}
+p{margin:0}
+.lede{font-size:17px;color:var(--ink2);margin-top:12px}
+.eyebrow{font:600 12px/1 var(--mono);color:var(--build);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px}
+section{display:flex;flex-direction:column;gap:16px}
+.toc{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.toc a{font-size:13px;color:var(--ink);text-decoration:none;border:1px solid var(--line2);border-radius:999px;padding:5px 12px;background:var(--surface)}
+.toc a:hover{border-color:var(--build);color:var(--build)}
+a{color:var(--info)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--build);outline-offset:2px}
+code,.mono{font-family:var(--mono);font-size:.88em}
+.note{font-size:13px;color:var(--ink3)}
+
+/* two-mode summary */
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.modebox{border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.modebox.fly{background:var(--navy);color:var(--on-navy)}
+.modebox.fly p{color:var(--on-navy2)}
+.modebox.hg{background:var(--hg-paper);border:1.5px dashed var(--build);background-image:linear-gradient(var(--hg-grid) 1px,transparent 1px),linear-gradient(90deg,var(--hg-grid) 1px,transparent 1px);background-size:16px 16px}
+.modebox.hg h3{color:var(--build)}
+.modebox p{font-size:14px}
+@media (max-width:640px){.modes{grid-template-columns:1fr}}
+
+/* tables */
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:13.5px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+th{font:600 12px var(--text);color:var(--ink3);background:var(--sunk)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600;white-space:nowrap}
+
+/* tour chips */
+.tour{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tour button{font-size:12.5px;border:1px solid var(--line2);background:var(--surface);border-radius:6px;padding:5px 10px}
+.tour button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.caption{font-size:13.5px;color:var(--ink2);background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--build);border-radius:6px;padding:10px 14px;max-width:none}
+
+/* ===== the mock app ===== */
+.frame{overflow-x:auto;border-radius:10px;border:1px solid var(--line2);box-shadow:0 10px 30px -18px rgba(10,34,61,.5)}
+.app{min-width:1000px;height:640px;display:grid;grid-template-columns:196px 1fr;grid-template-rows:auto 1fr;font-size:12.5px;line-height:1.45;background:var(--surface);color:var(--ink)}
+.app button{font-size:12.5px}
+.band{grid-column:1/-1;background:var(--build);color:var(--on-build);display:flex;align-items:center;gap:10px;padding:6px 12px;font-weight:600}
+.band .sp{flex:1}
+.band small{font-weight:400;opacity:.9}
+.band button{background:transparent;border:1px solid currentColor;border-radius:5px;padding:2px 9px;color:inherit}
+.side{display:flex;flex-direction:column;gap:2px;padding:10px 8px;min-height:0;overflow:auto}
+.app.fly .side{background:var(--navy);color:var(--on-navy)}
+.app.hg .side{background:var(--hg-paper);border-right:1.5px dashed var(--build)}
+.brand{display:flex;align-items:center;gap:8px;font-weight:650;padding:4px 8px 10px}
+.brand i{width:22px;height:12px;border-radius:6px 6px 2px 2px;background:currentColor;opacity:.85;display:inline-block}
+.nav{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;border:0;background:transparent;text-align:left;width:100%}
+.nav .n{margin-left:auto;font:11px var(--mono);opacity:.7}
+.app.fly .nav{color:var(--on-navy)} .app.fly .nav:hover{background:var(--navy-hover)} .app.fly .nav.on{background:var(--navy-active)}
+.app.hg .nav:hover{background:var(--build-soft)} .app.hg .nav.on{background:var(--build-soft);color:var(--build);font-weight:600}
+.sidehd{font-size:11px;padding:12px 8px 3px;opacity:.7}
+.side .grow{flex:1}
+.foot{display:flex;align-items:center;gap:8px;padding:6px 8px;border-top:1px solid var(--navy-hover);margin-top:6px}
+.app.hg .foot{border-top:1px dashed var(--build)}
+.foot .av{width:22px;height:22px;border-radius:50%;background:var(--on-navy);color:var(--navy);font:600 10px var(--text);display:grid;place-items:center}
+.hgswitch{display:flex;align-items:center;gap:7px;margin:0 0 2px;padding:5px 8px;border-radius:6px;border:1px dashed var(--on-navy2);background:transparent;color:var(--on-navy2);width:100%;text-align:left}
+.hgswitch:hover{color:var(--on-navy);border-color:var(--on-navy)}
+.hgswitch.pulse{animation:pulse 1.8s ease-in-out 3}
+@keyframes pulse{50%{box-shadow:0 0 0 4px rgba(88,201,211,.45)}}
+@media (prefers-reduced-motion:reduce){.hgswitch.pulse{animation:none}}
+.main{min-width:0;min-height:0;overflow:auto;display:flex;flex-direction:column}
+.app.hg .main{background:var(--hg-bg);background-image:linear-gradient(var(--hg-grid) 1px,transparent 1px),linear-gradient(90deg,var(--hg-grid) 1px,transparent 1px);background-size:16px 16px}
+.pad{padding:16px 20px;display:flex;flex-direction:column;gap:14px}
+.crumb{font:11.5px var(--mono);color:var(--ink3)}
+.crumb button{border:0;background:none;padding:0;color:var(--build);font:inherit;text-decoration:underline}
+.h{font:600 18px var(--display);letter-spacing:-.01em}
+.sub{color:var(--ink2)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.c{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.app.hg .c{background:var(--hg-paper);border:1px solid var(--line2)}
+button.c{text-align:left;align-items:stretch} button.c:hover{border-color:var(--build)}
+.ct{font-weight:600}
+.lab{font-size:11px;color:var(--ink3)}
+.path{font:11px var(--mono);color:var(--ink3);word-break:break-all}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;border-radius:4px;padding:1px 6px;background:var(--sunk);color:var(--ink2);white-space:nowrap}
+.chip.ok{background:var(--ok-soft);color:var(--ok)} .chip.attn{background:var(--attn-soft);color:var(--attn)} .chip.fail{background:var(--fail-soft);color:var(--fail)}
+.chip.info{background:var(--info-soft);color:var(--info)} .chip.build{background:var(--build-soft);color:var(--build)} .chip.lock{border:1px solid var(--line2);background:transparent}
+.chip.stand{border:1px dashed var(--attn);background:transparent;color:var(--attn)}
+.btn{border:1px solid var(--line2);background:var(--surface);border-radius:6px;padding:4px 10px}
+.btn.pri{background:var(--build);border-color:var(--build);color:var(--on-build);font-weight:600}
+.btn.navy{background:var(--navy);border-color:var(--navy);color:var(--on-navy)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.mk{width:24px;height:24px;display:inline-grid;place-items:center;font:600 10px var(--text);border-radius:5px;background:var(--info-soft);color:var(--info);flex:none}
+.mk.p{border-radius:50%;background:var(--ok-soft);color:var(--ok)} .mk.s{border:1.5px dashed var(--ok)}
+.mk.new{background:var(--agent-soft);color:var(--agent)}
+.turn{border:1px solid var(--line);border-left:3px solid var(--info);border-radius:6px;padding:8px 10px;background:var(--sunk);display:flex;flex-direction:column;gap:4px}
+.turn.p{border-left-color:var(--ok)} .turn.new{border-left-color:var(--agent)}
+.turn .who{display:flex;gap:7px;align-items:center}
+.steps{display:flex;gap:0;flex-wrap:wrap}
+.steps span{padding:4px 10px 4px 16px;background:var(--sunk);font-size:11.5px;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 50%,calc(100% - 8px) 100%,0 100%,8px 50%);margin-right:-2px}
+.steps span:first-child{clip-path:polygon(0 0,calc(100% - 8px) 0,100% 50%,calc(100% - 8px) 100%,0 100%);padding-left:10px}
+.steps span.done{background:var(--ok-soft);color:var(--ok)} .steps span.now{background:var(--build);color:var(--on-build);font-weight:600}
+.kv{display:grid;grid-template-columns:96px 1fr;gap:5px 10px}
+.kv dt{color:var(--ink3)} .kv dd{margin:0}
+dl{margin:0}
+.thumb{height:74px;border:1px solid var(--line);border-radius:5px;background:var(--surface);padding:6px;display:flex;flex-direction:column;gap:4px;overflow:hidden}
+.thumb i{display:block;height:5px;border-radius:2px;background:var(--line)}
+.thumb .r{display:flex;gap:4px} .thumb .r i{flex:1}
+.thumb i.k{background:var(--navy-active)} .thumb i.g{background:var(--ok)} .thumb i.a{background:var(--attn)} .thumb i.y{background:var(--you)}
+.thumb .col{flex:1;display:flex;flex-direction:column;gap:3px;background:var(--sunk);border-radius:3px;padding:3px}
+.thumb .col i{height:10px;background:var(--surface);border:1px solid var(--line)}
+.split{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);flex:1;min-height:0}
+.chat{border-right:1px solid var(--line2);padding:14px 16px;display:flex;flex-direction:column;gap:10px;overflow:auto;background:var(--surface)}
+.app.hg .chat{background:var(--hg-paper)}
+.msg{max-width:92%} .msg.you{align-self:flex-end;background:var(--sunk);border-radius:10px;padding:6px 10px}
+.msg b{font-weight:600}
+.composer{margin-top:auto;border:1px solid var(--line2);border-radius:8px;padding:8px 10px;color:var(--ink3);background:var(--surface)}
+.canvas{padding:14px 16px;display:flex;flex-direction:column;gap:10px;overflow:auto}
+.fld{display:flex;flex-direction:column;gap:3px}
+.inp{border:1px solid var(--line2);border-radius:5px;padding:5px 8px;background:var(--surface);min-height:28px}
+.inp.auto{border-style:dashed;color:var(--ink3);background:transparent}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:5px;overflow:hidden;align-self:flex-start}
+.seg span{padding:4px 10px;background:var(--surface)} .seg span.on{background:var(--build);color:var(--on-build)}
+.chk{display:flex;gap:7px;align-items:flex-start} .chk::before{content:"✓";color:var(--ok);font-weight:700}
+.chk.x::before{content:"✕";color:var(--fail)} .chk.w::before{content:"!";color:var(--attn)}
+.diff{font:11.5px/1.6 var(--mono)} .diff .add{color:var(--ok)} .diff .chg{color:var(--attn)}
+.script{font:11.5px/1.65 var(--mono);white-space:pre-wrap;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+.script .d{color:var(--build)} .script .s{color:var(--you)} .script .cur{background:var(--build-soft);display:block;margin:0 -10px;padding:0 10px}
+.panel{width:232px;border-left:1px solid var(--line);padding:12px;display:flex;flex-direction:column;gap:10px;overflow:auto;flex:none}
+.hl{margin-left:auto;font-size:11px;color:var(--ink3);border:0;background:none;padding:0;text-decoration:underline dotted}
+.hl:hover{color:var(--build)}
+.wr{margin-left:auto;border:0;background:none;padding:0 2px;font-size:12px;color:var(--ink3);opacity:.28;line-height:1}
+.wr:hover,.wr:focus-visible{opacity:1;color:var(--build)}
+.flyrow{display:flex;flex:1;min-height:0}
+.flychat{flex:1;min-width:0;padding:16px 22px;display:flex;flex-direction:column;gap:10px;overflow:auto}
+.trial{background:repeating-linear-gradient(135deg,var(--build-soft) 0 10px,transparent 10px 20px);border:1px dashed var(--build);border-radius:6px;padding:6px 10px;color:var(--build);font-weight:600}
+
+/* ===== decisions ===== */
+.dec{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.dec .num{font:600 12px var(--mono);color:var(--ink3)}
+.dec .know{background:var(--sunk);border-radius:8px;padding:12px 14px;font-size:14px;color:var(--ink2)}
+.dec .know b{color:var(--ink)}
+.decgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:820px){.decgrid{grid-template-columns:minmax(0,1fr)}.stage{position:static}}
+.stage,.opts{min-width:0}
+.stage{border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:12px;display:flex;flex-direction:column;gap:8px;position:sticky;top:8px}
+.stage .cap{font-size:12.5px;color:var(--ink2)}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--surface);text-align:left;display:flex;flex-direction:column;gap:4px;width:100%}
+.opt:hover{border-color:var(--line2)}
+.opt.view{border-color:var(--build)}
+.opt.sel{border-color:var(--you);background:var(--you-soft)}
+.opt .t{font-weight:600;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.opt .w{font-size:13.5px;color:var(--ink2)}
+.opt .cost{font-size:12.5px;color:var(--ink3)}
+.rec{font:600 10.5px var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--build);border:1px solid var(--build);border-radius:4px;padding:1px 5px}
+.why{font-size:13.5px;border-left:3px solid var(--build);padding:2px 0 2px 12px;color:var(--ink2)}
+.pick{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pick .btn{padding:6px 14px;font-size:13.5px}
+.pick .btn.you{background:var(--you);border-color:var(--you);color:#fff;font-weight:600}
+:root[data-theme="dark"] .pick .btn.you{color:#2a0a1f}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .pick .btn.you{color:#2a0a1f}}
+textarea{font:inherit;width:100%;min-height:64px;border:1px solid var(--line2);border-radius:6px;padding:8px 10px;background:var(--surface);color:var(--ink)}
+.saved{font-size:13px;color:var(--ok)}
+.progress{position:sticky;bottom:calc(10px + env(safe-area-inset-bottom,0px));align-self:center;background:var(--navy);color:var(--on-navy);border-radius:999px;padding:7px 16px;font-size:13px;box-shadow:0 6px 20px -8px rgba(0,0,0,.5)}
+
+/* mini wireframes for decision stages */
+.mini{height:230px;border-radius:6px;overflow:hidden;border:1px solid var(--line2);display:grid;grid-template-columns:26% 1fr;grid-template-rows:auto 1fr;font-size:10.5px;background:var(--surface);color:var(--ink)}
+.mini .b{grid-column:1/-1;background:var(--build);color:var(--on-build);padding:3px 8px;font-weight:600}
+.mini .s{padding:8px 6px;display:flex;flex-direction:column;gap:5px}
+.mini .s.nv{background:var(--navy);color:var(--on-navy)} .mini .s.pp{background:var(--hg-paper);border-right:1.5px dashed var(--build)}
+.mini .s i{display:block;height:6px;border-radius:3px;background:currentColor;opacity:.35}
+.mini .s .sw{margin-top:auto;border:1px dashed currentColor;border-radius:4px;padding:2px 5px;opacity:.95}
+.mini .s .sw.hot{background:var(--build);color:var(--on-build);border-style:solid}
+.mini .m{padding:10px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.mini .m.gr{background:var(--hg-bg);background-image:linear-gradient(var(--hg-grid) 1px,transparent 1px),linear-gradient(90deg,var(--hg-grid) 1px,transparent 1px);background-size:12px 12px}
+.mini .m i{display:block;height:7px;border-radius:3px;background:var(--line)}
+.mini .m .bx{border:1px solid var(--line2);border-radius:4px;padding:5px;background:var(--surface);display:flex;flex-direction:column;gap:4px}
+.mini .m .tabs{display:flex;gap:4px} .mini .m .tabs span{padding:2px 6px;border-radius:4px;background:var(--sunk)} .mini .m .tabs span.hot{background:var(--build);color:var(--on-build)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px} .two .mini{height:200px}
+.tree{font:12px/1.7 var(--mono);white-space:pre;overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+.tree b{color:var(--build)} .tree em{color:var(--ink3);font-style:normal}
+.lane{display:flex;flex-direction:column;gap:6px}
+.lane div{display:flex;gap:6px;align-items:center}
+.lane span{border-radius:5px;padding:5px 9px;font-size:12px;background:var(--sunk);border:1px solid var(--line)}
+.lane span.first{background:var(--build);color:var(--on-build);border-color:var(--build);font-weight:600}
+.lane em{font-style:normal;color:var(--ink3);font-size:12px;width:46px;flex:none}
+.bigband{border-radius:6px;overflow:hidden;border:1px solid var(--line2)}
+.bigband .b{background:var(--build);color:var(--on-build);padding:8px 12px;font-weight:600;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.bigband .b span{margin-left:auto;border:1px solid currentColor;border-radius:5px;padding:1px 8px;font-weight:400}
+.bigband .f{background:var(--navy);color:var(--on-navy2);padding:8px 12px;display:flex;gap:8px;align-items:center}
+.bigband .f span{border:1px dashed currentColor;border-radius:5px;padding:2px 8px}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Flight Deck · design · all seven decisions locked 21 Nov 2026</div>
+  <h1>Hangar: where the experiences get built</h1>
+  <p class="lede prose">Product Aviator gets two modes. In one you fly: you do product work with the agent and everything is polished. In the other you are in the hangar: you define the people, workflows, views and scenarios that other people will fly. This page is the design, a clickable mockup, and seven choices for you.</p>
+  <nav class="toc" aria-label="Sections">
+    <a href="#idea">The idea</a><a href="#try">Clickable mockup</a><a href="#interactions">Every interaction</a><a href="#guards">What prevents breakage</a><a href="#decisions">Your 7 decisions</a><a href="#build">How it gets built</a>
+  </nav>
+</header>
+
+<section id="idea">
+  <h2>The idea in one screen</h2>
+  <div class="modes">
+    <div class="modebox fly"><h3>Flying</h3><p>The app as it is today. Navy frame, sessions, the Library, the Session panel. Nothing here hints at files or structure. A person meets Mara and Risk Review as colleagues, and a workflow as a way of working.</p></div>
+    <div class="modebox hg"><h3>Hangar</h3><p>The same app with its panels off. Drafting-paper ground, dashed edges, a band across the top that says where you are and how to get back. Here Mara is a file with a brief, and a workflow is steps, records and views you can inspect and change.</p></div>
+  </div>
+  <div class="prose" style="display:flex;flex-direction:column;gap:12px">
+    <p><b>Three ideas carry the design.</b></p>
+    <p><b>1. Everything in the Hangar is already a file.</b> The roster, the workflow folders, the view specs, the screenplays and the starters exist on disk today and already have checks (<code>pa check</code>, <code>pa who --check</code>). The Hangar is a way of seeing and changing those files. It adds no database and no new format.</p>
+    <p><b>2. Building is itself a workflow.</b> "New person", "New workflow", "New scenario" and "New skill" each run as a guided session with Aviator: a few steps, a form in the canvas, a check, a trial, a publish. They use the same step card, the same views and the same chat as any other kind of work. The builder never writes a file by hand unless they choose to.</p>
+    <p><b>3. Nothing changes for anyone until Publish.</b> All work happens on a draft copy. Publish runs the checks, shows what will change and who is affected, keeps the previous version, and only then swaps the files in. Running sessions keep what they started with, which the app already does.</p>
+  </div>
+</section>
+
+<section id="try">
+  <h2>Clickable mockup</h2>
+  <p class="prose sub">This is a mockup, not the app. The names, counts and files are the real ones from the repo today; "Fraud Ops" and the version history are invented examples. Click inside it, or jump with the buttons.</p>
+  <div class="tour" id="tour" role="group" aria-label="Jump to a screen"></div>
+  <p class="caption" id="caption"></p>
+  <div class="frame"><div id="app"></div></div>
+</section>
+
+<section id="interactions">
+  <h2>Every interaction, start to finish</h2>
+  <p class="prose sub">The same nine moves apply to every kind of thing in the Hangar: a person or agent, a workflow, a view, a scenario, a skill, a starter.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Move</th><th>What the builder does</th><th>What they see</th><th>What it runs on</th></tr></thead>
+    <tbody>
+    <tr><td>Discover</td><td>Clicks the quiet Hangar switch at the foot of the sidebar, or "Open in Hangar" on a person, a workflow card or a Library card while flying.</td><td>The frame changes at once and lands on the thing they came from.</td><td>A route (<code>/hangar/…</code>) and one new sidebar item.</td></tr>
+    <tr><td>Browse</td><td>Picks a shelf: People and agents, Workflows, Views, Scenarios, Skills, Starters, Frameworks.</td><td>Cards drawn the way the thing appears to a user (a mark, a rendered view), with a health chip and "used in" counts.</td><td>One read-only endpoint that lists the folders, like the Library's.</td></tr>
+    <tr><td>Inspect</td><td>Opens one thing.</td><td>Two halves: how it looks to a user, and what it is made of (fields, steps, records, file path). Everything it uses and everything that uses it is a link.</td><td>The files, plus <code>pa render</code> over the sample data for real view pictures.</td></tr>
+    <tr><td>Create</td><td>Starts a guided build: from something similar, from a description, or from a session they just had.</td><td>A builder session: Aviator asks one thing at a time, a form fills in beside the chat, the step card shows where they are.</td><td>New builder skills (person, workflow, scenario, skill) written like the existing <code>scenario-builder</code>.</td></tr>
+    <tr><td>Edit</td><td>Presses Edit on anything. Built-in things offer "Duplicate to change" instead.</td><td>The same guided session, opened on a draft copy at the relevant step. Wording can be edited in place.</td><td>A drafts folder. The collab editor for briefs and screenplays.</td></tr>
+    <tr><td>Check</td><td>Nothing. Checks run on every change to the draft.</td><td>A checklist in plain words, each failure with a "Fix it" that sends Aviator to repair it.</td><td><code>pa check</code> and <code>pa who --check</code>, extended to look across things.</td></tr>
+    <tr><td>Try</td><td>Plays the scripted preview, or opens a trial session.</td><td>The preview player inside the Hangar. A trial session is a real flying session with a striped "Trial" strip, using the draft.</td><td><code>pa preview</code> as today. A trial is a normal session pointed at the draft folder.</td></tr>
+    <tr><td>Publish</td><td>Reads the summary and presses Publish.</td><td>What files change, which other things are touched, who is affected (new sessions only), and the checks, all green.</td><td>A copy into place, with the previous version kept in a history folder.</td></tr>
+    <tr><td>Go back</td><td>Opens History on anything and presses Restore.</td><td>Dated versions with a one-line summary each. Restoring is itself a new version, so it can be undone too.</td><td>Dated snapshot folders. Works from a ZIP download, with no git needed.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="guards">
+  <h2>What prevents breaking changes</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>Constraint</th><th>How it shows up</th><th>The breakage it prevents</th></tr></thead>
+    <tbody>
+    <tr><td>Drafts only</td><td>Edit always opens a copy. The live thing is read-only in the Hangar.</td><td>A half-finished change reaching someone who is flying.</td></tr>
+    <tr><td>Pick, do not type</td><td>People, views, record types and layouts are chosen from what exists. Ids are generated from names and never typed.</td><td>A workflow that names a person or view that does not exist.</td></tr>
+    <tr><td>Fixed shapes</td><td>A person needs a name, a kind, a way of answering and a "call for" line. A real person is always marked stand-in. A workflow has three to six steps and uses the standard layouts.</td><td>Things the app cannot draw, and agents passed off as real people.</td></tr>
+    <tr><td>Used-by guard</td><td>Renaming, removing or reshaping something lists everything that depends on it. The change is blocked until each is updated or the builder picks a replacement.</td><td>Removing Risk Review while four workflows call it. Renaming a button a workflow's instructions rely on.</td></tr>
+    <tr><td>Built-ins are locked</td><td>The kit and the reference workflows show a lock and "Duplicate to change".</td><td>Losing the known-good examples everyone copies from.</td></tr>
+    <tr><td>Publish gate</td><td>Publish is disabled while a check fails. A scenario must also play through start to finish on its own.</td><td>A demo that stops halfway in front of an audience.</td></tr>
+    <tr><td>Always a way back</td><td>Every publish keeps the previous version. Restore is one click.</td><td>A bad change with no undo.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="decisions">
+  <h2>Your seven decisions</h2>
+  <p class="prose sub">Click an option to see it drawn, then press "Choose this". Your picks are saved to this page so I can read them. Each has a "Something else" box. I am carrying on with the recommended options in the meantime, and nothing here is expensive to change later.</p>
+  <div id="decs" style="display:flex;flex-direction:column;gap:18px"></div>
+  <div class="progress" id="progress" aria-live="polite">0 of 7 decided</div>
+</section>
+
+<section id="build">
+  <h2>How it gets built, pragmatically</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>Piece</th><th>Reuses</th><th>New</th></tr></thead>
+    <tbody>
+    <tr><td>Hangar frame</td><td>The app shell, sidebar and design tokens.</td><td>A <code>/hangar</code> route, a body class that swaps the frame, a second nav list, the band. One extra token family for the Hangar color.</td></tr>
+    <tr><td>Shelves and inspect pages</td><td>The Library endpoint pattern. Participant marks. The HTML viewer for rendered views.</td><td>A read-only endpoint that lists roster, workflows, views, scenarios, skills, starters and how they refer to each other.</td></tr>
+    <tr><td>Guided builds</td><td>Sessions, the step card, view-kit forms, the <code>participants</code> and <code>scenario-builder</code> skills.</td><td>Four builder skills, each a workflow package of its own. A "Hangar" project so builder sessions stay out of the flying sidebar.</td></tr>
+    <tr><td>Drafts, publish, history</td><td>Files on disk.</td><td><code>pa draft</code>, <code>pa publish</code>, <code>pa history</code>: copy to a drafts folder, check, snapshot, copy into place, restore.</td></tr>
+    <tr><td>Cross-checks</td><td><code>pa check</code>, <code>pa who --check</code>.</td><td><code>pa uses &lt;thing&gt;</code>: what depends on this, used by the used-by guard and the inspect pages.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="prose sub">Two things I decided without asking, because they are cheap to change: versions are dated snapshot folders (they work from a ZIP download, where git may not exist), and a person's file gains an optional <code>skills</code> line so the Hangar can show and limit which skills a person's session gets. Sharing a workflow or scenario with another PM as a single file is left for later.</p>
+</section>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+/* ---------- data (real names from the repo) ---------- */
+const PEOPLE={
+ "risk-review":{n:"Risk Review",i:"RR",k:"agent",r:"Risk and compliance",b:"Session",cf:"regulatory, conduct, privacy and fraud risk in a plan or document",u:4},
+ "mara-okafor":{n:"Mara Okafor",i:"MO",k:"person",r:"Design lead, Cards",b:"Session",cf:"the customer's experience, wording, flows, accessibility, research evidence",u:5},
+ "cards-platform":{n:"Cards Platform",i:"CP",k:"agent",r:"Authorization platform",b:"Script",cf:"what the card authorization platform can do today, and what a change would cost",u:3},
+ "support-insights":{n:"Support Insights",i:"SI",k:"agent",r:"Support ticket analysis",b:"Script",cf:"what customers contact support about, how often, and how that has changed",u:2}};
+const FLOWS=[
+ ["document-review","Review a document with others",5,4,2],["decision-review","Decision review",4,3,3],["problem-discovery","Problem discovery",5,4,2],
+ ["intent-shaping","Intent shaping",5,4,4],["delivery-status","Delivery status update",5,3,3],["prd-to-requirements","PRD to requirements",4,3,0],["requirements-to-dependencies","Requirements to dependencies",4,3,0]];
+const mk=(id,extra="")=>{const p=PEOPLE[id];return `<span class="mk ${p.k=="person"?"p s":""} ${extra}">${p.i}</span>`};
+const th={
+ table:`<div class="thumb"><div class="r"><i class="k" style="flex:2"></i><i></i><i></i></div><div class="r"><i style="flex:2"></i><i class="g"></i><i></i></div><div class="r"><i style="flex:2"></i><i class="a"></i><i></i></div><div class="r"><i style="flex:2"></i><i class="g"></i><i class="y"></i></div><div class="r"><i style="flex:2"></i><i></i><i></i></div></div>`,
+ board:`<div class="thumb" style="flex-direction:row"><div class="col"><i></i><i></i></div><div class="col"><i></i><i></i><i></i></div><div class="col"><i></i></div><div class="col"><i></i><i></i></div></div>`,
+ card:`<div class="thumb"><i class="k" style="width:55%"></i><i></i><i style="width:80%"></i><div class="r" style="margin-top:auto"><i class="k" style="height:10px"></i><i style="height:10px"></i><i style="height:10px"></i></div></div>`,
+ form:`<div class="thumb"><i style="width:30%"></i><i style="height:9px;border:1px solid var(--line2);background:none"></i><i style="width:40%"></i><i style="height:9px;border:1px solid var(--line2);background:none"></i><i class="k" style="width:28%;height:9px;margin-top:auto"></i></div>`,
+ summary:`<div class="thumb"><div class="r"><i class="g" style="height:16px"></i><i class="a" style="height:16px"></i><i style="height:16px"></i></div><i></i><i style="width:70%"></i><i style="width:85%"></i></div>`,
+ doc:`<div class="thumb"><i class="k" style="width:45%;height:7px"></i><i></i><i></i><i style="width:60%"></i><i></i><i style="width:75%"></i></div>`};
+
+/* ---------- screens ---------- */
+let S={mode:"fly",scr:"session",step:1,pulse:true,published:false};
+const go=(scr,o={})=>{S={...S,scr,...o,mode:(scr=="session"||scr=="library"||scr=="trial")?"fly":"hg",pulse:false};draw()};
+window.go=go;
+const CAP={
+ session:"Flying. This is the app as a PM uses it. The only sign of the Hangar is the dashed switch at the foot of the sidebar, and a barely visible wrench on each person's turn and on the workflow card, which shows on hover (your decision 2). Click either.",
+ home:"The frame has changed: band on top, paper sidebar, drafting grid, different shelves. The overview answers what exists, whether it is healthy and what is half built.",
+ people:"Each person or agent is drawn with the same mark they have in a chat, with how they answer and where they are used.",
+ person:"Left: how Mara appears to someone flying. Right: what she is made of. Edit opens a draft; the live Mara is never changed directly.",
+ flows:"Workflows are the kinds of work. The lock means built-in: duplicate to change.",
+ flow:"A workflow shown as its steps, its views drawn from sample data, its cast, how people start it and its checks.",
+ views:"Every view a user can meet, drawn. Grouped by layout so a builder reuses a layout before inventing one.",
+ scenario:"A scenario is a scripted run of a workflow with a cast and invented data. The screenplay is plain text on the left; the player on the right plays it.",
+ build:"A guided build. Aviator asks one thing at a time on the left; the form on the right is the person's file, filling in. Use the step buttons or Continue.",
+ guard:"Two safety screens. Left: History, with Restore. Right: what happens when a builder tries to remove something that is in use.",
+ trial:"A trial is a real flying session that uses the draft. The striped strip is the only difference, so the builder sees exactly what a user would."};
+const TOUR=[["session","Flying"],["home","Hangar overview"],["people","People and agents"],["person","One person"],["flows","Workflows"],["flow","One workflow"],["views","Views"],["scenario","A scenario"],["build","Build a person"],["trial","Trial session"],["guard","History and guards"]];
+
+function flySide(){return `<div class="side"><div class="brand"><i></i>Product Aviator</div>
+ <button class="nav" onclick="go('session')">＋ New session</button><button class="nav">▤ Library</button><button class="nav">◷ Automations</button><button class="nav">✉ Inbox</button>
+ <div class="sidehd">Projects</div><button class="nav">Workspace</button><button class="nav on" style="padding-left:20px" onclick="go('session')">${S.scr=="trial"?"Trial: chargeback question":"Allowances PRD review"}</button>
+ <div class="grow"></div>
+ <button class="hgswitch ${S.pulse?"pulse":""}" onclick="go('home')" title="Open the Hangar">⌂ Hangar</button>
+ <div class="foot"><span class="av">LU</span><span>Local user</span><span style="margin-left:auto">⚙</span></div></div>`}
+function hgSide(){const it=(s,l,n,alt=[])=>`<button class="nav ${[s,...alt].includes(S.scr)?"on":""}" onclick="go('${s}')">${l}<span class="n">${n}</span></button>`;
+ return `<div class="side"><div class="brand" style="color:var(--build)"><i></i>Hangar</div>
+ ${it("home","Overview","")}${it("people","People and agents",4,["person"])}${it("flows","Workflows",7,["flow"])}${it("views","Views",30)}${it("scenario","Scenarios",7)}
+ <button class="nav">Skills<span class="n">4</span></button><button class="nav">Starters<span class="n">13</span></button><button class="nav">Frameworks<span class="n">1</span></button>
+ <div class="sidehd">Drafts</div><button class="nav ${S.scr=="build"?"on":""}" onclick="go('build')"><span class="mk new" style="width:18px;height:18px;font-size:8px">FO</span>Fraud Ops<span class="n">${S.published?"live":S.step+"/5"}</span></button>
+ <div class="grow"></div><button class="nav" onclick="go('guard')">↺ History</button>
+ <div class="foot"><button class="btn navy" style="width:100%" onclick="go('session')">← Back to flying</button></div></div>`}
+const band=()=>`<div class="band">⌂ Hangar <small>You are changing what other people will use. Nothing is live until you publish.</small><span class="sp"></span><button onclick="go('session')">Back to flying</button></div>`;
+
+const SCR={
+session:()=>`<div class="flyrow"><div class="flychat">
+  <div style="font-weight:600">Allowances PRD review</div>
+  <div class="msg you">I have finished the Allowances PRD. Help me review it.</div>
+  <div class="msg">I read it end to end. I am bringing in Risk Review: section 7 makes promises about consent.</div>
+  <div class="turn"><div class="who">${mk("risk-review")}<b>Risk Review</b><span class="chip">Agent</span><span class="lab">Risk and compliance</span><button class="wr" title="Open in Hangar" aria-label="Open in Hangar" onclick="go('person',{pid:'risk-review'})">🔧</button></div>
+   <div>Sections 5 and 7 are close, but as written they do not clear sign-off. The blocker is 7.4: it says an allowance for an under-18 card user "needs recorded consent" but not whose.</div></div>
+  <div class="turn p"><div class="who">${mk("mara-okafor")}<b>Mara Okafor</b><span class="chip stand">Stand-in</span><span class="lab">Design lead, Cards</span><button class="wr" title="Open in Hangar" aria-label="Open in Hangar" onclick="go('person',{pid:'mara-okafor'})">🔧</button></div>
+   <div>Section 5 is the right shape, but 5.2 does not yet meet the moment I care most about: the teenager at the till.</div></div>
+  <div class="composer">Reply, or @mention someone…</div></div>
+ <div class="panel"><div class="ct">Session</div>
+  <div class="c"><div class="row"><span class="lab">Workflow</span><button class="wr" title="Open in Hangar" aria-label="Open in Hangar" onclick="go('flow')">🔧</button></div><div class="ct">Review a document with others</div>
+   <div class="chk">First read</div><div class="chk">Call in others</div><div style="color:var(--build);font-weight:600">● Their reviews</div><div class="lab">○ Your decisions</div><div class="lab">○ Wrap up</div><div class="lab">2 of 8 findings decided</div></div>
+  <div class="c"><span class="lab">People and agents</span><div class="row">${mk("risk-review")}Risk Review</div><div class="row">${mk("mara-okafor")}Mara Okafor</div></div>
+  <div class="c"><span class="lab">Context</span><div>allowances-prd.md</div><div>platform-map.md</div></div></div></div>`,
+
+home:()=>`<div class="pad"><div class="h">What people can fly today</div>
+ <div class="grid4">
+  <button class="c" onclick="go('people')"><span class="lab">People and agents</span><span class="h">4</span><span class="sub">2 answer live, 2 from a script. 1 stand-in.</span><span class="chip ok">All pass checks</span></button>
+  <button class="c" onclick="go('flows')"><span class="lab">Workflows</span><span class="h">7</span><span class="sub">Kinds of work, each with steps, records and views.</span><span class="chip ok">All pass checks</span></button>
+  <button class="c" onclick="go('views')"><span class="lab">Views</span><span class="h">30</span><span class="sub">24 inside workflows, 6 standalone templates.</span><span class="chip ok">All draw</span></button>
+  <button class="c" onclick="go('scenario')"><span class="lab">Scenarios</span><span class="h">7</span><span class="sub">Scripted runs with invented data.</span><span class="chip ok">All play through</span></button></div>
+ <div class="grid2">
+  <div class="c"><div class="ct">Build something</div><div class="sub">Each is a guided session with Aviator. You can stop and come back.</div>
+   <div class="row"><button class="btn pri" onclick="go('build',{step:1})">New person or agent</button><button class="btn">New workflow</button><button class="btn">New scenario</button><button class="btn">New skill</button></div>
+   <div class="lab">Or start from a session you just had: "Turn this session into a workflow".</div></div>
+  <div class="c"><div class="ct">In progress</div>
+   <button class="c" onclick="go('build')"><div class="row"><span class="mk new">FO</span><b>Fraud Ops</b><span class="chip build">Draft</span><span class="lab" style="margin-left:auto">step ${S.step} of 5</span></div><span class="sub">A new agent for chargeback rules. Not visible to anyone flying.</span></button></div></div>
+ <div class="c"><div class="ct">How the pieces fit</div>
+  <div class="row" style="gap:6px"><span class="chip">Starter</span>starts a<span class="chip build">Workflow</span>which draws<span class="chip">Views</span>over records, and may call<span class="chip">People and agents</span>. A<span class="chip">Scenario</span>is a scripted run of one or more workflows with a cast. All of it is taught to the agent by<span class="chip">Skills</span>.</div></div></div>`,
+
+people:()=>`<div class="pad"><div class="row"><div class="h">People and agents</div><span style="flex:1"></span><button class="btn pri" onclick="go('build',{step:1})">New person or agent</button></div>
+ <div class="sub">Who Aviator can bring into a conversation. Square marks are agents, round are people, a dashed edge is an agent standing in for a real person.</div>
+ <div class="grid2">${Object.entries(PEOPLE).map(([id,p])=>`<button class="c" onclick="go('person',{pid:'${id}'})"><div class="row">${mk(id)}<b>${p.n}</b>${p.k=="person"?'<span class="chip stand">Stand-in</span>':'<span class="chip">Agent</span>'}<span class="chip ok" style="margin-left:auto">Healthy</span></div>
+   <span class="sub">${p.r}</span><span class="lab">Call for: ${p.cf}</span><div class="row"><span class="chip info">Answers: ${p.b=="Session"?"live, in character":"from a script"}</span><span class="chip">Used in ${p.u} workflows</span></div></button>`).join("")}
+  <button class="c" onclick="go('build')" style="border-style:dashed"><div class="row"><span class="mk new">FO</span><b>Fraud Ops</b><span class="chip build">Draft</span></div><span class="sub">Fraud operations</span><span class="lab">Not published. Only you can see this.</span></button></div></div>`,
+
+person:()=>{const id=S.pid||"mara-okafor",p=PEOPLE[id],per=p.k=="person";return `<div class="pad"><div class="crumb"><button onclick="go('people')">People and agents</button> / ${p.n}</div>
+ <div class="row">${mk(id)}<div class="h">${p.n}</div>${per?'<span class="chip stand">Stand-in</span>':'<span class="chip">Agent</span>'}<span class="chip ok">6 of 6 checks pass</span><span style="flex:1"></span>
+  <button class="btn pri" onclick="go('build',{step:2})">Edit</button><button class="btn">Duplicate</button><button class="btn" onclick="go('trial')">Ask a test question</button><button class="btn" onclick="go('guard')">History</button></div>
+ <div class="grid2"><div style="display:flex;flex-direction:column;gap:10px">
+  <div class="c"><span class="lab">How ${per?"she":"it"} appears when flying</span>
+   <div class="turn ${per?"p":""}"><div class="who">${mk(id)}<b>${p.n}</b>${per?'<span class="chip stand">Stand-in</span>':'<span class="chip">Agent</span>'}<span class="lab">${p.r}</span></div><div>${per?"Section 5 is the right shape, but 5.2 does not yet meet the moment I care most about. In the spring interviews the kids kept saying the same thing: they didn't mind the limit, they minded the embarrassment.":"Four findings, one High. Nothing blocks sign-off if F-01 becomes a launch gate."}</div></div>
+   <div class="row"><span class="lab">In the Session panel:</span>${mk(id)}<span>${p.n}</span><span class="lab">${p.r}</span></div></div>
+  <div class="c"><span class="lab">Used in</span>${FLOWS.filter(f=>f[4]).slice(0,p.u).map(f=>`<button class="hl" style="margin:0;text-align:left;color:var(--build)" onclick="go('flow')">${f[1]}</button>`).join("")}
+   <span class="lab">Removing or renaming ${p.n} would touch all ${p.u}. The Hangar will ask what to do with each.</span></div></div>
+  <div class="c"><span class="lab">What ${per?"she":"it"} is made of</span>
+   <dl class="kv"><dt>Name</dt><dd>${p.n}</dd><dt>Kind</dt><dd>${per?"Person":"Agent"}</dd>${per?'<dt>Stand-in</dt><dd>Yes <span class="chip lock">Required for a person</span></dd>':""}<dt>Role</dt><dd>${p.r}</dd><dt>Answers</dt><dd>${p.b=="Session"?"Live, from the brief below, in a session you can open":"Fixed answers written in the file"}</dd><dt>Call for</dt><dd>${p.cf}</dd><dt>Skills</dt><dd>Every bundled skill <span class="lab">(can be narrowed)</span></dd></dl>
+   <span class="lab">${p.b=="Session"?"Brief":"Script"}</span>
+   <div class="script">${per?"You are standing in for Mara Okafor, the design lead the product manager works with on Cards. The real Mara is not here: you answer the way she would, and you never claim to have checked with her.\n\nWhat Mara cares about:\n- The moment of a decline.\n- Plain words.\n- Evidence. Fewer notifications.":id=="risk-review"?"You are Risk Review, the bank's risk and compliance review agent. You give an independent second-line view.\n\n- Read the whole document before saying anything.\n- Raise each concern as one finding.\n- Never soften a High.":"### Can it block a purchase\nYes, at approval time, within limits. …\n\n### Anything else\nI have no answer for that. Ask the team directly."}</div>
+   <span class="path">workspace/participants/${id}.md</span></div></div></div>`},
+
+flows:()=>`<div class="pad"><div class="row"><div class="h">Workflows</div><span style="flex:1"></span><button class="btn pri">New workflow</button></div>
+ <div class="sub">Each kind of work a person can do with Aviator.</div>
+ <div class="grid2">${FLOWS.map(f=>`<button class="c" onclick="go('flow')"><div class="row"><b>${f[1]}</b><span class="chip lock">🔒 Built-in</span><span class="chip ok" style="margin-left:auto">Passes</span></div>
+  <div class="row"><span class="chip">${f[2]} steps</span><span class="chip">${f[3]} views</span><span class="chip">${f[4]?f[4]+" people can be called":"No one else called"}</span><span class="chip">1 scenario</span></div><span class="path">skills/${f[0]}/</span></button>`).join("")}</div></div>`,
+
+flow:()=>`<div class="pad"><div class="crumb"><button onclick="go('flows')">Workflows</button> / Review a document with others</div>
+ <div class="row"><div class="h">Review a document with others</div><span class="chip lock">🔒 Built-in</span><span class="chip ok">All 9 checks pass</span><span style="flex:1"></span><button class="btn pri">Duplicate to change</button><button class="btn" onclick="go('scenario')">Play its scenario</button><button class="btn" onclick="go('trial')">Try it live</button></div>
+ <div class="sub">Review a document, then call in other agents and people for second opinions. Everyone's findings land in one list, each with who raised it.</div>
+ <div class="c"><span class="lab">Steps, as the Session panel shows them</span><div class="steps"><span>First read</span><span>Call in others</span><span>Their reviews</span><span>Your decisions</span><span>Wrap up</span></div><span class="lab">Progress counts findings that are reviewed or returned.</span></div>
+ <div class="c"><div class="row"><span class="lab">Views, drawn from the scenario's sample data</span><button class="hl" onclick="go('views')">All views</button></div>
+  <div class="grid4"><div><div>${th.table}</div><b>Findings</b><div class="lab">Table · canvas</div></div><div><div>${th.form}</div><b>Who to call in</b><div class="lab">Form · chat</div></div><div><div>${th.card}</div><b>A question for you</b><div class="lab">Card · chat</div></div><div><div>${th.summary}</div><b>Summary</b><div class="lab">Summary · chat</div></div></div></div>
+ <div class="grid3">
+  <div class="c"><span class="lab">Who can be called</span><div class="row">${mk("risk-review")}<button class="hl" style="margin:0;color:var(--build)" onclick="go('person',{pid:'risk-review'})">Risk Review</button></div><div class="row">${mk("mara-okafor")}<button class="hl" style="margin:0;color:var(--build)" onclick="go('person',{pid:'mara-okafor'})">Mara Okafor</button></div></div>
+  <div class="c"><span class="lab">How people start it</span><div>Starter: "Review a document with others"</div><div>Button on any markdown file: "Review with others"</div></div>
+  <div class="c"><span class="lab">Records it keeps</span><div><b>finding</b>: what, why, severity, who raised it, status</div><div class="lab">Buttons: 6. Every one is covered by the instructions.</div></div></div></div>`,
+
+views:()=>{const g=(t,k,items)=>`<div class="c"><span class="lab">${t}</span><div class="grid4">${items.map(x=>`<div><div>${th[k]}</div><b>${x[0]}</b><div class="lab">${x[1]}</div></div>`).join("")}</div></div>`;
+ return `<div class="pad"><div class="h">Views</div><div class="sub">Everything a user can be shown, drawn from sample data. In the app these are the real rendered views, not sketches.</div>
+ ${g("Tables and lists","table",[["Requirements catalog","PRD to requirements"],["Findings","Review a document"],["Decision queue","Decision review"],["Plan","Delivery status"]])}
+ ${g("Boards","board",[["Dependency board","Requirements to dependencies"],["Problems","Problem discovery"]])}
+ ${g("Cards and forms for the chat","card",[["One decision","Decision review"],["One milestone","Delivery status"],["Shallowest area","Intent shaping"],["Review card","Requirements to dependencies"]])}
+ ${g("Standalone templates","doc",[["PRD one-pager","Template"],["Decision matrix","Template"],["Roadmap now, next, later","Template"],["Interview synthesis","Template"]])}</div>`},
+
+scenario:()=>`<div class="pad"><div class="crumb">Scenarios / Allowances PRD review</div>
+ <div class="row"><div class="h">Allowances PRD review</div><span class="chip ok">Plays through · 34 steps</span><span class="chip">Runs: Review a document with others</span><span style="flex:1"></span><button class="btn pri">Duplicate to change</button><button class="btn">Export as one file</button></div>
+ <div class="grid2"><div class="c"><span class="lab">Screenplay · plain text anyone can edit</span>
+  <div class="script"><span class="s">**You:**</span> I have finished the Allowances PRD. Help me review it.
+
+<span class="s">**Aviator:**</span> I read it end to end. I left two comments.
+<span class="d">[show findings as "Review findings"]</span>
+<span class="d">[widget who]</span>
+<span class="d">[wait for submit]</span>
+<span class="cur"><span class="d">[call Risk Review: Review the PRD for regulatory risk.]</span></span>
+<span class="s">**Risk Review:**</span> Reading sections 4 and 7…
+<span class="d">[reveal F-01, F-02]</span></div>
+  <div class="chk">Every person named is on the roster and allowed in this workflow</div><div class="chk">Every view shown exists</div><div class="chk">Every record revealed is in the sample data</div></div>
+ <div class="c"><span class="lab">Player</span>
+  <div style="border:1px solid var(--line);border-radius:6px;display:grid;grid-template-columns:1fr 1fr;min-height:190px;background:var(--surface)">
+   <div style="padding:8px;display:flex;flex-direction:column;gap:6px;border-right:1px solid var(--line)"><div class="msg you">Help me review it.</div><div class="msg">I left two comments.</div><div class="turn"><div class="who">${mk("risk-review")}<b>Risk Review</b></div><div>Reading sections 4 and 7…</div></div></div>
+   <div style="padding:8px"><div class="lab">Review findings</div>${th.table}</div></div>
+  <div class="row"><button class="btn">◀</button><button class="btn pri">Next ▶</button><span class="lab">Step 9 of 34</span></div>
+  <span class="lab">Cast</span><div class="row">${mk("risk-review")}Risk Review ${mk("mara-okafor")}Mara Okafor</div>
+  <span class="lab">Sample data: 8 findings, 1 document. All invented.</span></div></div></div>`,
+
+build:()=>{const st=S.step,names=["Who they are","How they answer","Where they can be called","Try them","Publish"];
+ const steps=`<div class="steps">${names.map((n,i)=>`<span class="${i+1<st?"done":i+1==st?"now":""}" style="cursor:pointer" onclick="go('build',{step:${i+1}})">${i+1}. ${n}</span>`).join("")}</div>`;
+ const chat=[
+  `<div class="msg">Who do you want to add? Tell me in a sentence, or pick someone similar to start from.</div><div class="msg you">Someone from fraud operations who knows the chargeback rules.</div><div class="msg">Got it. I filled in the basics on the right. Is this an agent, or a real colleague I would stand in for?</div><div class="msg you">An agent.</div>`,
+  `<div class="msg">Should Fraud Ops answer live from a brief, or from fixed answers so a demo goes the same way every time?</div><div class="msg you">Live.</div><div class="msg">I drafted a brief from Risk Review's, changed for fraud operations. Edit anything on the right, or tell me what to change.</div>`,
+  `<div class="msg">Fraud Ops can be called from any session. Do you also want it suggested in particular workflows?</div><div class="msg you">Document review and decision review.</div><div class="msg">Ticked. Both workflows will list Fraud Ops when you publish. Nothing has changed yet.</div>`,
+  `<div class="msg">Ask Fraud Ops something, the way a PM would. This runs for real against the draft.</div><div class="msg you">@fraud-ops would a declined allowance purchase count as a dispute?</div><div class="msg">That reads right to me. Open a full trial session if you want to see it inside a workflow.</div>`,
+  S.published?`<div class="msg">Published. Fraud Ops is on the roster for every session started from now on. The two sessions already running keep the roster they started with.</div>`:`<div class="msg">Everything passes. Here is exactly what publishing will change. Press Publish when you are happy, and you can undo it from History.</div>`][st-1];
+ const canvas=[
+  `<div class="row"><span class="mk new">FO</span><b>Fraud Ops</b><span class="chip build">Draft</span></div>
+   <div class="grid2"><div class="fld"><span class="lab">Name</span><div class="inp">Fraud Ops</div></div><div class="fld"><span class="lab">Role, shown beside the name</span><div class="inp">Fraud operations</div></div></div>
+   <div class="fld"><span class="lab">Kind</span><div class="seg"><span class="on">Agent</span><span>Person</span></div><span class="lab">Choosing Person turns on the stand-in label. It cannot be turned off.</span></div>
+   <div class="grid2"><div class="fld"><span class="lab">Initials</span><div class="inp">FO</div></div><div class="fld"><span class="lab">Id, made from the name</span><div class="inp auto">fraud-ops · not taken</div></div></div>
+   <div class="fld"><span class="lab">Call for · when should Aviator think of them?</span><div class="inp">chargebacks, disputes, fraud rules and what operations can handle</div></div>
+   <div class="row"><span class="lab">Start from:</span><button class="btn">Risk Review</button><button class="btn">Cards Platform</button><button class="btn">Blank</button></div>`,
+  `<div class="fld"><span class="lab">Answers</span><div class="seg"><span class="on">Live, from a brief</span><span>From a script</span></div></div>
+   <div class="fld"><span class="lab">Brief</span><div class="script">You are Fraud Ops, the fraud operations team's agent. You are not the product manager's assistant: you say what operations can and cannot handle.
+
+How you work:
+- Answer from the chargeback and dispute rules.
+- Say what volume a change would add to the queue.
+- Ask the product manager one question at a time.
+
+You are practical and brief.</div></div>
+   <div class="chk">Says who they are</div><div class="chk">Says how they talk</div><div class="chk w">Does not say what to do when it does not know. <button class="hl" style="margin:0;color:var(--build)">Fix it</button></div>`,
+  `<span class="lab">Suggest Fraud Ops in these workflows</span>
+   ${FLOWS.map((f,i)=>`<label class="row" style="gap:7px"><span class="inp" style="min-height:0;width:16px;height:16px;padding:0;display:grid;place-items:center;${i<2?"background:var(--build);color:var(--on-build);border-color:var(--build)":""}">${i<2?"✓":""}</span>${f[1]}<span class="lab">${f[4]?"calls "+f[4]+" today":"calls no one"}</span></label>`).join("")}
+   <span class="lab">You pick from the list. A workflow that does not exist cannot be named.</span>`,
+  `<div class="trial">Trial · uses the draft · nothing is published</div>
+   <div class="turn new"><div class="who"><span class="mk new">FO</span><b>Fraud Ops</b><span class="chip">Agent</span><span class="chip build">Draft</span><span class="lab">Fraud operations</span></div><div>No. A decline at approval is not a dispute, because no charge posted. It becomes one only if a counted-not-blocked charge is later contested. How many of those do you expect a month?</div></div>
+   <div class="row"><button class="btn" onclick="go('trial')">Open a full trial session</button><button class="btn">Ask something else</button></div>
+   <div class="chk">Answered in character</div><div class="chk">Asked one question back, as the brief says</div>`,
+  `<div class="row"><span class="mk new">FO</span><b>Fraud Ops</b>${S.published?'<span class="chip ok">Live</span>':'<span class="chip build">Ready to publish</span>'}</div>
+   <div class="c"><span class="lab">Checks</span><div class="chk">Has a name, kind, role and call-for line</div><div class="chk">Id is unique</div><div class="chk">Brief says what to do when it does not know</div><div class="chk">Both workflows still pass their own checks with Fraud Ops added</div><div class="chk">Answered a trial question</div></div>
+   <div class="c"><span class="lab">What changes</span><div class="diff"><div class="add">+ workspace/participants/fraud-ops.md</div><div class="chg">~ skills/document-review/scenario.json · adds fraud-ops</div><div class="chg">~ skills/decision-review/scenario.json · adds fraud-ops</div></div></div>
+   <div class="c"><span class="lab">Who is affected</span><div>Sessions started from now on. 2 running sessions are not changed.</div></div>
+   <div class="row">${S.published?`<button class="btn navy" onclick="go('session')">See it while flying</button><button class="btn" onclick="go('guard')">Undo from History</button>`:`<button class="btn pri" onclick="go('build',{step:5,published:true})">Publish</button><button class="btn">Keep as draft</button>`}</div>`][st-1];
+ return `<div class="pad" style="padding-bottom:8px;gap:8px"><div class="row"><div class="h">New person or agent</div><span class="chip build">Guided build</span><span style="flex:1"></span>${st<5?`<button class="btn pri" onclick="go('build',{step:${st+1}})">Continue</button>`:""}</div>${steps}</div>
+ <div class="split" style="border-top:1px solid var(--line2)"><div class="chat">${chat}<div class="composer">Reply to Aviator…</div></div><div class="canvas">${canvas}</div></div>`},
+
+trial:()=>`<div class="flyrow"><div class="flychat"><div class="trial">Trial session · using your draft of Fraud Ops · <button class="hl" style="margin:0;color:inherit" onclick="go('build',{step:4})">Back to the Hangar</button></div>
+  <div class="msg you">Review the Allowances PRD and call in whoever should look at it.</div>
+  <div class="msg">I read it. I am bringing in Fraud Ops: section 4.2 counts some charges without blocking them, which is where disputes come from.</div>
+  <div class="turn new"><div class="who"><span class="mk new">FO</span><b>Fraud Ops</b><span class="chip">Agent</span><span class="lab">Fraud operations</span></div><div>4.2 will create disputes we do not have a reason code for. A cardholder who set a limit and sees a charge past it will call it unauthorized. I need to know the monthly volume before I can say whether the queue can take it.</div></div>
+  <div class="composer">Reply, or @mention someone…</div></div>
+ <div class="panel"><div class="ct">Session</div><div class="c"><span class="lab">Workflow</span><div class="ct">Review a document with others</div><div class="chk">First read</div><div style="color:var(--build);font-weight:600">● Call in others</div></div>
+  <div class="c"><span class="lab">People and agents</span><div class="row">${mk("risk-review")}Risk Review</div><div class="row">${mk("mara-okafor")}Mara Okafor</div><div class="row"><span class="mk new">FO</span>Fraud Ops <span class="chip build">Draft</span></div></div></div></div>`,
+
+guard:()=>`<div class="pad"><div class="h">History and guards</div>
+ <div class="grid2"><div class="c"><div class="ct">History · Mara Okafor</div><span class="lab">Every publish keeps the one before it.</span>
+   ${[["Today 09:12","Added accessibility to what she is called for","Current"],["Today 08:40","Rewrote how she talks",""],["20 Nov 17:05","First version",""]].map(v=>`<div class="row" style="border-top:1px solid var(--line);padding-top:7px"><div style="flex:1"><b>${v[0]}</b><div class="sub">${v[1]}</div></div>${v[2]?'<span class="chip ok">Current</span>':'<button class="btn">See changes</button><button class="btn">Restore</button>'}</div>`).join("")}
+   <span class="lab">Restoring makes a new version, so a restore can be undone too. Example entries.</span></div>
+  <div class="c" style="border-color:var(--fail)"><div class="ct">Remove Risk Review?</div><div class="chip fail" style="align-self:flex-start">Blocked · used in 4 workflows and 3 scenarios</div>
+   <div class="sub">These call Risk Review by name. Choose what each should do, or cancel.</div>
+   ${["Review a document with others","Decision review","Delivery status update","Intent shaping"].map(n=>`<div class="row" style="border-top:1px solid var(--line);padding-top:6px"><span style="flex:1">${n}</span><span class="seg"><span class="on">Replace with…</span><span>Call no one</span></span></div>`).join("")}
+   <div class="row"><button class="btn" disabled>Remove</button><button class="btn pri">Ask Aviator to update all 7</button><button class="btn">Cancel</button></div>
+   <span class="lab">The same guard appears for renaming a button a workflow relies on, or changing a record's fields.</span></div></div></div>`
+};
+
+function draw(){
+ const hg=S.mode=="hg";
+ $("#app").className="app "+(hg?"hg":"fly");
+ $("#app").innerHTML=(hg?band():"")+(hg?hgSide():flySide())+`<div class="main">${SCR[S.scr]()}</div>`;
+ $("#caption").textContent=CAP[S.scr]||"";
+ $("#tour").innerHTML=TOUR.map(([s,l])=>`<button aria-pressed="${S.scr==s}" onclick="go('${s}')">${l}</button>`).join("");
+}
+draw();
+
+/* ---------- decisions ---------- */
+const side=(nv,sw)=>`<div class="s ${nv?"nv":"pp"}"><b>${nv?"Aviator":"Hangar"}</b><i></i><i></i><i></i>${sw||""}</div>`;
+const body=(gr,inner="")=>`<div class="m ${gr?"gr":""}">${inner||'<i style="width:40%"></i><div class="bx"><i></i><i style="width:70%"></i></div><div class="bx"><i></i><i style="width:55%"></i></div>'}</div>`;
+const mini=(b,s,m)=>`<div class="mini">${b?`<div class="b">${b}</div>`:'<div style="grid-column:1/-1"></div>'}${s}${m}</div>`;
+const lane=rows=>`<div class="lane">${rows.map((r,i)=>`<div><em>${["First","Then","Then"][i]}</em><span class="${i==0?"first":""}">${r}</span></div>`).join("")}</div>`;
+const nameband=n=>`<div class="bigband"><div class="b">⌂ ${n} · You are changing what other people will use<span>Back to flying</span></div><div class="f">Foot of the sidebar while flying: <span>⌂ ${n}</span></div></div>`;
+const DECS=[
+{k:"look",q:"How should the app show that you are in the Hangar?",
+ know:"<b>What you need to know.</b> You asked that it be obvious which mode you are in. The app's colors already carry meaning: navy is the frame, magenta is your edits, amber is \"needs you\", red is failed. So the Hangar should not borrow any of those. I gave it a drafting-paper look and one color of its own (a teal), and the options differ in how much of the screen changes.",
+ opts:[
+  {id:"frame",t:"The whole frame changes",w:"The navy sidebar becomes paper with a dashed edge, the work area gets a drafting grid, a band across the top names the mode, and the sidebar lists Hangar shelves in place of sessions.",cost:"Unmistakable from across the room, in light or dark. Costs one extra set of frame styles.",v:()=>`<div class="two">${mini("",side(1),body(0))}${mini("⌂ Hangar",side(0),body(1))}</div>`,cap:"Left: flying. Right: Hangar. Every edge of the screen is different."},
+  {id:"band",t:"Only a band across the top",w:"The app looks the same. A colored band appears above it and the page content changes.",cost:"Cheapest. Easy to miss once you scroll or stop noticing the band, and screenshots of the two modes look alike.",v:()=>`<div class="two">${mini("",side(1),body(0))}${mini("⌂ Hangar",side(1),body(0))}</div>`,cap:"Left: flying. Right: Hangar. Only the band differs."},
+  {id:"window",t:"A separate window",w:"The Hangar opens in its own browser tab with its own layout. Flying stays untouched in the first tab.",cost:"Strongest separation, and you can keep both open side by side. But \"Open in Hangar\" from a session means losing your place, and it feels like a second product.",v:()=>`<div class="two">${mini("",side(1),body(0))}${mini("⌂ Hangar · separate tab",'<div class="s pp" style="display:none"></div>',`<div class="m gr" style="grid-column:1/-1"><div class="tabs"><span class="hot">People</span><span>Workflows</span><span>Views</span></div><div class="bx"><i></i><i style="width:60%"></i></div></div>`)}</div>`,cap:"Two tabs. The Hangar has its own top-tab layout and no sidebar."}],
+ rec:"frame",why:"It is the only option where a glance, or a screenshot in a slide, tells you the mode. It also lets the sidebar do a different job in each mode: sessions when flying, shelves in the Hangar."},
+{k:"entry",q:"Where is the way in?",
+ know:"<b>What you need to know.</b> You asked for a subtle entry point. Most people flying should never need the Hangar, so the way in should be findable but not inviting. There are two kinds of entry: a general door, and a link from a specific thing (\"show me how this person is built\").",
+ opts:[
+  {id:"foot",t:"A quiet switch at the foot of the sidebar, plus \"Open in Hangar\" on things",w:"A small dashed \"Hangar\" item sits above your name. People, workflow cards and Library cards also carry a faint \"Open in Hangar\" link that lands on that exact thing.",cost:"One always-visible item. The contextual links are what make it useful day to day.",v:()=>mini("",side(1,'<span class="sw hot">⌂ Hangar</span>'),body(0,'<i style="width:40%"></i><div class="bx"><i></i><span style="align-self:flex-end;text-decoration:underline dotted;color:var(--build)">Open in Hangar</span></div><div class="bx"><i></i><i style="width:55%"></i></div>')),cap:"The switch at the foot of the sidebar, and a faint link on a person's turn."},
+  {id:"library",t:"A tab inside the Library",w:"The Library gains a second tab, \"Build\". There is no sidebar item.",cost:"Nothing new in the sidebar. But the Library is where users go to start work, so builders and users share a doorway and the mode line blurs.",v:()=>mini("",side(1),body(0,'<div class="tabs"><span>Starters</span><span>Templates</span><span class="hot">Build</span></div><div class="bx"><i></i><i style="width:70%"></i></div><div class="bx"><i></i></div>')),cap:"A third tab on the Library page."},
+  {id:"hidden",t:"Hidden: a keyboard shortcut and a line in Settings",w:"Nothing visible while flying. Builders learn the shortcut.",cost:"The cleanest end-user view, best for a pure demo. Other PMs will not find it without being told.",v:()=>mini("",side(1,'<span class="sw" style="opacity:.25;border-style:dotted">nothing here</span>'),body(0,'<i style="width:40%"></i><div class="bx" style="align-self:center;width:70%;text-align:center">⌘⇧H</div>')),cap:"No visible entry. A shortcut opens the Hangar."}],
+ rec:"foot",why:"Other PMs will be building scenarios, so they need to find the door without help. The foot of the sidebar is where people already look for settings, and it stays out of the working area."},
+{k:"name",q:"What do we call the two modes?",
+ know:"<b>What you need to know.</b> The name appears in the band, on the switch and in every \"Open in…\" link, so it should be one short word that says \"this is where things are made\". The fork is called Flight Deck and the brand is Product Aviator, so there is an aviation word available. I have used \"Hangar\" and \"flying\" on this page as working names.",
+ opts:[
+  {id:"hangar",t:"Hangar, and flying",w:"\"Open in Hangar\". \"Back to flying\".",cost:"Fits the brand and is memorable. A hangar is where aircraft are built and serviced, which is the right picture. Slightly playful.",v:()=>nameband("Hangar"),cap:"The band and the sidebar switch with this name."},
+  {id:"builder",t:"Builder, and workspace",w:"\"Open in Builder\". \"Back to workspace\".",cost:"Plainest. Nobody needs it explained. Generic, and \"workspace\" already means the project folder.",v:()=>nameband("Builder"),cap:"The band and the sidebar switch with this name."},
+  {id:"studio",t:"Studio, and workspace",w:"\"Open in Studio\". \"Back to workspace\".",cost:"Familiar from other products. Suggests visual design more than defining people and workflows.",v:()=>nameband("Studio"),cap:"The band and the sidebar switch with this name."}],
+ rec:"hangar",why:"It is one word, it cannot be confused with anything already in the app, and it makes the two modes a pair people can say out loud: \"is that live, or still in the hangar?\""},
+{k:"scenario",q:"Is a scenario its own thing, or part of a workflow?",
+ know:"<b>What you need to know.</b> Today a workflow folder holds everything: the agent's instructions, the record shapes, the views, and also one screenplay with its invented data. That means one demo per workflow. You said other PMs will write scenarios, and most of them will want a new story on an existing workflow (their product, their cast), not a new kind of work. The four current demos also chain into one story, which today is only a note in the docs.",
+ opts:[
+  {id:"separate",t:"A scenario is its own small folder that points at workflows",w:"A workflow keeps its instructions, records and views. A scenario holds a cast, invented data and a screenplay, and names the workflow or workflows it runs. Many scenarios per workflow. Today's seven become each workflow's first scenario.",cost:"A PM can write a scenario without touching, or being able to break, a workflow. Needs a small change to where the preview looks for its files.",v:()=>`<div class="tree"><b>skills/document-review/</b>      <em>the kind of work</em>
+  SKILL.md  schemas/  views/
+<b>workspace/scenarios/</b>
+  allowances-prd-review/       <em>today's demo, moved</em>
+    scenario.md  data.json  script.md
+  <b>business-accounts-review/</b>    <em>a PM's new story,</em>
+    scenario.md  data.json  script.md  <em>same workflow</em>
+  held-payments-story/         <em>chains four workflows</em></div>`,cap:"Workflows and scenarios in separate places. A scenario names what it runs."},
+  {id:"together",t:"Keep them together, as today",w:"One folder per workflow with one screenplay inside. A second story means copying the whole workflow.",cost:"Nothing to build. Copies drift apart, and a PM writing a story can change the workflow by accident.",v:()=>`<div class="tree"><b>skills/document-review/</b>
+  SKILL.md  schemas/  views/
+  fixtures/  script.md         <em>the one demo</em>
+<b>skills/document-review-business/</b>   <em>a full copy,</em>
+  SKILL.md  schemas/  views/        <em>to tell a</em>
+  fixtures/  script.md              <em>second story</em></div>`,cap:"A second story is a second copy of everything."}],
+ rec:"separate",why:"It matches how the work divides between people: a few builders define kinds of work, many PMs tell stories with them. It is also the main breakage guard for scenario authors, because the thing they edit cannot break the thing others rely on."},
+{k:"author",q:"How does someone actually build or change something?",
+ know:"<b>What you need to know.</b> You said building should itself be a workflow, so that its constraints prevent breaking changes. There are three ways to put a builder in front of a file. They can be combined, so the question is which one is the main road.",
+ opts:[
+  {id:"guided",t:"Guided by Aviator, with a form beside the chat",w:"Each build is a session. Aviator asks one thing at a time and drafts the long parts (a brief, a screenplay, sample data). The form in the canvas is the file, and you can edit it directly. Checks run as you go.",cost:"The same experience as every other kind of work, and it handles the hard parts for you. Needs Claude Code running, as flying does.",v:()=>mini("⌂ Hangar · New person · step 2 of 5",side(0),`<div class="m gr" style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><div class="bx"><i></i><i style="width:60%;align-self:flex-end"></i><i></i></div><div class="bx"><i style="width:40%"></i><i style="height:12px;background:none;border:1px solid var(--line2)"></i><i style="width:40%"></i><i style="height:26px;background:none;border:1px solid var(--line2)"></i></div></div>`),cap:"Chat on the left, the form that is the file on the right."},
+  {id:"forms",t:"Forms only, no agent",w:"A wizard of plain forms. You type everything yourself.",cost:"Works with no agent and is fully predictable. Writing a good brief or a 30-step screenplay into a form is slow, which is the part people most need help with.",v:()=>mini("⌂ Hangar · New person",side(0),body(1,'<div class="bx"><i style="width:30%"></i><i style="height:12px;background:none;border:1px solid var(--line2)"></i><i style="width:30%"></i><i style="height:12px;background:none;border:1px solid var(--line2)"></i><i style="width:30%"></i><i style="height:40px;background:none;border:1px solid var(--line2)"></i></div>')),cap:"One form, no chat."},
+  {id:"files",t:"Edit the files, with checks on save",w:"The Hangar opens the markdown or JSON in the editor. Saving runs the checks and shows what failed.",cost:"Fastest for someone who knows the formats. It catches mistakes after they are made, and asks a PM to learn file formats.",v:()=>mini("⌂ Hangar · mara-okafor.md",side(0),body(1,'<div class="bx" style="font-family:var(--mono)">---<br>name: Mara Okafor<br>kind: person<br>stand_in: true<br>---</div><div class="bx" style="color:var(--fail)">✕ backing is missing</div>')),cap:"The raw file, with check results under it."}],
+ rec:"guided",why:"It is what you asked for, and it puts the constraints before the mistake. I would keep file editing available for wording (a brief, a screenplay line), since the collab editor already does that well, but anything structural goes through the guided road."},
+{k:"gate",q:"How strict is Publish?",
+ know:"<b>What you need to know.</b> Publish is the one moment a builder's work can affect someone else. Checks already exist for workflows and people. The question is whether a failing check stops you, warns you, or whether a second person must also agree. This is a demo tool used by a handful of PMs, each on their own machine.",
+ opts:[
+  {id:"block",t:"Checks must pass, and a scenario must play through",w:"Publish stays disabled until every check is green. For a scenario, the app also plays the screenplay to the end on its own. Built-in things can only be duplicated.",cost:"A published thing always works. Occasionally you will have to fix something you consider minor before you can publish.",v:()=>`<div class="mini" style="display:block;padding:10px;height:auto"><div class="chk">Has a name, kind and role</div><div class="chk x">The screenplay shows a view that does not exist: "sumary"</div><div class="chk">Plays through</div><div class="row" style="margin-top:8px"><button class="btn" disabled>Publish</button><button class="btn pri">Fix it</button></div></div>`,cap:"One failing check. Publish is disabled and there is a Fix it."},
+  {id:"warn",t:"Checks warn, you decide",w:"Failures are shown, and Publish asks \"publish anyway?\".",cost:"Never in your way. Broken things can reach the Library, which is the outcome you asked the design to prevent.",v:()=>`<div class="mini" style="display:block;padding:10px;height:auto"><div class="chk">Has a name, kind and role</div><div class="chk w">The screenplay shows a view that does not exist: "sumary"</div><div class="row" style="margin-top:8px"><button class="btn pri">Publish anyway</button><button class="btn">Fix it</button></div></div>`,cap:"The same failure, as a warning."},
+  {id:"review",t:"Checks must pass, and a second person approves",w:"As the first option, plus a named reviewer has to approve before it goes live.",cost:"Right for the production version at work. On one person's laptop there is nobody to ask, so it needs sharing between machines first.",v:()=>`<div class="mini" style="display:block;padding:10px;height:auto"><div class="chk">All checks pass</div><div class="chk w">Waiting for approval from another builder</div><div class="row" style="margin-top:8px"><button class="btn" disabled>Publish</button><button class="btn">Ask for review</button></div></div>`,cap:"Green checks, but waiting on a reviewer."}],
+ rec:"block",why:"It is the constraint that makes \"no breaking changes\" true, and History makes it cheap: a strict gate costs little when any publish can be undone. I would note the reviewer step in the feature notes as what the production team should add."},
+{k:"first",q:"What gets built first?",
+ know:"<b>What you need to know.</b> The whole design is roughly three pieces of build work: the Hangar you can look around in, the first guided build, and scenario building for other PMs. Each is useful alone. The order decides what you can try on the Mac mini soonest. An Opus thread does the building.",
+ opts:[
+  {id:"look",t:"The look-around Hangar first",w:"The mode switch, the frame, all the shelves and the inspect pages, with real rendered views and \"used in\" links. Read-only. Then the person builder with drafts, publish and history. Then scenarios.",cost:"You see the two modes and judge the feel within the first piece. No building of things until the second piece.",v:()=>lane(["Switch, frame, shelves, inspect pages","Build a person: drafts, checks, trial, publish, history","Scenario and workflow builds"]),cap:"Order of work."},
+  {id:"person",t:"One guided build, end to end, first",w:"The person builder from start to publish and restore, inside a minimal Hangar frame. Then the remaining shelves. Then scenarios.",cost:"Proves the hardest idea (drafts, gate, history) earliest. The Hangar will feel empty around it for a while.",v:()=>lane(["Build a person: drafts, checks, trial, publish, history","Remaining shelves and inspect pages","Scenario and workflow builds"]),cap:"Order of work."},
+  {id:"scenario",t:"Scenario building first",w:"The scenario builder for other PMs, since that is the stated need, with the split from decision 4. Then the shelves. Then people.",cost:"Gets other PMs writing soonest. It is the largest build and would rest on the least-proven parts.",v:()=>lane(["Scenario build, with the workflow and scenario split","Shelves and inspect pages","Build a person"]),cap:"Order of work."}],
+ rec:"look",why:"You review designs, and the first thing to judge is whether the two modes feel distinct in the real app. The look-around Hangar is also the smallest piece and everything else hangs off its pages."}
+];
+
+let ANS={},VIEW={},db=null;
+const LS="hangar-answers";
+try{ANS=JSON.parse(localStorage.getItem(LS)||"{}")}catch(e){}
+function drawDecs(){
+ $("#decs").innerHTML=DECS.map((d,i)=>{
+  const a=ANS[d.k]||{},v=VIEW[d.k]||a.choice&&a.choice!="other"&&a.choice||d.rec,o=d.opts.find(x=>x.id==v)||d.opts[0];
+  return `<article class="dec" id="d-${d.k}"><div><div class="num">Decision ${i+1} of ${DECS.length}</div><h3 style="font-size:19px;margin-top:4px">${d.q}</h3></div>
+  <div class="know">${d.know}</div>
+  <div class="decgrid"><div class="stage" aria-live="polite">${o.v()}<div class="cap"><b>${o.t}.</b> ${o.cap}</div></div>
+   <div class="opts">${d.opts.map(x=>`<button class="opt ${x.id==v?"view":""} ${a.choice==x.id?"sel":""}" onclick="look('${d.k}','${x.id}')" aria-pressed="${x.id==v}">
+     <span class="t">${x.t}${x.id==d.rec?'<span class="rec">Recommended</span>':""}${a.choice==x.id?'<span class="chip" style="background:var(--you);color:#fff">Your pick</span>':""}</span><span class="w">${x.w}</span><span class="cost">${x.cost}</span></button>`).join("")}
+    <div class="why"><b>Why I recommend "${d.opts.find(x=>x.id==d.rec).t}".</b> ${d.why}</div>
+    <div class="pick"><button class="btn you" onclick="choose('${d.k}','${o.id}')">Choose "${o.t}"</button>${a.choice?`<span class="saved">Saved${a.choice=="other"?": something else":""}</span>`:""}</div>
+    <details ${a.choice=="other"?"open":""}><summary style="cursor:pointer;font-size:13.5px">Something else, or a note</summary>
+     <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px"><textarea id="note-${d.k}" placeholder="Tell me what you have in mind">${(a.note||"").replace(/</g,"&lt;")}</textarea>
+     <div class="pick"><button class="btn" onclick="choose('${d.k}','other')">Save as my answer</button><button class="btn" onclick="choose('${d.k}',null)">Save as a note on my pick</button></div></div></details>
+   </div></div></article>`}).join("");
+ const n=DECS.filter(d=>ANS[d.k]&&ANS[d.k].choice).length;
+ $("#progress").textContent=n+" of "+DECS.length+" decided"+(db?"":" · saved in this browser only");
+}
+window.look=(k,id)=>{VIEW[k]=id;drawDecs()};
+window.choose=async(k,id)=>{
+ const d=DECS.find(x=>x.k==k),note=($("#note-"+k)||{}).value||"",prev=ANS[k]||{};
+ const choice=id===null?(prev.choice||null):id, o=d.opts.find(x=>x.id==choice);
+ const row={choice,label:choice=="other"?"Something else":o?o.t:"",note,question:d.q,at:new Date().toISOString()};
+ ANS[k]=row;if(choice&&choice!="other")VIEW[k]=choice;drawDecs();
+ try{localStorage.setItem(LS,JSON.stringify(ANS))}catch(e){}
+ if(db){try{await db.doc("answers/"+k).set(row)}catch(e){$("#progress").textContent="Could not save to the page: kept in this browser"}}
+};
+drawDecs();
+(async()=>{try{
+ const d=await (window.claude&&window.claude.use?window.claude.use("db"):null);if(!d)return;db=d;
+ const snap=await db.collection("answers").get();snap.docs.forEach(x=>{const v=x.data();if(v)ANS[x.id]=v});drawDecs();
+}catch(e){}})();
+</script>
+
+</body></html>

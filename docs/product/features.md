@@ -101,6 +101,251 @@ the route); `web/src/hangar/FlyButton.tsx` and `useFlyScenario` /
 `demoSessionLink` in `web/src/hangar/hangarApi.ts`, for the Library to reuse;
 the `[live]` direction in `skills/view-kit/references/script.md`.
 
+## Runs and the "In flight" section
+
+**Intent.** A person should be able to walk away from a workflow in the
+middle and find it again without remembering which session it was in (D-93,
+D-96). The unit they come back to is the **run**: one workflow working on one
+subject, for example intent shaping on "Teen allowances". A run outlives its
+session, so the place to find runs is the project, not a session. This is the
+first built piece of [modes and projects](modes-and-projects.md), and it was
+built so it stays true when modes move into threads (D-89): a thread will be
+one more session a run can name.
+
+**Behaviour.**
+
+- A run has a state: working, needs you, waiting (on someone else), paused,
+  finished or stopped. Paused and stopped are the person's word and nothing
+  else overrides them. Needs-you comes from the records (any with status
+  `needs-you`) or from the agent saying the run cannot move without an answer.
+- **Pause** is said in plain language or (later) pressed. The agent records it
+  at once with a where-we-left-off note of one or two sentences: what is
+  settled, what is next, any question left unanswered. A pause without a note
+  is refused, because the note is the whole point. It does not ask to confirm.
+- **Stop** is for abandoning the work. It is the only one that confirms.
+  Nothing is deleted and a stopped run can be resumed.
+- **Resume** clears the note and carries on. Doing work on a paused run also
+  resumes it; a stopped run needs an explicit resume.
+- The project page shows **In flight** above the sessions board: a card per
+  run with the workflow, subject, step, state, the note, and one button.
+  Paused runs say Resume, a run that needs the person says Answer, the rest
+  say Open. Runs that need the person are first and outlined in amber (D-50).
+  Finished and stopped runs sit behind a "Show n finished or stopped" link.
+  A project that has never had a run shows no section at all.
+- Resume opens the run's session with "Resume intent shaping on ..." waiting
+  in the message box for the person to send. If the session is gone, it opens
+  a new session in the project with the same message, which names the run's
+  dataset so the agent picks up the same run.
+- The sidebar shows an amber count beside a project when any of its runs
+  needs the person. Paused runs are not counted: the person chose to leave
+  them.
+- The Session panel's workflow card shows Paused or Stopped and the note.
+
+**Choices made while building (not product decisions; change freely).**
+
+- The app cannot read the conversation (no model API at work), so only the
+  agent can recognise "pause this". The rule for when to pause, resume and
+  stop is in the workspace's `CLAUDE.md` and the view kit skill, so every
+  workflow follows it without each skill repeating it.
+- Runs are the `progress/*.json` files `pa flow` already wrote, with a few
+  more fields. No table. Files written before runs had a state still read.
+- The Workspace and Hangar projects share one folder. A run that names a
+  session is listed in that session's project; a run that names none is
+  listed in the default project only.
+- The Resume message goes to the message box, not straight to the agent, to
+  match how every other button outside the chat behaves (D-11 keeps direct
+  sends for state changes made inside a view).
+
+**Not built yet.** The strip on the message box with a Pause button (D-90),
+the rail beside mode turns (D-91), threads (D-89). Those wait on the second
+walkthrough.
+
+**Where.** `skills/view-kit/scripts/pa.py` (`flow --pause/--resume/--stop/
+--state/--session`, `runs`); the rule in `workspace/CLAUDE.md` and
+`skills/view-kit/SKILL.md` ("Runs"); `omnigent/server/routes/slim_runs.py`
+(`GET /v1/slim/runs?project=`); `web/src/projectHome/ProjectInFlight.tsx`,
+`projectRuns.ts`, `ProjectRunsBadge.tsx`; `web/src/lib/pendingPrompt.ts`;
+tests in `tests/test_slim_runs.py` and `web/src/projectHome/projectRuns.test.ts`.
+
+## Aviator as director: threads, briefs, reports and the run card
+
+**Intent.** The main Aviator session should feel like the lead of a project,
+not like one long transcript (D-89). A workflow's working (every question,
+every record, every file read) fills a conversation's context and crowds out
+everything else. So each workflow runs in a **thread**: a session of its own
+that the director starts, briefs and keeps track of. The person stays with
+the director for the whole picture and steps into a thread to do that work.
+This is the third slice of [modes and projects](modes-and-projects.md).
+
+**Behaviour.**
+
+- **The brief.** The director hands a thread a written brief: the workflow,
+  the subject, the dataset, the files to read, the target, who may be
+  called, and what to report. It is a file (`briefs/<run>.md`), so the person
+  can read exactly what the thread was told. `pa brief` writes it and prints
+  the thread's first message, so every brief has the same shape.
+- **Reports** (D-118). A thread tells the director milestones, progress,
+  blockers and state, one line each, pointing at files. The thread's agent
+  decides when and what; the brief tells it never to send everything.
+  `pa report` records the line in the run's file (the last twenty are kept).
+  For a blocker, a need, or a finish the thread also wakes the director with
+  a message. A blocker shows the run as waiting until work moves again.
+- **The run card.** The director shows a run as a live card in its chat: the
+  workflow and subject, the step, the state, what it needs from the person,
+  its last three reports, and a button into the thread ("Answer in the
+  thread" when it needs the person). The card says "Starting" until the
+  thread has written its first step. It reads the run from disk through the
+  server, so it still fills in when an old director session is reopened.
+- **Where things stand.** The director answers from the runs' reports and
+  notes (`pa runs`), not by reading the threads' histories.
+- A thread's run is listed under In flight in its director's project.
+
+**Choices made while building (not product decisions; change freely).**
+
+- **Directing is opt-in for now.** Aviator uses the `director` skill when
+  the person asks it to direct the project, or asks for a workflow "in a
+  thread" or "in the background". Starting a workflow the plain way still
+  runs it in the session, as before. Making threads the default for every
+  workflow (D-99) should wait until this has been flown with a live agent on
+  the Mac mini: the brief, the reports and the card are tested, but no cloud
+  session can run Claude Code inside the app, so the agent's side of the
+  conversation is not.
+- Until the direct line (D-116) is built, the person answers a thread's
+  questions in the thread. The skill tells the director not to relay turns
+  back and forth, which would double every wait and refill its context.
+- Reports live in the run's file rather than only in messages, so the card,
+  the project page and the director all read the same thing and nothing is
+  lost if a message is missed.
+
+**Stepping into a thread (D-117).** Opening a thread, from its run card or
+from In flight, puts the thread where the chat was. The canvas keeps its
+room: Geoff turned down a side tab because it takes space from the canvas,
+and because stepping in is a choice to focus. The director does not vanish.
+It folds to one line above the thread's chat, and that line does three jobs:
+
+- **Leads back.** The director's name with a back arrow returns to its chat.
+- **Says where this thread is.** Its subject, step and state, so the person
+  knows what they stepped into without reading the transcript.
+- **Shows what else is in flight.** A count of the project's other runs, and
+  an amber "needs you" count only when one of them is waiting on the person.
+  Opening it lists them, each a link straight into its own thread, so the
+  person can move between threads without going back through the director.
+
+The bar appears on any session a director started, even before the thread
+has written its first step (it then shows only the way back). It never
+appears on the director itself. The list covers the whole project, not only
+this director's threads, so it matches In flight on the project page.
+
+**The direct line (D-116, with D-90 to D-92).** The person should be able to
+stay with Aviator and still do the work, without Aviator repeating every turn
+(which would double each wait and fill its context). So while a thread has
+the floor, the director's chat is a direct line to it:
+
+- **The thread's turns show in the director's chat, inside a rail** (D-91),
+  in the order things happened, next to Aviator's own turns. The rail is a
+  thin line in the "agent at work" color with the work's name where each run
+  of turns begins. It says which work a turn belongs to; who is speaking is
+  unchanged inside it. A question the thread asks is answered right there,
+  and the answer goes to the thread.
+- **A strip on the message box says who it is talking to** (D-90): the
+  workflow and subject, the step, the state, and Pause. It is always in view.
+  The name on it steps into the thread (D-117).
+- **What the person types goes straight to the thread.** Aviator is not in
+  the path. A message that starts with `@aviator`, or "Talk to Aviator" on
+  the strip, goes to Aviator instead, and its answer shows outside the rail
+  while the thread carries on (D-92). "Back to the thread" returns.
+- **Pause** asks the thread to stop and note where things are; the agent
+  writes the note, as with pausing in words (D-93).
+
+Which thread has the floor: of the runs this director started that are in
+flight and not set aside, the one that needs the person, else the one touched
+most recently. That keeps one obvious destination for a message (D-94). When
+a different thread takes the floor, the message box goes back to talking to
+it.
+
+Choices made while building, and what is still thin:
+
+- The agent-to-agent messages (the brief, the director's nudges) are kept
+  out of the rail using upstream's own marking of messages sent by another
+  session. Whether the very first brief is marked that way needs the live
+  flight to confirm.
+- D-91 also asks for markers where a mode starts, pauses and resumes. Today
+  the only marker is the work's name at the start of each run of turns.
+- An off-topic question typed without `@aviator` goes to the thread; nothing
+  yet guesses that it was meant for Aviator.
+- Not flown with a live agent, like the rest of directing.
+
+**Not built yet.** Start, pause and resume markers in the rail (D-91).
+Threads on items (D-95).
+
+**Where.** `skills/director/SKILL.md`; `pa brief`, `pa report` and
+`pa flow --director/--brief` in `skills/view-kit/scripts/pa.py`;
+`web/src/lib/runBlock.ts` (the ` ```run ` fence),
+`web/src/components/chat/RunCardBlock.tsx`, `web/src/projectHome/RunParts.tsx`;
+`web/src/lib/directLine.ts` (who has the floor, where a message goes, the
+merge by time) and `web/src/components/chat/DirectLine.tsx` (the rail and the
+strip), wired into `components/chat/Transcript.tsx` and `pages/ChatPage.tsx`
+with `omnigent-slim:` comments; `GET /v1/slim/directors/{session}`;
+`web/src/components/chat/DirectorBar.tsx` and `web/src/lib/threadContext.ts`
+(the folded director, mounted in `pages/ChatPage.tsx`, placed by
+`.pa-director-bar` in `index.css`);
+`GET /v1/slim/runs/{id}?session=` and `GET /v1/slim/threads/{session}` in
+`omnigent/server/routes/slim_runs.py`;
+the rule in `workspace/CLAUDE.md` ("Threads").
+
+## Projects with a goal, and their connections
+
+**What it is for.** A project is one in-market goal that ships and then ends,
+inside an area that lasts (D-97). So the project page should say what the
+goal is before it lists sessions. And projects are not a family tree: a
+requirement handed to another team is that team's project. The person needs
+to see that where they act on it, and to be able to ask "what does this
+project touch" (D-119).
+
+**What it does.**
+
+- **The goal line.** The project page opens with the goal in one line and a
+  chip for how the project stands (shaping, in delivery, shipped, slipped,
+  paused, stopped).
+- **The Connections card**, under the goal, groups links by what they mean:
+  Lives in (the area), Came from, Handed to others, Relies on, Others rely
+  on this. Each row names the item the link hangs from, the other project,
+  its team, and its state. No map is drawn.
+- **A chip on the linked item.** In any view of the dataset, a linked record
+  carries a chip: the other project, its team, and its state in a few words
+  ("Allowance alerts · Cards Platform · slipped 2 wks"). Amber only when the
+  other project has slipped, because that is the news the person acts on.
+- **Read both ways.** A link is written once, on the item it hangs from.
+  From the other project it reads the other way: what one project handed
+  over is where the other came from.
+- Nothing shows on a project nobody has described or linked.
+
+**How the agent keeps it.** `pa project "<name>" --goal … --area … --team …
+--state … --state-note … --data <dataset>` writes what a project is and which
+datasets belong to it. `pa link <dataset> <record id> --to "<project>"
+--type handed-to|started|relies-on` hangs a link from a record (`--remove`
+takes it off). `pa project` alone lists them. A project can be described
+without existing in the app, which is how another team's project appears.
+
+**Choices made while building (D-121).** Meaning lives in files of our own,
+not in upstream's project table. "Relies on" is shown as its own group next
+to the four D-119 named, because a link stored as relies-on has to read
+somewhere from the near end.
+
+**Not built yet.** An area page. Starting a goal project from a problem
+marked worth solving. Opening the linked item or the other project from a
+row. Aviator telling the person when a linked project slips. The intent
+graph's detail is held (D-98).
+
+**Where.** `pa project`, `pa link` and the `projects` block of a view's data
+in `skills/view-kit/scripts/pa.py`; the chip in `skills/view-kit/kit/`
+(`links()` in `pa-kit.js`, `.pa-link` in `pa-kit.css`);
+`omnigent/server/routes/slim_projects.py`
+(`GET /v1/slim/projects/connections?project=`);
+`web/src/projectHome/projectConnections.ts` and `ProjectConnections.tsx`,
+mounted in `pages/ProjectHomePage.tsx`. Files: `workspace/projects/*.json`
+(not committed, like `data/`).
+
 ## Participants
 
 **Intent.** Product work is done with other people and other systems. Their
@@ -332,6 +577,61 @@ tells Claude to read the page again.
 `web/src/lib/canvasFrameRuntime.ts`; for skill writers,
 `docs/skill-writers/artifacts.md`.
 
+## Setup from a ZIP
+
+**Intent.** Someone who is not technical gets the app running on a locked-down
+work Mac from a browser download, with one command, and when it can't finish
+they get a plain explanation and a file to send back (D-100, D-107).
+
+**Behaviour.** `sh setup.sh` in the unzipped folder checks the Mac (macOS 13+,
+Apple silicon, not under Rosetta, disk space), that the folder is complete,
+and that Claude Code is installed (it finds it in the usual places when
+Terminal's PATH misses it). It clears the browser's quarantine flag from its
+own folder after asking, restores execute bits an unzip dropped, checks the
+bundled tmux runs, then runs `start.sh` and confirms the app answers on port
+6767 (or says which port it took). It never downloads or installs anything.
+Every run writes `setup-report.txt` in the app folder and
+`flight-deck-setup-report.txt` on the Desktop; a failure names the problem,
+the fix, and that file. `tests/setup_sim/simulate_zip_setup.py` rehearses the
+whole flow in a Linux container.
+
+**Updates (D-111).** Setup installs into one fixed folder, `~/flight-deck`,
+and `sh ~/flight-deck/setup.sh` finds the newest ZIP or unzipped folder in
+~/Downloads and updates from it, so the person never navigates folders.
+`scripts/install_sync.py` compares each file with the manifest of the last
+install: the person's own files, their edits to shipped workspace files and
+their deletions all survive, the new versions they didn't take are saved in
+`updates/<date>/`, and app code is always the release's. The Workspace and
+Hangar projects follow the app out of a download folder
+(`omnigent/slim_bootstrap.py`). It also builds and pins the Dock icon.
+
+**Where.** `setup.sh`, `scripts/install_sync.py`, `start.sh`,
+`omnigent/slim_bootstrap.py`, `tests/setup_sim/`, `tests/test_slim_install_sync.py`,
+README "Quick start" and "Updating to a newer version".
+
+## Usage log
+
+**Intent.** Know how the whole platform is used (which pages, workflows,
+skills and tools, what fails, what it costs), mostly while testing, without
+any work content leaving the work or reaching the log (D-122 to D-127).
+
+**Behaviour.** Every part of the app writes one JSON line per event to
+`logs/usage/<day>.jsonl` in the app folder: page views and clicks from the
+web app, sessions, turns and tokens from the server, Hangar actions, each
+tool and skill an agent uses, and every `pa` command with its exit code. A
+line holds ids, numbers and status words; any text with spaces becomes
+`<text N>`. Nothing is shown in flying. `pa usage summary` prints the counts;
+`pa usage pack` writes one file to the Desktop to carry elsewhere, optionally
+with names hashed; `pa usage eval start` tags an eval trial's lines and keeps
+them apart. Off with `OMNIGENT_SLIM_USAGE=0`.
+
+**Where.** `skills/view-kit/scripts/usagelog.py` (the writer, reader and
+packs), `pa.py` (`pa log`, `pa usage`, the per-command line),
+`omnigent/slim_usage.py` (server feeds), `omnigent/server/routes/slim_usage.py`
+(`POST /v1/slim/usage/events`, `GET /v1/slim/usage/summary`),
+`web/src/lib/slimUsage.ts` (the web sink), `tests/test_slim_usage.py`. Spec:
+[usage-logging.md](usage-logging.md).
+
 ## Dock launcher
 
 **Intent.** On the work Mac, starting the demo should be one click, not a
@@ -421,6 +721,16 @@ built in the Hangar is meant to travel with the repo. *Why:* Geoff wants
 recognisable faces for the cast, and wants the cast, workflows and scenarios
 to move with the repo to the work machine.
 
+**Send to repo (D-113).** On a git copy of the app, the Overview's "Not in
+the repo yet" list has a Send to repo button and a line for what changed. It
+commits just those files to a new `hangar/<date-time>` branch without touching
+the folder's own branch, pushes it, and opens a pull request (with `gh`) or
+links GitHub's page to open one; the last send is shown under the list. *Why:*
+publishing wrote the files but nothing put them in the repo, so edits made on
+the Mac mini never reached the ZIP everyone downloads. On the work Mac (a ZIP,
+no git) the button does not show; there setup keeps published files across
+updates (D-111).
+
 **Scenario and workflow builders (slice 3, D-71 to D-73).** Every scenario
 and workflow page has Edit, Duplicate and Remove (for a shipped workflow, "Edit
 a copy"), and the Scenarios shelf has "New scenario". The draft opens as an
@@ -437,10 +747,25 @@ scenario|workflow`, which the scenario-builder skill now uses. *Why:* so a PM
 can make a new demo, or adjust a kind of work for their team, without editing
 files or breaking what others fly, in the same way they edit a person.
 
+**Widgets and views (D-112).** A workflow's page groups what people see into
+"Widgets · in the chat" (forms, single-record cards, summaries the agent puts
+in the conversation) and "Views · in the canvas", each drawn over the
+scenario's sample data. "Edit widgets and views" on the workflow, or "Edit" on
+one view's page, opens the workflow draft at that widget: its small line,
+heading, form questions, button labels and what each button says in the chat
+are fields, the whole spec is a JSON box, and the drawing beside it follows
+every save. "Add a widget or view" starts from a blank form, a blank summary or
+a copy, and writes the `SKILL.md` line that tells the agent when and how to
+show it. Publishing goes through the usual checks and lands in the workflow's
+workspace copy, so it travels with the repo. *Why:* the widgets are most of
+what a person sees of a workflow, and Geoff wants to shape them where he
+shapes everything else, without hand-editing files.
+
 **Where.** Design in `hangar.md`. Server: `omnigent/server/routes/slim_hangar.py`
-(`GET /v1/slim/hangar`, rendered views, templates and scenario players, and the
+(`GET /v1/slim/hangar`, `POST /v1/slim/hangar/repo/send`, rendered views, templates and scenario players, and the
 draft, publish, history and restore routes for people, scenarios and
-workflows). Folder drafts: the "workflows and scenarios" builder section of
+workflows, and `GET /v1/slim/hangar/drafts/workflow/<id>/views/<view>` for a
+draft's widget). Widget editor: `web/src/hangar/WidgetsCard.tsx`. Folder drafts: the "workflows and scenarios" builder section of
 `skills/view-kit/scripts/pa.py`. Web: `FolderEditor.tsx` beside the person
 editor. Builder skill: `skills/build-person/`.
 Web: `web/src/hangar/`. Colors: the `build` and `hangar-*` tokens.

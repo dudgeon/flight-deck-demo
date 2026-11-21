@@ -10,7 +10,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/routing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { HANGAR_WRENCH_GROUP, HangarWrench } from "@/hangar/HangarWrench";

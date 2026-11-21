@@ -278,26 +278,52 @@ A design, not yet built. Spec and open questions:
   child sessions and side chats. Project meaning goes in our own file beside
   upstream's project, so the fork stays compatible.
 
+## The usage log
+
+One local record of how the platform is used (D-122 to D-127; spec
+[product/usage-logging.md](product/usage-logging.md)).
+
+- **One writer.** `skills/view-kit/scripts/usagelog.py`, standard library
+  only, shared by `pa` and the server (which loads it by path,
+  `omnigent/slim_usage.py`). Lines go to `<app folder>/logs/usage/<day>.jsonl`
+  (eval trials to `eval/<suite>/`). `logs/` is gitignored and skipped by
+  `scripts/install_sync.py`.
+- **Four feeds, all upstream hooks.** The web app's upstream analytics events
+  through our host sink (`web/src/lib/slimUsage.ts`, installed in `main.tsx`)
+  to `POST /v1/slim/usage/events`; upstream's telemetry `emit()` teed before
+  its opt-out (`omnigent/telemetry/client.py`); a middleware for slim route
+  writes (`omnigent/server/app.py`); the runner's `PostToolUse` observer
+  (`omnigent/runner/app.py`). `pa` logs each command in `main()`.
+- **Rules in the writer.** Event names `area.action`; parameters are numbers,
+  yes/no or short strings without spaces, anything else `<text N>`; paths
+  relative. Never raises.
+- **Out.** `pa usage pack` (re-checked, optionally fingerprinted, optionally
+  in upstream's gateway shape); `usagelog.Exporter` for a later server.
+
 ## Setup on the work Mac
 
 The target is an Apple silicon Mac with Claude Code installed and signed in,
 no open internet, no package installs, and no cloning outside the company's
 GitHub namespace.
 
-1. Download the repository as a ZIP of `main` (D-100). A `curl` download in
-   Terminal avoids macOS quarantine (README, step 1). A browser download is
-   quarantined; `start.sh` detects that and says so, and people are told to
-   ask IT rather than bypass it.
-2. `./start.sh`: first run unpacks the vendored Python and installs vendored
-   wheels into `.runtime/` with no network (about a minute), then starts the
+1. Download the repository as a ZIP of `main` in the browser and unzip it
+   in Downloads (D-100), or use the one-line `curl` download in the README.
+   Setup copies it into `~/flight-deck` and runs it from there (D-111);
+   `sh ~/flight-deck/setup.sh` later updates from a newer download without
+   overwriting the person's files (`scripts/install_sync.py`, a manifest of
+   what was shipped).
+2. `sh setup.sh` (D-107): checks the Mac and Claude Code, clears the browser's
+   quarantine flag from this folder after asking, restores execute bits,
+   checks the bundled tmux, runs `start.sh` and confirms the app answers. It
+   writes a report (in the folder and on the Desktop) to send back on
+   failure. `start.sh` refuses a still-quarantined copy and points to
+   `setup.sh`. Rehearsed in the cloud by `tests/setup_sim/simulate_zip_setup.py`.
+3. `./start.sh` (setup runs it the first time): first run unpacks the
+   vendored Python and installs vendored wheels into `.runtime/` with no network (about a minute), then starts the
    server and opens `http://127.0.0.1:6767/library`.
-3. Optional Dock icon: `scripts/make_dock_app.sh --add-to-dock` builds
+4. Optional Dock icon: `scripts/make_dock_app.sh --add-to-dock` builds
    `~/Applications/Product Aviator.app` on the machine (D-103).
-4. `./stop.sh` stops it; sessions stay in `~/.omnigent-slim`.
-
-Still to come (D-100): a one-step setup script for a browser-downloaded ZIP,
-with plain-language steps and failures that say what broke and what to send
-back.
+5. `./stop.sh` stops it; sessions stay in `~/.omnigent-slim`.
 
 ## Where to read the code
 
@@ -306,6 +332,9 @@ back.
 | Launch rules, offline | `omnigent/slim_policy.py`, `_offline_guard.py` | | |
 | Bootstrap, skills | `omnigent/slim_bootstrap.py`, `slim_skills.py` | | `skills/README.md` |
 | Library | `server/routes/slim_library.py` | `pages/LibraryPage.tsx` | |
+| Runs and In flight | `server/routes/slim_runs.py` | `projectHome/ProjectInFlight.tsx`, `projectHome/projectRuns.ts` | `view-kit` (`pa flow`, `pa runs`) |
+| Director, threads and the run card | `server/routes/slim_runs.py` (`/slim/runs/{id}`, `/slim/threads/{session}`, `/slim/directors/{session}`) | `lib/runBlock.ts`, `components/chat/RunCardBlock.tsx`, `components/chat/DirectorBar.tsx`, `components/chat/DirectLine.tsx`, `lib/directLine.ts`, `lib/threadContext.ts`, `projectHome/RunParts.tsx` | `director`, `view-kit` (`pa brief`, `pa report`) |
+| Projects with a goal, connections | `server/routes/slim_projects.py` (`/slim/projects/connections`) | `projectHome/projectConnections.ts`, `projectHome/ProjectConnections.tsx` | `view-kit` (`pa project`, `pa link`, the link chip in `kit/`) |
 | Hangar | `server/routes/slim_hangar.py` | `hangar/` | `build-person`, `scenario-builder` |
 | Inbox participants | `server/routes/slim_participant_inbox.py`, `server/inbox_media.py` | `pages/InboxPage.tsx`, `lib/proactiveInbox.ts` | `participants` |
 | Views and actions | | `lib/artifactBridge.ts`, `lib/chatView.ts` | `view-kit` |
@@ -313,3 +342,4 @@ back.
 | Collab editor | | `shell/review/` | `document-collaboration` |
 | Session panel | | `shell/SessionOverview*.tsx` | |
 | Design tokens | `design/build_tokens.py` | `designTokens.generated.css` | `product-aviator-design` |
+| Usage log | `slim_usage.py`, `server/routes/slim_usage.py`, the tees in `telemetry/client.py` and `runner/app.py` | `lib/slimUsage.ts` | `view-kit` (`usagelog.py`, `pa log`, `pa usage`) |

@@ -1,0 +1,170 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!-- decision-archive:start -->
+<div style="font:13px/1.45 system-ui,sans-serif;background:Canvas;color:CanvasText;border-bottom:1px solid GrayText;padding:8px 16px">Archived copy of <b>Person Builder Icons</b>, a decision artifact from 2026-11-21. Nothing on this page is saved. The index of all of them is in <a href="../index.html">docs/decision-artifacts</a>.</div>
+<script>
+(function(){
+  var A={};
+  function snap(){var docs=Object.keys(A).map(function(k){return {id:k,data:function(){return A[k]},exists:true}});return {docs:docs,empty:!docs.length,size:docs.length,forEach:function(f){docs.forEach(f)}}}
+  function doc(id){return {id:id,get:async function(){return {id:id,exists:id in A,data:function(){return A[id]}}},set:async function(){},update:async function(){},delete:async function(){}}}
+  var db={collection:function(){return {get:async function(){return snap()},doc:doc,onSnapshot:function(f){setTimeout(function(){f(snap())},0);return function(){}},add:async function(){}}},doc:function(p){return doc(String(p).split("/").pop())}};
+  window.claude={use:async function(name){return name==="db"?db:null}};
+})();
+</script>
+<!-- decision-archive:end -->
+
+<title>Person Builder Icons</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one reading column; option cards stack, each with its sheet, tradeoffs and a verdict line. Colors mirror design/tokens.json (--pa-*). */
+:root {
+  --bg: #edf4f6; --paper: #fbfdfd; --ink: #0f1e30; --ink-2: #475a70; --line: #d3e3e7;
+  --navy: #0a223d; --build: #0d6e78; --build-soft: #d9f0f1; --you: #b0237a; --you-soft: #f8e1ef;
+  --ok: #17794a; --ok-soft: #ddf1e6; --agent: #4f46b8; --agent-soft: #e8e6f8; --warn: #8d5a00; --warn-soft: #f9ebcf;
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #081d24; --paper: #0b252d; --ink: #e6eef3; --ink-2: #9fb4cc; --line: #12333b;
+  --navy: #9fb4cc; --build: #58c9d3; --build-soft: #0c3237; --you: #f07cc0; --you-soft: #3d1530;
+  --ok: #5cc98f; --ok-soft: #10301f; --agent: #a9a3f5; --agent-soft: #221f45; --warn: #e6b45c; --warn-soft: #33260a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #081d24; --paper: #0b252d; --ink: #e6eef3; --ink-2: #9fb4cc; --line: #12333b;
+  --navy: #9fb4cc; --build: #58c9d3; --build-soft: #0c3237; --you: #f07cc0; --you-soft: #3d1530;
+  --ok: #5cc98f; --ok-soft: #10301f; --agent: #a9a3f5; --agent-soft: #221f45; --warn: #e6b45c; --warn-soft: #33260a; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font);
+  background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 24px 24px; }
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 32px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 20px; }
+h1 { font-size: 26px; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
+h2 { font-size: 19px; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+h3 { font-size: 15px; margin: 0; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--build); font-weight: 650; }
+.panel { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 20px; display: grid; gap: 14px; min-width: 0; }
+.strip { image-rendering: auto; width: 312px; max-width: 100%; height: auto; border-radius: 6px; border: 1px solid var(--line); }
+.pair { display: grid; gap: 10px; }
+.pair .dk { display: none; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pair .lt { display: none; } :root:not([data-theme="light"]) .pair .dk { display: block; } }
+:root[data-theme="dark"] .pair .lt { display: none; } :root[data-theme="dark"] .pair .dk { display: block; }
+.sheet { border-radius: 6px; border: 1px solid var(--line); width: 100%; height: auto; display: block; background: #fbfdfd; }
+.pros { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 600px) { .pros { grid-template-columns: 1fr; } }
+.pros ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; }
+.pros .good h3 { color: var(--ok); } .pros .bad h3 { color: var(--warn); }
+.tag { display: inline-block; font-size: 12px; font-weight: 650; padding: 2px 8px; border-radius: 999px; }
+.tag.rec { background: var(--build-soft); color: var(--build); }
+.head { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.need { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.need div { border: 1px dashed var(--line); border-radius: 6px; padding: 12px; display: grid; gap: 4px; }
+.small { font-size: 13px; color: var(--ink-2); }
+code { font: 12.5px ui-monospace, "SF Mono", Menlo, monospace; background: var(--build-soft); padding: 1px 5px; border-radius: 4px; }
+
+.cast { display: grid; gap: 8px; border: 1px solid var(--line); border-radius: 8px; padding: 12px; background: var(--bg); }
+.who { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.who img { width: 40px; height: 40px; object-fit: cover; flex: none; }
+.who img.p { border-radius: 50%; } .who img.a { border-radius: 8px; }
+.who span.r { color: var(--ink-2); font-size: 12.5px; }
+.turns { display: flex; gap: 6px; align-items: center; font-size: 12.5px; color: var(--ink-2); }
+.turns img { width: 24px; height: 24px; object-fit: cover; }
+.turns img.p { border-radius: 50%; } .turns img.a { border-radius: 5px; }
+.split { display: grid; grid-template-columns: minmax(0,1.1fr) minmax(0,1fr); gap: 14px; align-items: start; }
+@media (max-width: 640px) { .split { grid-template-columns: 1fr; } }
+.score { font-size: 13px; color: var(--ink-2); }
+</style>
+<div class="wrap">
+  <header style="display:grid;gap:8px">
+    <div class="eyebrow">Hangar · avatars · design round 1</div>
+    <h1>Five directions for people and agents</h1>
+    <p>Round 2's flat clip-art set is off the table and PR #25 is paused. Here are five very different directions, each drawn on the same four subjects: a design lead, a risk agent, a planning agent and a research agent. Beside each sheet are the same four at the sizes they really appear in the app. Judge them there, not at poster size.</p>
+    <p class="small">Pick a direction, or mix them (for example, emblem agents with line-portrait people). The next round takes that direction across the full cast of twelve roles and the people.</p>
+  </header>
+
+  <section class="panel">
+    <div class="head"><h2>A · Geometric emblem</h2><span class="tag rec">Recommended</span></div>
+    <p>Bauhaus shapes in flat token colors. People are abstract silhouettes; each agent is an emblem built from its role (a shield, stepped blocks, a lens).</p>
+    <div class="split">
+      <img class="sheet" src="img/geo-sheet.jpg" alt="A · Geometric emblem: a design lead, a risk agent, a planning agent and a research agent.">
+      <div style="display:grid;gap:10px;min-width:0">
+        <span class="small">As a cast in the Hangar (40px):</span>
+        <div class="cast"><div class="who"><img class="p" src="img/geo-0.png" alt="Mara Okafor"><div><div>Mara Okafor</div><span class="r">Design lead</span></div></div><div class="who"><img class="a" src="img/geo-1.png" alt="Risk Review"><div><div>Risk Review</div><span class="r">Risk and compliance</span></div></div><div class="who"><img class="a" src="img/geo-2.png" alt="Planner"><div><div>Planner</div><span class="r">Planning</span></div></div><div class="who"><img class="a" src="img/geo-3.png" alt="Researcher"><div><div>Researcher</div><span class="r">Research</span></div></div></div>
+        <span class="small">In chat turns (24px):</span>
+        <div class="cast"><div class="turns"><img class="p" src="img/geo-0.png" alt=""><img class="a" src="img/geo-1.png" alt=""><img class="a" src="img/geo-2.png" alt=""><img class="a" src="img/geo-3.png" alt=""><span>Mara, Risk Review, Planner and Researcher replied</span></div></div>
+      </div>
+    </div>
+    <div class="pros">
+      <div class="good"><h3>What works</h3><ul><li>Sharpest at 24px of all five: big shapes, no fine detail.</li><li>Agents read by role, not as a row of near-identical robots.</li><li>Uses the token palette natively, so it sits inside the app instead of on top of it.</li><li>Easy to extend: a new role is a new emblem from the same shapes.</li></ul></div>
+      <div class="bad"><h3>Tradeoffs</h3><ul><li>People are abstract, so two colleagues may need different hair, color and accessory to tell apart.</li><li>Least warm; reads as a system, not a cast of characters.</li></ul></div>
+    </div>
+  </section>
+  <section class="panel">
+    <div class="head"><h2>B · Flight crew</h2></div>
+    <p>Leans into the Flight Deck name: people wear an aviator headset, agents are small aircraft with role insignia on the fuselage.</p>
+    <div class="split">
+      <img class="sheet" src="img/crew-sheet.jpg" alt="B · Flight crew: a design lead, a risk agent, a planning agent and a research agent.">
+      <div style="display:grid;gap:10px;min-width:0">
+        <span class="small">As a cast in the Hangar (40px):</span>
+        <div class="cast"><div class="who"><img class="p" src="img/crew-0.png" alt="Mara Okafor"><div><div>Mara Okafor</div><span class="r">Design lead</span></div></div><div class="who"><img class="a" src="img/crew-1.png" alt="Risk Review"><div><div>Risk Review</div><span class="r">Risk and compliance</span></div></div><div class="who"><img class="a" src="img/crew-2.png" alt="Planner"><div><div>Planner</div><span class="r">Planning</span></div></div><div class="who"><img class="a" src="img/crew-3.png" alt="Researcher"><div><div>Researcher</div><span class="r">Research</span></div></div></div>
+        <span class="small">In chat turns (24px):</span>
+        <div class="cast"><div class="turns"><img class="p" src="img/crew-0.png" alt=""><img class="a" src="img/crew-1.png" alt=""><img class="a" src="img/crew-2.png" alt=""><img class="a" src="img/crew-3.png" alt=""><span>Mara, Risk Review, Planner and Researcher replied</span></div></div>
+      </div>
+    </div>
+    <div class="pros">
+      <div class="good"><h3>What works</h3><ul><li>Most on-brand and memorable; a demo audience gets the joke at once.</li><li>Warm, detailed human portrait.</li></ul></div>
+      <div class="bad"><h3>Tradeoffs</h3><ul><li>All agents share one aircraft body, so the role is only a small marking that disappears at 24px.</li><li>The pilot costume makes every real colleague look like a pilot.</li><li>Sky backgrounds are off-palette and busy beside status colors.</li></ul></div>
+    </div>
+  </section>
+  <section class="panel">
+    <div class="head"><h2>C · Risograph editorial</h2></div>
+    <p>Two-color print look with grain, like magazine spot illustrations. Agents are mechanical heads built from their role (a visor with a shield, a calendar head, a telescope lens).</p>
+    <div class="split">
+      <img class="sheet" src="img/riso-sheet.jpg" alt="C · Risograph editorial: a design lead, a risk agent, a planning agent and a research agent.">
+      <div style="display:grid;gap:10px;min-width:0">
+        <span class="small">As a cast in the Hangar (40px):</span>
+        <div class="cast"><div class="who"><img class="p" src="img/riso-0.png" alt="Mara Okafor"><div><div>Mara Okafor</div><span class="r">Design lead</span></div></div><div class="who"><img class="a" src="img/riso-1.png" alt="Risk Review"><div><div>Risk Review</div><span class="r">Risk and compliance</span></div></div><div class="who"><img class="a" src="img/riso-2.png" alt="Planner"><div><div>Planner</div><span class="r">Planning</span></div></div><div class="who"><img class="a" src="img/riso-3.png" alt="Researcher"><div><div>Researcher</div><span class="r">Research</span></div></div></div>
+        <span class="small">In chat turns (24px):</span>
+        <div class="cast"><div class="turns"><img class="p" src="img/riso-0.png" alt=""><img class="a" src="img/riso-1.png" alt=""><img class="a" src="img/riso-2.png" alt=""><img class="a" src="img/riso-3.png" alt=""><span>Mara, Risk Review, Planner and Researcher replied</span></div></div>
+      </div>
+    </div>
+    <div class="pros">
+      <div class="good"><h3>What works</h3><ul><li>The most sophisticated and adult; nothing like other AI tools.</li><li>The role concepts are the strongest of the five.</li></ul></div>
+      <div class="bad"><h3>Tradeoffs</h3><ul><li>Fine linework and grain turn to mud at 24 and 40px.</li><li>Photographic portraits invite "who is that?" for invented colleagues.</li><li>Hard to keep consistent when contributors generate new ones.</li></ul></div>
+    </div>
+  </section>
+  <section class="panel">
+    <div class="head"><h2>D · Soft 3D</h2></div>
+    <p>Matte clay-like 3D busts on pastel tiles; agents are the same friendly robot holding a role object.</p>
+    <div class="split">
+      <img class="sheet" src="img/clay-sheet.jpg" alt="D · Soft 3D: a design lead, a risk agent, a planning agent and a research agent.">
+      <div style="display:grid;gap:10px;min-width:0">
+        <span class="small">As a cast in the Hangar (40px):</span>
+        <div class="cast"><div class="who"><img class="p" src="img/clay-0.png" alt="Mara Okafor"><div><div>Mara Okafor</div><span class="r">Design lead</span></div></div><div class="who"><img class="a" src="img/clay-1.png" alt="Risk Review"><div><div>Risk Review</div><span class="r">Risk and compliance</span></div></div><div class="who"><img class="a" src="img/clay-2.png" alt="Planner"><div><div>Planner</div><span class="r">Planning</span></div></div><div class="who"><img class="a" src="img/clay-3.png" alt="Researcher"><div><div>Researcher</div><span class="r">Research</span></div></div></div>
+        <span class="small">In chat turns (24px):</span>
+        <div class="cast"><div class="turns"><img class="p" src="img/clay-0.png" alt=""><img class="a" src="img/clay-1.png" alt=""><img class="a" src="img/clay-2.png" alt=""><img class="a" src="img/clay-3.png" alt=""><span>Mara, Risk Review, Planner and Researcher replied</span></div></div>
+      </div>
+    </div>
+    <div class="pros">
+      <div class="good"><h3>What works</h3><ul><li>Polished and friendly; reads well at 40px.</li><li>Easy to generate consistently.</li></ul></div>
+      <div class="bad"><h3>Tradeoffs</h3><ul><li>Looks like every AI startup mascot right now.</li><li>Agents are one robot with different props, the same problem as the round you rejected.</li><li>3D lighting clashes with the flat app.</li></ul></div>
+    </div>
+  </section>
+  <section class="panel">
+    <div class="head"><h2>E · Line portrait</h2></div>
+    <p>Single-weight navy line drawings over one offset color shape. Agents are instruments with personality (a shield gauge, a compass, a scope).</p>
+    <div class="split">
+      <img class="sheet" src="img/line-sheet.jpg" alt="E · Line portrait: a design lead, a risk agent, a planning agent and a research agent.">
+      <div style="display:grid;gap:10px;min-width:0">
+        <span class="small">As a cast in the Hangar (40px):</span>
+        <div class="cast"><div class="who"><img class="p" src="img/line-0.png" alt="Mara Okafor"><div><div>Mara Okafor</div><span class="r">Design lead</span></div></div><div class="who"><img class="a" src="img/line-1.png" alt="Risk Review"><div><div>Risk Review</div><span class="r">Risk and compliance</span></div></div><div class="who"><img class="a" src="img/line-2.png" alt="Planner"><div><div>Planner</div><span class="r">Planning</span></div></div><div class="who"><img class="a" src="img/line-3.png" alt="Researcher"><div><div>Researcher</div><span class="r">Research</span></div></div></div>
+        <span class="small">In chat turns (24px):</span>
+        <div class="cast"><div class="turns"><img class="p" src="img/line-0.png" alt=""><img class="a" src="img/line-1.png" alt=""><img class="a" src="img/line-2.png" alt=""><img class="a" src="img/line-3.png" alt=""><span>Mara, Risk Review, Planner and Researcher replied</span></div></div>
+      </div>
+    </div>
+    <div class="pros">
+      <div class="good"><h3>What works</h3><ul><li>Calm and elegant; very consistent with the paper look of the Hangar.</li><li>Agent concepts avoid robots entirely.</li></ul></div>
+      <div class="bad"><h3>Tradeoffs</h3><ul><li>Thin lines vanish at 24px and look faint in dark mode.</li><li>Instruments read as icons, not as members of a team.</li></ul></div>
+    </div>
+  </section>
+</div>
+
+</body></html>

@@ -1,0 +1,130 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!-- decision-archive:start -->
+<div style="font:13px/1.45 system-ui,sans-serif;background:Canvas;color:CanvasText;border-bottom:1px solid GrayText;padding:8px 16px">Archived copy of <b>Design Decisions Two</b>, a decision artifact from 2026-11-21. It shows the answers recorded on 2026-11-21; changes made here are not saved. The index of all of them is in <a href="../index.html">docs/decision-artifacts</a>.</div>
+<script>
+(function(){
+  var A={"attn": {"at": "2026-11-21T14:42:08.944Z", "locked": true, "pick": 0}, "frame": {"at": "2026-11-21T14:44:45.932Z", "locked": true, "pick": 0, "text": "This is a lot. We will need to figure out how to progressively add and remove complexity, focus the user on a single task in depth, or multiple tasks at a high level, progressive disclosure to human and agent, etc. But your task was to pressure test the system and I think you have accomplished it.\n\nOne affordance to explore: the agent needs to be able to direct the user’s attention. Perhaps when a canvas is open but the agent needs the user’s attention in chat, the canvas could flip grayscale or something to make the relative attention focus obvious."}, "navy": {"at": "2026-11-21T14:40:31.413Z", "locked": true, "pick": 0}, "views": {"at": "2026-11-21T14:42:37.638Z", "locked": true, "pick": 0}, "you": {"at": "2026-11-21T14:41:53.140Z", "locked": true, "pick": 0, "text": "I like your rec — please document the decision with your rationale. We will likely adopt a design system later with corporate guidelines, so the specific color you choose will likely be superseded. I like your rec, we just need to be able to keep the spirit of it in the future if the actual color is superseded."}};
+  function snap(){var docs=Object.keys(A).map(function(k){return {id:k,data:function(){return A[k]},exists:true}});return {docs:docs,empty:!docs.length,size:docs.length,forEach:function(f){docs.forEach(f)}}}
+  function doc(id){return {id:id,get:async function(){return {id:id,exists:id in A,data:function(){return A[id]}}},set:async function(){},update:async function(){},delete:async function(){}}}
+  var db={collection:function(){return {get:async function(){return snap()},doc:doc,onSnapshot:function(f){setTimeout(function(){f(snap())},0);return function(){}},add:async function(){}}},doc:function(p){return doc(String(p).split("/").pop())}};
+  window.claude={use:async function(name){return name==="db"?db:null}};
+})();
+</script>
+<!-- decision-archive:end -->
+
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Design Decisions Two</title>
+<style>
+:root{--bg:#f4f6f9;--sf:#fff;--sunk:#eaeef3;--ink:#0f1e30;--ink2:#475a70;--ink3:#71829a;--line:#d6dde6;--navy:#0a223d;--onnavy:#f2f6fa;--you:#b0237a;--yousoft:#f8e1ef;--ok:#17794a;--oksoft:#ddf1e6;--font:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;--mono:ui-monospace,"SF Mono",Menlo,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#071526;--sf:#0c1e33;--sunk:#091a2d;--ink:#e6edf5;--ink2:#a6b6c8;--ink3:#71849a;--line:#1e3550;--navy:#2f64a0;--onnavy:#f2f6fa;--you:#f26dc3;--yousoft:#3a1530;--ok:#5bcb93;--oksoft:#0f3123;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#071526;--sf:#0c1e33;--sunk:#091a2d;--ink:#e6edf5;--ink2:#a6b6c8;--ink3:#71849a;--line:#1e3550;--navy:#2f64a0;--onnavy:#f2f6fa;--you:#f26dc3;--yousoft:#3a1530;--ok:#5bcb93;--oksoft:#0f3123;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--font);padding:28px 16px 80px}
+main{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.eb{font:600 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--you)}
+h1{font-size:30px;line-height:1.15;margin:4px 0 6px}h2{font-size:22px;margin:0}h3{font-size:15px;margin:0 0 4px}
+p{margin:0;color:var(--ink2);max-width:72ch}
+button{font:inherit;color:inherit;cursor:pointer}
+.nav{display:flex;flex-wrap:wrap;gap:6px}.nav button{border:1px solid var(--line);background:var(--sf);border-radius:99px;padding:4px 12px;font-size:13px;color:var(--ink2)}
+.nav button[aria-current="true"]{background:var(--navy);border-color:var(--navy);color:var(--onnavy)}
+.nav button.done::after{content:" ✓";color:var(--ok)}
+.card{background:var(--sf);border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.know{background:var(--sunk);border-radius:8px;padding:12px 14px}.know p+p{margin-top:8px}
+.stage{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--sunk)}
+.stage img{display:block;width:100%;height:auto}
+.stage figcaption{padding:8px 12px;font-size:13px;color:var(--ink2);background:var(--sf);border-top:1px solid var(--line)}
+.gal{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.gal figure{margin:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--sf)}.gal img{width:100%;display:block}.gal figcaption{padding:6px 10px;font-size:12.5px;color:var(--ink2)}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:grid;grid-template-columns:22px 1fr;gap:10px;text-align:left;border:1px solid var(--line);background:var(--sf);border-radius:9px;padding:10px 12px}
+.opt:hover{border-color:var(--navy)}.opt .r{width:16px;height:16px;border-radius:50%;border:2px solid var(--ink3);margin-top:3px}
+.opt[aria-pressed="true"]{border-color:var(--you);background:var(--yousoft)}.opt[aria-pressed="true"] .r{border-color:var(--you);background:radial-gradient(var(--you) 45%,transparent 50%)}
+.opt.viewing{box-shadow:inset 3px 0 0 var(--navy)}
+.opt b{display:block}.opt span{color:var(--ink2);font-size:14px}.opt .tag{font:600 10.5px var(--mono);letter-spacing:.06em;color:var(--ok);margin-left:6px}
+textarea{width:100%;min-height:70px;font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--sf);color:var(--ink)}
+.rec{border-left:3px solid var(--ok);background:var(--oksoft);padding:10px 12px;border-radius:6px;color:var(--ink)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{border:1px solid var(--navy);background:var(--navy);color:var(--onnavy);border-radius:8px;padding:7px 14px;font-weight:600}
+.btn.ghost{background:var(--sf);color:var(--ink)}.btn:disabled{opacity:.45;cursor:default}
+.lockd{font:600 12px var(--mono);color:var(--ok)}.muted{color:var(--ink3);font-size:13px}
+table{border-collapse:collapse;width:100%;font-size:14px}td,th{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}th{background:var(--sunk);font:600 11px var(--mono);text-transform:uppercase;color:var(--ink3)}
+.tw{overflow-x:auto}
+</style></head><body><main>
+<header><div class="eb">Product Aviator · decision walkthrough, round two</div>
+<h1>Five decisions: how it looks, and where views go</h1>
+<p>Three are about one color system for the whole product, one is about where agent-drawn views appear, and one asks you to react to the drafted intent framework. Each shows the real screens. Click an option to see it, then lock your answer. Answers save to this page, so I can read them back. <span class="muted" id="sync"></span></p></header>
+<nav class="nav" id="nav"></nav>
+<section id="pane"></section>
+</main>
+<script>
+const D=[
+{id:"intro",title:"Background",intro:true},
+{id:"navy",title:"1. Where navy lives",src:"Unify the design language",
+ know:["Today the product has four color systems that don't agree: the app uses Omnigent's pink, the agent's views use navy and rust, the artifact templates use bright blue, and the preview player uses orange. You can see all four on the Background tab.","The proposal, called <b>flight deck</b>, puts every color in one token file that the app, the views and the templates all read. Navy is the frame, and status colors behave like cockpit lights: quiet until something needs attention. Whatever you pick here, the plumbing is the same; each option is just a different value in that file, so changing your mind later is cheap.","This decision is how loudly the brand shows. The screens on the right are the real requirements scenario, recolored."],
+ o:[["Navy sidebar","The left sidebar becomes a dark navy panel framing a white work area. The one bold brand move; everything else stays quiet.","img/navy-deck.jpg"],["Navy accents","Keeps today's light sidebar and only swaps pink for navy on selection and buttons. The smallest change from today.","img/navy-accents.jpg"],["Navy header band","A navy band across the top carries the logo and session title; the sidebar stays light. Costs one row of height on every screen.","img/navy-band.jpg"]],
+ extra:["Today, for comparison","img/today.jpg"],r:0,why:"It makes the product recognisable at a glance and gives the work a clear frame, like a cockpit panel around the instruments, without adding color anywhere else."},
+{id:"you",title:"2. Color for your own marks",src:"Unify the design language",
+ know:["Some things on screen are yours rather than the agent's: rows you ticked or locked, edits you made in the editor, notes you added. They get one dedicated color so you can tell at a glance what you did versus what the agent proposed.","Look at the Lock column in the catalog on the right: the ticked boxes are in this color.","The catch with today's rust is decision 3: if \"needs you\" becomes amber, rust and amber sit close together and your ticks start to look like warnings."],
+ o:[["Magenta","Borrowed from flight displays, where magenta marks the route the pilot set. Clear of every status color in light and dark.","img/you-magenta.jpg"],["Rust (today)","What the views use now. Familiar, but close to amber, so it blurs with \"needs you\" if that turns amber.","img/you-rust.jpg"]],
+ r:0,why:"It only ever means \"yours\", in light and dark, and it stays distinct whatever you pick for decision 3."},
+{id:"attn",title:"3. Color for \"needs you\"",src:"Unify the design language",
+ know:["Items waiting on you (a requirement to confirm, a question from a participant) need a color that pulls your eye. In the catalog on the right, look at the \"3 Needs you\" count and the status pills on R-03 and R-07.","Cockpits use amber for caution (look at this) and red for warning (something failed). Today the views use red for \"needs you\", which leaves nothing stronger for real failures."],
+ o:[["Amber","Reads as look-at-this, not alarm. Red stays reserved for failed work.","img/attn-amber.jpg"],["Red (today)","More urgent. With several items waiting, a busy catalog starts to look like an error report.","img/attn-red.jpg"]],
+ r:0,why:"Matches the cockpit convention and keeps red meaningful for things that actually broke."},
+{id:"views",title:"4. Where agent views appear",src:"Design the product agent workspace",
+ know:["A \"view\" is anything the agent draws from the kit: a three-choice question, a one-record card, a summary, a twenty-row catalog, a board. The question is which of those may be drawn <b>inside the chat</b>, and which only open in the canvas on the right.","Today the app does option 1: everything opens in the canvas, and the chat just says it did. That means a quick question takes over the canvas and hides the document you were reading, and when you scroll back you can't see what you answered.","Each picture shows the chat on the left and the canvas on the right."],
+ o:[["Asks in chat, work in canvas","Questions, pick-ones, single cards and summaries draw inside the chat and freeze into a record once answered; catalogs, boards and documents open in the canvas. Moderate build.","img/views-2.jpg"],["Canvas only (today)","Every view opens in the canvas and the chat only notes it. Nothing to build, but questions hide your work.","img/views-1.jpg"],["Anything in chat, expand to canvas","Every view first appears at chat width with an Expand button. Largest build, big tables are cramped, and one view can exist twice.","img/views-3.jpg"],["Snapshot in chat, live in canvas","The chat shows a still picture of each view as it was; the live one is always in the canvas. Small build, but questions still take over the canvas.","img/views-4.jpg"]],
+ table:true,r:0,why:"You can answer a question without losing the document in the canvas, the transcript records what you decided, and there is never a second live copy. A snapshot for large views can be added later."},
+{id:"frame",title:"5. The intent framework draft",src:"Design the product agent workspace",
+ know:["You chose \"draft one, keep it swappable\" for intent shaping, so it's built. The framework is a plain file the work team can later replace with the real one.","It has two axes. <b>Depth</b> has five levels: Spark (a sentence someone believes), Framed (who, what problem, what would change), Shaped (in, out, what could sink it), Tested (riskiest assumptions met evidence), and Committable (a team could start Monday). <b>Breadth</b> has seven areas: Customer, Problem, Outcome, Scope, Risks, Dependencies and Cost, each with what it needs at each depth.","The rule: an idea is only as deep as its shallowest required area, and Aviator asks about that area next. The picture shows the preview mid-conversation."],
+ o:[["Keep it as drafted","Five depths and seven areas stay. The next step is running intent shaping live with an agent, and you correct it once you've seen it work.","img/intent-shaping.png"],["Fewer depths","Collapse to three (Spark, Shaped, Committable) so a conversation reaches the end sooner. Less nuance about where an idea stands.","img/intent-shaping.png"],["Fewer areas","Drop Dependencies and Cost to five areas, keeping it about the customer and the bet. Delivery concerns move to the delivery status scenario.","img/intent-shaping.png"]],
+ r:0,why:"It's notional by design. Seeing it run live will tell you more than editing the file cold, and swapping it later doesn't change the skill.",link:["Open the clickable preview","/mnt/project-files/product-workspace/preview-intent-shaping.html"]}
+];
+const SE=["Something else","Describe what you want instead below."];
+let A={},cur=0,view={},db=null;
+const K="pa-decisions-r2";
+function loadLocal(){try{A=JSON.parse(localStorage.getItem(K)||"{}")}catch(e){A={}}}
+function saveLocal(){try{localStorage.setItem(K,JSON.stringify(A))}catch(e){}}
+async function persist(id){saveLocal();if(db){try{await db.doc("answers/"+id).set({...A[id],at:new Date().toISOString()})}catch(e){}}}
+function nav(){document.getElementById("nav").innerHTML=D.map((d,i)=>`<button aria-current="${i===cur}" class="${A[d.id]?.locked?"done":""}" data-i="${i}">${d.title}</button>`).join("")+`<button data-i="${D.length}" aria-current="${cur===D.length}">Summary</button>`;
+ document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>{cur=+b.dataset.i;render();scrollTo(0,0)})}
+function intro(){return `<div class="card"><h2>Background: four color systems today</h2>
+<p>Before the decisions, here is what the product looks like now. These are real screenshots, and each part was colored on its own.</p>
+<div class="gal">
+<figure><img src="img/app-home-light.jpg" alt="App home"><figcaption><b>The app.</b> Omnigent's pink for selection.</figcaption></figure>
+<figure><img src="img/catalog.jpg" alt="Catalog view"><figcaption><b>Agent views.</b> Navy plus rust, red for needs-you.</figcaption></figure>
+<figure><img src="img/tpl-decision.jpg" alt="Decision template"><figcaption><b>Artifact templates.</b> Their own grey and bright blue.</figcaption></figure>
+<figure><img src="img/view-prd.jpg" alt="Preview player"><figcaption><b>Preview player.</b> Orange.</figcaption></figure></div>
+<p>The proposal puts all of it on one token file. The full proposal, with a live before/after toggle and light and dark, is <a href="../2026-11-21-design-language/index.html" target="_blank" rel="noopener">here</a>. Dark mode under the recommended options looks like this:</p>
+<figure class="stage" style="margin:0"><img src="img/deck-dark.jpg" alt="Dark mode"><figcaption>Navy sidebar, magenta and amber, in dark mode.</figcaption></figure>
+<div class="row"><button class="btn" onclick="cur=1;render();scrollTo(0,0)">Start with decision 1</button></div></div>`}
+function dec(d){const a=A[d.id]||{},L=a.locked,v=view[d.id]??a.pick??d.r,opts=[...d.o,SE],img=(d.o[v]||d.o[d.r])[2];
+return `<div class="card"><div class="eb">${d.src}</div><h2>${d.title}</h2>
+<div class="know"><h3>What you need to know</h3>${d.know.map(k=>`<p>${k}</p>`).join("")}</div>
+<figure class="stage" style="margin:0"><img src="${img}" alt=""><figcaption>Showing: <b>${(d.o[v]||d.o[d.r])[0]}</b>${v>=d.o.length?" (your own idea; the recommended option is shown)":""}</figcaption></figure>
+${d.extra?`<details><summary class="muted">${d.extra[0]}</summary><figure class="stage" style="margin:8px 0 0"><img src="${d.extra[1]}" alt=""></figure></details>`:""}
+${d.table?`<div class="tw"><table><tr><th></th><th>Asks in chat</th><th>Canvas only</th><th>Anything in chat</th><th>Snapshots</th></tr>
+<tr><td>Answer a question without losing the canvas</td><td>Yes</td><td>No</td><td>Yes</td><td>No</td></tr>
+<tr><td>Transcript shows what was decided</td><td>Yes</td><td>No</td><td>Partly</td><td>Yes</td></tr>
+<tr><td>Risk of two live copies</td><td>None</td><td>None</td><td>High</td><td>None</td></tr>
+<tr><td>Participants can put a view in their turn</td><td>Yes</td><td>No</td><td>Yes</td><td>As a snapshot</td></tr>
+<tr><td>Work to build</td><td>Moderate</td><td>Done</td><td>Large</td><td>Small</td></tr></table></div>`:""}
+${d.link?`<p class="muted">${d.link[0]}: <code>${d.link[1]}</code></p>`:""}
+<div class="opts">${opts.map((o,j)=>`<button class="opt ${v===j?"viewing":""}" aria-pressed="${a.pick===j}" data-j="${j}" ${L?"disabled":""}><i class="r"></i><div><b>${o[0]}${j===d.r?'<span class="tag">RECOMMENDED</span>':""}</b><span>${o[1]}</span></div></button>`).join("")}</div>
+<textarea id="tx" placeholder="Notes or your own idea (optional unless you picked Something else)" ${L?"disabled":""}>${a.text||""}</textarea>
+<div class="rec"><b>My recommendation: ${d.o[d.r][0]}.</b> ${d.why}</div>
+<div class="row">${L?`<span class="lockd">LOCKED</span><button class="btn ghost" id="unl">Unlock</button>`:`<button class="btn" id="lk" ${a.pick===undefined?"disabled":""}>Lock this answer</button>`}<span class="muted">${a.pick===undefined?"Pick an option to lock it.":""}</span></div></div>`}
+function summary(){return `<div class="card"><h2>Summary</h2><table><tr><th>Decision</th><th>Your answer</th><th>Status</th></tr>${D.filter(d=>!d.intro).map(d=>{const a=A[d.id]||{};const o=[...d.o,SE][a.pick];return `<tr><td>${d.title}</td><td>${o?o[0]:"—"}${a.text?`<div class="muted">${a.text.replace(/</g,"&lt;")}</div>`:""}</td><td>${a.locked?"Locked":a.pick!==undefined?"Picked":"Open"}</td></tr>`}).join("")}</table><p>When you've locked them, tell me in the thread and I'll pass each one to the thread that owns it.</p></div>`}
+function render(){nav();const p=document.getElementById("pane"),d=D[cur];
+ p.innerHTML=cur===D.length?summary():d.intro?intro():dec(d);if(!d||d.intro)return;
+ p.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{const j=+b.dataset.j;view[d.id]=j;A[d.id]={...(A[d.id]||{}),pick:j};persist(d.id);render()});
+ const tx=document.getElementById("tx");if(tx)tx.oninput=()=>{A[d.id]={...(A[d.id]||{}),text:tx.value};saveLocal()};if(tx)tx.onchange=()=>persist(d.id);
+ const lk=document.getElementById("lk");if(lk)lk.onclick=()=>{const a=A[d.id];if(a.pick===d.o.length&&!(a.text||"").trim()){tx.focus();tx.placeholder="Tell me what you want instead, then lock.";return}a.locked=true;persist(d.id);if(cur<D.length)cur++;render();scrollTo(0,0)};
+ const u=document.getElementById("unl");if(u)u.onclick=()=>{A[d.id].locked=false;persist(d.id);render()}}
+loadLocal();render();
+(async()=>{try{db=await window.claude?.use?.("db")}catch(e){db=null}
+ const sy=document.getElementById("sync");if(!db){sy.textContent="(Saving in this browser only.)";return}
+ sy.textContent="";try{const snap=await db.collection("answers").get();snap.docs.forEach(x=>{const v=x.data();if(v)A[x.id]={pick:v.pick,text:v.text,locked:v.locked}});saveLocal();render()}catch(e){}})();
+</script></body></html>
+
+</body></html>

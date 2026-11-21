@@ -6,7 +6,11 @@ in ``OMNIGENT_SLIM_WORKSPACE`` on this machine with the Claude Code agent, so
 canned sessions and the "New session" button land in the workspace folder.
 It also creates a "Hangar" project in the same folder for the Hangar's guided
 builds (``OMNIGENT_SLIM_HANGAR_PROJECT``).
-An existing project of that name is left as the user configured it.
+An existing project of that name is left as the user configured it, with one
+exception (D-111): when its folder is the ``workspace`` of another copy of the
+app (for example a download that setup.sh has since installed into
+~/flight-deck), it is moved to this copy's workspace. A folder the person
+chose themselves is never another copy's workspace, so it is never touched.
 """
 
 from __future__ import annotations
@@ -47,11 +51,36 @@ def _claude_agent_id(client: httpx.Client) -> str | None:
     return None
 
 
+def _other_app_workspace(stored: str, workspace: Path) -> bool:
+    """True when ``stored`` is the ``workspace`` folder of another app copy."""
+    if not stored:
+        return False
+    path = Path(stored).expanduser()
+    try:
+        if path.resolve() == workspace.resolve():
+            return False
+    except OSError:
+        return False
+    app = path.parent
+    return path.name == "workspace" and (app / "start.sh").is_file() and (
+        app / "omnigent" / "slim_bootstrap.py"
+    ).is_file()
+
+
 def ensure_project(base_url: str, name: str, workspace: Path, icon: str = "🗂️") -> str:
     """Create the project if missing; return a one-line status."""
     with httpx.Client(base_url=base_url, timeout=15.0) as client:
         projects = client.get("/v1/projects", params={"limit": 200}).json().get("data", [])
-        if any(project.get("name") == name for project in projects):
+        existing = next((p for p in projects if p.get("name") == name), None)
+        if existing is not None:
+            config = dict(existing.get("config") or {})
+            stored = str(config.get("workspace") or "")
+            if _other_app_workspace(stored, workspace):
+                config["workspace"] = str(workspace)
+                client.patch(
+                    f"/v1/projects/{existing['id']}", json={"config": config}
+                ).raise_for_status()
+                return f"moved project '{name}' from {stored} to {workspace}"
             return f"project '{name}' already exists"
         config: dict[str, object] = {
             "host_id": _wait_for_local_host(client),

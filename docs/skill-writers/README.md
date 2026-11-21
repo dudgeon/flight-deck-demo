@@ -10,6 +10,7 @@ into `SKILL.md`.
 | [`detect.md`](detect.md) | How to tell, in one step, whether Claude is running inside Omnigent (and inside omnigent-slim) |
 | [`interfaces.md`](interfaces.md) | Every interface a Claude session in Omnigent can use: the viewer, artifacts, sessions, projects, comments, inbox, reminders, schedules, terminals |
 | [`artifacts.md`](artifacts.md) | How to make, show and update artifacts, and how artifacts talk back |
+| [`usage-log.md`](usage-log.md) | When and how a skill writes to Flight Deck's usage log with `pa log` (usually it need not) |
 | [`example-skill/SKILL.md`](example-skill/SKILL.md) | A small, complete skill that uses all of the above, to copy from |
 
 To ship a skill with omnigent-slim, drop its folder in the repo's

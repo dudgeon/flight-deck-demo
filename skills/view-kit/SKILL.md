@@ -59,7 +59,11 @@ text; then name the file and ask the question in words.
 | `$PA get data/x.json [ids] [--where ...] [--fields a,b] [--count-by field]` | Read records, one JSON object per line. Read this instead of the whole file. |
 | `$PA render spec.json --data data/x.json --out artifacts/x.html` | Draw a view. It is then redrawn on every `add` and `set`. `--host chat` for the compact form, `--record R-01` for a detail view. |
 | `$PA refresh data/x.json` | Redraw every view of a dataset. |
-| `$PA flow <data> --scenario <folder>`, then `--step <n or name> [--note "..."]`, `--done` | Record which step of a workflow the work is at. The Session panel draws it as a card with the steps and how many items are done. |
+| `$PA flow <data> --scenario <folder> --session <id>`, then `--step <n or name> [--note "..."]`, `--done` | Record which step of a workflow the work is at. The Session panel and the project page draw it as a card with the steps and how many items are done. |
+| `$PA flow <data> --pause --note "..."`, `--resume`, `--stop`, `--state needs-you` | Set a run aside with a note on where it was left, pick it up, abandon it, or say it is waiting on the person. See "Runs" below. |
+| `$PA runs [--all] [--json]` | List the runs in this workspace: state, step and where each was left. |
+| `$PA brief <workflow folder> --subject "..." --director <id>` | Write the brief a director hands a workflow's thread and print the thread's first message. See the `director` skill. |
+| `$PA report <data> --kind milestone\|progress\|blocker\|done "one line"` | From a thread: tell the director one thing worth knowing. Shown on the run card and the project page. Never everything. |
 | `$PA who [id]` | List the participants in `participants/` (other agents and people), or show one. See the `participants` skill. |
 | `$PA check <scenario folder>` | Validate a scenario's specs, schemas and fixtures. |
 | `$PA preview <scenario folder> --out demo.html` | Build a standalone click-through of a scenario from its fixtures. |
@@ -67,6 +71,53 @@ text; then name the file and ask the question in words.
 
 After `render`, show the file with `ui_open_file`. You do not need to open it
 again after later changes.
+
+## Projects and links
+
+A project is one goal that ships, inside an area that lasts. Its page shows
+the goal and a Connections card; a linked record shows a chip naming the
+other project and how it stands.
+
+- `pa project "<name>" --goal "…" --area "…" [--team "…"] [--state shaping|in-delivery|shipped|slipped|paused|stopped] [--state-note "slipped 2 wks"] [--data data/x.json]`
+  writes `projects/<slug>.json`. `--data` says a dataset belongs to the
+  project. Describe another team's project the same way; it need not exist
+  in the app. `pa project` alone lists them.
+- `pa link data/x.json R-07 --to "<project>" --type handed-to|started|relies-on`
+  hangs a link from one record (`--remove` takes it off). Write it once, on
+  the item it is about. The other project reads it the other way: what was
+  handed to it is where it came from.
+
+## Runs: pausing, resuming and stopping
+
+One workflow working on one subject is a **run**. It outlives the session: its
+state lives on the dataset and in `progress/`, and the project page lists every
+run under "In flight" with a Resume button. Keep that state true, because the
+app cannot read the conversation; it only reads what `pa flow` wrote.
+
+- **Start.** Pass `--session <id>` with `--scenario` (the id is `conversation_id`
+  from `sys_session_get_info`), so the project page can reopen this session.
+- **Pause.** When the person sets the work aside in any words ("pause this",
+  "let me come back to that later", "park it", or a press of Pause), run
+  `$PA flow <data> --pause --note "<where we left off>"` straight away. The
+  note is one or two sentences for someone returning cold: what is settled,
+  what is next, and any question left unanswered. Do not confirm first and do
+  not finish the step first. Reply in one line with the note and that they can
+  resume from the project page or by saying so. Then stop working on it.
+- **A side question is not a pause.** Answer it and carry on (the run stays
+  where it is).
+- **Needs the person.** When the run cannot move until the person answers or
+  decides, run `--state needs-you --note "<what you need>"`. Clear it with
+  `--state working` when they answer. Records with status `needs-you` set this
+  on their own.
+- **Resume.** When the person comes back ("resume intent shaping", "where did
+  I leave off?", or a message from the Resume button), run `$PA runs` to find
+  the run, read its note and its dataset, run `$PA flow <data> --resume`,
+  say in one or two lines where things stood, and carry on from there. Never
+  start a second dataset for a subject that already has a run.
+- **Finish.** `--done`, when the last step's work is complete.
+- **Stop.** Only when the person abandons the work ("drop this", "we are not
+  doing this"). Ask once to confirm, then `--stop [--note "<why>"]`. Nothing
+  is deleted, and `--resume` brings it back.
 
 ## Records and state
 
