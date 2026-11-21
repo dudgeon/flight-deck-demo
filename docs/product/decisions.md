@@ -5,6 +5,14 @@ never edited after the fact; a later entry may replace an earlier one and says
 so. "Geoff" is the product owner. "Claude" marks a choice made by the agent
 while building, which Geoff later accepted as a group (D-27).
 
+Where each decision stands now (built, replaced, pending, open) is in
+[decision-index.md](decision-index.md), with a one-line reason for every
+entry. Entries are grouped by topic, so numbers are not always in order.
+D-60 to D-62 were never assigned. To add a decision, follow "Decisions" in
+the repository's `CLAUDE.md`: claim the next number after the highest one on
+`main` *and* in open pull requests, and say in the pull request which numbers
+it uses.
+
 ## Foundations
 
 **D-01 · 2026-11-20 · Geoff.** Product Aviator is a cut-down fork of Omnigent,
@@ -495,6 +503,51 @@ at work" token); starting a mode never asks first; a run belongs to one
 project; threads reuse upstream's side chats and child sessions; demo
 projects (D-76) stay as they are. "Resume returns to the same session" is
 carried over as "Resume returns to the run's own thread".
+
+## Backfilled
+
+Decisions Geoff made on 20 and 21 November that were acted on but never
+logged. Recorded on 21 November from the walkthroughs and threads where he
+made them, with the date he made them.
+
+**D-100 · 2026-11-21 · Geoff.** The work Mac gets Flight Deck as a ZIP of the
+whole repository downloaded from GitHub, unzipped, and set up by running one
+script. The script must fail in ways that say what broke and what to send
+back. A `curl` command is fine only if a person runs it, with instructions a
+non-technical PM can follow. *The work Mac blocks cloning repositories outside
+the company's own namespace, and the people setting it up are not
+engineers.* Not built yet: `start.sh` detects a quarantined copy, but the
+one-step setup script is still to come.
+
+**D-101 · 2026-11-21 · Geoff.** When a session is open in several browser
+tabs, one tab is the active canvas and the others offer "Use this tab". The
+canvas is not mirrored between tabs. *One active tab is enough for a demo, and
+mirroring the page's state would be a lot of machinery for no visible gain.*
+
+**D-102 · 2026-11-21 · Geoff.** The sidebar shows the Product Aviator emblem
+with the name as text beside it, at the top left. The new-session screen has
+no logo and no heading. *The full logo would be acceptable, but its spacing
+and alignment were poor at sidebar size.*
+
+**D-103 · 2026-11-21 · Geoff.** The Dock launcher uses icon A (the current
+emblem), and it is pinned to the Dock (`scripts/make_dock_app.sh
+--add-to-dock`). *One click to start the demo on the work Mac.*
+
+**D-104 · 2026-11-21 · Geoff.** In a document, the main agent's behaviour
+depends on how it is asked: "make a change" edits directly (the edit is
+highlighted until seen), "propose changes" makes tracked suggestions. Every
+other agent only suggests (D-26). *The person stays in control of what lands,
+without making every small fix a suggestion to accept.*
+
+**D-105 · 2026-11-21 · Geoff.** Every question card put to him includes a
+"Something else" option. Extends D-32. *The real answer is often not one of
+the options offered.*
+
+**D-106 · 2026-11-21 · Geoff.** Two choices the agent made overnight stand
+(confirming them under D-27): a view is redrawn by rewriting its HTML file,
+and the reviewed and locked states of a record belong to the person, never
+set by the agent. *Rewriting the file is what makes old artifacts and the
+canvas reload work; reviewed and locked are the person's judgment.*
 
 ## Open
 
