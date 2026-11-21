@@ -2981,6 +2981,12 @@ def build_hook_settings(
     # before reading them. Deny/ask rules and Omnigent policy hooks still apply.
     attachment_read_rule = _claude_read_rule(attachment_cache_dir(bridge_dir))
     allow_rules = [attachment_read_rule] if attachment_read_rule is not None else []
+    # omnigent-slim: let Claude read (only read) the artifact templates.
+    library_dir = os.environ.get("OMNIGENT_SLIM_LIBRARY_DIR", "").strip()
+    if library_dir:
+        template_read_rule = _claude_read_rule(Path(library_dir))
+        if template_read_rule is not None:
+            allow_rules.append(template_read_rule)
     # Omnigent reviews the full change and requires human approval server-side.
     # Don't let a second native prompt or classifier prevent that review.
     allow_rules.extend(

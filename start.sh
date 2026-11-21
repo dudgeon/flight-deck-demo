@@ -60,10 +60,14 @@ export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC="${CLAUDE_CODE_DISABLE_NONESSENT
 mkdir -p "$OMNIGENT_DATA_DIR"
 
 # 3. Start the server and host, then make sure the workspace project exists.
+# The server prefers port 6767 and takes another free port if that one is busy.
 "$VENV/bin/omnigent" start --no-open --non-interactive </dev/null
-"$VENV/bin/python" -m omnigent.slim_bootstrap || true
+SERVER_URL=$("$VENV/bin/omnigent" server status </dev/null 2>/dev/null \
+    | sed -n 's/.*running at \(http:\/\/[^ ]*\).*/\1/p' | head -1)
+SERVER_URL=${SERVER_URL:-http://127.0.0.1:6767}
+OMNIGENT_SLIM_URL="$SERVER_URL" "$VENV/bin/python" -m omnigent.slim_bootstrap || true
 
-URL="http://127.0.0.1:6767/library"
+URL="$SERVER_URL/library"
 echo "omnigent-slim is running: $URL"
 if [ "$OPEN_BROWSER" = 1 ]; then
     open "$URL"

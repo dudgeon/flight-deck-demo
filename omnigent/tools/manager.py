@@ -666,7 +666,10 @@ class ToolManager:
         (``omnigent/runner/tool_dispatch.py``), which needs the runner's
         ``server_client`` that ``ToolContext`` does not carry.
         """
-        if not self._spec.tool_groups.browser:
+        from omnigent.slim_policy import EMBEDDED_BROWSER_TOOLS_ENABLED
+
+        # omnigent-slim: no desktop app, so no embedded browser to drive.
+        if not self._spec.tool_groups.browser or not EMBEDDED_BROWSER_TOOLS_ENABLED:
             return
         from omnigent.tools.builtins.browser import (
             BrowserClickTool,

@@ -69,3 +69,9 @@ def enforce_claude_permission_args(args: Iterable[str]) -> list[str]:
         # In front, so it never lands after a positional prompt or a ``--``.
         result[:0] = ["--permission-mode", DEFAULT_CLAUDE_PERMISSION_MODE]
     return result
+
+
+#: The embedded-browser tools (``browser_navigate`` and friends) drive a browser
+#: pane that only the Omnigent desktop app has. omnigent-slim ships without it,
+#: and the tools could otherwise load internet pages, so they are not offered.
+EMBEDDED_BROWSER_TOOLS_ENABLED = False

@@ -66,6 +66,45 @@ WORKSPACE_IMAGE_INSTRUCTION = (
 )
 
 
+def slim_canvas_instruction() -> str:
+    """omnigent-slim: how to put things on the canvas (the right-hand viewer).
+
+    Every session gets this, whatever folder it runs in, so a request such as
+    "make a canvas with a calculator" lands in the viewer rather than in a
+    stray HTML file. Templates come from ``OMNIGENT_SLIM_LIBRARY_DIR``.
+    """
+    import os
+
+    library = os.environ.get("OMNIGENT_SLIM_LIBRARY_DIR", "").strip()
+    templates = (
+        f"Templates live in `{library}/artifacts/`; read the closest one first and "
+        "follow its pattern (content in a JSON data block, inline CSS/JS). "
+        if library
+        else ""
+    )
+    return (
+        "You are running inside the Omnigent web app (omnigent-slim). The user reads your "
+        "replies in a browser, and the app has a canvas: a viewer panel on the right that "
+        "renders HTML files from the session workspace and runs their JavaScript. When the "
+        "user asks for a canvas, an artifact, a page, a visual, a dashboard, a form, a "
+        "prototype or any interactive or visual output, put it on the canvas: write one "
+        "self-contained HTML file to `artifacts/<short-name>.html` inside the session "
+        "workspace (your current directory), then call the `ui_open_file` tool with that "
+        "relative path, e.g. `{\"path\": \"artifacts/calculator.html\"}`. Do not tell the "
+        "user to open the file themselves or start a web server; `ui_open_file` shows it. "
+        "To change it, edit the file and call `ui_open_file` again. "
+        "The canvas is for the user: you cannot see it, click it or take screenshots of "
+        "it, and there is no browser tool. To check an artifact, read its code carefully "
+        "and, where it helps, run its pure logic with a quick script; then ask the user to "
+        "try it and tell you what happens. "
+        + templates
+        + "This machine has no internet access: never use CDNs, remote fonts, images or "
+        "APIs in an artifact; inline everything. Inside the canvas, "
+        "`window.omnigent?.prompt(text)` puts text into the user's chat box for them to "
+        "review and send; use it for buttons that hand a choice or answers back to you."
+    )
+
+
 def _framework_instructions_for(spec: AgentSpec) -> list[str]:
     """
     Framework instructions that apply to every turn of ``spec``.
@@ -88,7 +127,9 @@ def _framework_instructions_for(spec: AgentSpec) -> list[str]:
     dispatches_web_researcher = any(entry.name == "web_fetch" for entry in spec.tools.builtins)
     if spec.tools.agents or spec.spawn or dispatches_web_researcher:
         instructions.append(SUBAGENT_WAKE_NOTICE_INSTRUCTION)
-    if spec.tool_groups.browser:
+    from omnigent.slim_policy import EMBEDDED_BROWSER_TOOLS_ENABLED
+
+    if spec.tool_groups.browser and EMBEDDED_BROWSER_TOOLS_ENABLED:  # omnigent-slim
         instructions.append(EMBEDDED_BROWSER_PRIORITY_INSTRUCTION)
     instructions.append(WORKSPACE_IMAGE_INSTRUCTION)
     return instructions
@@ -238,10 +279,9 @@ def build_native_startup_instructions(spec: AgentSpec | None) -> str:
     :returns: Author instructions followed by workspace-image guidance.
     """
     authored = raw_author_instructions(spec) if spec is not None else None
-    return (
-        append_framework_instructions(authored, (WORKSPACE_IMAGE_INSTRUCTION,))
-        or WORKSPACE_IMAGE_INSTRUCTION
-    )
+    # omnigent-slim: every native session also learns how to use the canvas.
+    guidance = (WORKSPACE_IMAGE_INSTRUCTION, slim_canvas_instruction())
+    return append_framework_instructions(authored, guidance) or "\n\n".join(guidance)
 
 
 def _strip_output_annotations(
