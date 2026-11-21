@@ -13,6 +13,7 @@ import {
   artifactStateScope,
   handleArtifactMessage,
   injectArtifactBridge,
+  injectDesignTokens,
   readArtifactState,
 } from "@/lib/artifactBridge";
 import {
@@ -28,6 +29,7 @@ import { MessageSquarePlusIcon } from "lucide-react";
 import type { Comment } from "@/hooks/useComments";
 import { useCanEdit } from "@/hooks/usePermissions";
 import { useIsEmbedded } from "@/lib/embedded";
+import { useResolvedThemeMode } from "@/components/theme/useResolvedThemeMode";
 import { getEmbedRoot, getOmnigentHtmlPreviewFrame } from "@/lib/host";
 import { randomUUID } from "@/lib/randomUUID";
 import { type ActiveSelection, HTML_PREVIEW_SANDBOX } from "./codeViewerHelpers";
@@ -129,21 +131,26 @@ export function HtmlCommentViewer({
   // omnigent-slim: what the artifact saved with `omnigent.saveState`, handed
   // back on every reload so a redrawn view keeps the reader's place.
   const stateScope = artifactStateScope(conversationId, path);
+  // omnigent-slim: the artifact is drawn in the current design tokens and mode.
+  const themeMode = useResolvedThemeMode() === "dark" ? "dark" : "light";
   const { nonce, srcDoc } = useMemo(() => {
     const n = genNonce();
     return {
       nonce: n,
-      srcDoc: injectArtifactBridge(
-        injectCommentBridge(
-          content,
-          n,
-          loadBridgeExternally ? HTML_COMMENT_BRIDGE_RUNTIME_URL : undefined,
-          scrollKey ? (getSavedScrollTop(scrollKey) ?? 0) : 0,
+      srcDoc: injectDesignTokens(
+        injectArtifactBridge(
+          injectCommentBridge(
+            content,
+            n,
+            loadBridgeExternally ? HTML_COMMENT_BRIDGE_RUNTIME_URL : undefined,
+            scrollKey ? (getSavedScrollTop(scrollKey) ?? 0) : 0,
+          ),
+          readArtifactState(stateScope),
         ),
-        readArtifactState(stateScope),
+        themeMode,
       ),
     };
-  }, [content, loadBridgeExternally, scrollKey, stateScope]);
+  }, [content, loadBridgeExternally, scrollKey, stateScope, themeMode]);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
   // omnigent-slim: `omnigent.prompt(text)` calls from this artifact's frame.

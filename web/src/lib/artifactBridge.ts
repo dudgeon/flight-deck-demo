@@ -10,6 +10,7 @@
 // see canvasFrameRuntime.ts and canvasRelay.ts.
 
 import { CANVAS_FRAME_RUNTIME } from "./canvasFrameRuntime";
+import { PA_TOKENS } from "./designTokens.generated";
 
 /** Tag on every message an artifact posts to the host. */
 export const ARTIFACT_BRIDGE_SOURCE = "omnigent-slim-artifact";
@@ -138,6 +139,31 @@ export function injectArtifactBridge(html: string, state: ArtifactState = {}): s
   if (!doctype) return script + html;
   const end = doctype[0].length;
   return html.slice(0, end) + script + html.slice(end);
+}
+
+// ── Design tokens ────────────────────────────────────────────────────────────
+// omnigent-slim: every artifact gets the current Product Aviator design tokens
+// (design/tokens.json) and the app's light/dark mode as it opens, so templates,
+// views and artifacts made before a token change all follow the change. The
+// tokens are added last in the head with a high-specificity selector, so they
+// win over the copy an artifact carries for viewing outside the app.
+
+/**
+ * Add the current design tokens and theme to an artifact's HTML.
+ *
+ * @param mode The app's resolved light or dark mode.
+ */
+export function injectDesignTokens(html: string, mode: "light" | "dark"): string {
+  const values = { ...PA_TOKENS.base, ...PA_TOKENS[mode] } as Record<string, string>;
+  const decls = Object.entries(values)
+    .map(([name, value]) => `--pa-${name}:${value}`)
+    .join(";");
+  const style =
+    `<style data-pa-tokens>:root:root:root{${decls};color-scheme:${mode}}</style>` +
+    `<script>document.documentElement.setAttribute("data-theme",${JSON.stringify(mode)})</script>`;
+  const head = /<\/head\s*>/i.exec(html);
+  if (!head) return html + style;
+  return html.slice(0, head.index) + style + html.slice(head.index);
 }
 
 // ── Direct actions ───────────────────────────────────────────────────────────

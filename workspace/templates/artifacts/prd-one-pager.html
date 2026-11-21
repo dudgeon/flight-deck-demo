@@ -6,10 +6,161 @@
 <title>PRD one-pager</title>
 <meta name="description" content="Problem, users, goals and non-goals, requirements with priority, and open questions you can send back to Claude.">
 <style>
-  :root { --bg:#fff; --fg:#1d1d1f; --muted:#6e6e73; --line:#e5e5ea; --card:#f7f7f8; --accent:#2f6feb; --p0:#c62828; --p1:#ef6c00; --p2:#6e6e73; }
-  @media (prefers-color-scheme: dark) { :root { --bg:#141414; --fg:#f2f2f2; --muted:#a1a1a6; --line:#2c2c2e; --card:#1d1d1f; --accent:#6ea0ff; } }
+  /* pa-tokens:begin: generated from design/tokens.json by design/build_tokens.py. Do not edit here. */
+:root {
+  --pa-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  --pa-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --pa-r: 6px;
+  --pa-r-panel: 10px;
+  --pa-gap: 12px;
+  --pa-text: 14px;
+  --pa-text-sm: 12.5px;
+  --pa-text-title: 19px;
+  --pa-weight-title: 650;
+  --pa-tracking-title: -0.015em;
+  --pa-bg: #f4f6f9;
+  --pa-surface: #ffffff;
+  --pa-sunk: #eaeef3;
+  --pa-ink: #0f1e30;
+  --pa-ink-2: #475a70;
+  --pa-ink-3: #71829a;
+  --pa-line: #d6dde6;
+  --pa-line-strong: #b4c0ce;
+  --pa-navy: #0a223d;
+  --pa-navy-hover: #17385f;
+  --pa-on-navy: #f2f6fa;
+  --pa-chrome: #0a223d;
+  --pa-chrome-ink: #f2f6fa;
+  --pa-chrome-ink-2: #9fb4cc;
+  --pa-chrome-hover: #17385f;
+  --pa-chrome-active: #2a5486;
+  --pa-chrome-line: #17385f;
+  --pa-you: #b0237a;
+  --pa-you-soft: #f8e1ef;
+  --pa-on-you: #ffffff;
+  --pa-ok: #17794a;
+  --pa-ok-soft: #ddf1e6;
+  --pa-info: #1e6aa6;
+  --pa-info-soft: #ddebf7;
+  --pa-warn: #8d5a00;
+  --pa-warn-soft: #f9ebcf;
+  --pa-attn: #8d5a00;
+  --pa-attn-soft: #f9ebcf;
+  --pa-fail: #b3261e;
+  --pa-fail-soft: #f9dedc;
+  --pa-idle: #71829a;
+  --pa-idle-soft: #eaeef3;
+  --pa-agent: #4f46b8;
+  --pa-agent-soft: #e8e6f8;
+  --pa-author-1: #1e6aa6;
+  --pa-author-2: #8d5a00;
+  --pa-author-3: #4d6b1f;
+  --pa-author-4: #7a3f8f;
+  --pa-author-5: #1f6b66;
+  --pa-author-6: #17794a;
+  --pa-author-7: #a0462f;
+  --pa-author-8: #3d5a99;
+  --pa-shadow: #0a223d;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --pa-bg: #071526;
+    --pa-surface: #0c1e33;
+    --pa-sunk: #091a2d;
+    --pa-ink: #e6edf5;
+    --pa-ink-2: #a6b6c8;
+    --pa-ink-3: #71849a;
+    --pa-line: #1e3550;
+    --pa-line-strong: #3a5676;
+    --pa-navy: #2f64a0;
+    --pa-navy-hover: #3a73b3;
+    --pa-on-navy: #f2f6fa;
+    --pa-chrome: #0d2138;
+    --pa-chrome-ink: #f2f6fa;
+    --pa-chrome-ink-2: #8ea6c2;
+    --pa-chrome-hover: #15304f;
+    --pa-chrome-active: #1f4470;
+    --pa-chrome-line: #17304d;
+    --pa-you: #f26dc3;
+    --pa-you-soft: #3a1530;
+    --pa-on-you: #2a0a1f;
+    --pa-ok: #5bcb93;
+    --pa-ok-soft: #0f3123;
+    --pa-info: #7db7ea;
+    --pa-info-soft: #12304d;
+    --pa-warn: #e9b44c;
+    --pa-warn-soft: #362808;
+    --pa-attn: #e9b44c;
+    --pa-attn-soft: #362808;
+    --pa-fail: #ff8a80;
+    --pa-fail-soft: #3d1715;
+    --pa-idle: #71849a;
+    --pa-idle-soft: #12263b;
+    --pa-agent: #a59cff;
+    --pa-agent-soft: #211d47;
+    --pa-author-1: #7db7ea;
+    --pa-author-2: #e9b44c;
+    --pa-author-3: #a9c46a;
+    --pa-author-4: #d39be6;
+    --pa-author-5: #6fcfc6;
+    --pa-author-6: #5bcb93;
+    --pa-author-7: #f2967a;
+    --pa-author-8: #9fb3ef;
+    --pa-shadow: #000000;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --pa-bg: #071526;
+  --pa-surface: #0c1e33;
+  --pa-sunk: #091a2d;
+  --pa-ink: #e6edf5;
+  --pa-ink-2: #a6b6c8;
+  --pa-ink-3: #71849a;
+  --pa-line: #1e3550;
+  --pa-line-strong: #3a5676;
+  --pa-navy: #2f64a0;
+  --pa-navy-hover: #3a73b3;
+  --pa-on-navy: #f2f6fa;
+  --pa-chrome: #0d2138;
+  --pa-chrome-ink: #f2f6fa;
+  --pa-chrome-ink-2: #8ea6c2;
+  --pa-chrome-hover: #15304f;
+  --pa-chrome-active: #1f4470;
+  --pa-chrome-line: #17304d;
+  --pa-you: #f26dc3;
+  --pa-you-soft: #3a1530;
+  --pa-on-you: #2a0a1f;
+  --pa-ok: #5bcb93;
+  --pa-ok-soft: #0f3123;
+  --pa-info: #7db7ea;
+  --pa-info-soft: #12304d;
+  --pa-warn: #e9b44c;
+  --pa-warn-soft: #362808;
+  --pa-attn: #e9b44c;
+  --pa-attn-soft: #362808;
+  --pa-fail: #ff8a80;
+  --pa-fail-soft: #3d1715;
+  --pa-idle: #71849a;
+  --pa-idle-soft: #12263b;
+  --pa-agent: #a59cff;
+  --pa-agent-soft: #211d47;
+  --pa-author-1: #7db7ea;
+  --pa-author-2: #e9b44c;
+  --pa-author-3: #a9c46a;
+  --pa-author-4: #d39be6;
+  --pa-author-5: #6fcfc6;
+  --pa-author-6: #5bcb93;
+  --pa-author-7: #f2967a;
+  --pa-author-8: #9fb3ef;
+  --pa-shadow: #000000;
+  color-scheme: dark;
+}
+/* pa-tokens:end */
+  /* This template's own names for the shared tokens. Restyle through design/tokens.json, not here. */
+  :root { --bg:var(--pa-surface); --fg:var(--pa-ink); --muted:var(--pa-ink-2); --line:var(--pa-line); --card:var(--pa-sunk); --accent:var(--pa-navy); --p0:var(--pa-fail); --p1:var(--pa-attn); --p2:var(--pa-ink-3); }
   * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.5 -apple-system, system-ui, "Segoe UI", sans-serif; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.5 var(--pa-font); }
   main { max-width:860px; margin:0 auto; padding:32px 24px 64px; }
   h1 { font-size:26px; margin:0 0 4px; } h2 { font-size:15px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:32px 0 10px; }
   .meta { color:var(--muted); font-size:13px; }
@@ -21,7 +172,7 @@
   .pill { display:inline-block; font-size:12px; font-weight:600; padding:1px 8px; border-radius:99px; border:1px solid currentColor; }
   .P0 { color:var(--p0); } .P1 { color:var(--p1); } .P2 { color:var(--p2); }
   .q { display:flex; gap:10px; align-items:flex-start; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--line); }
-  button { font:inherit; font-size:13px; border:1px solid var(--line); background:var(--bg); color:var(--fg); border-radius:7px; padding:4px 10px; cursor:pointer; white-space:nowrap; }
+  button { font:inherit; font-size:13px; border:1px solid var(--line); background:var(--bg); color:var(--fg); border-radius:var(--pa-r); padding:4px 10px; cursor:pointer; white-space:nowrap; }
   button:hover { border-color:var(--accent); color:var(--accent); }
 </style>
 </head>
