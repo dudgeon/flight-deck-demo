@@ -958,12 +958,15 @@ def template_roots(workspace: Path | None = None) -> list[Path]:
     workspace = workspace or default_workspace()
     roots = []
     here = Path.cwd() / "templates"
+    shipped = KIT_DIR.parent.parent.parent / "workspace" / "templates"  # a demo folder has none of its own
     for root in [here, workspace / "templates"]:
         if root.is_dir() and root.resolve() not in [r.resolve() for r in roots]:
             roots.append(root)
     for folder in list_workflows(workspace).values():
         if (folder / "templates").is_dir():
             roots.append(folder / "templates")
+    if shipped.is_dir() and shipped.resolve() not in [r.resolve() for r in roots]:
+        roots.append(shipped)
     return roots
 
 
@@ -1173,6 +1176,8 @@ def cmd_register(args: argparse.Namespace) -> None:
         record["blocking"] = bool(args.blocking)
     elif args.type == "decision":
         record["status"] = "decided"
+    elif args.type == "evidence":
+        record["status"] = "recorded"
     elif args.type == "check":
         record["status"] = args.status or "unknown"
     elif args.status:

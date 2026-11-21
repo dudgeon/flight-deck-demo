@@ -4,27 +4,186 @@
  "eyebrow": "Initiative · Registers",
  "title": "{dataset.title}",
  "subtitle": "Evidence, open questions, decisions and ready checks, shared by every workflow on this initiative.",
- "records": { "type": ["evidence", "question", "decision", "check"] },
- "summary": { "count_by": "type" },
- "lanes": { "field": "type", "order": ["question", "evidence", "decision", "check"] },
- "statuses": {
-  "open": { "label": "Open", "tone": "attn" },
-  "answered": { "label": "Answered", "tone": "ok" },
-  "decided": { "label": "Decided", "tone": "ok" },
-  "superseded": { "label": "Superseded", "tone": "idle" },
-  "pass": { "label": "Pass", "tone": "ok" },
-  "fail": { "label": "Fail", "tone": "warn" },
-  "unknown": { "label": "Not checked", "tone": "idle" }
+ "records": {
+  "type": [
+   "evidence",
+   "question",
+   "decision",
+   "check"
+  ]
  },
- "tile": { "fields": [ { "field": "status", "as": "status" }, { "field": "owner" }, { "field": "source" } ] },
+ "summary": {
+  "count_by": "status"
+ },
+ "lanes": {
+  "field": "type",
+  "order": [
+   "question",
+   "evidence",
+   "decision",
+   "check"
+  ],
+  "labels": {
+   "question": "Open questions and assumptions",
+   "evidence": "Evidence",
+   "decision": "Decisions",
+   "check": "Ready checks"
+  }
+ },
+ "statuses": {
+  "open": {
+   "label": "Open",
+   "tone": "attn"
+  },
+  "answered": {
+   "label": "Answered",
+   "tone": "ok"
+  },
+  "decided": {
+   "label": "Decided",
+   "tone": "ok"
+  },
+  "superseded": {
+   "label": "Superseded",
+   "tone": "idle"
+  },
+  "pass": {
+   "label": "Pass",
+   "tone": "ok"
+  },
+  "fail": {
+   "label": "Fail",
+   "tone": "warn"
+  },
+  "unknown": {
+   "label": "Not checked",
+   "tone": "idle"
+  },
+  "recorded": {
+   "label": "Recorded",
+   "tone": "info"
+  }
+ },
+ "tile": {
+  "fields": [
+   {
+    "field": "owner"
+   },
+   {
+    "field": "source"
+   }
+  ]
+ },
  "details": {
-  "evidence": { "title": "{title}", "sections": [ { "kind": "fields", "fields": [ { "field": "source" }, { "field": "by", "as": "who" } ] }, { "kind": "text", "field": "quote", "label": "In their words" } ] },
-  "question": { "title": "{title}", "sections": [ { "kind": "fields", "fields": [ { "field": "owner" }, { "field": "blocking", "as": "check" }, { "field": "status", "as": "status" } ] }, { "kind": "text", "field": "answer", "label": "Answer" } ] },
-  "decision": { "title": "{title}", "sections": [ { "kind": "text", "field": "note", "label": "Why" }, { "kind": "fields", "fields": [ { "field": "owner" }, { "field": "supersedes" }, { "field": "superseded_by" } ] } ] },
-  "check": { "title": "{title}", "sections": [ { "kind": "fields", "fields": [ { "field": "status", "as": "status" }, { "field": "owner" } ] } ] }
+  "evidence": {
+   "title": "{title}",
+   "sections": [
+    {
+     "kind": "fields",
+     "fields": [
+      {
+       "field": "source"
+      },
+      {
+       "field": "by",
+       "as": "who"
+      }
+     ]
+    },
+    {
+     "kind": "text",
+     "field": "quote",
+     "label": "In their words"
+    }
+   ]
+  },
+  "question": {
+   "title": "{title}",
+   "sections": [
+    {
+     "kind": "fields",
+     "fields": [
+      {
+       "field": "owner"
+      },
+      {
+       "field": "blocking",
+       "as": "check"
+      },
+      {
+       "field": "status",
+       "as": "status"
+      }
+     ]
+    },
+    {
+     "kind": "text",
+     "field": "answer",
+     "label": "Answer"
+    }
+   ]
+  },
+  "decision": {
+   "title": "{title}",
+   "sections": [
+    {
+     "kind": "text",
+     "field": "note",
+     "label": "Why"
+    },
+    {
+     "kind": "fields",
+     "fields": [
+      {
+       "field": "owner"
+      },
+      {
+       "field": "supersedes"
+      },
+      {
+       "field": "superseded_by"
+      }
+     ]
+    }
+   ]
+  },
+  "check": {
+   "title": "{title}",
+   "sections": [
+    {
+     "kind": "fields",
+     "fields": [
+      {
+       "field": "status",
+       "as": "status"
+      },
+      {
+       "field": "owner"
+      }
+     ]
+    }
+   ]
+  }
  },
  "actions": [
-  { "id": "answer", "label": "Answer in chat", "tone": "primary", "when": { "type": "question", "status": "open" }, "prompt": "About question {id} ({title}): " },
-  { "id": "supersede", "label": "Replace this decision", "when": { "type": "decision", "status": "decided" }, "prompt": "Replace decision {id} ({title}) with: " }
+  {
+   "id": "answer",
+   "label": "Answer in chat",
+   "tone": "primary",
+   "when": {
+    "type": "question",
+    "status": "open"
+   },
+   "prompt": "About question {id} ({title}): "
+  },
+  {
+   "id": "supersede",
+   "label": "Replace this decision",
+   "when": {
+    "type": "decision",
+    "status": "decided"
+   },
+   "prompt": "Replace decision {id} ({title}) with: "
+  }
  ]
 }

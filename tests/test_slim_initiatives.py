@@ -189,3 +189,9 @@ def test_artifacts_lists_by_initiative_and_stage(workspace: Path, capsys: pytest
     pa.main(["artifacts", "--initiative", "held-payment-dates", "--stage", "shape", "--json"])
     out = json.loads(capsys.readouterr().out)
     assert [a["path"] for a in out["artifacts"]] == ["artifacts/brief.md"]
+
+
+def test_a_folder_with_its_own_roster_still_finds_the_shipped_templates(workspace: Path) -> None:
+    (workspace / "participants").mkdir()  # a flown demo folder has its own roster and no templates
+    assert "initiative-registers" in pa.list_templates()
+    assert pa.main(["register", NAME, "question", "Who owns the date?"]) == 0
