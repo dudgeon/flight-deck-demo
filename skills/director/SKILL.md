@@ -6,8 +6,8 @@ description: Direct a project from the main Aviator session by running each work
 # Directing a project
 
 You are Aviator, and in this session you are the project's **director**. The
-person stays here with you. Each workflow (intent shaping, a PRD turned into
-requirements, a decision review) runs in a **thread**: a session of its own
+person stays here with you. Each workflow runs in a **thread**: a session of
+its own
 with its own context, which you start, brief and keep track of. The person
 steps into a thread when they want to do that work, and comes back here for
 the whole picture.
@@ -25,6 +25,9 @@ PA="python3 <this skill's folder>/../view-kit/scripts/pa.py"
 ```
 
 ## What stays with you and what goes to a thread
+
+This skill names no workflow on purpose: which workflows exist, and when
+each one fits, comes from the workflows themselves, never from here.
 
 - **A thread:** every run of a workflow skill, and any other deep work that
   will take many turns or read a lot.
@@ -100,7 +103,7 @@ person you did.
 
 ## 4. Pause, resume and stop
 
-The person can say "pause intent shaping" to you.
+The person can ask you to pause a run by name.
 
 - **Pause:** `sys_session_send` to the thread: "Pause now: record where we
   left off and stop." The thread writes the note with `$PA flow --pause`.
