@@ -58,6 +58,7 @@ back.
   Pictures for people and agents, and configuration that travels with the
   repo (PR 15, D-74, D-75). `pa draft|publish|history|uses`.
 - **In an open PR.** "◆ Fly this" on a scenario page (PR 17, see below).
+  "Send to repo" for Hangar edits on a git copy (D-113).
 - **Next.** Builder skills for workflows and skills (`build-workflow`,
   `build-skill`) beyond `build-person` and `scenario-builder`.
 - **Open.** Left for later by design: sharing a workflow or scenario with

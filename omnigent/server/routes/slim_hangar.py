@@ -30,8 +30,11 @@ import json
 import logging
 import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
+from datetime import datetime
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -538,7 +541,169 @@ def repo_status() -> dict[str, Any]:
         with contextlib.suppress(ValueError):
             path = (top / path).resolve().relative_to(root.resolve()).as_posix()
         files.append(path)
-    return {"git": True, "uncommitted": files[:100], "count": len(files)}
+    return {
+        "git": True,
+        "uncommitted": files[:100],
+        "count": len(files),
+        "sent": _last_send(root),
+    }
+
+
+# ------------------------------------------------------------ send to repo
+#
+# D-113: on a git copy of the app (the Mac mini), "Send to repo" commits the
+# published configuration to a new branch and pushes it, then opens a pull
+# request with `gh` when it is installed (otherwise it hands back the link to
+# open one). The commit is built in a throwaway index from HEAD, so the
+# checkout, its branch and anything else in the working tree are left as they
+# are; once the pull request merges, pulling main brings the same files back.
+# Only a person's press does this: nothing is sent on its own, and a ZIP copy
+# (no git, the work Mac) never shows the button.
+
+_SENT = ".hangar/sent.json"
+
+
+def _last_send(root: Path) -> dict[str, Any] | None:
+    sent = _json(root / _SENT)
+    return sent if isinstance(sent, dict) else None
+
+
+def _git(args: list[str], cwd: Path, env: dict[str, str], timeout: int = 20) -> str:
+    try:
+        done = subprocess.run(
+            ["git", *args],
+            cwd=cwd,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as err:
+        raise HTTPException(
+            status_code=422, detail=f"git {args[0]} took too long; nothing was sent"
+        ) from err
+    except OSError as err:
+        raise HTTPException(status_code=422, detail="git is not installed here") from err
+    if done.returncode != 0:
+        lines = (done.stderr or done.stdout).strip().splitlines() or ["no reason given"]
+        raise HTTPException(status_code=422, detail=f"git {args[0]} failed: {lines[-1]}")
+    return done.stdout.strip()
+
+
+def _compare_url(remote: str, base: str, branch: str) -> str | None:
+    """The page that opens a pull request, for a GitHub remote."""
+    m = re.fullmatch(
+        r"(?:https://(?:[^@/]+@)?github\.com/|git@github\.com:)([^/]+/[^/]+?)(?:\.git)?/?", remote
+    )
+    return f"https://github.com/{m.group(1)}/compare/{base}...{branch}?expand=1" if m else None
+
+
+def send_to_repo(summary: str = "") -> dict[str, Any]:
+    root = workspace_dir()
+    env = {**os.environ, "GIT_TERMINAL_PROMPT": "0"}
+    top = Path(_git(["rev-parse", "--show-toplevel"], root, env))
+    head = _git(["rev-parse", "HEAD"], top, env)
+    rel = root.resolve().relative_to(top.resolve()).as_posix()
+    specs = [
+        spec
+        for spec in (f"{rel}/{t}" if rel != "." else t for t in _TRAVELS)
+        # A folder git has never seen and that is not on disk would fail `git add`.
+        if (top / spec).exists() or _git(["ls-tree", "--name-only", "HEAD", spec], top, env)
+    ]
+    with tempfile.TemporaryDirectory() as tmp:
+        index = {**env, "GIT_INDEX_FILE": str(Path(tmp) / "index")}
+        _git(["read-tree", "HEAD"], top, index)
+        _git(["add", "-A", "--", *specs], top, index, timeout=60)
+        tree = _git(["write-tree"], top, index)
+        if tree == _git(["rev-parse", "HEAD^{tree}"], top, env):
+            raise HTTPException(
+                status_code=422, detail="every published file is already in the repo"
+            )
+        last = _last_send(root) or {}
+        if last.get("tree") == tree:
+            raise HTTPException(
+                status_code=422,
+                detail=f"already sent as {last.get('branch')}; merge that first",
+            )
+        changed = _git(["diff-tree", "-r", "--name-status", "HEAD", tree], top, env).splitlines()
+        who = {}
+        if not _git_config(top, env, "user.email"):
+            who = {
+                "GIT_AUTHOR_NAME": "Flight Deck Hangar",
+                "GIT_AUTHOR_EMAIL": "hangar@flight-deck.local",
+                "GIT_COMMITTER_NAME": "Flight Deck Hangar",
+                "GIT_COMMITTER_EMAIL": "hangar@flight-deck.local",
+            }
+        title = f"Hangar: {summary.strip()}" if summary.strip() else "Hangar: published changes"
+        body = "Published in the Hangar and sent with Send to repo (D-113).\n\n" + "\n".join(
+            f"- {line.replace(chr(9), ' ')}" for line in changed[:200]
+        )
+        commit = _git(
+            ["commit-tree", tree, "-p", head, "-m", f"{title}\n\n{body}"], top, {**env, **who}
+        )
+    stamp = datetime.now().astimezone().strftime("%Y-%m-%d-%H%M%S")
+    branch = f"hangar/{stamp}"
+    remote = _git(["remote"], top, env).splitlines()
+    name = "origin" if "origin" in remote else (remote[0] if remote else "")
+    if not name:
+        raise HTTPException(status_code=422, detail="this copy has no remote to send to")
+    _git(["push", name, f"{commit}:refs/heads/{branch}"], top, env, timeout=120)
+    base = "main"
+    with contextlib.suppress(HTTPException):
+        base = _git(["symbolic-ref", "--short", f"refs/remotes/{name}/HEAD"], top, env).split(
+            "/", 1
+        )[-1]
+    url = None
+    if shutil.which("gh"):
+        with contextlib.suppress(OSError, subprocess.SubprocessError):
+            made = subprocess.run(
+                [
+                    "gh",
+                    "pr",
+                    "create",
+                    "--head",
+                    branch,
+                    "--base",
+                    base,
+                    "--title",
+                    title,
+                    "--body",
+                    body,
+                ],
+                cwd=top,
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=60,
+                check=False,
+            )
+            if made.returncode == 0 and made.stdout.strip().startswith("https://"):
+                url = made.stdout.strip().splitlines()[-1]
+    remote_url = ""
+    with contextlib.suppress(HTTPException):
+        remote_url = _git(["remote", "get-url", name], top, env)
+    sent = {
+        "branch": branch,
+        "commit": commit,
+        "tree": tree,
+        "files": len(changed),
+        "at": datetime.now().astimezone().isoformat(timespec="seconds"),
+        "pull_request": url,
+        "open_pr": None if url else _compare_url(remote_url, base, branch),
+        "summary": summary.strip(),
+    }
+    target = root / _SENT
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(sent, indent=1) + "\n", encoding="utf-8")
+    return sent
+
+
+def _git_config(top: Path, env: dict[str, str], key: str) -> str:
+    try:
+        return _git(["config", key], top, env)
+    except HTTPException:
+        return ""
 
 
 # ------------------------------------------------------------------ building
@@ -866,6 +1031,13 @@ def create_slim_hangar_router(*, auth_provider: AuthProvider | None = None) -> A
     async def get_template(request: Request, template: str) -> HTMLResponse:
         require_user(request, auth_provider)
         return HTMLResponse(read_template(template))
+
+    @router.post("/slim/hangar/repo/send")
+    async def post_send_to_repo(
+        request: Request, body: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        require_user(request, auth_provider)
+        return send_to_repo(str((body or {}).get("summary") or "")[:120])
 
     @router.get("/slim/hangar/drafts/person/{pid}")
     async def get_draft(request: Request, pid: str) -> dict[str, Any]:
