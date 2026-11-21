@@ -2,7 +2,8 @@ import type { Branding } from "./capabilities";
 import { useServerInfo } from "./CapabilitiesContext";
 
 export const DEFAULT_APP_NAME = "Omnigent";
-export const DEFAULT_HEADING = "What should we build?";
+// omnigent-slim: no hero heading by default; the logo stands alone.
+export const DEFAULT_HEADING = "";
 
 const EMPTY_BRANDING: Branding = {
   app_name: null,
