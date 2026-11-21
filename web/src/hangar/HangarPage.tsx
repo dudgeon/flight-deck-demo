@@ -38,6 +38,8 @@ import {
   BUILD_STEPS,
   aviatorPrompt,
   builderSessionLink,
+  draftAvatarUrl,
+  useAvatarActions,
   buildPrompts,
   type CastKind,
   type CastSet,
@@ -251,10 +253,16 @@ function Health({ problems, ok = "Passes checks" }: { problems: string[]; ok?: s
 function Mark({
   person,
   small,
+  src,
 }: {
-  person: Pick<HangarPerson, "kind" | "stand_in" | "initials" | "name">;
+  person: Pick<HangarPerson, "kind" | "stand_in" | "initials" | "name"> & {
+    avatar?: string | null;
+  };
   small?: boolean;
+  /** A picture to show instead of the live one (a draft's). */
+  src?: string | null;
 }) {
+  const picture = src === undefined ? person.avatar : src;
   return (
     <span
       aria-hidden="true"
@@ -263,9 +271,14 @@ function Mark({
         person.kind === "person" && "person",
         person.stand_in && "stand",
         small && "sm",
+        picture && "pic",
       )}
     >
-      {person.initials || participantSlug(person.name).slice(0, 2).toUpperCase()}
+      {picture ? (
+        <img src={picture} alt="" />
+      ) : (
+        person.initials || participantSlug(person.name).slice(0, 2).toUpperCase()
+      )}
     </span>
   );
 }
@@ -312,6 +325,29 @@ const byId = <T extends { id: string }>(items: T[]) =>
   new Map(items.map((item) => [item.id, item]));
 
 // ----------------------------------------------------------------- overview
+
+/** Published config that is not committed yet would be lost with a fresh download (D-75). */
+function RepoNote({ hangar }: { hangar: Hangar }) {
+  const repo = hangar.repo;
+  if (!repo?.git || repo.uncommitted.length === 0) return null;
+  const count = repo.count ?? repo.uncommitted.length;
+  return (
+    <Section title="Not in the repo yet">
+      <p className="lab">
+        {count} published file{count === 1 ? " is" : "s are"} in the workspace but not committed.
+        Commit them so they travel with the repo.
+      </p>
+      <ul className="plain" data-testid="hangar-uncommitted">
+        {repo.uncommitted.slice(0, 8).map((path) => (
+          <li key={path} className="path">
+            workspace/{path}
+          </li>
+        ))}
+        {count > 8 && <li className="lab">and {count - 8} more</li>}
+      </ul>
+    </Section>
+  );
+}
 
 function Overview({ hangar }: { hangar: Hangar }) {
   const failing = (items: { problems: string[] }[]) =>
@@ -418,14 +454,18 @@ function Overview({ hangar }: { hangar: Hangar }) {
       <div className="grid2">
         <Section title="Build something">
           <p className="sub">
-            Each build is a guided session with Aviator, on a draft nobody else sees until you
-            publish it. You can stop and come back.
+            Everything is edited on its own page, on a draft nobody else sees until you publish it,
+            with Aviator beside you when you want help. You can stop and come back.
           </p>
           <div className="row">
             <NewPersonButton />
-            <span className="lab">Workflows, scenarios and skills come next.</span>
+            <NewScenarioButton hangar={hangar} />
+            <Link className="hangar-btn" to={hangarPath.shelf("workflows")}>
+              Change a workflow
+            </Link>
           </div>
         </Section>
+        <RepoNote hangar={hangar} />
         <Section title="In progress">
           {hangar.drafts.length + hangar.folder_drafts.length === 0 ? (
             <p className="lab">No drafts.</p>
@@ -1779,6 +1819,64 @@ function CastPicker({
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
+/** A picture for them, picked from a file and copied into the draft (D-74). */
+function AvatarPicker({
+  draft,
+  person,
+  src,
+}: {
+  draft: HangarDraft;
+  person: Pick<HangarPerson, "kind" | "stand_in" | "initials" | "name">;
+  src: string | null;
+}) {
+  const input = useRef<HTMLInputElement>(null);
+  const { set, clear } = useAvatarActions();
+  return (
+    <div className="field">
+      <span>Picture</span>
+      <div className="avatarpick">
+        <Mark person={person} src={src} />
+        <input
+          ref={input}
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          data-testid="hangar-avatar-file"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) set.mutate({ id: draft.id, file });
+            e.target.value = "";
+          }}
+        />
+        <button
+          type="button"
+          className="hangar-btn"
+          onClick={() => input.current?.click()}
+          disabled={set.isPending}
+          data-testid="hangar-avatar-pick"
+        >
+          {src ? "Change picture…" : "Choose a picture…"}
+        </button>
+        {src && (
+          <button
+            type="button"
+            className="hangar-btn quiet"
+            onClick={() => clear.mutate(draft.id)}
+            disabled={clear.isPending}
+          >
+            Remove
+          </button>
+        )}
+        <span className="lab">
+          {set.isPending
+            ? "Copying…"
+            : "PNG, JPEG, WebP or GIF under 2 MB. It is copied into the repo when you publish."}
+        </span>
+      </div>
+      <ActionError error={set.error ?? clear.error} />
+    </div>
+  );
+}
+
 function PersonEditor({ hangar, draft }: { hangar: Hangar; draft: HangarDraft }) {
   const navigate = useNavigate();
   const { edit, publish, discard } = useHangarActions();
@@ -1855,7 +1953,7 @@ function PersonEditor({ hangar, draft }: { hangar: Hangar; draft: HangarDraft })
     <div className={cn("editor", pinned && "with-aviator")} data-testid="hangar-editor">
       <Crumb shelf="people" label={form.name || "New person or agent"} />
       <div className="row">
-        <Mark person={person} />
+        <Mark person={person} src={draft.person?.avatar ? draftAvatarUrl(draft) : null} />
         <h1>{form.name || "Unnamed"}</h1>
         <span className="chip build">{isNew ? "New" : "Change"} · draft</span>
         {draft.problems.length > 0 ? (
@@ -1952,6 +2050,11 @@ function PersonEditor({ hangar, draft }: { hangar: Hangar; draft: HangarDraft })
                 data-testid="hangar-field-call"
               />
             </label>
+            <AvatarPicker
+              draft={draft}
+              person={person}
+              src={draft.person?.avatar ? draftAvatarUrl(draft) : null}
+            />
           </section>
           <section className="card editing">
             <div className="row">

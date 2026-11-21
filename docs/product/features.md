@@ -360,6 +360,15 @@ session to change a role or a brief clunky and opaque, and could not see how
 to give someone skills or put them in a workflow. Direct edits handle the
 simple changes; Aviator is there for rewrites, without leaving the page.
 
+**Pictures and the repo (D-74, D-75).** The person editor has a Picture field:
+choose a file and it is copied into the draft, then into
+`workspace/participants/avatars/` on Publish, and shown instead of the
+initials in the Hangar, on participant turns and in the Session panel. The
+Overview lists published files that are not committed yet, because everything
+built in the Hangar is meant to travel with the repo. *Why:* Geoff wants
+recognisable faces for the cast, and wants the cast, workflows and scenarios
+to move with the repo to the work machine.
+
 **Scenario and workflow builders (slice 3, D-71 to D-73).** Every scenario
 and workflow page has Edit, Duplicate and Remove (for a shipped workflow, "Edit
 a copy"), and the Scenarios shelf has "New scenario". The draft opens as an

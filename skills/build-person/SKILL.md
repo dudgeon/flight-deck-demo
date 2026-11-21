@@ -84,6 +84,11 @@ $PA draft person <id> --cast workflows=document-review,decision-review \
 The checks block taking someone out of a scenario whose script has them
 speak, and say when a scenario is ticked but its workflow is not.
 
+**Picture.** The user picks a picture on the person's Hangar page (Picture,
+under Who they are); it is copied into the draft and into
+`participants/avatars/` on publish. You can't pick one for them; say where the
+button is if they ask.
+
 **Skills.** A person or agent can bring skills (from the Skills shelf): the
 session that plays them is told to use them. Ask if any fit, then
 `--set skills="frontend-design, prd-to-requirements"`.

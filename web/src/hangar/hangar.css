@@ -884,3 +884,26 @@
 .hangar .castpick.single {
   grid-template-columns: minmax(0, 1fr);
 }
+.hangar .mark.pic {
+  overflow: hidden;
+  padding: 0;
+}
+.hangar .mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+.hangar .avatarpick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.hangar .avatarpick .mark {
+  width: 48px;
+  height: 48px;
+  font-size: 15px;
+}
+.hangar .avatarpick input[type="file"] {
+  display: none;
+}

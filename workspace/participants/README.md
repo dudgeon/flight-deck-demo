@@ -31,6 +31,8 @@ Everything below the second line of dashes is theirs.
 | `stand_in` | `true` when an agent is playing a real person. Required for every `person`. The chat always labels them "stand-in". |
 | `backing` | How they answer: `session` or `script`. See below. |
 | `call_for` | When the agent should think of them. This is what "the risk agent" or "someone from design" is matched against. |
+| `skills` | Skills the session playing them is told to use, comma-separated. Optional. |
+| `avatar` | Their picture, `avatars/<id>.png` (or .jpg, .webp, .gif) in this folder. Optional; set it from the Hangar, which copies the file in. |
 
 The file name is their id: `mara-okafor.md` is `mara-okafor`.
 
