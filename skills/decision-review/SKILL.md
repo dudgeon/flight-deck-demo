@@ -32,7 +32,7 @@ Pick a slug and start the dataset and the view:
 
 ```bash
 $PA init data/<slug>-decisions.json --title "<what the decisions are about>" --meta source="<where you looked>"
-$PA flow data/<slug>-decisions.json --scenario SKILL_DIR
+$PA flow data/<slug>-decisions.json --scenario SKILL_DIR --session <this session's id, from sys_session_get_info>
 $PA render SKILL_DIR/views/queue.json --data data/<slug>-decisions.json --out artifacts/<slug>-decisions.html
 ```
 

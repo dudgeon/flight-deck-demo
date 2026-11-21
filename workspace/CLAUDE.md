@@ -29,6 +29,23 @@ changes. Skills such as `prd-to-requirements` and
 `requirements-to-dependencies` are built this way, and `scenario-builder`
 makes new ones.
 
+## Work in flight
+
+A workflow working on one subject is a run, and the project page lists every
+run under "In flight" so the user can leave and come back. That list is only
+as true as what you record with the `pa flow` command (see "Runs" in the
+`view-kit` skill):
+
+- When the user sets a workflow aside in any words ("pause this", "let me
+  come back to that later"), record it at once with `--pause --note "<where
+  we left off>"`, say so in one line, and stop working on it. Do not ask
+  first.
+- When the user asks what is in flight or where they left off, or asks to
+  resume, run `pa runs`, read the note and the dataset, mark it `--resume`
+  and carry on from there. Do not start the workflow over.
+- When the user abandons a workflow, confirm once, then `--stop`.
+- A question on the side is not a pause. Answer it and carry on.
+
 ## Other people and agents
 
 `participants/` is the roster of other agents and people who can join a

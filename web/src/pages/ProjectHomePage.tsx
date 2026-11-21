@@ -12,6 +12,7 @@ import {
   PROJECT_PANEL_SESSION_PARAM,
   projectSessionPanelSearch,
 } from "@/projectHome/projectHomeNavigation";
+import { ProjectInFlight } from "@/projectHome/ProjectInFlight";
 import { ProjectKanbanBoard } from "@/projectHome/ProjectKanbanBoard";
 import { ProjectSessionPanel } from "@/projectHome/ProjectSessionPanel";
 import { NewChatLandingScreen } from "@/shell/NewChatDialog";
@@ -84,14 +85,18 @@ export function ProjectHomePage() {
         extraTop={isMobile ? "0.75rem" : "4rem"}
         extraBottom="0px"
       >
-        <ProjectKanbanBoard
-          projectName={projectName}
-          searchQuery={searchQuery}
-          quickViewHref={isMobile ? undefined : projectSessionPanelSearch}
-          selectedSessionId={panelSessionId}
-          onCloseQuickView={closePanel}
-          overlayClearance={composerOpen ? "10rem" : undefined}
-        />
+        {/* omnigent-slim: the project's runs sit above its sessions (D-96). */}
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <ProjectInFlight projectName={projectName} />
+          <ProjectKanbanBoard
+            projectName={projectName}
+            searchQuery={searchQuery}
+            quickViewHref={isMobile ? undefined : projectSessionPanelSearch}
+            selectedSessionId={panelSessionId}
+            onCloseQuickView={closePanel}
+            overlayClearance={composerOpen ? "10rem" : undefined}
+          />
+        </div>
         {panelSessionId !== null && (
           <aside
             aria-label="Session quick view"

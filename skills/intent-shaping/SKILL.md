@@ -50,7 +50,7 @@ area in the framework:
 
 ```bash
 $PA init data/<slug>-intent.json --title "<the idea, as the user said it>" --meta framework="<framework name>" --meta depth="0" --meta target="3 · Shaped"
-$PA flow data/<slug>-intent.json --scenario SKILL_DIR
+$PA flow data/<slug>-intent.json --scenario SKILL_DIR --session <this session's id, from sys_session_get_info>
 $PA add data/<slug>-intent.json --json '[{"id":"AR-1","type":"area","title":"Customer","required_from":1,"depth":1,"depth_name":"Spark","status":"ready","by":"you","statement":"...","next":"<the framework line for depth 2>","question":"..."}]'
 $PA render SKILL_DIR/views/map.json --data data/<slug>-intent.json --out artifacts/<slug>-intent.html
 ```

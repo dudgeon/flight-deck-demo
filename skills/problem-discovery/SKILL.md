@@ -36,7 +36,7 @@ and say at the end whether the sources support it.
 
 ```bash
 $PA init data/<slug>-problems.json --title "<what the discovery is about>" --meta source="<the folder or files>"
-$PA flow data/<slug>-problems.json --scenario SKILL_DIR
+$PA flow data/<slug>-problems.json --scenario SKILL_DIR --session <this session's id, from sys_session_get_info>
 $PA add data/<slug>-problems.json --json '[{"id":"S-1","type":"source","kind":"Interview","title":"Interview: mobile dog groomer","who":"Sole trader, 3 weeks in","size":"38 minutes","path":"context/interviews/01-groomer.md","status":"queued"}]'
 $PA render SKILL_DIR/views/sources.json --data data/<slug>-problems.json --out artifacts/<slug>-sources.html
 ```
