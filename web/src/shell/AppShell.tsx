@@ -139,6 +139,11 @@ import {
 } from "@/hooks/useSessionLiveness";
 import { useResizableInlinePanel } from "@/hooks/useResizableInlinePanel";
 import { useResizableSidebar } from "@/hooks/useResizableSidebar";
+import {
+  REVIEW_CHAT_MIN_PX,
+  REVIEW_RAIL_MIN_PX,
+  useReviewPanelOpen,
+} from "./review/reviewRailState";
 import { ChatHeader } from "./ChatHeader";
 import { ProjectHomeHeaderActions, ProjectHomeTitle } from "@/projectHome/ProjectHomeHeader";
 import { projectNameFromHomePath } from "@/projectHome/projectHomeNavigation";
@@ -418,10 +423,15 @@ function AppShellImpl() {
   // 240px (CommentsPanel default/min width) + 480px comfortable code viewer
   // width. The panel can be dragged wider, but this floor keeps it usable at
   // its default; widening past it is the user's choice via the inline handle.
+  // omnigent-slim: an open Review panel beside a markdown document widens the
+  // rail the same way, taking the room from chat (see review/reviewRailState.ts).
+  const reviewPanelOpen = useReviewPanelOpen();
   const inlinePanelMinWidth =
     (rightRailTab === "files" || rightRailTab === "changes") && fileViewerCommentsOpen
-      ? 720
-      : undefined;
+      ? Math.max(720, reviewPanelOpen ? REVIEW_RAIL_MIN_PX : 0)
+      : reviewPanelOpen
+        ? REVIEW_RAIL_MIN_PX
+        : undefined;
   const [searchParams, setSearchParams] = useSearchParams();
   const agentsPanelRequested = searchParams.get("panel") === "agents";
   const [sidebarOpen, setSidebarOpen] = useCanvasSidebar(canvasMode, initialSidebarOpen);
@@ -516,6 +526,34 @@ function AppShellImpl() {
   // Reads the same module-level store Sidebar drives, so the rail's ceiling
   // tracks the live sidebar width (including a drag) rather than a guess.
   const { width: sidebarWidth } = useResizableSidebar();
+
+  // omnigent-slim: when a Review panel opens and chat would be squeezed below
+  // its minimum, collapse the left sidebar; reopen it when the panel closes,
+  // unless the person changed it meanwhile.
+  const reviewCollapsedSidebarRef = useRef(false);
+  const reviewWasOpenRef = useRef(false);
+  useEffect(() => {
+    const wasOpen = reviewWasOpenRef.current;
+    reviewWasOpenRef.current = reviewPanelOpen;
+    if (mobileViewport) return;
+    if (reviewPanelOpen && !wasOpen) {
+      const chatRoom =
+        window.innerWidth - (sidebarOpen ? sidebarWidth : 0) - REVIEW_RAIL_MIN_PX - 8;
+      if (sidebarOpen && chatRoom < REVIEW_CHAT_MIN_PX) {
+        reviewCollapsedSidebarRef.current = true;
+        setSidebarOpen(false);
+      }
+    } else if (!reviewPanelOpen && wasOpen && reviewCollapsedSidebarRef.current) {
+      reviewCollapsedSidebarRef.current = false;
+      if (!sidebarOpen) setSidebarOpen(true);
+    }
+    // Only the panel opening or closing decides; a sidebar the person reopens stays open.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reviewPanelOpen]);
+  useEffect(() => {
+    // The person reopened the sidebar themselves: don't reopen or collapse it for them later.
+    if (sidebarOpen) reviewCollapsedSidebarRef.current = false;
+  }, [sidebarOpen]);
   // ?sidebar=open surfaces the session list on phone-width shells where the
   // sidebar is closed by default — the destination for a "N sessions need
   // your attention" notification tap, which would otherwise land on a bare

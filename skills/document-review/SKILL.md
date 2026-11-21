@@ -76,7 +76,12 @@ For each one, follow the `participants` skill. In what you ask them, include:
   and the record shape from step 2, with `by` set to their id and ids that
   start with their initials (for example `RR-01`);
 - that a finding only the user can settle gets `status: needs-you` and a
-  `question`.
+  `question`;
+- that they may also comment on passages and suggest wording in the document
+  itself with `pa review comment` and `pa review suggest` (see the
+  `document-collaboration` skill), but findings still go in the dataset.
+  If the document is in `context/`, first copy it to `artifacts/` and point
+  them at the copy: nobody changes `context/`.
 
 Pass on each reply in a participant block. The findings view redraws itself
 when they add records. When a participant asks the user something, stop and
@@ -90,7 +95,7 @@ wait for the user; send their answer back to that participant.
 | "I push back on finding F-06 ... raised by mara-okafor. My note: ..." (`push-back`) | Set `status=returned` and `return_note`. If someone else raised it, send them the note and pass on their answer. If you raised it, answer yourself. |
 | "About finding F-03 ...: <answer>" (`answer`) | Set `answer`, clear `question` with `question=null`, set `status=ready`. Tell whoever raised it. |
 | "Accept every finding that is raised." (`accept-all`) | The same request in words, from a host without direct actions. Set `status=reviewed` where `status=ready`. |
-| "Apply the accepted findings ..." (`apply`) | Propose the edits to the document for every finding with `status=reviewed`, as a list of before and after passages. Change the document only when the user says to, and never a file in `context/`: write the revised copy to `artifacts/`. |
+| "Apply the accepted findings ..." (`apply`) | For every finding with `status=reviewed`, add the edit as a suggestion with `$PA review suggest <doc> --by aviator ... --note "<finding id>"`, one line at a time, so the user accepts or rejects each in the Review panel. A document in `context/` is never changed: copy it to `artifacts/` first and suggest in the copy. Then open the document and say how many suggestions are waiting. |
 
 Never set `reviewed` yourself. Accepting is the user's call.
 
