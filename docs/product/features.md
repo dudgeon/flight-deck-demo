@@ -178,6 +178,17 @@ field skips records that lack it.
 the problem-discovery demo (held payments with no release date), so the two
 can be shown as one story, but neither depends on the other.
 
+**Live run, 21 Nov.** Delivery status was run end to end with a real agent
+from a plan typed into the chat: it built the plan view, called the owners,
+and wrote the update in about a minute and a half (about a dollar). The
+owners' stand-ins had nothing to say about status, and the agent reported
+exactly that ("no owner has confirmed it") instead of inventing dates, which
+is the behaviour the skill asks for. It also showed a gap in the demo, not
+the product: participants only know what their file says, so a convincing
+live demo needs each scenario to give its cast the facts of that scenario.
+That is what the scenario folder split (D-42) is for. Until then Cards
+Platform's script carries a load-test answer.
+
 ## Intent shaping (a kind of work) and frameworks
 
 **What it is for.** Most ideas arrive as a solution in one sentence. Intent
@@ -305,17 +316,6 @@ for what the person did.
 dark value per token, so it can feed any styling system. The contract that
 matters is the set of token names and what each means (in the skill), not the
 values.
-
-**Live run, 21 Nov.** Delivery status was run end to end with a real agent
-from a plan typed into the chat: it built the plan view, called the owners,
-and wrote the update in about a minute and a half (about a dollar). The
-owners' stand-ins had nothing to say about status, and the agent reported
-exactly that ("no owner has confirmed it") instead of inventing dates, which
-is the behaviour the skill asks for. It also showed a gap in the demo, not
-the product: participants only know what their file says, so a convincing
-live demo needs each scenario to give its cast the facts of that scenario.
-That is what the scenario folder split (D-42) is for. Until then Cards
-Platform's script carries a load-test answer.
 
 ## The Hangar (builder mode): designed, not yet built
 

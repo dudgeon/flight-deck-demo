@@ -16,7 +16,7 @@ in the same pull request.
 | [Design language and tokens](#design-language-and-tokens) | Built; three colors and two other questions waiting on Geoff |
 | [Collaborative markdown editor](#collaborative-markdown-editor) | Built; two known gaps |
 | [Participants and personas](#participants-and-personas) | Built, scripted and live; some gaps |
-| [The four kinds of work](#the-four-kinds-of-work) | Built as previews; none run live yet |
+| [The four kinds of work](#the-four-kinds-of-work) | Built as previews; one run live so far |
 | [Work-Mac setup from a ZIP](#work-mac-setup-from-a-zip) | In progress, not merged |
 | [Canvas tools across several tabs](#canvas-tools-across-several-tabs) | Done |
 | [Dock launcher](#dock-launcher) | Done |
@@ -165,11 +165,16 @@ Their invented material chains into one story, and each also stands alone.
   decisions put to him (D-33). The intent framework is a swappable markdown
   file, `workspace/frameworks/intent.md` (D-34).
 - **Partial.**
-  - None of the four has been run live with an agent yet.
+  - Only delivery status has been run live with an agent (once, 21 Nov,
+    about 90 seconds). It worked, and showed that a participant only knows
+    what their file says, so a convincing live demo needs each scenario to
+    give its cast that scenario's facts (the D-42 scenario folders). Until
+    then Cards Platform's script carries a load-test answer. Decision
+    review, problem discovery and intent shaping have not been run live.
   - The intent framework is a notional draft written by us. Geoff will
     correct it after seeing it run (walkthrough question 5 above).
-- **Next.** Run each one live in the app and fix what breaks, starting with
-  decision review (it reuses the most). Then let Geoff react to intent
+- **Next.** Run the other three live in the app and fix what breaks,
+  starting with decision review (it reuses the most). Then let Geoff react to intent
   shaping live, and swap in the real company framework when there is one.
 - **Open.** The framework's shape (question 5 in the design walkthrough).
 - **Read.** D-31, D-33, D-34; features.md, one section per kind of work;
