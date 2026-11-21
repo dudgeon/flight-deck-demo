@@ -247,3 +247,14 @@ the product: participants only know what their file says, so a convincing
 live demo needs each scenario to give its cast the facts of that scenario.
 That is what the scenario folder split (D-42) is for. Until then Cards
 Platform's script carries a load-test answer.
+
+## The Hangar (builder mode): designed, not yet built
+
+**Intent.** Defining people, workflows, views and scenarios should happen in
+the app, by product managers, without being able to break what others use.
+The app therefore has two modes that cannot be mistaken for each other:
+flying (using it) and the Hangar (defining what others fly). Building is
+itself a guided workflow, drafts are the only thing ever edited, and Publish
+is a strict gate with a way back (D-39 to D-47).
+
+**Where.** The full design is in `hangar.md`.

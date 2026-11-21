@@ -179,6 +179,60 @@ over `frontend-design` where they disagree. Small all-caps mono labels are
 dropped in favor of sentence case, following `frontend-design`. *Built ahead of
 the color choices because it is the same whichever colors are picked.*
 
+## The Hangar (builder mode)
+
+Design and mockup: https://claude.ai/artifact/9M4JGs5WuxigJz1jiJ9QVr. Spec:
+`hangar.md`.
+
+**D-39 · 2026-11-21 · Geoff.** The app has two modes. "Flying" is using
+Product Aviator as an end user. The "Hangar" is where the people, workflows,
+views, scenarios and skills that others fly are defined. *Those are the names
+in the UI: "Open in Hangar", "Back to flying".*
+
+**D-40 · 2026-11-21 · Geoff.** In the Hangar the whole frame changes, not
+only a band: paper sidebar with a dashed edge, drafting grid behind the work,
+a band across the top naming the mode, Hangar shelves in the sidebar in place
+of sessions, and a color of its own that is none of navy, magenta, amber or
+red. *It must be obvious at a glance, and in a screenshot, which mode this
+is.*
+
+**D-41 · 2026-11-21 · Geoff.** The way in is a quiet switch at the foot of
+the sidebar. Things met while flying (a participant, the workflow card, a
+Library card) may also link to themselves in the Hangar, but that link must
+be extremely subtle: a small wrench icon button at most, no words, shown on
+hover or focus. *It must not distract in screen recordings of demos.*
+
+**D-42 · 2026-11-21 · Geoff.** A scenario is its own small folder (cast,
+invented data, screenplay) that names the workflow or workflows it runs.
+A workflow keeps its instructions, record shapes and views. Many scenarios
+per workflow; the seven existing demos become each workflow's first scenario.
+*Many PMs will tell stories with a few kinds of work, and editing a story
+must not be able to break the kind of work.*
+
+**D-43 · 2026-11-21 · Geoff.** Building or changing anything is a guided
+session with Aviator, with a form beside the chat that is the file. Building
+is itself a workflow, so its constraints come before the mistake. Wording
+(a brief, a screenplay line) may still be edited in place.
+
+**D-44 · 2026-11-21 · Geoff.** Publish is strict: disabled until every check
+passes, and a scenario must also play through to the end on its own.
+Built-in things can only be duplicated. *A second person's approval is what
+the production version should add; there is nobody to ask on one laptop.*
+
+**D-45 · 2026-11-21 · Geoff.** Build order: the look-around Hangar first
+(mode switch, frame, shelves, inspect pages, read-only), then the person
+builder with drafts, checks, trial, publish and history, then scenario and
+workflow building.
+
+**D-46 · 2026-11-21 · Claude.** All Hangar work happens on a draft copy;
+nothing changes for anyone until Publish. Every publish keeps the previous
+version as a dated snapshot folder, and Restore makes a new version. *Dated
+folders work from a ZIP download, where git may not exist.*
+
+**D-47 · 2026-11-21 · Claude.** A participant file may carry an optional
+`skills` line naming the skills their session gets, so the Hangar can show
+and narrow it. Without it they get every bundled skill, as today.
+
 ## Open
 
 - Whether views should also appear inside the chat, and in what form. Geoff
