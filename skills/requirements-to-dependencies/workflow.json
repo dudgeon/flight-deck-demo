@@ -62,5 +62,35 @@
  "needs": [
   "prd-to-requirements"
  ],
- "next": []
+ "next": [],
+ "routing": {
+  "when": [
+   "The person has a requirements catalog and wants to know which platform capabilities each requirement depends on"
+  ],
+  "not_when": [
+   "Project dependencies between teams or dates (that is delivery status)",
+   "No requirements catalog exists yet"
+  ],
+  "needs": "A requirements dataset from PRD to requirements, and a platform map in context/",
+  "stage": "map",
+  "offer": "Your requirements are catalogued. The next step maps what the platform offers for each one, on a board you start and review tile by tile.",
+  "examples": {
+   "start": [
+    "Map the platform dependencies for data/held-payments.json."
+   ],
+   "offer": [
+    "The requirements are locked. What do we need from the platform teams?"
+   ],
+   "open": [
+    "Which platform team is usually slowest to respond?"
+   ]
+  },
+  "persona": {
+   "strictness": "guide",
+   "invariants": [
+    "Never invent a capability the platform map does not describe",
+    "Never mark an exploration reviewed; that is the person's"
+   ]
+  }
+ }
 }

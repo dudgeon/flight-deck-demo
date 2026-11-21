@@ -13,6 +13,7 @@ import {
   projectSessionPanelSearch,
 } from "@/projectHome/projectHomeNavigation";
 import { ProjectConnections } from "@/projectHome/ProjectConnections";
+import { DirectorNotes } from "@/projectHome/DirectorNotes";
 import { ProjectInFlight } from "@/projectHome/ProjectInFlight";
 import { ProjectKanbanBoard } from "@/projectHome/ProjectKanbanBoard";
 import { ProjectSessionPanel } from "@/projectHome/ProjectSessionPanel";
@@ -90,6 +91,8 @@ export function ProjectHomePage() {
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           {/* omnigent-slim: what the project is for and what it touches (D-97, D-119). */}
           <ProjectConnections projectName={projectName} />
+          {/* omnigent-slim: what the director keeps across compactions, editable (D-128). */}
+          <DirectorNotes projectName={projectName} />
           <ProjectInFlight projectName={projectName} />
           <ProjectKanbanBoard
             projectName={projectName}

@@ -69,5 +69,38 @@
    "on": "folder",
    "prompt": "Find the problems worth solving in {path}."
   }
- ]
+ ],
+ "routing": {
+  "when": [
+   "The person has raw material (interviews, call notes, tickets, survey answers, usage data) and wants the problems in it",
+   "The person asks what is worth solving, what the pain points or themes are"
+  ],
+  "not_when": [
+   "Summarising one document or one call",
+   "The person already has a problem picked and wants to shape a response to it"
+  ],
+  "needs": "A folder or a few files of raw material; context/ is checked first",
+  "stage": "discover",
+  "offer": "There is a lot of raw material here. Problem discovery reads all of it and lays out the problems with the evidence for and against each, so you can pick which are worth solving.",
+  "examples": {
+   "start": [
+    "Run problem discovery on the support calls in context/calls.",
+    "Find the problems worth solving in these interview notes."
+   ],
+   "offer": [
+    "I've got twelve interview transcripts from last month. What are people actually struggling with?"
+   ],
+   "open": [
+    "What do you think is behind the spike in cancellations?"
+   ]
+  },
+  "persona": {
+   "strictness": "guide",
+   "invariants": [
+    "Every problem cites the sources it comes from",
+    "Never fill a gap in the sources with a guess",
+    "Describe people by segment, never by name"
+   ]
+  }
+ }
 }

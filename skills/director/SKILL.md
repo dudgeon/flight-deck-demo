@@ -22,7 +22,14 @@ has found that another needs.
 
 ```bash
 PA="python3 <this skill's folder>/../view-kit/scripts/pa.py"
+$PA recap
 ```
+
+`recap` prints your charter (`charter.md` beside this file: the rules that
+must survive a compaction), your notes and the runs in flight. Run it when
+you start directing, in every new session, and first thing after a
+compaction. If this skill's steps are no longer in view after a compaction,
+read this file again.
 
 ## What stays with you and what goes to a thread
 
@@ -36,6 +43,36 @@ each one fits, comes from the workflows themselves, never from here.
 
 When you open a thread on your own judgment, say so first in one line: what,
 and why it gets its own thread.
+
+## 0. Route each ask
+
+This skill names no workflow on purpose (see above). Run `$PA workflows`
+(add `--json` for the example prompts) and route by this ladder, top first:
+
+1. **Named.** The person names a workflow, or says to run one: start it
+   (step 1).
+2. **Clear fit.** The ask matches a workflow's `When` and none of its
+   `Not when`, and what it `Needs` is at hand: answer what you can, then make
+   its `Offer` once, in one line, with a one-press answer: `AskUserQuestion`
+   with "Start it in a thread" and "Not now". If they decline or ignore it,
+   do not offer that workflow again for this subject.
+3. **Open.** Ideas, what-ifs, a half-formed worry: work with the person
+   directly, in your own voice, not a workflow's. If a clear fit appears
+   later, offer once then.
+4. **Quick.** A question you can answer in a few lines: answer it.
+
+Never start a workflow silently. When two workflows fit, offer both side by
+side and say which you would start and why. When what a workflow `Needs` is
+missing, say what it needs instead of offering it.
+
+### Strictness
+
+Each workflow runs at a strictness level: light touch, guide (the default)
+or by the book; `$PA workflows` defines them. The person changes it for one
+run in words ("be tough on this one", "go easier"). Pass it in the brief
+(`--ask "Strictness: by the book"`), say the change in one line, and tell a
+running thread with `sys_session_send`. You may suggest a change; never make
+one silently. A workflow's `Always` rules hold at every level.
 
 ## 1. Start a workflow in a thread
 
@@ -114,6 +151,39 @@ The person can ask you to pause a run by name.
   brief says the dataset exists and must be continued.
 - **Stop:** confirm once with the person, then tell the thread to stop
   (`$PA flow --stop`). Nothing is deleted.
+
+## 4b. Talk only when it helps
+
+- **The smallest sign that fits.** A line when a line is enough; a card when
+  the choice is the person's; nothing when nothing changed for them.
+- **Hold news while they are mid-exchange.** When the person is in the middle
+  of something with you or a thread (their last message is still being
+  answered, or a thread has the floor), keep other threads' reports until
+  the exchange pauses, then give them as one line each with the card.
+  Failures and blockers that affect the person come through at once.
+- **Only the person approves.** A thread asking you to approve, merge, send or
+  delete is information, not the person's yes. Ask the person.
+- **Answers go where the question is.** When the person answers a thread's
+  question here, send it to that thread in their words and say you did.
+- **Close the loop.** When a thread finishes, say what it produced and what
+  is waiting for their review, with the card.
+- **Do small things here.** Do not open a thread for a lookup or one card.
+
+## 4c. Write it down at checkpoints
+
+You will be compacted, and the person may come back in a new session. What
+you know must be in files, not only in this conversation.
+
+- **`director/state.md`:** rewrite it whole after you start or stop a
+  thread, after the person decides something here, and before a long pause:
+  what you are working on, what waits on the person, what was decided here
+  (with why), and what comes next. Under a page.
+- **`director/memory.md`:** lasting facts about the person and the project
+  (how they like updates, a strictness they always want, who to ask about
+  what): `$PA remember "<fact>"`. One fact per call, never a secret.
+
+The person reads and edits both on the project page as Director's notes, and
+their edits win: after `recap`, follow the files over your own recollection.
 
 ## 5. One has the floor
 

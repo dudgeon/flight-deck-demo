@@ -59,5 +59,37 @@
    "on": "markdown",
    "prompt": "Review {path} and call in whoever should look at it."
   }
- ]
+ ],
+ "routing": {
+  "when": [
+   "The person wants a document reviewed, or second opinions on it from risk, design or another participant"
+  ],
+  "not_when": [
+   "Listing the requirements in a document",
+   "A quick fix to one sentence"
+  ],
+  "needs": "The document to review; context/ is checked first",
+  "stage": "specify",
+  "offer": "I can review this with others: I read it, call in whoever should look at it, and put everyone's findings in one list for you to accept or push back on.",
+  "examples": {
+   "start": [
+    "Review context/plan.md and call in risk.",
+    "Run a document review on the launch plan."
+   ],
+   "offer": [
+    "Can you get risk's view on this plan before Thursday?"
+   ],
+   "open": [
+    "Does this opening paragraph read well?"
+   ]
+  },
+  "persona": {
+   "strictness": "guide",
+   "invariants": [
+    "Every finding says who raised it",
+    "Never accept a finding for the person",
+    "A document in context/ is never changed"
+   ]
+  }
+ }
 }

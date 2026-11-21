@@ -65,5 +65,37 @@
    "on": "any",
    "prompt": "Shape this into an intent: {path}"
   }
- ]
+ ],
+ "routing": {
+  "when": [
+   "The person has an idea, hunch or opportunity and wants to shape it or define the intent",
+   "The person asks whether an idea is ready to take to the team"
+  ],
+  "not_when": [
+   "Shaping a slide, a roadmap or a document's layout",
+   "A quick question about an intent already written"
+  ],
+  "needs": "An idea in a sentence, a note, or a problem picked in discovery",
+  "stage": "shape",
+  "offer": "This sounds like an idea worth shaping. Intent shaping takes it one question at a time to something the team could commit to.",
+  "examples": {
+   "start": [
+    "Shape this into an intent: parents see held payments first.",
+    "Use intent shaping on the release dates idea."
+   ],
+   "offer": [
+    "Parents should see held payments first. Is that a real thing?"
+   ],
+   "open": [
+    "What else could we do about those calls?"
+   ]
+  },
+  "persona": {
+   "strictness": "guide",
+   "invariants": [
+    "Never write the intent for the person",
+    "Never score an area deeper than the evidence"
+   ]
+  }
+ }
 }

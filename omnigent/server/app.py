@@ -144,6 +144,7 @@ from omnigent.server.routes.slim_library import create_slim_library_router
 from omnigent.server.routes.slim_hangar import create_slim_hangar_router  # omnigent-slim
 from omnigent.server.routes.slim_runs import create_slim_runs_router  # omnigent-slim
 from omnigent.server.routes.slim_projects import create_slim_projects_router  # omnigent-slim
+from omnigent.server.routes.slim_director import create_slim_director_router  # omnigent-slim
 from omnigent.server.routes.slim_participant_inbox import (  # omnigent-slim
     create_slim_participant_inbox_router,
 )
@@ -4431,6 +4432,12 @@ def create_app(
     # omnigent-slim: a project's goal, area and typed links (D-97, D-119).
     app.include_router(
         create_slim_projects_router(project_store=project_store, auth_provider=auth_provider),
+        prefix="/v1",
+        tags=["slim"],
+    )
+    # omnigent-slim: the director's notes on a project's page (D-128).
+    app.include_router(
+        create_slim_director_router(project_store=project_store, auth_provider=auth_provider),
         prefix="/v1",
         tags=["slim"],
     )
