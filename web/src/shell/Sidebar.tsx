@@ -145,7 +145,7 @@ import {
   useSearchParams,
 } from "@/lib/routing";
 import { SidebarHeaderActions, SidebarSearchButton } from "./SidebarHeaderActions";
-import omnigentWordmark from "@/assets/omnigent-wordmark.svg";
+import { ProductAviatorLogo } from "@/components/ProductAviatorLogo";
 import { Button } from "@/components/ui/button";
 import { OmniGlassSurface } from "@/components/OmniGlassSurface";
 import {
@@ -1402,12 +1402,8 @@ function SidebarImpl({
                     {branding.app_name}
                   </span>
                 ) : (
-                  <img
-                    src={omnigentWordmark}
-                    alt="Omnigent"
-                    data-testid="sidebar-wordmark"
-                    className="h-[15px] w-auto shrink-0 translate-y-px max-md:h-[18px] dark:invert"
-                  />
+                  // omnigent-slim: Product Aviator logo in place of the Omnigent wordmark.
+                  <ProductAviatorLogo className="h-8 shrink-0" />
                 )}
               </Link>
               {isMacElectronShell() && (

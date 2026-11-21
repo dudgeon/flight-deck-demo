@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { OttoIcon } from "@/components/icons/OttoIcon";
-import { ProductAviatorLogo } from "@/components/ProductAviatorLogo";
 import { withBasePath } from "@/lib/basePath";
 import { useAppName, useLogoUrl } from "@/lib/branding";
 import { authenticatedFetch } from "@/lib/identity";
@@ -87,10 +86,9 @@ function acquireLogo(path: string, generation: number): BlobUrlHandle {
 }
 
 function FallbackLogo({ className, variant }: { className?: string; variant: "eyes" | "icon" }) {
-  // omnigent-slim: the hero logo is Product Aviator, not Otto's eyes.
-  return variant === "eyes" ? (
-    <ProductAviatorLogo className={className} />
-  ) : (
+  // omnigent-slim: no hero logo on the new session screen; Product Aviator
+  // sits at the top of the sidebar instead (Sidebar.tsx).
+  return variant === "eyes" ? null : (
     <OttoIcon className={className} aria-hidden />
   );
 }
@@ -160,7 +158,7 @@ function StandaloneBrandLogo({
 /**
  * The app's brand logo: the operator's custom logo when configured, else the
  * Otto mascot. `variant` picks the logo variant and matching fallback —
- * `"eyes"` (hero) → `main`/Product Aviator (omnigent-slim), `"icon"` (indicators) → `loading`/`OttoIcon`.
+ * `"eyes"` (hero) → `main`/nothing (omnigent-slim), `"icon"` (indicators) → `loading`/`OttoIcon`.
  */
 export function BrandLogo({
   className,

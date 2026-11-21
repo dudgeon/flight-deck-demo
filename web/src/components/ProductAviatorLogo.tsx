@@ -1,5 +1,5 @@
-// omnigent-slim: the Product Aviator logo, shown in place of Otto on the
-// new-session screen. The SVG fills with currentColor, and its color comes
+// omnigent-slim: the Product Aviator logo, shown in place of the Omnigent
+// wordmark at the top of the sidebar. The SVG fills with currentColor, and its color comes
 // from --brand-logo in index.css (navy in light mode, near-white in dark), so
 // a later reskin only changes the brand tokens there.
 import logoSvg from "@/assets/product-aviator-logo.svg?raw";
