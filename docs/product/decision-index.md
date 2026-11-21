@@ -90,7 +90,8 @@ feature notes of the time and marked *(reconstructed)*.
 
 | D | Decision | Who | Status | Why |
 |---|---|---|---|---|
-| D-35 | The fork is Flight Deck; the UI is Product Aviator; identifiers keep `omnigent-slim` | Geoff | Active; **repo rename open** | He liked the name. |
+| D-35 | The fork is Flight Deck; the UI is Product Aviator; identifiers keep `omnigent-slim` | Geoff | Active; repository renamed by D-114 | He liked the name. |
+| D-114 | Repository renamed `dudgeon/flight-deck-demo`; local folders, data folder and identifiers keep their names | Geoff | Built (README, `setup.sh` accepts both download names) | Repo should carry the product name; renaming checkouts breaks their venv, Dock launcher and session history. |
 | D-36 | Vendor Anthropic's `frontend-design` skill | Geoff | Built (`skills/frontend-design/`) | He asked for it; the work Mac cannot download skills. |
 | D-37 | One design language from shared tokens | Geoff | Built | Four color systems looked like four products. |
 | D-38 | How tokens are built and injected | Claude | Built (`design/`) | The same whichever colors are picked. |
@@ -198,5 +199,4 @@ decided but nothing is built yet.
   mode, where a thread opens, what a thread reports back, how a project's
   connections show. They take D-107 onward when Geoff answers.
 - Progressive complexity (D-54).
-- Whether to rename the repository (D-35).
 - D-24 for production.

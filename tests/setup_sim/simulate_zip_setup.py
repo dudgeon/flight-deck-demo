@@ -5,7 +5,7 @@
 Never run this on the work Mac: it is a test rig, and it downloads things.
 
 ZIP is a ZIP of the repository as GitHub serves it, for example
-    git archive --format=zip --prefix=omnigent-slim-main/ -o /tmp/main.zip HEAD
+    git archive --format=zip --prefix=flight-deck-demo-main/ -o /tmp/main.zip HEAD
 With no scenario named, all of them run. Each checks its own expectations and
 the rig exits non-zero if any fails.
 
@@ -50,7 +50,7 @@ PBS = (
 TMP = Path(os.environ.get("TMPDIR", "/tmp"))
 CACHE = Path(os.environ.get("SIM_CACHE", TMP / "omnigent-slim-sim-cache"))
 WORK = Path(os.environ.get("SIM_WORK", TMP / "omnigent-slim-sim"))
-PREFIX = "omnigent-slim-main/"
+PREFIX = "flight-deck-demo-main/"
 QUARANTINE = "user.com.apple.quarantine"
 
 SHIMS = {
@@ -173,7 +173,7 @@ class Mac:
         }
         self.app = self.home / "flight-deck"
 
-    def download(self, zip_path: Path, folder: str = "omnigent-slim-main") -> Path:
+    def download(self, zip_path: Path, folder: str = "flight-deck-demo-main") -> Path:
         """Unzip like Archive Utility: every file flagged; execute bits lost."""
         target = self.home / "Downloads"
         with zipfile.ZipFile(zip_path) as z:
@@ -276,7 +276,7 @@ def s_update(z: Path, c: Check) -> None:
 
     z2 = WORK / "release2.zip"
     twin_zip(ORIGINAL_ZIP, z2, newer)
-    shutil.copy(z2, mac.home / "Downloads/omnigent-slim-main (1).zip")
+    shutil.copy(z2, mac.home / "Downloads/flight-deck-demo-main (1).zip")
     rc, out = mac.setup(mac.app / "setup.sh")
     print(out)
     c("update exit 0", rc == 0)

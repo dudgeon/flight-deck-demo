@@ -1,7 +1,7 @@
 #!/bin/sh
 # Install, update and start Flight Deck (omnigent-slim) on a Mac (D-100, D-107, D-111).
 #
-#   sh ~/Downloads/omnigent-slim-main/setup.sh   first install, from the download
+#   sh ~/Downloads/flight-deck-demo-main/setup.sh  first install, from the download
 #   sh ~/flight-deck/setup.sh                    start; or update, if a newer
 #                                                download is in ~/Downloads
 # Options:
@@ -180,7 +180,7 @@ use_zip() {
     SRC=$(ls -d "$WORK"/unzipped/*/ 2>/dev/null | head -1)
     SRC=${SRC%/}
     [ -f "$SRC/setup.sh" ] || fail "$1 doesn't look like a Flight Deck download." \
-        "Download https://github.com/dudgeon/omnigent-slim/archive/refs/heads/main.zip again."
+        "Download https://github.com/dudgeon/flight-deck-demo/archive/refs/heads/main.zip again."
 }
 
 # The newest download in ~/Downloads (a ZIP, or a folder unzipped from one)
@@ -188,7 +188,10 @@ use_zip() {
 newer_download() {
     stamp="$APP/.install-manifest.json"
     best=
-    for d in "$HOME"/Downloads/omnigent-slim*.zip "$HOME"/Downloads/omnigent-slim-main*; do
+    # flight-deck-demo is the repository's name since D-114; omnigent-slim is
+    # its old name, which older downloads still carry.
+    for d in "$HOME"/Downloads/flight-deck-demo*.zip "$HOME"/Downloads/flight-deck-demo-main* \
+             "$HOME"/Downloads/omnigent-slim*.zip "$HOME"/Downloads/omnigent-slim-main*; do
         case $d in
             *.zip) [ -f "$d" ] || continue ;;
             *) [ -f "$d/setup.sh" ] && [ -f "$d/start.sh" ] || continue ;;

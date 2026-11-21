@@ -4,7 +4,9 @@
 [Omnigent](https://github.com/omnigent-ai/omnigent), the open-source
 meta-harness from Databricks, for prototyping an agent workspace on a
 locked-down Mac. Its user interface is branded **Product Aviator**. The
-repository, folders and commands keep the name `omnigent-slim`.
+repository is `dudgeon/flight-deck-demo` (renamed from `omnigent-slim`, D-114);
+code identifiers, commands and the `~/.omnigent-slim` data folder keep the
+name `omnigent-slim`.
 
 - It drives **Claude Code as a terminal program** (your own `claude` login), so
   it needs no API key.
@@ -45,10 +47,10 @@ is missing.
 
 ### Step 1. Download and unzip
 
-1. Click this link: **https://github.com/dudgeon/omnigent-slim/archive/refs/heads/main.zip**
-   Your browser saves `omnigent-slim-main.zip` (about 75 MB) to **Downloads**.
+1. Click this link: **https://github.com/dudgeon/flight-deck-demo/archive/refs/heads/main.zip**
+   Your browser saves `flight-deck-demo-main.zip` (about 75 MB) to **Downloads**.
 2. In Finder, open **Downloads** and double-click the ZIP. You get a folder
-   called **omnigent-slim-main**. (Safari may unzip it for you.)
+   called **flight-deck-demo-main**. (Safari may unzip it for you.)
 
 Leave it in Downloads. Setup copies the app to its own folder, `~/flight-deck`
 (the **flight-deck** folder in your home folder), and runs it from there.
@@ -59,11 +61,11 @@ Leave it in Downloads. Setup copies the app to its own folder, `~/flight-deck`
 2. Copy this line, paste it into Terminal and press Return:
 
    ```bash
-   sh ~/Downloads/omnigent-slim-main/setup.sh
+   sh ~/Downloads/flight-deck-demo-main/setup.sh
    ```
 
    (If it says *No such file*, the folder has another name, such as
-   `omnigent-slim-main 2`. Type `sh ` with a space, drag the **setup.sh** file
+   `flight-deck-demo-main 2`. Type `sh ` with a space, drag the **setup.sh** file
    from that folder onto the Terminal window, and press Return.)
 
 The setup checks your Mac, then says that macOS has flagged the download as
@@ -95,6 +97,11 @@ passwords or keys in it. You can run setup again as often as you like.
    sh ~/flight-deck/setup.sh
    ```
 
+(Installed before the repository was renamed on 21 November? Run the new
+download's own setup once instead: `sh ~/Downloads/flight-deck-demo-main/setup.sh`.
+An older `~/flight-deck/setup.sh` only looks for downloads named
+`omnigent-slim-main`. After that, the line above works again.)
+
 Setup finds the newest download in **Downloads**, stops the app, updates
 `~/flight-deck` and starts it again. **It never overwrites your work:**
 
@@ -115,7 +122,7 @@ yourself and press Return. It downloads the ZIP to Downloads, unzips it and
 runs the setup, for a first install or an update:
 
 ```bash
-cd ~/Downloads && curl -fL -o omnigent-slim-main.zip https://github.com/dudgeon/omnigent-slim/archive/refs/heads/main.zip && unzip -qo omnigent-slim-main.zip && sh omnigent-slim-main/setup.sh
+cd ~/Downloads && curl -fL -o flight-deck-demo-main.zip https://github.com/dudgeon/flight-deck-demo/archive/refs/heads/main.zip && unzip -qo flight-deck-demo-main.zip && sh flight-deck-demo-main/setup.sh
 ```
 
 A download made this way never gets the macOS flag. `git clone` works too, on
