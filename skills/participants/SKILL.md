@@ -173,6 +173,40 @@ suggestion the user accepts or rejects (`pa review suggest --by <id>`). When
 you ask a participant to work on a document, say so in what you ask. See the
 `document-collaboration` skill for the rest of `pa review`.
 
+## 7. Messages and invitations in the Inbox
+
+A participant can reach the user outside the conversation the user has open.
+That shows up in the user's Inbox under the participant's name and mark, and
+the card opens the conversation; the user always replies there, never from the
+Inbox.
+
+Use it only for messages meant for the user: the participant reaching out on
+their own, a follow-up after a call has ended, or an invitation to join a
+session of theirs. Replies during a call are not Inbox messages; pass them on
+in the chat as in step 4.
+
+```bash
+# A message about a session (the card opens that session):
+$PA tell <id> --session <session id> --says "<what they say, word for word>"
+
+# A scripted participant: take the text from an entry of their script:
+$PA tell <id> --session <session id> --entry "<part of a ### heading>"
+
+# An invitation into a session of their own:
+$PA tell <id> --session <their session id> --invite --says "<why they want you>"
+```
+
+For an invitation, first start their session as in step 2, with an opening
+that tells them the user will join them there and what they want to discuss.
+Then send the invitation with that session's id. When the user opens it, they
+talk with the participant directly in that session.
+
+A live participant whose brief says when to reach out (for example "follow up
+if a blocker is still open after the call") runs the same command from its
+own session. Scripts and scenarios can name a `pa tell` step at a set point,
+so a demo plays the same way every time. Each session holds at most 10 Inbox
+items; point further messages at another session.
+
 ## Who is eligible
 
 `participants/` is the one roster for the whole workspace. A demo or a session

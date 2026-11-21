@@ -106,6 +106,22 @@ participant: they answer, Aviator still sees everything. A message with no
 **D-26 · 2026-11-21 · Geoff.** Participants only ever suggest changes to a
 document; they never edit it directly. (Built in the collaborative editor.)
 
+**D-68 · 2026-11-21 · Geoff.** Participant messages land in the Inbox only
+when they are meant for the user: a participant reaching out on their own, a
+follow-up after a call, or an invitation to join a session of theirs. Replies
+during a call stay in the chat, where the host relays them. *Just as we send
+messages to others, they send them to us, and demos will pull the user into
+other people's sessions, not only bring others into ours.*
+
+**D-69 · 2026-11-21 · Geoff.** Both scripted and live, scripted first: a
+script (or Aviator, following one) drops a participant's message at a set
+point with `pa tell`; a live participant posts the same way when its brief
+says to.
+
+**D-70 · 2026-11-21 · Geoff.** No inline reply in the Inbox. A participant's
+card only offers Open conversation (Join conversation for an invitation) and
+Done; the user always replies in context.
+
 ## How we work
 
 **D-27 · 2026-11-21 · Geoff.** The choices the agent made without asking, up

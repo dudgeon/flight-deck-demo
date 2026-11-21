@@ -319,3 +319,47 @@ export function suggestionPreview(bodyMd: string, maxChars = 200): string {
   if (!line) return "";
   return line.length > maxChars ? `${line.slice(0, maxChars - 1)}…` : line;
 }
+
+/** omnigent-slim: who a participant message is from (D-68 to D-70). */
+export interface ParticipantSender {
+  id: string;
+  name: string;
+  kind: "agent" | "person";
+  role: string;
+  standIn: boolean;
+}
+
+/** omnigent-slim: a suggestion that is a participant's message or invitation. */
+export interface ParticipantMessage {
+  participant: ParticipantSender;
+  /** "invite": they ask the user to join a session of their own. */
+  intent: "message" | "invite";
+  /** The session the card opens: the one it is about, or theirs for an invite. */
+  sessionId: string;
+  sessionLabel: string | undefined;
+}
+
+/**
+ * omnigent-slim: read a suggestion's ``participant`` media block, or ``null``
+ * when it is an ordinary agent suggestion.
+ */
+export function participantMessageOf(item: Suggestion): ParticipantMessage | null {
+  const block = item.media.find((b) => b.type === "participant");
+  const raw = block?.participant;
+  if (!raw || typeof raw !== "object") return null;
+  const p = raw as Record<string, unknown>;
+  if (typeof p.name !== "string" || typeof p.id !== "string") return null;
+  const link = item.links.find((l) => l.type === "session");
+  return {
+    participant: {
+      id: p.id,
+      name: p.name,
+      kind: p.kind === "person" ? "person" : "agent",
+      role: typeof p.role === "string" ? p.role : "",
+      standIn: p.stand_in === true,
+    },
+    intent: block?.intent === "invite" ? "invite" : "message",
+    sessionId: link?.ref ?? item.sourceSessionId,
+    sessionLabel: link?.label,
+  };
+}

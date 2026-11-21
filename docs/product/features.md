@@ -87,6 +87,23 @@ their id and shows in views.
 `web/src/lib/participantTurn.ts`, `web/src/components/chat/ParticipantTurn.tsx`,
 `pa who`.
 
+**Messages and invitations in the Inbox.** *Intent:* just as the user sends
+messages to others, others send messages to the user, and demos pull the user
+into other people's sessions, not only others into the user's (D-68 to D-70).
+*Behaviour:* `pa tell <id> --session S --says TEXT` (or `--entry` for a
+script entry, `--invite` for an invitation into the participant's own
+session) puts a card in the Inbox. The card shows the participant's mark and
+name, a stand-in or agent tag, their role and the session it is about, and
+counts toward the sidebar badge. It offers Open conversation (Join conversation
+for an invitation) and Done; there is no reply box, so the user always answers
+in context. A People tab lists only these. Under the hood it is an ordinary
+agent-posted Inbox item (`/v1/inbox/items`) with a `participant` media block,
+posted through `POST /v1/slim/inbox/participant-messages`, so nothing new is
+stored. *Where:* `omnigent/server/routes/slim_participant_inbox.py`,
+`omnigent/server/inbox_media.py`, `participantMessageOf` in
+`web/src/lib/proactiveInbox.ts`, the participant card in
+`web/src/pages/InboxPage.tsx`, `skills/participants/SKILL.md` step 7.
+
 ## Decision review (a kind of work)
 
 **What it is for.** A PM's work stalls on questions nobody has put to them

@@ -139,7 +139,13 @@ own background session, and later real agents and people.
   in on Aviator's own judgment with a note saying so (D-23). People and
   agents card in the Session panel. Two live participants called in parallel
   replied in about a minute each.
+- **Done (this PR).** Participants reach the user through the Inbox (D-68 to
+  D-70): `pa tell` puts a participant's message, or their invitation into a
+  session of their own, in the Inbox under their name and mark, with a People
+  tab. Cards open the conversation; there is no reply from the Inbox.
 - **Partial.**
+  - No shipped scenario uses `pa tell` yet; a demo where Risk Review pulls the
+    user into its session is the obvious first one.
   - A live participant cannot place a comment on a document anchor through
     the app's own comments (the app has no tool to create one), so their
     findings carry the quoted text and section instead. Comments through the
@@ -150,7 +156,7 @@ own background session, and later real agents and people.
   production (D-24). The Hangar's person builder (slice 2) becomes the way
   to add someone.
 - **Open.** D-24 is explicitly a demo-only choice.
-- **Read.** D-17 to D-26; features.md "Participants";
+- **Read.** D-17 to D-26, D-68 to D-70; features.md "Participants";
   `workspace/participants/README.md`; `skills/participants/`.
 
 ## The four kinds of work

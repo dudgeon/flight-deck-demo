@@ -463,6 +463,68 @@ def cmd_who(args: argparse.Namespace) -> None:
     print(json.dumps(person, indent=1, ensure_ascii=False))
 
 
+DEFAULT_APP_URL = "http://127.0.0.1:6767"
+
+
+def _script_entry(person: dict[str, Any], wanted: str) -> str:
+    """The text under the `###` heading in a participant's `## Script` that matches `wanted`."""
+    script = re.split(r"^## Script\s*$", person["brief"], maxsplit=1, flags=re.M)
+    if len(script) < 2:
+        raise PaError(f"{person['id']} has no '## Script' section")
+    entries = re.split(r"^### +(.+?)\s*$", script[1], flags=re.M)[1:]
+    found = [(h, t.strip()) for h, t in zip(entries[::2], entries[1::2]) if wanted.lower() in h.lower()]
+    if len(found) != 1:
+        heads = ", ".join(repr(h) for h in entries[::2]) or "none"
+        raise PaError(f"no single script entry matches {wanted!r}; entries: {heads}")
+    return found[0][1]
+
+
+def cmd_tell(args: argparse.Namespace) -> None:
+    """Put a participant's message, or their invitation to a session, in the user's Inbox."""
+    import urllib.error
+    import urllib.request
+
+    roster = _participants(_roster_dir(args.dir))
+    person = roster.get(args.id)
+    if person is None:
+        raise PaError(f"no participant {args.id!r}; ids: {', '.join(roster) or 'none'}")
+    if bool(args.says) == bool(args.entry):
+        raise PaError("give what they say with --says TEXT, or --entry HEADING from their script")
+    text = args.says or _script_entry(person, args.entry)
+    first = re.split(r"(?<=[.!?])\s", text.strip(), maxsplit=1)[0]
+    title = args.title or (first if len(first) <= 120 else first[:117].rstrip() + "...")
+    payload = {
+        "participant": {
+            "id": person["id"],
+            "name": person["name"],
+            "kind": person["kind"],
+            "role": str(person.get("role", "")),
+            "stand_in": bool(person["stand_in"]),
+        },
+        "intent": "invite" if args.invite else "message",
+        "session_id": args.session,
+        "title": title,
+        "body_md": text,
+    }
+    base = (args.url or os.environ.get("OMNIGENT_SLIM_URL") or DEFAULT_APP_URL).rstrip("/")
+    request = urllib.request.Request(
+        f"{base}/v1/slim/inbox/participant-messages",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=15) as response:
+            item = json.loads(response.read().decode("utf-8"))["item"]
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", "replace")[:300]
+        raise PaError(f"the app refused the message ({exc.code}): {detail}") from exc
+    except urllib.error.URLError as exc:
+        raise PaError(f"could not reach the app at {base}: {exc.reason}") from exc
+    what = "invitation" if args.invite else "message"
+    print(f"{person['name']}'s {what} is in the Inbox (item {item['id']}).")
+
+
 def page(spec: dict[str, Any], data: dict[str, Any], host: str = "canvas") -> str:
     """Return one self-contained HTML page for `spec` over `data`."""
     css = (KIT_DIR / "pa-kit.css").read_text(encoding="utf-8")
@@ -2263,6 +2325,17 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--ask", help="with --opening: what they are asked to do")
     p.add_argument("--conversation", help="with --opening: the id of the user's session, so they can read the whole conversation")
     p.set_defaults(run=cmd_who)
+
+    p = sub.add_parser("tell", help="put a participant's message, or their invitation to a session, in the user's Inbox")
+    p.add_argument("id", help="the participant's id")
+    p.add_argument("--session", required=True, help="the session the card opens: the one it is about, or theirs for --invite")
+    p.add_argument("--says", help="what they say, word for word")
+    p.add_argument("--entry", help="instead of --says: a heading (or part of one) from their '## Script'")
+    p.add_argument("--title", help="one line for the collapsed card; default the first sentence")
+    p.add_argument("--invite", action="store_true", help="they are asking the user to join --session, a session of their own")
+    p.add_argument("--dir", help="the roster folder; default participants/ in the workspace")
+    p.add_argument("--url", help=f"the app's address; default $OMNIGENT_SLIM_URL or {DEFAULT_APP_URL}")
+    p.set_defaults(run=cmd_tell)
 
     p = sub.add_parser("init", help="create a dataset file")
     p.add_argument("data")
