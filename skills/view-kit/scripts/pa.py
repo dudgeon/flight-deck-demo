@@ -106,7 +106,7 @@ def _save(path: Path, data: dict[str, Any]) -> None:
     data["updated"] = _now()
     _write_atomic(path, json.dumps(data, indent=1, ensure_ascii=False) + "\n")
     if data.get("flow"):
-        _write_flow(data)
+        _write_flow(data, path)
 
 
 # ---------------------------------------------------------------- workflow progress
@@ -134,9 +134,26 @@ def _flow_counts(data: dict[str, Any], count: dict[str, Any] | None) -> dict[str
     }
 
 
-def _write_flow(data: dict[str, Any]) -> None:
-    """Write the small file the Session panel reads to draw the workflow card."""
+RUN_STATES = ("working", "needs-you", "waiting", "paused", "finished", "stopped")
+
+
+def _run_state(flow: dict[str, Any], counts: dict[str, Any] | None) -> str:
+    """Where a run stands. Paused and stopped are the person's word and win;
+    finished comes from the steps; needs-you from the records or the agent."""
+    held = flow.get("state") or "working"
+    if held in ("paused", "stopped"):
+        return held
+    if flow.get("current", 1) > len(flow.get("steps") or []):
+        return "finished"
+    if held == "needs-you" or (counts and counts.get("waiting")):
+        return "needs-you"
+    return "waiting" if held == "waiting" else "working"
+
+
+def _write_flow(data: dict[str, Any], dataset: Path | None = None) -> None:
+    """Write the small file the Session panel and the project page read to draw a run."""
     flow = data["flow"]
+    counts = _flow_counts(data, flow.get("count"))
     out = {
         "workflow": flow.get("workflow", ""),
         "scenario": flow.get("scenario", ""),
@@ -144,8 +161,15 @@ def _write_flow(data: dict[str, Any]) -> None:
         "steps": flow.get("steps", []),
         "current": flow.get("current", 1),
         "note": flow.get("note", ""),
-        "counts": _flow_counts(data, flow.get("count")),
+        "counts": counts,
         "participants": flow.get("participants"),
+        # The run: its state, the note left at a pause, the session it runs in.
+        "state": _run_state(flow, counts),
+        "left_off": flow.get("left_off", ""),
+        "session": flow.get("session", ""),
+        "data": flow.get("data") or (dataset.as_posix() if dataset else ""),
+        "started": flow.get("started", ""),
+        "paused_at": flow.get("paused_at", ""),
         "updated": _now(),
     }
     _write_atomic(Path(flow["file"]), json.dumps(out, indent=1, ensure_ascii=False) + "\n")
@@ -153,6 +177,9 @@ def _write_flow(data: dict[str, Any]) -> None:
 
 def cmd_flow(args: argparse.Namespace) -> None:
     path = Path(args.data)
+    moves = [name for name in ("pause", "resume", "stop", "done") if getattr(args, name, False)]
+    if len(moves) > 1:
+        raise PaError(f"pass one of --{', --'.join(moves)}, not several")
     with _locked(path):
         data = _load(path)
         flow = data.get("flow") or {}
@@ -169,7 +196,15 @@ def cmd_flow(args: argparse.Namespace) -> None:
             flow.setdefault("current", 1)
         if not flow.get("steps"):
             raise PaError("no workflow on this dataset yet; pass --scenario <scenario folder> once")
+        flow.setdefault("started", _now())
+        flow["data"] = path.as_posix()
+        if getattr(args, "session", None):
+            flow["session"] = args.session
         total = len(flow["steps"])
+        held = flow.get("state") or "working"
+        advancing = args.done or args.step is not None
+        if held == "stopped" and advancing and not args.resume:
+            raise PaError("this run was stopped; pass --resume to pick it up again")
         if args.done:
             flow["current"] = total + 1
         elif args.step is not None:
@@ -184,14 +219,70 @@ def cmd_flow(args: argparse.Namespace) -> None:
             if not 1 <= number <= total:
                 raise PaError(f"step must be 1 to {total}")
             flow["current"] = number
-        if args.note is not None:
-            flow["note"] = args.note
-        elif args.step is not None or args.done:
-            flow["note"] = ""
+        if args.pause or args.stop:
+            if flow["current"] > total:
+                raise PaError("this run is finished; there is nothing to pause or stop")
+            if args.pause and not (args.note or "").strip():
+                raise PaError("a pause needs --note: one or two sentences on where the work was left")
+            flow["state"] = "paused" if args.pause else "stopped"
+            flow["paused_at"] = _now()
+            if args.note is not None:
+                flow["left_off"] = args.note.strip()
+        else:
+            # Doing work on a paused run picks it up; so does --resume.
+            if args.resume or advancing or getattr(args, "state", None):
+                if held in ("paused", "stopped"):
+                    flow["paused_at"] = ""
+                    flow["left_off"] = ""
+                flow["state"] = getattr(args, "state", None) or "working"
+            if args.note is not None:
+                flow["note"] = args.note
+            elif advancing:
+                flow["note"] = ""
         data["flow"] = flow
         _save(path, data)
+    state = _run_state(flow, _flow_counts(data, flow.get("count")))
     where = "done" if flow["current"] > total else f"step {flow['current']} of {total}: {flow['steps'][flow['current'] - 1]}"
-    print(f"{flow['workflow']}: {where}")
+    tail = "" if state in ("working", "finished") else f" ({state})"
+    print(f"{flow['workflow']}: {where}{tail}")
+
+
+def cmd_runs(args: argparse.Namespace) -> None:
+    """List the runs in this workspace: what is in flight and where each was left."""
+    folder = Path(args.dir or FLOW_DIR)
+    runs: list[dict[str, Any]] = []
+    for file in sorted(folder.glob("*.json")) if folder.is_dir() else []:
+        try:
+            run = json.loads(file.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not isinstance(run, dict) or not isinstance(run.get("steps"), list):
+            continue
+        total = len(run["steps"])
+        current = run.get("current", 1)
+        # Files written before runs had a state: finished or working, from the steps.
+        run["state"] = run.get("state") or ("finished" if current > total else "working")
+        run["file"] = file.as_posix()
+        if args.all or run["state"] not in ("finished", "stopped"):
+            runs.append(run)
+    order = {state: i for i, state in enumerate(("needs-you", "paused", "waiting", "working", "stopped", "finished"))}
+    runs.sort(key=lambda r: (order.get(r["state"], 9), r.get("updated", "")))
+    if args.json:
+        print(json.dumps(runs, indent=1, ensure_ascii=False))
+        return
+    if not runs:
+        print("no runs in flight")
+        return
+    for run in runs:
+        total = len(run["steps"])
+        current = run.get("current", 1)
+        step = "finished" if current > total else f"step {current} of {total}: {run['steps'][current - 1]}"
+        print(f"{run['state']:<10} {run.get('workflow', '')}: {run.get('subject', '')} ({step})")
+        note = run.get("left_off") or run.get("note")
+        if note:
+            print(f"           {note}")
+        if run.get("data"):
+            print(f"           data: {run['data']}")
 
 
 # ---------------------------------------------------------------- values
@@ -2310,8 +2401,20 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--scenario", help="the workflow (or scenario) folder, the first time, to take its steps")
     p.add_argument("--step", help="a step number, or part of its name")
     p.add_argument("--done", action="store_true", help="the workflow is finished")
-    p.add_argument("--note", help="one line on what is happening in this step")
+    p.add_argument("--note", help="one line on what is happening in this step; with --pause, where the work was left")
+    p.add_argument("--pause", action="store_true", help="the person set this run aside; needs --note")
+    p.add_argument("--resume", action="store_true", help="pick a paused or stopped run up again")
+    p.add_argument("--stop", action="store_true", help="the person abandoned this run; the work so far is kept")
+    p.add_argument("--state", choices=["working", "needs-you", "waiting"],
+                   help="needs-you: the run cannot move until the person answers; waiting: on someone else")
+    p.add_argument("--session", help="the id of the session this run is in, so the project page can reopen it")
     p.set_defaults(run=cmd_flow)
+
+    p = sub.add_parser("runs", help="list the workflow runs in this workspace and where each was left")
+    p.add_argument("--dir", help="the progress folder; default progress/ in the workspace")
+    p.add_argument("--all", action="store_true", help="include finished and stopped runs")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(run=cmd_runs)
 
     p = sub.add_parser("who", help="list the participants the agent can call, or show one")
     p.add_argument("id", nargs="?", help="an id, or part of a name or role")

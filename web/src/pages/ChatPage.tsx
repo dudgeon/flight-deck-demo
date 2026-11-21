@@ -5,6 +5,7 @@ import {
   type ArtifactPromptDetail,
 } from "@/lib/artifactBridge";
 import { clearLocalReviewContexts, usePendingLocalReviewContexts } from "@/lib/localReviewContext";
+import { takePendingPrompt } from "@/lib/pendingPrompt"; // omnigent-slim
 import { buildOutgoingMessage, carriesMessageContext } from "@/lib/outgoingComposerMessage";
 import { SelectionPopup } from "@/components/chat/SelectionPopup";
 import {
@@ -1663,6 +1664,25 @@ const MainAgentSurface = memo(function MainAgentSurfaceImpl({
     window.addEventListener(ARTIFACT_PROMPT_EVENT, onArtifactPrompt);
     return () => window.removeEventListener(ARTIFACT_PROMPT_EVENT, onArtifactPrompt);
   }, []);
+  // omnigent-slim: text another page left for this session's message box, e.g.
+  // the project page's Resume button (D-96). The composer may mount a moment
+  // after the page, so try a few times before giving up.
+  useEffect(() => {
+    if (!conversationId) return;
+    const text = takePendingPrompt(conversationId);
+    if (!text) return;
+    let tries = 0;
+    const timer = window.setInterval(() => {
+      tries += 1;
+      if (composerRef.current) {
+        composerRef.current.appendDraftText(text);
+        window.clearInterval(timer);
+      } else if (tries >= 20) {
+        window.clearInterval(timer);
+      }
+    }, 100);
+    return () => window.clearInterval(timer);
+  }, [conversationId]);
   // omnigent-slim: a state change made in an artifact (`omnigent.act()`) is sent
   // as a message at once. The bridge wrote the text itself from validated state
   // values, so this is the only artifact text that skips the composer.

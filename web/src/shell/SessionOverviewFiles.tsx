@@ -258,6 +258,10 @@ export interface WorkflowProgress {
   counts: { done: number; total: number; noun: string; label: string; waiting: number } | null;
   /** Ids of the participants this workflow may call; ``null`` when it does not say. */
   participants: string[] | null;
+  /** omnigent-slim: where the run stands (D-93). Files without one are working or finished. */
+  state: "working" | "needs-you" | "waiting" | "paused" | "finished" | "stopped";
+  /** The note written when the person set the run aside. */
+  leftOff: string;
 }
 
 /**
@@ -295,6 +299,14 @@ export function parseWorkflowProgress(path: string, text: string): WorkflowProgr
     steps,
     current: Math.min(steps.length + 1, Math.max(1, count(data.current) || 1)),
     note: label(data.note),
+    state: (["working", "needs-you", "waiting", "paused", "finished", "stopped"] as const).includes(
+      data.state as WorkflowProgress["state"],
+    )
+      ? (data.state as WorkflowProgress["state"])
+      : count(data.current) > steps.length
+        ? "finished"
+        : "working",
+    leftOff: typeof data.left_off === "string" ? data.left_off.slice(0, 600) : "",
     participants: Array.isArray(data.participants)
       ? data.participants.filter((id): id is string => typeof id === "string")
       : null,
@@ -353,6 +365,14 @@ function WorkflowCard({ flow }: { flow: WorkflowProgress }) {
           <span className="font-medium">{flow.workflow}</span>
           {flow.subject && <span className="text-muted-foreground"> · {flow.subject}</span>}
         </span>
+        {(flow.state === "paused" || flow.state === "stopped") && (
+          <span
+            data-testid="session-workflow-state"
+            className="shrink-0 rounded-full bg-[var(--pa-idle-soft)] px-2 py-0.5 text-[11px] leading-4 font-semibold text-[var(--pa-ink-2)]"
+          >
+            {flow.state === "paused" ? "Paused" : "Stopped"}
+          </span>
+        )}
         {flow.scenario && (
           <HangarWrench
             to={hangarPath.workflow(flow.scenario)}
@@ -403,6 +423,12 @@ function WorkflowCard({ flow }: { flow: WorkflowProgress }) {
           );
         })}
       </ol>
+      {flow.state === "paused" && flow.leftOff && (
+        <p className="text-xs text-muted-foreground">
+          <span className="block font-semibold">Where you left off</span>
+          {flow.leftOff}
+        </p>
+      )}
       {counts && (
         <div className="flex flex-col gap-1">
           <div
