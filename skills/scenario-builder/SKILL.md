@@ -39,6 +39,8 @@ Find out, one question at a time, only what you cannot infer:
 4. Does any of it run in parallel or take long enough to need a board?
 
 Do not ask about field names, colors or layout. Propose them and show them.
+Colors come only from the design tokens (see `product-aviator-design`): a
+spec names a status tone such as `ok` or `attn`, never a color.
 
 ## Design rules
 

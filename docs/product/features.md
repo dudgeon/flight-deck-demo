@@ -211,3 +211,28 @@ top.
 discovery finds the held-payment problem, intent shaping shapes the idea of
 showing a release date, decision review settles open questions, delivery
 status tracks it. Each demo also stands alone.
+
+## Design language and tokens
+
+**What it is for.** Product Aviator should look like one product, and a
+decision about its look should be made once. Before this, the app, the canvas
+views, the artifact templates and the scenario previews each had their own
+colors, so every change meant editing many files by hand, and artifacts made
+earlier kept the old look forever.
+
+**What it does.** Every color, font and corner comes from
+`design/tokens.json`. `design/build_tokens.py` writes those values into the
+app (the default palette and the navy sidebar read them), the view kit that
+draws chat widgets and canvas views, the preview player, and each artifact
+template. When the canvas shows any HTML artifact, it adds the current tokens
+and the app's light or dark mode, so artifacts made before a change follow it.
+The `product-aviator-design` skill tells Claude what each token means and to
+use nothing else; the view kit, scenario builder and artifact skills point to
+it. Statuses follow one meaning everywhere: green done, blue ready for review,
+amber needs you, red failed, indigo the agent working, and one color reserved
+for what the person did.
+
+**For the production team.** The tokens file is plain JSON with a light and a
+dark value per token, so it can feed any styling system. The contract that
+matters is the set of token names and what each means (in the skill), not the
+values.

@@ -12,6 +12,9 @@ Follow the "Artifacts" section of this workspace's CLAUDE.md. In short:
 3. Open it with the `ui_open_file` tool: `{"path": "artifacts/<name>.html"}`.
 4. Tell the user in one line what it shows and what they can click.
 
+Style only with the `--pa-…` design tokens the templates already use; never
+add colors or fonts of your own (see the `product-aviator-design` skill).
+
 Keep artifacts offline: no URLs to CDNs, fonts, images or APIs. Interactive
 controls hand text back with `window.omnigent?.prompt("...")`, which fills the
 chat composer for the user to send.

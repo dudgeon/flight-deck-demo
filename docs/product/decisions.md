@@ -149,7 +149,43 @@ as a notional one and kept swappable: a markdown file in
 can replace it later without changing the skill. He will correct the draft
 from a preview.
 
+## Name and design language
+
+**D-35 · 2026-11-21 · Geoff.** The fork of the Omnigent meta-harness is named
+**Flight Deck**. Product Aviator stays the name of the user interface. The
+repository, folders and code identifiers keep `omnigent-slim` unless Geoff
+says otherwise. *He liked the name when it came up for the design direction.*
+
+**D-36 · 2026-11-21 · Geoff.** Anthropic's `frontend-design` skill is
+vendored into `skills/` (Apache 2.0, unchanged), so every session has it,
+including on the work Mac, which cannot download skills. *He asked for the
+Anthropic visual design skill to freshen the look.*
+
+**D-37 · 2026-11-21 · Geoff.** One design language for the whole product: the
+app, its components, chat widgets and canvas templates all read the same
+design tokens, so a later change to a token reaches all of them. The widget
+and template builders (view kit, scenario builder, artifact templates) are
+steered to use only those tokens. *Today's four separate color systems (pink
+app, navy and rust views, blue templates, orange previews) look like four
+products.*
+
+**D-38 · 2026-11-21 · Claude.** How D-37 is built: `design/tokens.json` is the
+single source; `design/build_tokens.py` writes it into the app, the view kit,
+the preview player and each template; the canvas viewer injects the current
+tokens and the app's light or dark mode into every artifact frame, so old
+artifacts follow too. The view kit's `--pa-` token names are kept as the
+public contract. A `product-aviator-design` skill holds the rules and wins
+over `frontend-design` where they disagree. Small all-caps mono labels are
+dropped in favor of sentence case, following `frontend-design`. *Built ahead of
+the color choices because it is the same whichever colors are picked.*
+
 ## Open
 
 - Whether views should also appear inside the chat, and in what form. Geoff
   asked for the options to be laid out and mocked before deciding.
+- The colors of the design language, proposed in
+  https://claude.ai/artifact/7YzXdsPux416J5qdkVuAea and shipped as the
+  recommended defaults until decided: where navy lives (navy sidebar,
+  recommended; navy accents; navy header band), the color for the person's
+  own edits (magenta, recommended; rust), and the color for "needs you"
+  (amber, recommended, with red kept for failures; red).
