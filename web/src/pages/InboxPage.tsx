@@ -77,6 +77,7 @@ import { useProactiveInbox } from "@/hooks/useProactiveInbox";
 import { useProactiveAgentSettings } from "@/hooks/useProactiveAgentSettings";
 import { FilePathAwareMessageResponse } from "@/components/blocks/ChatMarkdown";
 import { ElicitationMessage } from "@/components/blocks/ElicitationMessage";
+import { ParticipantMark } from "@/components/chat/ParticipantTurn"; // omnigent-slim
 import { PageScroll } from "@/components/PageScroll";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -130,6 +131,7 @@ import {
   DISMISS_REASONS,
   OPEN_SUGGESTION_STATUSES,
   PROACTIVE_AGENT_DISPLAY_NAME,
+  participantMessageOf,
   suggestionKindLabel,
   suggestionLinkTarget,
   suggestionPreview,
@@ -188,6 +190,8 @@ const INBOX_TABS: { value: InboxFilter; label: string }[] = [
   { value: "unread", label: "Unread" },
   { value: "awaiting", label: "Awaiting response" },
   { value: "advisor", label: PROACTIVE_AGENT_DISPLAY_NAME },
+  // omnigent-slim: messages and invitations from participants (D-68).
+  { value: "people", label: "People" },
 ];
 
 const EMPTY_STATES: Record<InboxFilter, { title: string; body: string }> = {
@@ -206,6 +210,10 @@ const EMPTY_STATES: Record<InboxFilter, { title: string; body: string }> = {
   advisor: {
     title: `No suggestions from ${PROACTIVE_AGENT_DISPLAY_NAME}`,
     body: "Follow-ups, related information, and reminders about your recent work will show up here.",
+  },
+  people: {
+    title: "No messages from people or agents",
+    body: "When a participant writes to you, or asks you to join a session of theirs, it will show up here.",
   },
 };
 
@@ -406,7 +414,9 @@ export function InboxPage() {
     showSuggestions && proactiveInbox.enabled
       ? advisorOnly
         ? listedSuggestions.filter(isAdvisorItem)
-        : listedSuggestions
+        : filter === "people"
+          ? listedSuggestions.filter((item) => participantMessageOf(item) !== null)
+          : listedSuggestions
       : [];
   const visibleCount =
     visibleApprovals.length +
@@ -615,6 +625,107 @@ export function InboxPage() {
         // The user reviews and sends the prompt from the composer.
         navigate(newSessionLocation(action.prompt, []));
       };
+      // omnigent-slim: a participant's message or invitation (D-68 to D-70).
+      // No inline reply (D-70): the card opens the conversation, or closes.
+      const fromParticipant = participantMessageOf(item);
+      if (fromParticipant) {
+        const { participant, intent, sessionId, sessionLabel } = fromParticipant;
+        const invite = intent === "invite";
+        const openSession = () => {
+          if (item.status === "unread") proactiveInbox.update(item.id, { status: "read" });
+        };
+        return (
+          <InboxCard
+            key={entry.key}
+            testId="inbox-participant-message"
+            dataKind={intent}
+            tile={
+              <span className="flex size-8 items-center justify-center">
+                <ParticipantMark
+                  name={participant.name}
+                  kind={participant.kind}
+                  standIn={participant.standIn}
+                  className="size-7 text-[11px]"
+                />
+              </span>
+            }
+            kindLabel={participant.name}
+            title={item.title}
+            preview={
+              invite
+                ? "asks you to join"
+                : // `pa tell` titles a message with its first sentence; don't repeat it.
+                  suggestionPreview(
+                    item.bodyMd.startsWith(item.title)
+                      ? item.bodyMd.slice(item.title.length)
+                      : item.bodyMd,
+                  ) || undefined
+            }
+            at={entry.at}
+            unread={item.status === "unread"}
+            expanded={expanded}
+            onToggle={onToggleSuggestion}
+          >
+            {/* The name is already in the card's header row. */}
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+              {participant.standIn ? (
+                <span
+                  className="rounded border border-dashed border-amber-600 px-1 font-mono text-[10px] tracking-wide text-amber-700 uppercase dark:text-amber-400"
+                  title="An agent is playing this person"
+                >
+                  stand-in
+                </span>
+              ) : (
+                <span className="rounded border border-border px-1 font-mono text-[10px] tracking-wide text-muted-foreground uppercase">
+                  {participant.kind}
+                </span>
+              )}
+              {participant.role && (
+                <span className="text-muted-foreground">{participant.role}</span>
+              )}
+            </p>
+            <p
+              className="flex items-center gap-1.5 text-sm text-muted-foreground"
+              data-testid="inbox-participant-about"
+            >
+              <SquarePenIcon aria-hidden className="size-3 shrink-0" />
+              <span className="shrink-0">{invite ? "Asks you to join" : "About"}</span>
+              <span className="truncate font-medium text-foreground">
+                {sessionLabel ?? rowsById.get(sessionId)?.title ?? "a session"}
+              </span>
+            </p>
+            <FileViewerContext.Provider value={null}>
+              <FilePathAwareMessageResponse>{item.bodyMd}</FilePathAwareMessageResponse>
+            </FileViewerContext.Provider>
+            {participant.standIn && (
+              <p className="text-xs text-muted-foreground">
+                An agent is standing in for {participant.name}.
+              </p>
+            )}
+            <InboxActions>
+              <Button
+                variant="outline"
+                size="xs"
+                className={OUTLINE_ACTION}
+                onClick={() => resolve({ resolution: "already_done" })}
+                componentId="inbox.participant.done"
+              >
+                <CheckIcon className="size-3.5" /> Done
+              </Button>
+              <Button asChild size="xs" className={PRIMARY_ACTION}>
+                <Link
+                  to={`/c/${encodeURIComponent(sessionId)}`}
+                  onClick={openSession}
+                  componentId={invite ? "inbox.participant.join" : "inbox.participant.open"}
+                >
+                  {invite ? "Join conversation" : "Open conversation"}{" "}
+                  <ArrowRightIcon className="size-3.5" />
+                </Link>
+              </Button>
+            </InboxActions>
+          </InboxCard>
+        );
+      }
       const fromAdvisor = isAdvisorItem(item);
       return (
         <InboxCard

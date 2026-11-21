@@ -10,9 +10,9 @@ the web app, with no schema change.
 from __future__ import annotations
 
 import json
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from omnigent.server.inbox_chart import InboxChartV1
 
@@ -34,9 +34,44 @@ class ChartBlock(BaseModel):
         return {"type": self.type, "chart": self.chart.stored()}
 
 
+class ParticipantCard(BaseModel):
+    """Who a participant message is from, as the roster file describes them."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str = Field(pattern=r"^[a-z][a-z0-9-]{0,63}$")
+    name: str = Field(min_length=1, max_length=120)
+    kind: Literal["agent", "person"]
+    role: str = Field(default="", max_length=200)
+    stand_in: bool = False
+
+
+class ParticipantBlock(BaseModel):
+    """omnigent-slim: marks an item as a message from a roster participant.
+
+    ``intent`` is ``"message"`` when they write to the user about a session,
+    or ``"invite"`` when they ask the user to join a session of their own.
+    The item's first session link is the session the card opens.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal["participant"]
+    participant: ParticipantCard
+    intent: Literal["message", "invite"] = "message"
+
+    def stored(self) -> dict[str, Any]:
+        """The block as stored and returned."""
+        return {
+            "type": self.type,
+            "participant": self.participant.model_dump(),
+            "intent": self.intent,
+        }
+
+
 # The block types the server accepts. Add a type as a union member with a
 # ``type`` literal and annotate the union with ``Field(discriminator="type")``.
-InboxMediaBlock = ChartBlock
+InboxMediaBlock = Annotated[ChartBlock | ParticipantBlock, Field(discriminator="type")]
 
 
 def stored_media(blocks: list[InboxMediaBlock]) -> list[dict[str, Any]]:

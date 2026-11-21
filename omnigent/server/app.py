@@ -142,6 +142,9 @@ from omnigent.server.routes.extensions import create_extensions_router
 from omnigent.server.routes.harnesses import create_harnesses_router
 from omnigent.server.routes.slim_library import create_slim_library_router
 from omnigent.server.routes.slim_hangar import create_slim_hangar_router  # omnigent-slim
+from omnigent.server.routes.slim_participant_inbox import (  # omnigent-slim
+    create_slim_participant_inbox_router,
+)
 from omnigent.server.routes.imports import create_imports_router
 from omnigent.server.routes.inbox_items import create_inbox_items_router
 from omnigent.server.routes.memory import create_memory_router
@@ -4523,6 +4526,16 @@ def create_app(
             ),
             prefix="/v1",
             tags=["inbox_items"],
+        )
+        # omnigent-slim: participant messages and invitations (D-68 to D-70).
+        app.include_router(
+            create_slim_participant_inbox_router(
+                inbox_item_store,
+                conversation_store=conversation_store,
+                auth_provider=auth_provider,
+            ),
+            prefix="/v1",
+            tags=["slim"],
         )
         if proactive_agent_settings_store is not None:
             app.include_router(

@@ -5,11 +5,12 @@
 const STORAGE_KEY = "omnigent:inbox-filter";
 
 /** Which slice of the Inbox is shown. */
-export type InboxFilter = "all" | "unread" | "awaiting" | "advisor";
+// omnigent-slim: "people" lists messages and invitations from participants.
+export type InboxFilter = "all" | "unread" | "awaiting" | "advisor" | "people";
 
 export const DEFAULT_INBOX_FILTER: InboxFilter = "all";
 
-const INBOX_FILTERS = new Set<string>(["all", "unread", "awaiting", "advisor"]);
+const INBOX_FILTERS = new Set<string>(["all", "unread", "awaiting", "advisor", "people"]);
 
 /** Return whether a string is a known Inbox tab value. */
 export function isInboxFilter(value: string): value is InboxFilter {
