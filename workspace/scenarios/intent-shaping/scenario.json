@@ -1,7 +1,8 @@
 {
  "scenario": "intent-shaping",
- "title": "Release dates: shaping the intent",
- "summary": "The Intent shaping workflow played with an invented brief for showing release dates.",
+ "title": "Release dates, from a hunch",
+ "summary": "\"Just show people the release date.\" A one-line idea, shaped against the framework into something a team could commit to.",
+ "length_minutes": 5,
  "workflow": "intent-shaping",
  "participants": [
   "risk-review",

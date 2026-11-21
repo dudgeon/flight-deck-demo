@@ -3,7 +3,7 @@
 ``start.sh`` runs ``python -m omnigent.slim_bootstrap`` after the server is up.
 It creates (once) a project named ``OMNIGENT_SLIM_PROJECT`` whose sessions run
 in ``OMNIGENT_SLIM_WORKSPACE`` on this machine with the Claude Code agent, so
-canned sessions and the "New session" button land in the workspace folder.
+Library Start buttons and the "New session" button land in the workspace folder.
 It also creates a "Hangar" project in the same folder for the Hangar's guided
 builds (``OMNIGENT_SLIM_HANGAR_PROJECT``).
 An existing project of that name is left as the user configured it, with one

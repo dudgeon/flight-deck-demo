@@ -497,7 +497,7 @@ function Overview({ hangar }: { hangar: Hangar }) {
               "starters",
               "Starters",
               hangar.starters.length,
-              "The Library's canned sessions: how people start work.",
+              "Extra ways into a featured skill on the Library.",
             ],
             [
               "frameworks",
@@ -1403,8 +1403,8 @@ function StarterShelf({ hangar }: { hangar: Hangar }) {
       <div>
         <h1>Starters</h1>
         <p className="sub">
-          The canned sessions in the Library. Each opens the composer with its prompt filled in;
-          nothing is sent by itself.
+          Extra ways into a featured skill: each shows on that skill's Library card and opens the
+          composer with its prompt filled in. Nothing is sent by itself.
         </p>
       </div>
       <div className="grid2">

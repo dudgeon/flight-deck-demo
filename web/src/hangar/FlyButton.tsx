@@ -17,8 +17,11 @@ export function FlyButton({
   demo,
   disabled,
   label = "Fly this",
+  liveTurns,
 }: {
   scenarioId: string;
+  /** False plays every turn canned; undefined keeps the script's live turns (or what was set before). */
+  liveTurns?: boolean;
   /** The demo as the catalog last saw it, so the choice can show without a round trip. */
   demo?: DemoInfo | null;
   disabled?: boolean;
@@ -29,7 +32,7 @@ export function FlyButton({
   const [existing, setExisting] = useState<DemoInfo | null>(null);
 
   const go = async (mode?: "reset" | "keep") => {
-    const result = await fly.mutateAsync({ id: scenarioId, mode });
+    const result = await fly.mutateAsync({ id: scenarioId, mode, liveTurns });
     if (result.state === "exists") {
       setExisting(result.demo);
       return;

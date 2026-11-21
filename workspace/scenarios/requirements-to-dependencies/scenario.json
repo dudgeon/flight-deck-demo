@@ -1,7 +1,8 @@
 {
  "scenario": "requirements-to-dependencies",
- "title": "Allowances dependencies",
- "summary": "The Requirements to dependencies workflow played with the invented Allowances requirements and a platform map.",
+ "title": "What the platform must give",
+ "summary": "Twenty explorations, one per requirement, run side by side on one board. Start them, answer two, and review the rest.",
+ "length_minutes": 4,
  "workflow": "requirements-to-dependencies",
  "fixtures": {
   "dataset": "fixtures/allowances.json",

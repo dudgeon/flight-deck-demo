@@ -164,6 +164,8 @@ export interface DemoInfo {
   started?: string;
   finished: boolean;
   project: string;
+  /** False when every turn plays canned (the Library's "Live turns" switch, D-85). */
+  live_turns?: boolean;
 }
 
 export interface FlyResult {
@@ -190,11 +192,23 @@ export function demoSessionLink(result: FlyResult): string {
 export function useFlyScenario() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, mode }: { id: string; mode?: "reset" | "keep" }) =>
-      send(flyPath(id), "POST", mode ? { mode } : {}) as Promise<FlyResult>,
+    mutationFn: ({
+      id,
+      mode,
+      liveTurns,
+    }: {
+      id: string;
+      mode?: "reset" | "keep";
+      liveTurns?: boolean;
+    }) =>
+      send(flyPath(id), "POST", {
+        ...(mode ? { mode } : {}),
+        ...(liveTurns === undefined ? {} : { live_turns: liveTurns }),
+      }) as Promise<FlyResult>,
     onSuccess: (result) => {
       if (result.state === "exists") return;
       void client.invalidateQueries({ queryKey: ["slim-hangar"] });
+      void client.invalidateQueries({ queryKey: ["slim-library"] });
       void client.invalidateQueries({ queryKey: ["projects"] });
     },
   });

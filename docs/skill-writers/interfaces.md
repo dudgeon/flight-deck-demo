@@ -195,7 +195,7 @@ tools reach for most:
 | `POST /v1/sessions/{id}/ui/open-file` with `{"path": "..."}` | Open a file in that session's viewer |
 | `GET /v1/projects` / `POST /v1/projects` | List or create projects |
 | `GET /v1/agents` | List agents |
-| `GET /v1/slim/library` | omnigent-slim: canned sessions and templates *slim* |
+| `GET /v1/slim/library` | omnigent-slim: featured skills and demos, from workflow and scenario files *slim* |
 
 The web UI also opens a prefilled composer from a link:
 `/?project=<name>&prompt=<url-encoded text>`. Nothing is sent until the user

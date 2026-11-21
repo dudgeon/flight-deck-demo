@@ -1,7 +1,8 @@
 {
  "scenario": "delivery-status",
- "title": "Release dates: status update",
- "summary": "The Delivery status update workflow played with an invented Release dates delivery and its status update.",
+ "title": "The launch slips",
+ "summary": "Steering is tomorrow and the load test just lost its environment. Find a way to hold the date, then write the update.",
+ "length_minutes": 3,
  "workflow": "delivery-status",
  "participants": [
   "cards-platform",

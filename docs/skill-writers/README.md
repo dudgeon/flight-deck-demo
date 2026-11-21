@@ -36,7 +36,9 @@ Use these words in skills so they match what Omnigent and its users say.
 - **Artifact**: a self-contained HTML file in the workspace, shown in the
   viewer. omnigent-slim keeps them in `artifacts/`.
 - **Template**: an artifact to copy and fill in, from the library folder.
-- **Canned session**: a prompt with fill-in fields, listed on the Library page.
+- **Library**: the page where work and demos start. A workflow shows there
+  when its `workflow.json` has `"library": {"show": true}`; every published
+  scenario shows as a demo. See `docs/customizing.md`.
 
 ## The two rules every Omnigent skill should follow
 
