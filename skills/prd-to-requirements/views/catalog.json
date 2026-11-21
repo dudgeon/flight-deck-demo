@@ -32,12 +32,12 @@
   }
  },
  "actions": [
-  { "id": "approve", "label": "Approve", "tone": "primary", "when": { "type": "requirement", "status": ["draft", "ready", "returned"] }, "set": { "status": "reviewed" }, "next": true },
-  { "id": "approve-lock", "label": "Approve and lock", "when": { "type": "requirement", "status": ["draft", "ready", "returned"] }, "set": { "status": "reviewed", "locked": true }, "next": true },
+  { "id": "approve", "label": "Approve", "tone": "primary", "direct": true, "when": { "type": "requirement", "status": ["draft", "ready", "returned"] }, "set": { "status": "reviewed" }, "next": true },
+  { "id": "approve-lock", "label": "Approve and lock", "direct": true, "when": { "type": "requirement", "status": ["draft", "ready", "returned"] }, "set": { "status": "reviewed", "locked": true }, "next": true },
   { "id": "return", "label": "Send back", "when": { "type": "requirement", "status": ["draft", "ready", "reviewed"] }, "ask": { "label": "What should change?", "field": "return_note" }, "set": { "status": "returned" }, "prompt": "Rework requirement {id} ({title}). My note: {note}" },
   { "id": "answer", "label": "Answer in chat", "tone": "primary", "when": { "type": "requirement", "status": "needs-you" }, "prompt": "About requirement {id} ({title}): " },
   { "id": "split", "label": "Split", "when": { "type": "requirement" }, "prompt": "Split requirement {id} ({title}) into separate testable requirements." },
-  { "id": "approve-all", "label": "Approve all ready", "scope": "view", "prompt": "Mark every requirement that is ready as reviewed." },
+  { "id": "approve-all", "label": "Approve all ready", "scope": "view", "direct": true, "set": { "status": "reviewed" }, "records": { "type": "requirement", "status": "ready" }, "prompt": "Mark every requirement that is ready as reviewed." },
   { "id": "map-dependencies", "label": "Map dependencies", "scope": "view", "tone": "primary", "prompt": "Map the platform dependencies for the reviewed requirements in {dataset}." }
  ]
 }

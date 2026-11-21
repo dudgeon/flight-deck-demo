@@ -21,6 +21,17 @@ export interface ArtifactPromptDetail {
   text: string;
 }
 
+/**
+ * Window event for a state change an artifact sends straight to the agent.
+ * `detail` is {@link ArtifactActionDetail}; the chat page sends `detail.text`.
+ */
+export const ARTIFACT_ACTION_EVENT = "omnigent-slim:artifact-action";
+
+export interface ArtifactActionDetail {
+  /** The message to send, written by the host from validated values. */
+  text: string;
+}
+
 /** Longest text an artifact may hand to the composer. */
 const MAX_PROMPT_CHARS = 20_000;
 
@@ -102,6 +113,14 @@ function runtime(state: ArtifactState): string {
     /** Keep a small JSON value across reloads of this artifact. */
     saveState: function (key, value) {
       try { post("state", JSON.stringify(value === undefined ? null : value), String(key)); } catch (e) {}
+    },
+    /**
+     * Send state changes to the agent without the composer:
+     * act({ dataset: "data/x.json", changes: [{ id: "R-01", field: "status", value: "reviewed" }] }).
+     * Only state fields and plain status words are accepted; the host writes the message.
+     */
+    act: function (request) {
+      try { post("act", JSON.stringify(request)); } catch (e) {}
     }
   };
 ${CANVAS_FRAME_RUNTIME}
@@ -121,6 +140,52 @@ export function injectArtifactBridge(html: string, state: ArtifactState = {}): s
   return html.slice(0, end) + script + html.slice(end);
 }
 
+// ── Direct actions ───────────────────────────────────────────────────────────
+// `omnigent.act(...)` is the one way an artifact reaches the agent without the
+// user pressing Send, so it is deliberately narrow. The frame supplies only
+// record ids, state field names and status words, each checked against a strict
+// pattern; the host composes the sentence. An artifact therefore cannot use the
+// channel to give the agent instructions, only to report a state change the
+// user made in the view. Anything else goes through `omnigent.prompt`.
+
+const MAX_ACTION_CHANGES = 50;
+const MIN_ACTION_INTERVAL_MS = 400;
+const ACTION_DATASET = /^[A-Za-z0-9_][A-Za-z0-9_./-]{0,199}$/;
+const ACTION_ID = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,39}$/;
+const ACTION_FIELD = /^(status|locked|[a-z][a-z0-9_]{0,30}_status)$/;
+const ACTION_VALUE = /^[a-z][a-z0-9-]{0,30}$/;
+
+let lastActionAt = 0;
+
+/**
+ * Build the message for a direct action, or null when any part is not a plain
+ * state change.
+ *
+ * @param request What the frame passed to `omnigent.act`, already JSON-parsed.
+ */
+export function artifactActionText(request: unknown): string | null {
+  if (typeof request !== "object" || request === null) return null;
+  const { dataset, changes } = request as { dataset?: unknown; changes?: unknown };
+  if (typeof dataset !== "string" || !ACTION_DATASET.test(dataset) || dataset.includes("..")) {
+    return null;
+  }
+  if (!Array.isArray(changes) || changes.length === 0 || changes.length > MAX_ACTION_CHANGES) {
+    return null;
+  }
+  const lines: string[] = [];
+  for (const change of changes as unknown[]) {
+    if (typeof change !== "object" || change === null) return null;
+    const { id, field, value } = change as { id?: unknown; field?: unknown; value?: unknown };
+    if (typeof id !== "string" || !ACTION_ID.test(id)) return null;
+    if (typeof field !== "string" || !ACTION_FIELD.test(field)) return null;
+    const valid =
+      typeof value === "boolean" || (typeof value === "string" && ACTION_VALUE.test(value));
+    if (!valid) return null;
+    lines.push(`- ${id} ${field} = ${String(value)}`);
+  }
+  return `Canvas action on ${dataset}:\n${lines.join("\n")}`;
+}
+
 /**
  * Turn a message from the artifact frame into a composer event.
  *
@@ -137,6 +202,22 @@ export function handleArtifactMessage(data: unknown, stateScope: string | null =
       return false;
     }
     writeArtifactState(stateScope, message.key.slice(0, 200), message.text);
+    return true;
+  }
+  if (message.type === "act") {
+    if (typeof message.text !== "string") return false;
+    let request: unknown;
+    try {
+      request = JSON.parse(message.text);
+    } catch {
+      return false;
+    }
+    const text = artifactActionText(request);
+    const now = Date.now();
+    if (!text || now - lastActionAt < MIN_ACTION_INTERVAL_MS) return false;
+    lastActionAt = now;
+    const action: ArtifactActionDetail = { text };
+    window.dispatchEvent(new CustomEvent(ARTIFACT_ACTION_EVENT, { detail: action }));
     return true;
   }
   if (message.type !== "prompt") return false;

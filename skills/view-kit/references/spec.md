@@ -116,6 +116,7 @@ Field kinds: `choice`, `multi`, `toggle`, `text`, `line`, `number`.
 | `next` | After the action, move to the next record that needs the same attention. |
 | `inline` | Also show on board tiles. |
 | `tone` | `primary` for the main action. |
+| `direct` | `true` for an action that only changes state (`status`, `locked`, `*_status`, with a lower-case word or true/false as the value). It goes to the agent without the chat box. On a `view` action add `records` to say which records the `set` applies to. Keep a `prompt` as the fallback for hosts without direct actions. |
 
 Give every action a stable `id`. The scenario's SKILL.md says what the agent
 does for each id.

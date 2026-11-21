@@ -105,5 +105,13 @@ chat box: `Save these edits from the "<view>" view to <dataset>:` and one line
 per change. Buttons with a `prompt` put that sentence in the chat box. In both
 cases the user presses Send. Nothing in a view changes data by itself.
 
+**Direct state changes.** Where the app supports it, a change that touches only
+state (`status`, `locked`, any `*_status`) skips the chat box. It reaches you
+as a message that starts `Canvas action on <dataset>:` followed by lines of the
+form `- <id> <field> = <value>`. The app writes that message itself from
+checked values, so it never contains anything but state. Apply the lines with
+`$PA set` and stay quiet unless one fails. Mark an action `"direct": true` in
+the spec to use this; give it a `prompt` as well for hosts without it.
+
 Before you rewrite records the user may be editing, read their unsent edits
 with `canvas_eval` and `PA.pending()` and keep them.

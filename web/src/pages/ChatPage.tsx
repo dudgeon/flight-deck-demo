@@ -1,4 +1,9 @@
-import { ARTIFACT_PROMPT_EVENT, type ArtifactPromptDetail } from "@/lib/artifactBridge";
+import {
+  ARTIFACT_ACTION_EVENT,
+  ARTIFACT_PROMPT_EVENT,
+  type ArtifactActionDetail,
+  type ArtifactPromptDetail,
+} from "@/lib/artifactBridge";
 import { clearLocalReviewContexts, usePendingLocalReviewContexts } from "@/lib/localReviewContext";
 import { buildOutgoingMessage, carriesMessageContext } from "@/lib/outgoingComposerMessage";
 import { SelectionPopup } from "@/components/chat/SelectionPopup";
@@ -1657,6 +1662,19 @@ const MainAgentSurface = memo(function MainAgentSurfaceImpl({
     };
     window.addEventListener(ARTIFACT_PROMPT_EVENT, onArtifactPrompt);
     return () => window.removeEventListener(ARTIFACT_PROMPT_EVENT, onArtifactPrompt);
+  }, []);
+  // omnigent-slim: a state change made in an artifact (`omnigent.act()`) is sent
+  // as a message at once. The bridge wrote the text itself from validated state
+  // values, so this is the only artifact text that skips the composer.
+  const onSendRef = useRef(onSend);
+  onSendRef.current = onSend;
+  useEffect(() => {
+    const onArtifactAction = (event: Event) => {
+      const detail = (event as CustomEvent<ArtifactActionDetail>).detail;
+      if (detail?.text) onSendRef.current(detail.text);
+    };
+    window.addEventListener(ARTIFACT_ACTION_EVENT, onArtifactAction);
+    return () => window.removeEventListener(ARTIFACT_ACTION_EVENT, onArtifactAction);
   }, []);
   // Stable, so the memoized transcript doesn't re-render when the composer does.
   const editSentMessage = useCallback(

@@ -23,7 +23,7 @@
   var SF = spec.status_field || "status";
 
   /* ---------- state that survives a redraw and, where the host allows, a reload ---------- */
-  var state = { detail: [], wide: false, collapsed: {}, filter: null, edits: {}, sent: false, answers: {}, answered: false, asking: null };
+  var state = { detail: [], wide: false, collapsed: {}, filter: null, edits: {}, direct: {}, sent: false, answers: {}, answered: false, asking: null };
   (function load() {
     var saved = null;
     try { saved = window.omnigent && window.omnigent.state && window.omnigent.state[KEY]; } catch (e) {}
@@ -53,7 +53,9 @@
   function val(rec, field) {
     if (!rec) return undefined;
     var e = state.edits[rec.id];
-    return e && field in e ? e[field] : rec[field];
+    if (e && field in e) return e[field];
+    var d = state.direct[rec.id];
+    return d && field in d ? d[field].v : rec[field];
   }
   function isEdited(rec, field) {
     var e = state.edits[rec.id];
@@ -95,6 +97,7 @@
   /* ---------- status vocabulary ---------- */
   var STATUS = {
     queued: { label: "Queued", tone: "idle", icon: "ring" },
+    requested: { label: "Starting", tone: "warn", icon: "ring" },
     working: { label: "Working", tone: "warn", icon: "half" },
     "needs-you": { label: "Needs you", tone: "attn", icon: "bang" },
     ready: { label: "Ready for review", tone: "info", icon: "dot" },
@@ -175,6 +178,31 @@
   function actionBtn(a, rec, small) {
     return '<button class="pa-btn ' + (a.tone || "") + (small ? " small" : "") + '" data-act="action" data-a="' + esc(a.id) + '"' + (rec ? ' data-id="' + esc(rec.id) + '"' : "") + ">" + esc(a.label || label(a.id)) + "</button>";
   }
+  /* State changes (a status, a lock) can go straight to the agent where the host offers
+     omnigent.act. The host accepts state fields only and writes the message itself, so a
+     view cannot use this channel to say anything else. Content edits always wait for Send. */
+  function isStateField(f) { return f === "status" || f === "locked" || /_status$/.test(f); }
+  function isStateValue(v) { return typeof v === "boolean" || (typeof v === "string" && /^[a-z][a-z0-9-]{0,30}$/.test(v)); }
+  function canAct() { return !!(window.omnigent && window.omnigent.act && spec.dataset && spec.direct !== false); }
+  var actQueue = [], actTimer = null;
+  function setDirect(id, field, value) {
+    var rec = byId[id];
+    if (!rec || rec[field] === value) return;
+    (state.direct[id] || (state.direct[id] = {}))[field] = { v: value, from: rec[field] == null ? null : rec[field], t: Date.now() };
+    var e = state.edits[id];
+    if (e) { delete e[field]; if (!Object.keys(e).length) delete state.edits[id]; }
+    actQueue.push({ id: id, field: field, value: value });
+    clearTimeout(actTimer);
+    actTimer = setTimeout(function () {
+      var changes = actQueue.splice(0, 50); actQueue = [];
+      try { window.omnigent.act({ dataset: spec.dataset, changes: changes }); } catch (e) {}
+    }, 30);
+  }
+  /* A change from a button or a cell: direct when it is state and the host allows, else an edit. */
+  function change(id, field, value) {
+    if (canAct() && isStateField(field) && isStateValue(value)) setDirect(id, field, value);
+    else setEdit(id, field, value);
+  }
   function setEdit(id, field, value) {
     var rec = byId[id];
     if (!rec) return;
@@ -211,9 +239,15 @@
   function runAction(a, rec, note) {
     if (a.ask && note === undefined) { state.asking = { a: a.id, id: rec ? rec.id : null }; return; }
     state.asking = null;
-    if (a.set && rec) for (var f in a.set) setEdit(rec.id, f, typeof a.set[f] === "string" ? fmt(a.set[f], rec) : a.set[f]);
+    /* "direct" actions are pure state changes. With a host that takes them they need no
+       sentence; without one they fall back to their prompt and leave the data alone. */
+    var direct = a.direct && a.set && !a.ask && canAct();
+    var targets = rec ? [rec] : a.direct && a.set && a.records ? collection().filter(function (r) { return match(r, a.records); }) : [];
+    if (a.set && !(a.direct && !direct)) targets.forEach(function (r) {
+      for (var f in a.set) (a.ask ? setEdit : change)(r.id, f, typeof a.set[f] === "string" ? fmt(a.set[f], r) : a.set[f]);
+    });
     if (a.ask && rec && a.ask.field) setEdit(rec.id, a.ask.field, note || "");
-    if (a.prompt) {
+    if (a.prompt && !direct) {
       var text = fmt(a.prompt, rec).replace("{note}", note || "");
       var lines = editLines();
       if (lines.length) { text += "\n\nAlso save these edits to " + (spec.dataset || "the dataset") + ":\n" + lines.join("\n"); state.sent = true; }
@@ -545,6 +579,17 @@
       if (!Object.keys(e).length) delete state.edits[id];
     });
     if (!Object.keys(state.edits).length) state.sent = false;
+    /* A direct change shows at once and is dropped as soon as the data moves, or after
+       three minutes if the agent never applied it. */
+    Object.keys(state.direct).forEach(function (id) {
+      var rec = byId[id], d = state.direct[id];
+      if (!rec) { delete state.direct[id]; return; }
+      Object.keys(d).forEach(function (f) {
+        var now = rec[f] == null ? null : rec[f];
+        if (now !== d[f].from || Date.now() - d[f].t > 180000) delete d[f];
+      });
+      if (!Object.keys(d).length) delete state.direct[id];
+    });
     state.detail = state.detail.filter(function (id) { return byId[id]; });
   }
 
@@ -592,7 +637,7 @@
     var t = ev.target, field = t.getAttribute("data-edit"), q = t.getAttribute("data-q");
     if (field) {
       var v = t.type === "checkbox" ? t.checked : t.type === "number" ? (t.value === "" ? null : Number(t.value)) : t.value;
-      setEdit(t.getAttribute("data-id"), field, v);
+      change(t.getAttribute("data-id"), field, v);
       render();
     } else if (q) {
       if (t.type === "radio") state.answers[q] = t.value;

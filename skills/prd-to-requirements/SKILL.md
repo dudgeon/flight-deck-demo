@@ -85,6 +85,7 @@ The view puts text in the chat box and the user presses Send. Handle each:
 
 | Message from the view | What you do |
 |---|---|
+| "Canvas action on data/<slug>.json:" then lines like `- R-07 status = reviewed` or `- R-02 locked = true` (`approve`, `approve-lock`, `approve-all`, the lock box) | These arrive without the user pressing Send, and only ever carry state. Apply each line with `$PA set data/<slug>.json <id> field=value` exactly as written. Do not reply unless something fails. |
 | "Save these edits ..." (`save-edits`) | Apply each line with `$PA set data/<slug>.json <id> field=value`. Booleans and numbers are bare (`locked=true`). Confirm in one line. |
 | "Rework requirement R-07 ... My note: ..." (`return`) | Rewrite that record from the document and the note, set `status=ready` and clear `return_note` with `return_note=null`. |
 | "About requirement R-03 ...: <answer>" (`answer`) | Update the record with the answer, set `status=ready`, clear `question` with `question=null`. |

@@ -7,7 +7,7 @@
  "status_field": "explore_status",
  "records": { "type": "requirement" },
  "summary": { "count_by": "explore_status" },
- "lanes": { "field": "explore_status", "order": ["queued", "working", "needs-you", "ready", "returned", "reviewed", "failed"] },
+ "lanes": { "field": "explore_status", "order": ["queued", "requested", "working", "needs-you", "ready", "returned", "reviewed", "failed"] },
  "tile": { "fields": [ { "field": "priority", "as": "chip" } ] },
  "details": {
   "requirement": {
@@ -42,11 +42,11 @@
   }
  },
  "actions": [
-  { "id": "explore", "label": "Start", "inline": true, "tone": "primary", "when": { "type": "requirement", "explore_status": ["queued", "failed"] }, "prompt": "Start exploring dependencies for {id} ({title})." },
-  { "id": "approve", "label": "Approve", "tone": "primary", "when": { "type": "requirement", "explore_status": ["ready"] }, "set": { "explore_status": "reviewed" }, "next": true },
+  { "id": "explore", "label": "Start", "inline": true, "tone": "primary", "direct": true, "set": { "explore_status": "requested" }, "when": { "type": "requirement", "explore_status": ["queued", "failed"] }, "prompt": "Start exploring dependencies for {id} ({title})." },
+  { "id": "approve", "label": "Approve", "tone": "primary", "direct": true, "when": { "type": "requirement", "explore_status": ["ready"] }, "set": { "explore_status": "reviewed" }, "next": true },
   { "id": "return", "label": "Send back", "when": { "type": "requirement", "explore_status": ["ready", "reviewed"] }, "ask": { "label": "What should the explorer look at again?", "field": "explore_return_note" }, "set": { "explore_status": "returned" }, "prompt": "Explore {id} ({title}) again. My note: {note}" },
   { "id": "answer", "label": "Answer in chat", "tone": "primary", "when": { "type": "requirement", "explore_status": "needs-you" }, "prompt": "My answer on {id} ({title}): " },
-  { "id": "explore-all", "label": "Start all queued", "scope": "view", "tone": "primary", "prompt": "Start exploring dependencies for every queued requirement in {dataset}." },
+  { "id": "explore-all", "label": "Start all queued", "scope": "view", "tone": "primary", "direct": true, "set": { "explore_status": "requested" }, "records": { "type": "requirement", "explore_status": ["queued", "failed"] }, "prompt": "Start exploring dependencies for every queued requirement in {dataset}." },
   { "id": "summarize", "label": "Summarize", "scope": "view", "prompt": "Summarize the dependency mapping in {dataset} and tell me what it means for the PRD." }
  ]
 }

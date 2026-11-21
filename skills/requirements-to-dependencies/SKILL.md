@@ -54,7 +54,7 @@ This stage keeps its own status in `explore_status`, so it never disturbs the
 
 For each requirement you are asked to start:
 
-1. `$PA set data/<slug>.json <id> explore_status=working --no-stale`
+1. `$PA set data/<slug>.json <id> explore_status=working --no-stale` (the board may already show it as `requested`, meaning the user pressed Start)
 2. Launch one sub-agent with the Agent tool, in the background, model
    `sonnet`. Its prompt is `references/explorer.md` with the four values at
    the top filled in. Launch up to five at a time. When one finishes, start
@@ -75,7 +75,8 @@ The board puts text in the chat box and the user presses Send.
 
 | Message from the board | What you do |
 |---|---|
-| "Start exploring dependencies for R-07 ..." (`explore`) | Step 3 for that requirement. |
+| "Canvas action on data/<slug>.json:" then lines like `- R-07 explore_status = requested` | These arrive without the user pressing Send, and only ever carry state. For each `explore_status = requested` line, do step 3 for that requirement. Apply any other line with `$PA set` exactly as written (an approval is `explore_status = reviewed`). Do not reply unless something fails. |
+| "Start exploring dependencies for R-07 ..." (`explore`) | The same request in words, from a host without direct actions. Step 3 for that requirement. |
 | "Start exploring dependencies for every queued requirement ..." (`explore-all`) | Step 3 for all with `explore_status=queued`. |
 | "Save these edits ..." (`save-edits`) | Apply each line with `$PA set`. This is how approvals (`approve`), a chosen capability (`selected_option`) and edited fields arrive. Confirm in one line. |
 | "Explore R-07 ... again. My note: ..." (`return`) | Set `explore_status=working`, then start a new explorer with the note added to its prompt. It replaces that requirement's dependencies rather than adding duplicates. |

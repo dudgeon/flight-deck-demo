@@ -3,7 +3,7 @@
  "requirement": {
   "required": ["id", "type", "title", "statement"],
   "fields": {
-   "explore_status": { "enum": ["queued", "working", "needs-you", "ready", "reviewed", "returned", "failed"], "note": "This stage's own status field" },
+   "explore_status": { "enum": ["queued", "requested", "working", "needs-you", "ready", "reviewed", "returned", "failed"], "note": "This stage's own status field" },
    "explore_question": { "type": "string" },
    "explore_note": { "type": "string" }
   }
