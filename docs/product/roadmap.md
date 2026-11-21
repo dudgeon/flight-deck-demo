@@ -356,6 +356,29 @@ strictly as the moment needs, measured by evals rather than argued.
 - **Read.** [director-coordination.md](director-coordination.md); walkthrough
   at https://claude.ai/artifact/La4Qa5THk5JhwQBQGcVY7d.
 
+## Hero-skill set and the lifecycle
+
+Refine the hero skills into a small, flexible set (Geoff: don't subdivide
+the process into too many subskills, don't make it rigid), with the widgets
+and worksheet templates each needs.
+
+- **Done.** Research (2026-11-21) from Geoff's product agent and harness
+  library and the public lifecycle frameworks, with a recommendation: four
+  arcs (problem discovery, intent shaping, PRD to dependencies, delivery
+  status), two moves on any artifact (review, decide) and the lifecycle
+  companion; a suggested path with fixed checkpoints per skill; stages as
+  tags with Learn added and Decide made a move; evidence, open questions,
+  decisions and readiness shared on the initiative; five shared widgets.
+- **Open.** HS-1 to HS-5, being put to Geoff one at a time. Nothing built.
+- **Next, if accepted.** Merge the two requirement workflows (old ids kept),
+  `checkpoints` in `workflow.json` and `pa check`, a stage list on routing,
+  Learn in `lifecycle.json`, Review and Decide as launchers on every
+  artifact, the shared widgets in the view kit. The registers' shape comes
+  from the template and initiative data model work.
+- **Read.** [lifecycle-research.md](lifecycle-research.md); walkthrough at
+  https://claude.ai/artifact/P3hZWy2Ht6es1KCxMDLTEv (offline copy in
+  `docs/decision-artifacts/2026-11-21-hero-skills-and-lifecycle/`).
+
 ## Usage logging
 
 Geoff wants to understand how the whole platform is used, mostly while

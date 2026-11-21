@@ -275,6 +275,18 @@
       "about": "How the local usage log works, and whether logs are committed, what a work Mac pack holds, where the numbers are seen (UL-1 to UL-3)",
       "decisions": "D-122 to D-127",
       "status": "Open"
+    },
+    {
+      "id": "P3hZWy2Ht6es1KCxMDLTEv",
+      "order": 23,
+      "url": "https://claude.ai/artifact/P3hZWy2Ht6es1KCxMDLTEv",
+      "slug": "2026-11-21-hero-skills-and-lifecycle",
+      "date": "2026-11-21",
+      "title": "Hero Skills and the Lifecycle",
+      "kind": "Decision walkthrough",
+      "about": "Research on the product lifecycle and AI help; five questions on the shape of the hero-skill set (HS-1 to HS-5)",
+      "decisions": "HS-1 to HS-5 (open)",
+      "status": "Asked"
     }
   ]
 }
