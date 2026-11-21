@@ -1808,7 +1808,7 @@ def restore_version(workspace: Path, pid: str, version: str, skills: Path | None
 FOLDER_KINDS = {"scenario": "scenarios", "workflow": "workflows"}
 BUILD_KINDS = ["person", "scenario", "workflow"]
 SCENARIO_KEYS = ("title", "summary", "workflow", "participants", "fixtures", "script", "opening")
-WORKFLOW_KEYS = ("title", "summary", "steps", "participants", "inputs", "launchers", "work_products")
+WORKFLOW_KEYS = ("title", "summary", "steps", "participants", "inputs", "launchers", "work_products", "views")
 _TEXT_SUFFIXES = {".md", ".json", ".txt", ".csv", ".html", ".yaml", ".yml"}
 _MAX_FILE = 1_000_000
 _MAX_SHOWN = 300_000
@@ -1968,6 +1968,17 @@ def edit_folder_draft(workspace: Path, kind: str, fid: str, manifest: dict[str, 
             value = manifest.get(key)
             if value is not None and not (isinstance(value, list) and all(isinstance(v, str) for v in value)):
                 raise PaError(f"{key} must be a list of text")
+        views = manifest.get("views")
+        if views is not None:
+            # A workflow's widgets and views (D-112): a name to a spec file in the folder.
+            if not isinstance(views, dict) or not all(
+                isinstance(k, str) and re.fullmatch(r"[a-z0-9][a-z0-9-]{0,40}", k)
+                and isinstance(v, str) and v.endswith(".json")
+                for k, v in views.items()
+            ):
+                raise PaError("views must map a short lower-case name to a .json spec file")
+            for v in views.values():
+                _safe_rel(v)
         if manifest.get("workflow") and manifest["workflow"] not in list_workflows(workspace):
             raise PaError(f"there is no workflow {manifest['workflow']}")
         path = folder / _manifest_name(kind, folder)

@@ -234,18 +234,50 @@ def _record_types(folder: Path, manifest: dict[str, Any]) -> list[dict[str, Any]
     return types
 
 
-def _workflow(pa: ModuleType, folder: Path, roster: dict[str, Any]) -> dict[str, Any] | None:
-    try:
-        run = pa.resolve_run(folder, workspace_dir())
-    except Exception:  # noqa: BLE001 -- an unreadable workflow is left off the shelf
-        return None
-    manifest, wid, sdir = run["manifest"], run["workflow_id"], run["scenario_dir"]
-    wid = folder.name
-    script = _script(pa, sdir, manifest, roster)
-    fixture = (manifest.get("fixtures") or {}).get("dataset")
-    sample = _json(sdir / fixture) if fixture and sdir is not None else None
-    sample = sample if isinstance(sample, dict) else {}
-    hosts = script["hosts"] if script else {}
+# Where a view is shown (D-112). A workflow's instructions say it: a line like
+# ``$PA render SKILL_DIR/views/card.json --host chat`` puts the card in the
+# chat as a widget. The scenario's script ([widget card]) says it too. A view
+# neither mentions goes by its layout: a form or one record's card in the chat,
+# anything bigger in the canvas, as the view-kit skill teaches.
+_SKILL_RENDER = re.compile(r"views/([A-Za-z0-9_.-]+?)\.json\b([^\n`]*)")
+
+
+def skill_hosts(folder: Path, manifest: dict[str, Any]) -> dict[str, str]:
+    """Each view's place as the workflow's SKILL.md renders it: ``chat`` or ``canvas``."""
+    text = _read_text(folder / "SKILL.md") or ""
+    by_file = {
+        Path(str(rel)).stem: name for name, rel in (manifest.get("views") or {}).items()
+    }
+    hosts: dict[str, str] = {}
+    for m in _SKILL_RENDER.finditer(text):
+        name = by_file.get(m.group(1))
+        if name is None or "render" not in text[max(0, m.start() - 80) : m.start()]:
+            continue
+        if "--host chat" in m.group(2):
+            hosts[name] = "chat"
+        else:
+            hosts.setdefault(name, "canvas")
+    return hosts
+
+
+def view_host(
+    name: str, spec: dict[str, Any], script: dict[str, Any] | None, skill: dict[str, str]
+) -> str:
+    return (
+        (script or {}).get("hosts", {}).get(name)
+        or skill.get(name)
+        or ("chat" if spec.get("layout") in ("form", "detail") else "canvas")
+    )
+
+
+def _views_of(
+    folder: Path,
+    manifest: dict[str, Any],
+    sample: dict[str, Any],
+    script: dict[str, Any] | None,
+    wid: str,
+) -> list[dict[str, Any]]:
+    skill = skill_hosts(folder, manifest)
     views = []
     for name, rel in (manifest.get("views") or {}).items():
         spec = _json(folder / rel)
@@ -263,12 +295,27 @@ def _workflow(pa: ModuleType, folder: Path, roster: dict[str, Any]) -> dict[str,
                     lambda m: str(sample.get(m.group(1), "")), str(spec.get("title", ""))
                 ),
                 "layout": spec.get("layout", ""),
-                "host": hosts.get(name)
-                or ("chat" if spec.get("layout") in ("form", "detail") else "canvas"),
+                "host": view_host(name, spec, script, skill),
                 "actions": len(spec.get("actions", [])) + (1 if spec.get("submit") else 0),
                 "path": _shown(folder / rel),
+                "file": str(rel),
             }
         )
+    return views
+
+
+def _workflow(pa: ModuleType, folder: Path, roster: dict[str, Any]) -> dict[str, Any] | None:
+    try:
+        run = pa.resolve_run(folder, workspace_dir())
+    except Exception:  # noqa: BLE001 -- an unreadable workflow is left off the shelf
+        return None
+    manifest, wid, sdir = run["manifest"], run["workflow_id"], run["scenario_dir"]
+    wid = folder.name
+    script = _script(pa, sdir, manifest, roster)
+    fixture = (manifest.get("fixtures") or {}).get("dataset")
+    sample = _json(sdir / fixture) if fixture and sdir is not None else None
+    sample = sample if isinstance(sample, dict) else {}
+    views = _views_of(folder, manifest, sample, script, wid)
     skill_meta, _ = _front_matter(_read_text(folder / "SKILL.md") or "")
     builtin = not folder.resolve().is_relative_to(workspace_dir().resolve())
     return {
@@ -694,7 +741,24 @@ def _folder_kind(kind: str) -> str:
 
 def folder_draft_detail(kind: str, fid: str) -> dict[str, Any]:
     pa = _pa()
-    return _pa_call(pa.folder_draft_info, workspace_dir(), _folder_kind(kind), fid)
+    info = _pa_call(pa.folder_draft_info, workspace_dir(), _folder_kind(kind), fid)
+    if info.get("kind") == "workflow" and info.get("action") != "remove":
+        info["views"] = _draft_views(pa, fid)
+    return info
+
+
+def _draft_views(pa: ModuleType, fid: str) -> list[dict[str, Any]]:
+    """The widgets and views of a workflow draft, placed as they would be when flying."""
+    folder, _ = pa._fd_paths(workspace_dir(), "workflow", fid)
+    try:
+        run = pa.resolve_run(folder, workspace_dir())
+    except Exception:  # noqa: BLE001 -- the checks already say what is wrong
+        return []
+    manifest, sdir = run["manifest"], run["scenario_dir"]
+    script = _script(pa, sdir, manifest, _roster(pa))
+    fixture = (manifest.get("fixtures") or {}).get("dataset")
+    sample = _json(sdir / fixture) if fixture and sdir is not None else None
+    return _views_of(folder, manifest, sample if isinstance(sample, dict) else {}, script, fid)
 
 
 def start_folder_draft(kind: str, fid: str, remove: bool = False) -> dict[str, Any]:
@@ -792,9 +856,26 @@ def _workflow_folder(workflow: str) -> Path:
 
 def render_view(workflow: str, view: str) -> str:
     """One view of a workflow over its first scenario's sample data, as ``pa render`` draws it."""
+    return _render_view_in(_workflow_folder(workflow), view)
+
+
+def render_draft_view(fid: str, view: str) -> str:
+    """One view of a workflow draft, so the widget editor shows the change as it is typed."""
     pa = _pa()
-    folder = _workflow_folder(workflow)
-    run = pa.resolve_run(folder, workspace_dir())
+    if not _NAME.fullmatch(fid):
+        raise HTTPException(status_code=404, detail="no such draft")
+    folder, meta = pa._fd_paths(workspace_dir(), "workflow", fid)
+    if not meta.is_file() or not folder.is_dir():
+        raise HTTPException(status_code=404, detail="no such draft")
+    return _render_view_in(folder, view)
+
+
+def _render_view_in(folder: Path, view: str) -> str:
+    pa = _pa()
+    try:
+        run = pa.resolve_run(folder, workspace_dir())
+    except Exception as err:  # noqa: BLE001 -- shown in the frame, not raised
+        raise HTTPException(status_code=422, detail=str(err)) from err
     manifest, sdir = run["manifest"], run["scenario_dir"]
     rel = (manifest.get("views") or {}).get(view)
     if not rel:
@@ -811,10 +892,11 @@ def render_view(workflow: str, view: str) -> str:
             data = {k: v for k, v in loaded.items() if k not in ("views", "flow")}
     data["participants"] = {k: pa._card(v) for k, v in roster.items()}
     script = _script(pa, sdir, manifest, roster)
-    host = (script or {}).get("hosts", {}).get(view) or (
-        "chat" if spec.get("layout") in ("form", "detail") else "canvas"
-    )
-    return pa.page(spec, data, host)
+    host = view_host(view, spec, script, skill_hosts(folder, manifest))
+    try:
+        return pa.page(spec, data, host)
+    except Exception as err:  # noqa: BLE001 -- a half-typed spec is shown as a problem
+        raise HTTPException(status_code=422, detail=f"{rel}: {err}") from err
 
 
 def render_preview(name: str) -> str:
@@ -941,6 +1023,11 @@ def create_slim_hangar_router(*, auth_provider: AuthProvider | None = None) -> A
     async def post_restore(request: Request, pid: str, version: str) -> dict[str, Any]:
         require_user(request, auth_provider)
         return restore_person(pid, version)
+
+    @router.get("/slim/hangar/drafts/workflow/{fid}/views/{view}", response_class=HTMLResponse)
+    async def get_draft_view(request: Request, fid: str, view: str) -> HTMLResponse:
+        require_user(request, auth_provider)
+        return HTMLResponse(render_draft_view(fid, view))
 
     @router.get("/slim/hangar/drafts/{kind}/{fid}/preview", response_class=HTMLResponse)
     async def get_folder_preview(request: Request, kind: str, fid: str) -> HTMLResponse:

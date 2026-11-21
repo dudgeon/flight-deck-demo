@@ -128,6 +128,7 @@ feature notes of the time and marked *(reconstructed)*.
 | D-73 | A scenario draft plays on its page; `opening` line | Claude | Built | Seeing the demo is the real check. |
 | D-74 | Pictures for people and agents, committed with the repo | Geoff | Built | He asked for avatars chosen from a file. |
 | D-75 | Configuration travels with the repo; a test guards `.gitignore` | Geoff | Built | Personas, skills, workflows and scenarios go to the work Mac. |
+| D-112 | A workflow's widgets and views are shown, edited and added in the Hangar | Geoff asked, Claude chose | Pending, this PR | He asked that widgets tied to a workflow be visible and editable there. |
 
 ## Views in the chat
 
