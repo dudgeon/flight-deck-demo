@@ -10,7 +10,7 @@ D-114 are on `main`. D-60, D-61 and D-62 were never assigned (parallel threads
 claimed blocks and skipped them); they stay unused so no reference can point
 at the wrong thing. Claimed by open pull requests: D-76 to D-81 (PR 17),
 D-82 to D-88 (PR 19), and D-108 to D-110 (PR 25, avatars, held). D-100 to D-106 record decisions Geoff made earlier that
-were never logged (see "Backfilled" in decisions.md). D-115 onward is next;
+were never logged (see "Backfilled" in decisions.md). D-116 onward is next;
 check open pull requests first, as `CLAUDE.md` says. No number is used twice.
 
 **Status words.** *Built*: in the code on `main`. *Active*: a rule or
@@ -84,6 +84,7 @@ feature notes of the time and marked *(reconstructed)*.
 | D-31 | Next kinds of work: problem discovery, intent shaping, decision review, delivery status | Geoff | Built as previews; delivery status and intent shaping run live | *(reconstructed)* They cover the PM life cycle beyond requirements. |
 | D-32 | More than one question: decision cards, one at a time | Geoff | Active; extended by D-105 | *(reconstructed)* A list in prose is hard to answer from a phone. |
 | D-33 | Never ask Geoff to decide blind | Geoff | Active; built into decision review | *(reconstructed)* A decision without context, options and visuals is not a decision he can make. |
+| D-115 | Decision artifacts are archived in the repo as offline HTML, kept by the `docs-refresh` skill | Geoff asked, Claude chose | Built (`docs/decision-artifacts/`) | A record anyone can open without his claude.ai account, and examples of how to ask. |
 | D-34 | Intent framework is notional and swappable (`workspace/frameworks/`) | Geoff | Built | *(reconstructed)* The real company framework can replace it without touching the skill. |
 
 ## Name and design language

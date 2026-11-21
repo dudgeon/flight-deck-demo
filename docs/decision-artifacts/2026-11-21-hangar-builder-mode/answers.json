@@ -1,0 +1,51 @@
+{
+  "author": {
+    "at": "2026-11-21T14:28:33.228Z",
+    "choice": "guided",
+    "label": "Guided by Aviator, with a form beside the chat",
+    "note": "",
+    "question": "How does someone actually build or change something?"
+  },
+  "entry": {
+    "at": "2026-11-21T14:27:38.502Z",
+    "choice": "other",
+    "label": "Something else",
+    "note": "The “open hanger on things” affordance should be extremely subtle; like a wrench icon button or something. It should not distract when we make screen recordings of demos.",
+    "question": "Where is the way in?"
+  },
+  "first": {
+    "at": "2026-11-21T14:28:53.237Z",
+    "choice": "look",
+    "label": "The look-around Hangar first",
+    "note": "",
+    "question": "What gets built first?"
+  },
+  "gate": {
+    "at": "2026-11-21T14:28:41.206Z",
+    "choice": "block",
+    "label": "Checks must pass, and a scenario must play through",
+    "note": "",
+    "question": "How strict is Publish?"
+  },
+  "look": {
+    "at": "2026-11-21T14:26:21.476Z",
+    "choice": "frame",
+    "label": "The whole frame changes",
+    "note": "",
+    "question": "How should the app show that you are in the Hangar?"
+  },
+  "name": {
+    "at": "2026-11-21T14:27:53.573Z",
+    "choice": "hangar",
+    "label": "Hangar, and flying",
+    "note": "",
+    "question": "What do we call the two modes?"
+  },
+  "scenario": {
+    "at": "2026-11-21T14:28:14.006Z",
+    "choice": "separate",
+    "label": "A scenario is its own small folder that points at workflows",
+    "note": "",
+    "question": "Is a scenario its own thing, or part of a workflow?"
+  }
+}

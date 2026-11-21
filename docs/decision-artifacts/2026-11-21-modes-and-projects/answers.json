@@ -1,0 +1,86 @@
+{
+  "aside": {
+    "at": "2026-11-21T19:11:05.932Z",
+    "locked": true,
+    "pick": 0,
+    "text": "",
+    "title": "4. Side questions during a mode"
+  },
+  "attr": {
+    "at": "2026-11-21T19:10:33.353Z",
+    "locked": true,
+    "pick": 0,
+    "text": "",
+    "title": "3. Marking replies as the mode's"
+  },
+  "calls": {
+    "at": "2026-11-21T19:16:16.426Z",
+    "locked": true,
+    "pick": -1,
+    "text": "",
+    "title": "Smaller calls"
+  },
+  "chrome": {
+    "at": "2026-11-21T19:09:57.839Z",
+    "locked": true,
+    "pick": 0,
+    "text": "",
+    "title": "2. How a mode shows"
+  },
+  "graph": {
+    "at": "2026-11-21T19:15:55.584Z",
+    "locked": true,
+    "pick": 3,
+    "text": "Too early for me to decide — hold decision until it blocks something",
+    "title": "11. How detailed the intent graph is"
+  },
+  "home": {
+    "at": "2026-11-21T19:09:36.267Z",
+    "locked": true,
+    "pick": 3,
+    "text": "for context reasons, the main session should act like a project director/orchestrator, with threads used to isolate context for a given workflow; so I think we need a relatively dynamic approach; a sub-session, running the skill is opened for deep work that will require/benefit from context window isolation. The director can use agent<>agent messaging to coordinate between the main thread and sub threads. The use should be able to stay in aviator/director/orchestrator session and only click into the sub-thread as needed. Please explore this direction. Main/aviator sessions should feel like a Claude code project, and modes should be powered by threads. We still need to resolve how the aviator thread shows a mode for the high level interactions.",
+    "title": "1. Where a mode's conversation lives"
+  },
+  "leave": {
+    "at": "2026-11-21T19:11:16.387Z",
+    "locked": true,
+    "pick": 0,
+    "text": "",
+    "title": "5. Leaving a mode"
+  },
+  "list": {
+    "at": "2026-11-21T19:12:55.238Z",
+    "locked": true,
+    "pick": 0,
+    "text": "",
+    "title": "8. Finding what is in flight"
+  },
+  "multi": {
+    "at": "2026-11-21T19:11:40.712Z",
+    "locked": true,
+    "pick": 0,
+    "text": "",
+    "title": "6. A second mode in the same session"
+  },
+  "proj": {
+    "at": "2026-11-21T19:14:34.164Z",
+    "locked": true,
+    "pick": 0,
+    "text": "We may later need to explore a more graph-like, and less hierarchical approach. If project a has 20 requirements, and implementing one of them is delegated to a different team, that would become project b for them",
+    "title": "9. What a project is"
+  },
+  "rel": {
+    "at": "2026-11-21T19:15:29.323Z",
+    "locked": true,
+    "pick": 3,
+    "text": "Please rethink based on my prior response",
+    "title": "10. Showing a project's relatives"
+  },
+  "threads": {
+    "at": "2026-11-21T19:12:07.042Z",
+    "locked": true,
+    "pick": 0,
+    "text": "",
+    "title": "7. Threads on single items"
+  }
+}

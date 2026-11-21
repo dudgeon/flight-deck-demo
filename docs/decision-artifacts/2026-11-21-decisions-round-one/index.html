@@ -1,0 +1,465 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!-- decision-archive:start -->
+<div style="font:13px/1.45 system-ui,sans-serif;background:Canvas;color:CanvasText;border-bottom:1px solid GrayText;padding:8px 16px">Archived copy of <b>Product Aviator Decisions</b>, a decision artifact from 2026-11-21. It shows the answers recorded on 2026-11-21; changes made here are not saved. The index of all of them is in <a href="../index.html">docs/decision-artifacts</a>.</div>
+<script>
+(function(){
+  var A={"at": {"at": "2026-11-21T13:08:59.437Z", "locked": true, "pick": 0, "text": "When I @ a participant, the aviator orchestrator agent sees it (and the full conversation), but the mentioned participant responds. Messages in user without an @, or with @aviator, go to the main agent session."}, "call": {"at": "2026-11-21T13:06:57.795Z", "locked": true, "pick": 1, "text": ""}, "context": {"at": "2026-11-21T13:05:24.218Z", "locked": true, "pick": 0, "text": ""}, "icon": {"at": "2026-11-21T12:58:06.444Z", "locked": true, "pick": 0, "text": ""}, "inline": {"at": "2026-11-21T13:06:30.569Z", "locked": true, "pick": "else", "text": "Please clarify your question — you are making a distinction I don’t understand, please enumerate the options, make options for each, and explain the tradeoffs."}, "install": {"at": "2026-11-21T13:01:57.074Z", "locked": true, "pick": "else", "text": "download full repo as zip, user unzips, user runs some script; we can run a test today to unblock, and you can make the setup script fail in ways that are diagnostically useful for us.\n\nWe can try the curl script approach as well as long as a human performs the curl, not Claude. So the script instructions need to be very non-technical-user-friendly. work Mac definitely blocks cloning repos that are not in the company’s namespace."}, "layout": {"at": "2026-11-21T13:04:31.447Z", "locked": true, "pick": "else", "text": "Do another round of refinement on these directions. I am generally comfortable with a; the rest seem very cluttered; make more refined wireframes including animations for state changes"}, "merge": {"at": "2026-11-21T13:03:01.335Z", "locked": true, "pick": 1, "text": "The Claude project orchestrator agent on my dev machine (Mac mini) review PRs, merges them. I will not review code — only designs and test result summaries."}, "mirror": {"at": "2026-11-21T12:57:22.411Z", "locked": true, "pick": 0, "text": ""}, "pin": {"at": "2026-11-21T12:58:20.869Z", "locked": true, "pick": 0, "text": ""}, "restart": {"at": "2026-11-21T12:57:15.861Z", "locked": true, "pick": 0, "text": ""}, "second": {"at": "2026-11-21T13:11:52.347Z", "locked": true, "pick": "else", "text": "Problem discovery (reviewing data, interviews, call transcripts, etc to find problems worth solving); intent shaping (taking a high level idea and progressively elaborating on it — uses notional company frameworks for intent definition depth and breadth that we will need to define), decision review (a process much like the one we are following right now in this decision flow), delivery status update (includes execution of plan, monitoring dependencies, exploration of alternatives, and updated projections for delivery)"}, "sees": {"at": "2026-11-21T13:07:23.691Z", "locked": true, "pick": 1, "text": "For the demos we are building, full context; we may need to revisit in the future."}, "sidebar": {"at": "2026-11-21T12:59:22.165Z", "locked": true, "pick": 2, "text": "Full logo is fine but the spacing and alignment is bad."}, "team": {"at": "2026-11-21T13:14:44.925Z", "locked": true, "pick": "else", "text": "Ignore the production build and focus on the local demo. The production team will be able to introspect out decisions (because you will document them), features specs, PRDs, etc that we built for this demo harness. The demo harness is functional, so they will be able to replicate it when the time comes. But be sure we are documenting feature intent as we go, decisions, etc."}, "unasked": {"at": "2026-11-21T13:03:19.716Z", "locked": true, "pick": 0, "text": ""}, "who": {"at": "2026-11-21T13:13:10.653Z", "locked": true, "pick": 1, "text": "Ideally, scenario creation happens in aviator and we build assistive guided workflows, canvas elements, etc to help the scenario builder build a full packaged demo that can be run, including leveraging existing personas (and their skills) as well as creating new ones"}};
+  function snap(){var docs=Object.keys(A).map(function(k){return {id:k,data:function(){return A[k]},exists:true}});return {docs:docs,empty:!docs.length,size:docs.length,forEach:function(f){docs.forEach(f)}}}
+  function doc(id){return {id:id,get:async function(){return {id:id,exists:id in A,data:function(){return A[id]}}},set:async function(){},update:async function(){},delete:async function(){}}}
+  var db={collection:function(){return {get:async function(){return snap()},doc:doc,onSnapshot:function(f){setTimeout(function(){f(snap())},0);return function(){}},add:async function(){}}},doc:function(p){return doc(String(p).split("/").pop())}};
+  window.claude={use:async function(name){return name==="db"?db:null}};
+})();
+</script>
+<!-- decision-archive:end -->
+
+<title>Product Aviator Decisions</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: chapter rail on the left; each decision is a briefing (what you need to know), a stage that redraws for the option you are looking at, and an answer card. Same navy tokens as the Product Aviator design pages. */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --sunk:#e9edf2; --ink:#0a223d; --ink-2:#44566c; --ink-3:#6b7a8c;
+  --line:#d3dae3; --navy:#0a223d; --on-navy:#f3f5f8;
+  --you:#c2501f; --you-soft:#fbe6dc; --ok:#1d7a4f; --ok-soft:#dcf0e5; --warn:#9a6a00; --attn:#b8323c;
+  --risk:#17756b; --risk-soft:#d9efec; --person:#6b4ea0; --person-soft:#ebe4f6;
+  --display:"Space Grotesk","Avenir Next",system-ui,sans-serif; --body:"Inter",system-ui,-apple-system,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#07172a; --surface:#0e2238; --sunk:#0a1c30; --ink:#e8eef5; --ink-2:#a9b8c9; --ink-3:#8394a8;
+  --line:#22384f; --navy:#16385f; --on-navy:#eef3f8; --you:#ff9166; --you-soft:#3a2118; --ok:#5fcf98; --ok-soft:#123426; --warn:#e6bd55; --attn:#ff7d86;
+  --risk:#6fd0c3; --risk-soft:#103631; --person:#b9a2ec; --person-soft:#2a2140; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#07172a; --surface:#0e2238; --sunk:#0a1c30; --ink:#e8eef5; --ink-2:#a9b8c9; --ink-3:#8394a8;
+  --line:#22384f; --navy:#16385f; --on-navy:#eef3f8; --you:#ff9166; --you-soft:#3a2118; --ok:#5fcf98; --ok-soft:#123426; --warn:#e6bd55; --attn:#ff7d86;
+  --risk:#6fd0c3; --risk-soft:#103631; --person:#b9a2ec; --person-soft:#2a2140; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+a{color:var(--you)}
+h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;text-wrap:balance;letter-spacing:-.01em}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.top .in{max-width:1280px;margin:0 auto;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;gap:10px 14px;align-items:center;flex-wrap:wrap}
+.top h1{font-size:17px}
+.top .sub{color:var(--ink-3);font-size:12.5px}
+.sp{flex:1}
+.pill{font:500 11.5px/1 var(--mono);border:1px solid var(--line);border-radius:999px;padding:5px 10px;color:var(--ink-2)}
+.btn{font:500 13.5px var(--body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:7px;padding:8px 13px;cursor:pointer;min-height:38px}
+.btn.primary{background:var(--navy);border-color:var(--navy);color:var(--on-navy)}
+.btn.lock{background:var(--you);border-color:var(--you);color:#fff}
+.btn:disabled{opacity:.45;cursor:default}
+.btn:focus-visible,.opt:focus-visible,nav button:focus-visible,textarea:focus-visible{outline:2px solid var(--you);outline-offset:2px}
+.wrap{max-width:1280px;margin:0 auto;padding-block:20px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;grid-template-columns:250px minmax(0,1fr);gap:24px}
+nav{position:sticky;top:calc(env(safe-area-inset-top,0px) + 70px);align-self:start;display:flex;flex-direction:column;gap:12px;max-height:calc(100vh - 90px);overflow:auto}
+nav h4{font:500 10.5px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin:6px 0 4px}
+nav button{all:unset;cursor:pointer;display:flex;gap:8px;align-items:center;padding:5px 8px;border-radius:6px;font-size:13px;line-height:1.3}
+nav button:hover{background:var(--sunk)}
+nav button.on{background:var(--you-soft);color:var(--ink);font-weight:500}
+.mk{width:10px;height:10px;flex:none;border-radius:50%;border:1.5px solid var(--ink-3)}
+.mk.picked{border-color:var(--you);background:var(--you-soft)}
+.mk.locked{border:0;background:var(--ok);border-radius:2px;transform:rotate(45deg) scale(.85)}
+main{min-width:0;display:flex;flex-direction:column;gap:18px}
+.intro{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px 22px;display:flex;flex-direction:column;gap:10px}
+.intro p{margin:0;color:var(--ink-2);max-width:75ch}
+.eyebrow{font:500 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.dec{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(300px,1fr);gap:18px;align-items:start}
+.brief{display:flex;flex-direction:column;gap:14px;min-width:0}
+.brief h2{font-size:24px;line-height:1.2}
+.know{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.know p{margin:0;color:var(--ink-2);max-width:72ch}
+.know p b{color:var(--ink)}
+.know ul{margin:0;padding-left:18px;color:var(--ink-2);display:flex;flex-direction:column;gap:4px}
+.src{font-size:12.5px;color:var(--ink-3)}
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.stage .cap{font-size:13.5px;color:var(--ink-2);max-width:72ch;margin:0}
+.ask{position:sticky;top:calc(env(safe-area-inset-top,0px) + 70px);background:var(--surface);border:1.5px solid var(--you);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.ask.done{border-color:var(--ok)}
+.ask .h{display:flex;gap:6px;align-items:center;font:500 10.5px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--you)}
+.ask.done .h{color:var(--ok)}
+.ask .q{font:600 15.5px/1.35 var(--display)}
+.opt{text-align:left;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:10px 12px;cursor:pointer;display:flex;flex-direction:column;gap:3px}
+.opt:hover{border-color:var(--ink-3)}
+.opt[aria-pressed="true"]{border:1.5px solid var(--navy);background:var(--sunk)}
+.opt.viewing{box-shadow:inset 3px 0 0 var(--you)}
+.opt .t{font-weight:600;font-size:14px}
+.opt .d{font-size:12.5px;color:var(--ink-2);line-height:1.45}
+.opt .rec{font:500 10px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ok)}
+.opt .cost{font:400 11px/1.3 var(--mono);color:var(--ink-3)}
+.opt.else{border-style:dashed}
+.why{font-size:12.5px;color:var(--ink-2);background:var(--ok-soft);border-radius:8px;padding:9px 11px}
+.why b{color:var(--ink)}
+textarea{width:100%;font:13.5px/1.45 var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-height:60px;resize:vertical}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.status{font-size:12px;color:var(--ink-3)}
+.locked-note{font-size:13px;background:var(--ok-soft);border-radius:8px;padding:9px 11px}
+.pager{display:flex;justify-content:space-between;gap:8px}
+/* visuals */
+.icons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.ic{border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;align-items:center;cursor:pointer;background:var(--bg)}
+.ic.sel{border:1.5px solid var(--you);background:var(--you-soft)}
+.ic>img{width:min(128px,100%);height:auto}
+.ic .sizes{display:flex;gap:8px;align-items:end}
+.ic .sizes img{flex:none}
+.ic .sizes{flex-wrap:wrap;justify-content:center}
+.ic b{font:600 13px var(--display)}
+.ic span{font-size:11.5px;color:var(--ink-2);text-align:center;line-height:1.3}
+.dock{display:flex;gap:10px;flex-wrap:wrap}
+.dockbar{flex:1;min-width:0;overflow:hidden;border-radius:12px;padding:14px;display:flex;justify-content:center}
+.dockbar .tray img{flex:none}
+.dockbar .tray{display:flex;gap:8px;padding:6px 10px;border-radius:14px;align-items:center}
+.dockbar.light{background:linear-gradient(135deg,#bcd3ea,#e6d7c6)}.dockbar.light .tray{background:rgba(255,255,255,.55)}
+.dockbar.dark{background:linear-gradient(135deg,#1c2233,#3a2c3f)}.dockbar.dark .tray{background:rgba(40,40,48,.6)}
+.dot{width:34px;height:34px;border-radius:8px;flex:none}
+.wfgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.wf{display:flex;flex-direction:column;gap:5px;min-width:0}
+.wf>span{font:500 10.5px/1.2 var(--mono);color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase}
+.fr{aspect-ratio:16/10;border:1.5px solid var(--ink-3);border-radius:6px;display:flex;overflow:hidden;background:var(--bg)}
+.fr>div{border-right:1.5px solid var(--ink-3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:500 10px/1.15 var(--mono);color:var(--ink-2);text-align:center;padding:3px;min-width:0;overflow:hidden}
+.fr>div:last-child{border-right:0}
+.sb{flex:0 0 11%;background:var(--navy);color:var(--on-navy)!important}
+.ch{flex:1 1 0}.cv{flex:1.5 1 0;background:var(--surface)}
+.rl{flex:0 0 21%;background:var(--you-soft);color:var(--you)!important}
+.st{flex:0 0 6%;background:var(--you-soft);color:var(--you)!important}
+.col{flex-direction:column!important;padding:0!important;align-items:stretch!important;justify-content:flex-start!important;gap:0!important}
+.col>i{font-style:normal;display:flex;align-items:center;justify-content:center;flex:1;padding:2px}
+.col>i.r{background:var(--you-soft);color:var(--you);flex:0 0 auto;padding:5px 2px;border-block:1.5px solid var(--ink-3)}
+.col>i.r:first-child{border-top:0}.col>i.r:last-child{border-bottom:0}
+.pop{position:relative}.pop::after{content:"panel";position:absolute;top:8%;right:4%;width:38%;height:52%;background:var(--you-soft);color:var(--you);border:1.5px solid var(--you);border-radius:4px;display:flex;align-items:center;justify-content:center}
+.pc{display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px}
+.pc ul{margin:0;padding-left:16px;color:var(--ink-2)}
+.pc b{font:500 10.5px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);display:block;margin-bottom:5px}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:500 10.5px/1.2 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+td.g{color:var(--ok);font-weight:600}td.m{color:var(--warn);font-weight:600}td.b{color:var(--attn);font-weight:600}
+tr.hl td{background:var(--you-soft)}
+.shot{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--bg)}
+.shot img{display:block;width:100%;height:auto}
+.mini{border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:12px;display:flex;flex-direction:column;gap:8px;font-size:13px}
+.tabs2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tab{border:1.5px solid var(--ink-3);border-radius:8px;overflow:hidden;background:var(--surface);display:flex;flex-direction:column}
+.tab .bar{font:500 10.5px var(--mono);padding:5px 8px;background:var(--sunk);color:var(--ink-2);display:flex;justify-content:space-between}
+.tab .body{display:flex;min-height:120px}
+.tab .c1{flex:1;padding:8px;font-size:11.5px;color:var(--ink-2);border-right:1px solid var(--line)}
+.tab .c2{flex:1.3;padding:8px;position:relative;font-size:11.5px}
+.dim{position:absolute;inset:0;background:color-mix(in srgb,var(--bg) 78%,transparent);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--ink-2)}
+.chipb{font:500 11px var(--body);border:1px solid var(--ink-3);border-radius:6px;padding:3px 8px;background:var(--surface);color:var(--ink)}
+.flow{display:flex;flex-direction:column;gap:6px;font:500 12.5px var(--mono)}
+.flow .ln{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.node{border:1.5px solid var(--ink-3);border-radius:6px;padding:4px 8px;background:var(--surface)}
+.node.m{border-color:var(--navy);background:var(--navy);color:var(--on-navy)}
+.node.p{border-color:var(--you);background:var(--you-soft)}
+.arrow{color:var(--ink-3)}
+.term{background:#0d1726;color:#d8e2ee;border-radius:8px;padding:10px 12px;font:12px/1.5 var(--mono);overflow-x:auto;white-space:pre}
+.av{width:22px;height:22px;flex:none;display:inline-flex;align-items:center;justify-content:center;font:600 9.5px var(--mono);color:var(--surface);border-radius:6px;background:var(--c)}
+.av.p{border-radius:50%}.av.si{background:none;color:var(--c);border:1.5px dashed var(--c)}
+.msg{display:flex;gap:8px;align-items:flex-start}
+.msg .b{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:12.5px;flex:1}
+.msg.me{flex-direction:row-reverse}.msg.me .b{background:var(--you-soft);border-color:transparent}
+.sys{font-size:11.5px;color:var(--ink-3);text-align:center;border-top:1px dashed var(--line);padding-top:4px}
+.comp{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:8px 10px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:13px}
+.cards3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.uc{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--bg);display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:var(--ink-2)}
+.uc.sel{border:1.5px solid var(--you);background:var(--you-soft)}
+.uc b{font:600 14px var(--display);color:var(--ink)}
+.uc .v{font:500 10.5px var(--mono);color:var(--ink-3)}
+.sheet td:first-child{width:46%;color:var(--ink-2)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font:500 11px var(--mono);color:var(--ink-3)}
+pre.copy{white-space:pre-wrap;font:12px/1.5 var(--mono);background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:12px;max-height:280px;overflow:auto;margin:0}
+@media (max-width:980px){.dec{grid-template-columns:minmax(0,1fr)}.ask{position:static}}
+@media (max-width:760px){.wrap{grid-template-columns:minmax(0,1fr)}nav{position:static;max-height:none}.icons,.cards3{grid-template-columns:repeat(2,minmax(0,1fr))}.wfgrid,.pc,.tabs2{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:no-preference){.stage-body{animation:f .2s ease-out}@keyframes f{from{transform:translateY(3px)}to{transform:none}}}
+</style>
+
+<div class="top"><div class="in">
+  <div><h1>Product Aviator decisions</h1><div class="sub">Everything open across the project, in an order where each answer helps the next</div></div>
+  <span class="sp"></span>
+  <span class="pill" id="count">0 of 0 locked</span>
+  <span class="pill" id="sync">Saving in this browser</span>
+  <button class="btn" id="tosheet">Answer sheet</button>
+</div></div>
+
+<div class="wrap">
+  <nav id="nav" aria-label="Decisions"></nav>
+  <main id="main"></main>
+</div>
+
+<script>
+const PR="https://github.com/dudgeon/omnigent-slim/pull/1";
+const L={layout:"https://claude.ai/artifact/LhM6tVPt9VZxEGvy6wf7g7",part:"https://claude.ai/artifact/G2LzasRADedU9HKu1EmUPN",doc:"https://claude.ai/artifact/A6XPJtYiKJNzYCrGyJ1B1N",designs:"https://claude.ai/artifact/YNab7JioFtgdQtDxuJKjfN",system:"https://claude.ai/artifact/3dxvwdc1LWXc9ExmUNpim1"};
+const a=(href,t)=>`<a href="${href}" target="_blank" rel="noopener">${t}</a>`;
+
+/* ---------- stage helpers ---------- */
+const IC=[["A","Wings to the edge, white on navy","What the launcher has now"],["B","Whole emblem with wordmark, white on navy","Matches the sidebar logo"],["C","Wings to the edge, navy on white","Light tile, like Notes or Pages"],["D","Robot head only, white on navy","Simplest silhouette"],["E","Robot head on a blue-to-navy gradient","Closest to Apple's own icons"],["F","Robot head only, navy on white","Light tile, head only"]];
+function iconStage(i){
+  const cards=IC.map((c,j)=>`<div class="ic ${j===i?'sel':''}" data-pick="${j}"><img src="img/icon-${c[0]}.png" alt="Option ${c[0]} at 128 pixels"><div class="sizes"><img src="img/icon-${c[0]}.png" width="64" height="64" alt=""><img src="img/icon-${c[0]}.png" width="32" height="32" alt=""><img src="img/icon-${c[0]}.png" width="16" height="16" alt=""></div><b>${c[0]}</b><span>${c[1]}</span></div>`).join("");
+  const sel=IC[i]?IC[i][0]:"A";
+  const tray=k=>`<div class="tray"><span class="dot" style="background:#4a90e2"></span><span class="dot" style="background:#f5c542"></span><img src="img/icon-${sel}.png" width="52" height="52" alt="Option ${sel} in the Dock"><span class="dot" style="background:#e5534b"></span><span class="dot" style="background:#5cb85c"></span></div>`;
+  return `<div class="icons">${cards}</div><div class="eyebrow">Option ${sel} in a Dock, on light and dark wallpaper</div><div class="dock"><div class="dockbar light">${tray()}</div><div class="dockbar dark">${tray()}</div></div><p class="cap">Each tile shows the icon at 128, 64, 32 and 16 pixels. The Dock uses about 64, Finder lists use 16 to 32, and Cmd-Tab uses about 128. Click a tile to look at it in the Dock.</p>`;
+}
+function wf(k){
+  const W={
+   A:['<div class="sb">nav</div><div class="ch">chat</div><div class="rl">outputs<br>context<br>people<br>cost</div>','<div class="sb">nav</div><div class="ch">chat</div><div class="cv pop">canvas</div>'],
+   B:['<div class="sb">nav</div><div class="ch">chat</div><div class="cv col"><i class="r">home · review · board</i><i>outputs, context, steps</i></div>','<div class="sb">nav</div><div class="ch">chat</div><div class="cv col"><i class="r">home · review · board</i><i>canvas</i></div>'],
+   C:['<div class="rl" style="flex-basis:20%">context<br>outputs<br><br>sessions</div><div class="ch">chat</div>','<div class="rl" style="flex-basis:20%">context<br>outputs<br><br>sessions</div><div class="ch">chat</div><div class="cv">canvas</div>'],
+   D:['<div class="sb">nav</div><div class="ch">chat</div><div class="st">O<br>C<br>S</div>','<div class="sb">nav</div><div class="ch">chat</div><div class="cv">canvas</div><div class="st">O<br>C<br>S</div>'],
+   E:['<div class="sb">nav</div><div class="ch col"><i>chat</i><i class="r">context shelf</i><i style="flex:0 0 auto;padding:4px">message box</i></div><div class="cv col"><i class="r">outputs</i><i>home: outputs, steps</i></div>','<div class="sb">nav</div><div class="ch col"><i>chat</i><i class="r">context shelf</i><i style="flex:0 0 auto;padding:4px">message box</i></div><div class="cv col"><i class="r">outputs as tabs</i><i>canvas</i></div>']};
+  return `<div class="wfgrid"><div class="wf"><span>Only chatting</span><div class="fr">${W[k][0]}</div></div><div class="wf"><span>Canvas open</span><div class="fr">${W[k][1]}</div></div></div>`;
+}
+const LAYPC={
+ A:["Already built, almost no new code","Canvas keeps its full width","Right side is never empty","Outputs and context hide behind a button exactly when the canvas is open","The same list lives in two places depending on width"],
+ B:["One rule: the right side is where the work is","Tabs already exist in Omnigent","Scales to many outputs","You can't see the list and an output at once","Context you give sits among things you get"],
+ C:["Lists and canvas visible together","Familiar from every code editor","Natural home for project-wide context","Three columns is tight on a 13-inch laptop","Largest change to upstream code"],
+ D:["Always in the same place","Costs the canvas almost nothing","Counts on icons can show what's new","Icons need learning","Flyouts cover what you were looking at"],
+ E:["Each list sits beside the action it serves","No third column at any width","You see what the agent can read before you press Send","Two things to build instead of one","The shelf takes height from the chat on small screens"]};
+function layoutStage(i){
+  const k="EACBD"[i]||"E";const p=LAYPC[k];
+  const rows=[["A","Panel gives way","g:Full","b:No","m:Medium","g:Tiny"],["B","Home tab","g:Full","m:One at a time","g:Good","g:Small"],["C","Left sidebar","b:Reduced","g:Yes","g:Good","b:Large"],["D","Thin strip","g:Nearly full","m:On demand","m:Needs learning","m:Medium"],["E","Split by direction","g:Full","g:Context yes, outputs as tabs","g:Good","m:Medium"]];
+  return wf(k)+`<div class="pc"><div><b>For</b><ul>${p.slice(0,3).map(x=>`<li>${x}</li>`).join("")}</ul></div><div><b>Against</b><ul>${p.slice(3).map(x=>`<li>${x}</li>`).join("")}</ul></div></div>
+  <div class="tw"><table><tr><th>Option</th><th>Canvas width on a laptop</th><th>Lists visible while working</th><th>Easy to find</th><th>Change to Omnigent</th></tr>${rows.map(r=>`<tr class="${r[0]===k?'hl':''}"><td><b>${r[0]}</b> ${r[1]}</td>${r.slice(2).map(c=>`<td class="${c[0]}">${c.slice(2)}</td>`).join("")}</tr>`).join("")}</table></div>
+  <p class="cap">Wireframes from ${a(L.layout,"Workspace Layout Options")}. The orange regions are outputs and context.</p>`;
+}
+function tabsStage(i){
+  const t=(n,active,content)=>`<div class="tab"><div class="bar"><span>Tab ${n} · Allowances review</span><span>${active?'active':''}</span></div><div class="body"><div class="c1">chat<br><br>“Mark F-02 accepted”</div><div class="c2">${content}</div></div></div>`;
+  const grid='F-01 Needs you<br>F-02 <b>Accepted</b><br>F-03 Raised';
+  if(i===1) return `<div class="tabs2">${t(1,true,grid)}${t(2,true,grid)}</div><p class="cap">True mirroring: Claude's click lands in both tabs. Your own scrolling, selections and half-typed edits in one tab would also need syncing, and an artifact that saves or sends something on click would do it twice unless every artifact is written to avoid that.</p>`;
+  return `<div class="tabs2">${t(1,true,grid)}${t(2,false,grid+'<div class="dim"><span>Claude is using another tab</span><span class="chipb">Use this tab</span></div>')}</div><p class="cap">What is built (commit 03c0e5f): every canvas call in a session goes to one tab, the one where you last opened the canvas. Other tabs dim their copy and offer “Use this tab”. If the active tab closes, the next call moves to another open tab and Claude is told to re-read the page. Tested with two tabs on a spare server.</p>`;
+}
+function restartStage(i){
+  const lines=["$ cd ~/claude-home/omnigent-slim","$ ./stop.sh && ./start.sh","  stopping server on 127.0.0.1:6767 …","  starting … ready at http://127.0.0.1:6767"].join("\n");
+  const txt=["Claude runs this on the Mac mini now. Any session that is mid-turn stops and has to be re-sent. Sessions themselves, their history and files are kept.","You run the same two commands when nothing is mid-turn. Until then the tab bug is still live.","Wait for the workspace pull request, then do one restart that picks up the tab fix and everything in the pull request. Until then the tab bug is still live, and the pull request's features stay off main."][i]||"";
+  return `<div class="term">${lines}</div><p class="cap">${txt}</p>`;
+}
+function pinStage(i){
+  return `<div class="dock"><div class="dockbar light"><div class="tray"><span class="dot" style="background:#4a90e2"></span><span class="dot" style="background:#f5c542"></span>${i===0?'<img src="img/icon-A.png" width="52" height="52" alt="Product Aviator in the Dock">':''}<span class="dot" style="background:#e5534b"></span></div></div></div><p class="cap">${i===0?'Claude runs <code>scripts/make_dock_app.sh --add-to-dock</code>, which builds <code>~/Applications/Product Aviator.app</code> and adds it to the Dock. Clicking it starts the server if it is off and opens the Library in its own Chrome app window, in about 3 seconds cold and under 2 warm. Right-click → Options → Remove from Dock undoes it.':'The app is still built in <code>~/Applications</code>. You drag it to the Dock yourself, or never use it.'} The icon shown is whatever you pick in the icon decision.</p>`;
+}
+function sidebarStage(i){
+  return `<div class="tabs2"><div class="mini"><div class="eyebrow">Now · full logo</div><div class="shot" style="background:#fff"><img src="img/sidebar-now.jpg" alt="Current sidebar with the full Product Aviator logo"></div><span>Real screenshot. At this size the “Product Aviator” lettering is about 7 pixels tall.</span></div><div class="mini"><div class="eyebrow">Emblem only</div><div style="background:#fff;border:1px solid var(--line);border-radius:8px;padding:14px 12px;display:flex;align-items:center;gap:10px"><img src="img/sidebar-emblem.png" width="110" height="31" alt="Wings and robot without lettering"></div><span>Wings and robot, no lettering. The name could sit beside it in normal text, or in the window title.</span></div></div>`;
+}
+function prStage(i){
+  return `<div class="flow"><div class="ln"><span class="node m">main</span><span class="arrow">←</span><span class="node p">PR 1 · claude/product-workspace-views · tip 706b3b3</span><span class="arrow">←</span><span class="node">claude/collab-markdown-editor (in progress)</span></div></div>
+  <div class="know" style="padding:12px 14px"><p><b>What PR 1 holds, all tested live in the app:</b></p><ul><li>The view kit: datasets, view specs, table, board, card, summary and form layouts, and the <code>pa</code> command</li><li>Three scenarios (PRD to requirements, requirements to dependencies, document review), each with a click-through preview</li><li>Canvas buttons that send state changes straight to the agent (start, approve, lock)</li><li>The Session panel: outputs, context picker, people and agents, and a workflow card</li><li>Participants: a global roster, background-session personas, named turns in chat, a stand-in tag</li></ul></div>
+  <div class="shot"><img src="img/workflow-card.jpg" alt="Session panel with workflow card, context and people, beside a findings view in the canvas"></div><p class="cap">Real screenshot from PR 1: the Session panel's workflow card, context and people, beside a findings view in the canvas.</p>`;
+}
+function unaskedStage(i){
+  return `<div class="tw"><table><tr><th>Choice made without asking</th><th>What it costs</th><th>What changing it means</th></tr>
+  <tr class="${i===2?'hl':''}"><td><b>Views redraw by rewriting a file.</b> The agent writes the dataset, the page is regenerated, and the viewer reloads it.</td><td>A brief reload on each change, mostly hidden by a saved-state hook.</td><td>A server change so views update in place. Smoother, but moves further from upstream Omnigent.</td></tr>
+  <tr class="${i===1?'hl':''}"><td><b>“Reviewed” and “locked” are yours.</b> Skills tell agents never to set them.</td><td>You click every approval yourself, even for obvious ones.</td><td>Agents may set them in named cases, for example after you say “approve all the low-risk ones” in chat.</td></tr>
+  <tr><td><b>The Session panel reuses upstream's session overview</b> (layout A).</td><td>Lists hide behind a button when the canvas is open.</td><td>Decided separately in the layout question.</td></tr></table></div>`;
+}
+function installStage(i){
+  const t=[`Step 1 of the README today, typed in Terminal:\n\n$ curl -L -o omnigent-slim.zip \\\n    https://github.com/dudgeon/omnigent-slim/archive/refs/heads/main.zip\n$ unzip omnigent-slim.zip && cd omnigent-slim-main && ./start.sh`,
+  `Download ZIP in the browser, then:\n\n$ ./start.sh\n  This copy is quarantined by macOS, so the bundled tmux\n  and Python will be killed on launch. Ask IT to allow it,\n  or download with curl (README step 1).`,
+  `$ git clone https://github.com/dudgeon/omnigent-slim.git\n$ cd omnigent-slim && ./start.sh\n\n(needs git and access to github.com from the work Mac)`][i]||"";
+  return `<div class="term">${t}</div><p class="cap">Tested on a fresh copy with the network blocked: a browser ZIP gets the macOS quarantine flag and the bundled tools are killed; the curl and git copies don't get the flag. <code>start.sh</code> spots a flagged copy and says so instead of clearing the flag, which would break your no-bypass rule.</p>`;
+}
+function contextStage(i){
+  const proj=`<div class="mini"><div class="eyebrow">Project: Allowances</div><div>context/ · allowances-prd.md · platform-map.md · risk-policy.md</div><div class="sys">every session in the project starts with these</div><div class="row"><span class="node">Session: PRD review</span><span class="node">Session: dependency mapping</span><span class="node">Session: launch notes</span></div><div style="font-size:12px;color:var(--ink-3)">Each session can still add or untick files.</div></div>`;
+  const sess=`<div class="mini"><div class="eyebrow">Workspace context/ folder (today)</div><div>allowances-prd.md · platform-map.md · cards-roadmap.md · risk-policy.md · …</div><div class="sys">each session ticks what it uses</div><div class="row"><span class="node">PRD review: ☑ prd ☑ map</span><span class="node">Dependencies: ☑ prd ☑ map ☑ risk</span></div><div style="font-size:12px;color:var(--ink-3)">Nothing is shared; you re-pick per session.</div></div>`;
+  return (i===1?sess:proj)+`<div class="shot"><img src="img/participants-live.jpg" alt="Live session with the Context section in the Session panel"></div><p class="cap">Real screenshot: today's per-session Context list (right, with tick boxes) in a live review session.</p>`;
+}
+function inlineStage(i){
+  const card=`<div class="msg"><span class="av" style="--c:var(--navy)">AV</span><div class="b">I've built the catalog: 20 requirements, 4 need your review.<div class="comp" style="margin-top:6px"><b>Requirements catalog</b><span style="color:var(--ink-3)">20 rows · 4 need you</span><span class="sp"></span><span class="chipb">Open in canvas</span></div></div></div>`;
+  const inl=`<div class="msg"><span class="av" style="--c:var(--navy)">AV</span><div class="b">I've built the catalog. Four need your review:<table style="margin-top:6px"><tr><th>ID</th><th>Requirement</th><th></th></tr><tr><td>R-03</td><td>Change limit takes effect immediately</td><td><span class="chipb">Approve</span></td></tr><tr><td>R-07</td><td>Decline shows remaining amount</td><td><span class="chipb">Approve</span></td></tr><tr><td colspan="3" style="color:var(--ink-3)">2 more · open full view</td></tr></table></div></div>`;
+  const none=`<div class="msg"><span class="av" style="--c:var(--navy)">AV</span><div class="b">I've built the catalog and opened it in the canvas on the right.</div></div>`;
+  return `<div class="mini">${[card,inl,none][i]||card}</div><p class="cap">${["A card in the transcript that opens the view in the canvas. Small change; the card is a fixed component.","The view's compact form drawn inside the turn, with working buttons. The largest app change on the list: it touches upstream transcript code, and every view must work in a 600-pixel column.","Views only ever appear in the canvas. Nothing to build."][i]||""}</p>`;
+}
+function callStage(i){
+  const ann=`<div class="sys">Aviator called Risk Review · section 7 touches under-18 consent</div>`;
+  const ask=`<div class="msg"><span class="av" style="--c:var(--navy)">AV</span><div class="b">This touches card limits for under-18s. Shall I ask Risk Review to look?</div></div><div class="msg me"><div class="b">Yes</div></div>`;
+  const chain=`<div class="sys">Risk Review called Cards Platform · checking authorization limits</div>`;
+  const rr=`<div class="msg"><span class="av" style="--c:var(--risk)">RR</span><div class="b"><b>Risk Review</b> · Sections 5 and 7 are close, but 7.4 doesn't say whose consent…</div></div>`;
+  return `<div class="mini">${[ask+rr,ann+rr,ann+rr+chain][i]||ann+rr}</div><div class="shot"><img src="img/participants-live.jpg" alt="Live: Risk Review and Mara Okafor replying in the chat"></div><p class="cap">Real screenshot from the live test. Each call starts a background session (about a minute and $0.11 each in that test), which you can open with “Open their session”.</p>`;
+}
+function seesStage(i){
+  return `<div class="tabs2"><div class="mini" style="${i===0?'outline:1.5px solid var(--you)':''}"><div class="eyebrow">Only what Aviator passes on</div><div class="term" style="font-size:11px">brief: Risk Review (risk-review.md)\nask: “Review sections 5 and 7 of\n  context/allowances-prd.md for\n  conduct and consent risk.”\nfiles: allowances-prd.md</div><span>Like briefing a colleague. Cheap. Whatever Aviator leaves out, they don't know.</span></div><div class="mini" style="${i===1?'outline:1.5px solid var(--you)':''}"><div class="eyebrow">The whole conversation</div><div class="term" style="font-size:11px">brief: Risk Review\ntranscript: all 46 turns, including\n  your side remarks and other\n  participants' replies\nfiles: everything in context</div><span>Fuller picture, several times the tokens, and everything you said is visible to every participant, including stand-ins for real people.</span></div></div>`;
+}
+function atStage(i){
+  return `<div class="mini">${i===0?`<div class="comp"><span class="node p" style="font-size:12px">@Risk Review</span> what's your view on 7.4 now?</div><div class="sys">goes to Risk Review's session; Aviator sees it too</div><div class="msg"><span class="av" style="--c:var(--risk)">RR</span><div class="b"><b>Risk Review</b> · With the cardholder named as consenting party, 7.4 is a Medium…</div></div>`:`<div class="comp">Ask Risk Review what they think of 7.4 now</div><div class="msg"><span class="av" style="--c:var(--navy)">AV</span><div class="b">Asking Risk Review…</div></div><div class="msg"><span class="av" style="--c:var(--risk)">RR</span><div class="b"><b>Risk Review</b> · With the cardholder named…</div></div>`}</div><p class="cap">${i===0?"The collaborative editor already routes @mentions in document comments to participants (decided). This would use the same picker in the message box.":"Aviator stays the one front door; it costs an extra hop and a few seconds per question."}</p>`;
+}
+function ucStage(i){
+  const U=[["Interview synthesis","Twelve interview notes in; themes, quotes and evidence counts out.","Tests: unstructured input, many-to-many links (quote ↔ theme), a board of themes, evidence cards"],["Metrics review","A CSV of weekly metrics in; movements, causes and actions out.","Tests: charts in views, number formatting, comparisons, a summary layout"],["Launch checklist","A plan in; tasks per team with owners and dates out.","Tests: status tracking, owners, dates. Close to the requirements catalog"]];
+  return `<div class="cards3">${U.map((u,j)=>`<div class="uc ${j===i?'sel':''}"><b>${u[0]}</b><span>${u[1]}</span><span class="v">${u[2]}</span></div>`).join("")}</div><p class="cap">Both scenarios so far start from the same Allowances PRD. Whichever you pick, Claude would build it with the scenario-builder skill, so the skill itself gets tested too.</p>`;
+}
+function whoStage(i){
+  return `<div class="mini">${i===1?`<div class="msg"><span class="av" style="--c:var(--navy)">AV</span><div class="b">What kind of work is this? Who is the PM, what goes in, what should come out?</div></div><div class="msg me"><div class="b">Interview notes in, themes out</div></div><div class="msg"><span class="av" style="--c:var(--navy)">AV</span><div class="b">Here's a draft schema and a preview with sample data. Check the theme card before I write the skill.</div></div><div class="sys">pa check: 0 problems · preview built</div>`:`<div class="term" style="font-size:11.5px">You: build a scenario for interview synthesis\n→ scenario-builder writes schema, fixtures,\n  views, script.md and the skill\n→ pa check · pa preview</div>`}</div><p class="cap">${i===1?"A guided interview plus stricter checks, so someone who has never seen the view kit can make a scenario.":"Today's skill: fast for someone who knows the kit, unforgiving for someone who doesn't."}</p>`;
+}
+function teamStage(i){
+  return `<div class="tw"><table><tr><th>What exists now</th><th>Format</th><th>Tied to the fork?</th></tr><tr><td>Datasets</td><td>JSON records with id, type, parent, status, locked, stale, derived_from</td><td class="g">No</td></tr><tr><td>View specs</td><td>Short JSON: layout, columns, buttons</td><td class="g">No</td></tr><tr><td>Scenarios</td><td>Skill folders: instructions, schemas, fixtures, script.md</td><td class="g">No</td></tr><tr><td>Participants</td><td>Markdown files with frontmatter</td><td class="g">No</td></tr><tr><td>Rendering, Session panel, named turns</td><td>React inside the fork</td><td class="m">Yes</td></tr></table></div><p class="cap">The first four could be served by a different backend unchanged. Only the rendering is specific to this fork.</p>`;
+}
+
+/* ---------- decisions ---------- */
+const G=[
+{g:"Quick unblocks",d:[
+ {id:"restart",q:"Restart Omnigent on the Mac mini now?",src:"Fix canvas with session open in multiple tabs",
+  know:`<p>When the same session was open in two browser tabs and Claude used the canvas, its clicks and reads raced between tabs, so it saw different page state on each call. <b>The fix is written, tested on a spare server and pushed to main (03c0e5f)</b>, but your running copy on port 6767 still has the old code. Python changes only load on restart.</p><p>A restart stops any turn that is running. Sessions, history and files are kept. At the time, your “Casual English Greeting” session looked mid-turn.</p>`,
+  stage:restartStage,
+  o:[["Restart it now","Claude runs stop.sh and start.sh on the Mac mini and confirms the app is back.","2 minutes"],["I'll restart it myself","You run the two commands when nothing is mid-turn.","You, 1 minute"],["Wait for the workspace pull request","One restart later picks up both.","Bug stays live until then"]],r:0,
+  why:"It is two minutes, it closes a thread, and the bug is in your way whenever you have two tabs open."},
+ {id:"mirror",q:"Is one active tab enough, or do you still want mirroring?",src:"Fix canvas with session open in multiple tabs",
+  know:`<p>You ranked three outcomes: <b>(1) mirror the canvas across tabs, (2) one active tab with the others disabled, (3) never the current confusion.</b> Option 2 is what was built.</p><p>Mirroring was not built because replaying each action in every tab runs an artifact's side effects twice (a button that saves or sends would fire in both), and your own scrolling and typing in one tab still would not show in the others without a full sync layer. Use the toggle on the right to see both.</p>`,
+  stage:tabsStage,
+  o:[["One active tab is enough","Close the thread after the restart.","Nothing more"],["Build true mirroring","A follow-up to sync canvas state between tabs, with rules so artifacts don't act twice.","Large; touches every artifact"]],r:0,
+  why:"The confusion is gone with option 2, and mirroring is a large job for a situation that only happens by accident."},
+ {id:"icon",q:"Which Dock icon should the launcher use?",src:"Add a Dock launcher for Omnigent",
+  know:`<p>The launcher app is built and pushed (637df4a). These six are rebuilt from the logo SVG in the repo (<code>scripts/dock/app-icon.svg</code>) to match the six options described in that thread, because the original option page was a temporary file on the Mac mini. A is exactly what the launcher has now.</p><p>Things to look at: how each reads at 32 and 16 pixels (Finder, Spotlight), and how it sits in a Dock beside Apple's icons. The wings in A and C run off the tile edges, which reads as stray bars at small sizes. The wordmark in B is unreadable below 64.</p>`,
+  stage:iconStage,
+  o:IC.map(c=>[`${c[0]}: ${c[1]}`,c[2]+".", c[0]==="A"?"No rebuild":"Rebuild, push"]),r:3,
+  why:"D keeps one clear shape at every size and sits well beside other Dock icons. E is the same with more polish if you like gradients."},
+ {id:"pin",q:"Pin the launcher to your Dock?",src:"Add a Dock launcher for Omnigent",
+  know:`<p>Claude asked before touching your Dock because it changes your Mac's settings. The app works either way; pinning only puts it in the Dock for you.</p>`,
+  stage:pinStage,
+  o:[["Yes, pin it","Claude builds the app with your chosen icon and adds it to the Dock.","1 minute"],["No, I'll drag it myself","The app stays in ~/Applications.","Nothing"]],r:0,
+  why:"You asked for a Dock launcher in the first place, and it's one right-click to remove."},
+ {id:"sidebar",q:"Keep the lettering in the sidebar logo?",src:"Brand new session screen as Product Aviator",
+  know:`<p>The Product Aviator logo now sits at the top left of the sidebar. The thread that put it there flagged that the “Product Aviator” lettering under the robot is very small at that size, and offered to show only the robot and wings. Compare the real screenshot with the emblem-only version.</p>`,
+  stage:sidebarStage,
+  o:[["Keep the full logo","No change.","Nothing"],["Emblem only","Robot and wings, no lettering; the name stays in the window title.","Small"],["Emblem plus the name in text","Robot and wings with “Product Aviator” beside it in the app's own font, readable at any size.","Small"]],r:2,
+  why:"The emblem stays crisp and the name stays readable, instead of shrinking a wordmark to 7 pixels."}
+]},
+{g:"Getting it to work",d:[
+ {id:"install",q:"How will you get the build onto your work Mac?",src:"Prepare slimmed Omnigent harness for work",
+  know:`<p>Project memory says you planned to download it as a ZIP. That was tested and <b>a ZIP downloaded in a browser does not run</b>: macOS marks it quarantined and kills the bundled tmux and Python on launch. Clearing that flag yourself would break your “no sandbox bypass” rule, so <code>start.sh</code> refuses and says so.</p><p>Two more things that thread asked you to check against work rules: the app marks its workspace folder as trusted in Claude Code, and it names new sessions with a short <code>claude -p</code> call that has no tools.</p>`,
+  stage:installStage,
+  o:[["curl in Terminal (README step 1)","The download isn't quarantined. Needs Terminal access to github.com.","Works today"],["Browser ZIP, ask IT to allow it","IT whitelists or removes the flag through their own process.","Depends on IT"],["git clone","Not quarantined, and updates are a git pull. Needs git and github.com.","Works today"]],r:0,
+  why:"It works with no change and no IT ticket. Mention in your note if the trusted folder or the claude -p naming would break a work rule."}
+]},
+{g:"Shipping what's built",d:[
+ {id:"merge",q:"How should the workspace pull request land?",src:"Design the product agent workspace",
+  know:`<p>${a(PR,"Pull request 1")} is a draft holding everything from last night and this morning. It is tested live but you haven't reviewed it. The collaborative editor is being built on top of its branch, so the order matters: merging PR 1 first lets the editor's pull request show only its own changes.</p>`,
+  stage:prStage,
+  o:[["Review it, then merge","Claude marks it ready for review. You read it (or skim the designs) and merge.","Your time: about 30 minutes"],["Merge it now","Main gets everything; the editor rebases onto main.","Nothing more"],["Land it with the editor","Wait until the editor is finished and merge both together.","Main lags a day or more"]],r:0,
+  why:"It's large and touches the chat, the canvas and the Session panel. A read now is cheaper than unpicking later, and the editor isn't blocked meanwhile."},
+ {id:"unasked",q:"Keep the choices made without asking you?",src:"Design the product agent workspace",
+  know:`<p>Three calls were made overnight so work could continue. Each is cheap to reverse. The table shows what each costs today and what changing it would mean. The third is settled by the layout question below.</p>`,
+  stage:unaskedStage,
+  o:[["Keep them","No change.","Nothing"],["Let agents approve or lock when you say so","Skills gain a rule: only after you tell them in chat, and each one is shown.","Small"],["Update views in place, no reload","A server change so views redraw without reloading.","Medium; further from upstream"]],r:0,
+  why:"Both are cheap, reversible and stay close to upstream. Revisit approvals once you've felt the clicking in a real run."}
+]},
+{g:"Workspace shape",d:[
+ {id:"layout",q:"Where should outputs and context live?",src:"Design the product agent workspace",
+  know:`<p>The right side is where both the canvas and a list of outputs and context want to be, and a laptop only has room for one more column. Five placements were drawn. <b>A is built</b> because it reused an upstream panel, not because it is best. Switch options on the right to compare the wireframes, pros and cons.</p>`,
+  stage:layoutStage,
+  o:[["E: split by direction","Context sits above the message box; outputs are the canvas's own tabs. Keep A until E is built.","Medium"],["A: keep the panel","Polish what exists.","Tiny"],["C: left sidebar","Context and outputs as a tree in the sidebar.","Large"],["B: home tab in the canvas","The canvas's first tab lists outputs, context and steps.","Small"],["D: thin strip","Three icons on the right edge open flyouts.","Medium"]],r:0,
+  why:"What you give the agent sits where you talk to it; what it gives you sits where you look. Nothing competes with the canvas."},
+ {id:"context",q:"Is context set per session or per project?",src:"Design the product agent workspace",
+  know:`<p>Today there is one <code>context/</code> folder per workspace and each session ticks the files it uses. Your film has one “Allowances” project holding work across weeks, which suggests context curated once per initiative and inherited. This also affects layout: project-wide context fits the left sidebar (C) better.</p>`,
+  stage:contextStage,
+  o:[["Per project, inherited","Curate once per initiative; each session starts with it and can add or untick.","Medium"],["Per session, as today","Each session picks from the shared folder.","Nothing"]],r:0,
+  why:"PM work is organised by initiative, and the same PRD and research feed many sessions."},
+ {id:"inline",q:"Should views appear inside the chat?",src:"Design the product agent workspace",
+  know:`<p>Every view already has a compact form. Your first template class was chat widgets inline in the conversation (forms, buttons, data). The app can't place a view in the transcript yet; doing it properly is the largest app change on the list.</p>`,
+  stage:inlineStage,
+  o:[["A card first, inline later","A clickable card now; real inline views once the layout settles.","Small now"],["Inline views now","The compact view drawn inside the turn, with working buttons.","Large"],["Canvas only","Views stay in the canvas.","Nothing"]],r:0,
+  why:"Most of the value soon, without locking out inline views."}
+]},
+{g:"Participants",d:[
+ {id:"call",q:"Who may bring a participant in without asking you?",src:"Design the product agent workspace",
+  know:`<p>Aviator can now call roster participants into background sessions, and replies appear under their own name (stand-ins always tagged). Nothing yet says when it may do so on its own. Each call costs real time and money, and a stand-in speaks for a real colleague.</p>`,
+  stage:callStage,
+  o:[["Only when you ask","Aviator suggests; you say yes.","Slower workflows"],["Aviator may call, and says so","It calls when a workflow step needs it, with a line in the chat each time.","Recommended"],["Participants may call each other too","Most autonomous; hardest to follow.","Most cost"]],r:1,
+  why:"Workflows like document review run without stopping, and every call is still visible and openable."},
+ {id:"sees",q:"What does a called participant see?",src:"Design the product agent workspace",
+  know:`<p>Today a participant gets its brief and what Aviator passes on. The alternative hands it the whole conversation.</p>`,
+  stage:seesStage,
+  o:[["Only what Aviator passes on","Smaller and cheaper, like briefing a colleague.","As built"],["The whole conversation","Fuller context; more cost; nothing you say is private from participants.","More tokens"]],r:0,
+  why:"It's how you'd brief a person, and you can always open their session to see exactly what they got."},
+ {id:"at",q:"Can you @mention a participant in the main chat?",src:"Build collaborative markdown editor",
+  know:`<p>In documents, @mentions in comments go to that participant (decided). The same could work in the message box, so you can address Risk Review directly.</p>`,
+  stage:atStage,
+  o:[["Yes, @ works in chat","Your message goes to that participant; the reply shows under their name.","Small"],["No, go through Aviator","Aviator stays the single front door.","Nothing"]],r:0,
+  why:"One rule for documents and chat."}
+]},
+{g:"Direction",d:[
+ {id:"second",q:"Which kind of work is the second test?",src:"Design the product agent workspace",
+  know:`<p>You asked not to overfit the PRD example. A scenario from different work shows quickly where the view kit is too shaped by requirements.</p>`,
+  stage:ucStage,
+  o:[["Interview synthesis","Messy notes in, themes out.","Hardest contrast"],["Metrics review","Numbers and charts.","Tests data views"],["Launch checklist","Status across teams.","Close to today"]],r:0,
+  why:"Furthest from a PRD, so it stresses the kit hardest."},
+ {id:"who",q:"Who will write scenarios at work?",src:"Design the product agent workspace",
+  know:`<p>The scenario-builder skill is a power tool today. If other PMs will build scenarios, it needs a guided interview and stricter checks.</p>`,
+  stage:whoStage,
+  o:[["Just me for now","Keep it lean.","Nothing"],["Other PMs too","Add a guided interview and stricter checks.","Medium"]],r:0,
+  why:"The format is still changing; a guided flow is easier once it settles."},
+ {id:"team",q:"What does the work team need from this?",src:"Design the product agent workspace",
+  know:`<p>A work team will productionize on Omnigent. Everything except the rendering is plain files they could reuse. It's unclear whether they want a spec, components, or just demos.</p>`,
+  stage:teamStage,
+  o:[["I'll ask them; keep plain files","No change until you hear back.","Nothing"],["Write a format spec","A spec for datasets, view specs, scenarios and participants.","Small"],["Demos are enough","Effort goes into demos.","Nothing"]],r:0,
+  why:"A spec written before knowing what they want risks the wrong shape."}
+]}];
+const ALL=G.flatMap(g=>g.d.map(d=>({...d,g:g.g})));
+/* ---------- state ---------- */
+let A={},cur=-1,view={},db=null;
+const OLDMAP={restart:{0:0,1:1,2:2},mirror:{0:0,1:1},icon:{0:0,1:1,2:2,3:3,4:4,5:5},pin:{0:0,1:1},merge:{0:1,1:2,2:0},unasked:{0:0,1:1,2:2},layout:{0:0,1:1,2:-1},context:{0:0,1:1,2:-1},inline:{0:0,1:1,2:2},call:{0:0,1:1,2:2},sees:{0:0,1:1},at:{0:0,1:1},second:{0:0,1:1,2:2},who:{0:0,1:1},team:{0:0,1:1,2:2}};
+const OLDLEN={restart:3,mirror:2,icon:6,pin:2,merge:3,unasked:3,layout:3,context:3,inline:3,call:3,sees:2,at:2,second:3,who:2,team:3};
+function loadLocal(){try{A=JSON.parse(localStorage.getItem("pa-decisions-v2")||"{}")}catch(e){A={}}
+  try{const old=JSON.parse(localStorage.getItem("pa-decisions-v1")||"null");
+    if(old){for(const id in old){if(A[id])continue;const o=old[id];const d=ALL.find(x=>x.id===id);if(!d||o.pick===undefined)continue;
+      if(o.pick>=OLDLEN[id]||OLDMAP[id][o.pick]===-1){A[id]={pick:"else",text:o.text||"",locked:true,from:"first version"}}
+      else A[id]={pick:OLDMAP[id][o.pick],text:o.text||"",locked:true,from:"first version"}}}}catch(e){}}
+function saveLocal(){try{localStorage.setItem("pa-decisions-v2",JSON.stringify(A))}catch(e){}}
+async function persist(id){saveLocal();if(db){try{await db.doc("answers/"+id).set({...A[id],at:new Date().toISOString()})}catch(e){}}}
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function label(d,a){if(!a||a.pick===undefined)return"";return a.pick==="else"?"Something else: "+(a.text||""):d.o[a.pick][0]}
+/* ---------- render ---------- */
+function nav(){
+  const n=document.getElementById("nav");let k=0;
+  n.innerHTML=`<button class="${cur===-1?'on':''}" data-k="-1"><span class="mk"></span>Start here</button>`+G.map(g=>`<div><h4>${g.g}</h4>${g.d.map(d=>{const i=k++;const s=A[d.id];return `<button class="${i===cur?'on':''}" data-k="${i}"><span class="mk ${s?.locked?'locked':s?.pick!==undefined?'picked':''}"></span>${esc(d.q)}</button>`}).join("")}</div>`).join("")+`<div><h4>Finish</h4><button class="${cur===ALL.length?'on':''}" data-k="${ALL.length}"><span class="mk"></span>Answer sheet</button></div>`;
+  n.querySelectorAll("button").forEach(b=>b.onclick=()=>go(+b.dataset.k));
+  const lc=ALL.filter(d=>A[d.id]?.locked).length;document.getElementById("count").textContent=`${lc} of ${ALL.length} locked`;
+}
+function go(k){cur=k;render();window.scrollTo({top:0})}
+function intro(){
+  const lockedFirst=ALL.filter(d=>A[d.id]?.from==="first version");
+  return `<div class="intro"><span class="eyebrow">How this works</span><h2>${ALL.length} decisions, quick unblocks first</h2>
+  <p>Each decision has a briefing with what you need to know, a stage on the left that redraws for whichever option you're looking at, and an answer card. Pick an option, add a note if you like, and press <b>Lock answer</b>. Locked answers are saved to this page, where Claude reads them and passes each to the thread that owns it.</p>
+  <p>Already settled and left out: other agents always propose changes in documents; Claude edits directly when asked to make a change and suggests when asked to propose; canvas buttons send state changes straight to the agent; participants run as background sessions with one global roster; stand-ins are always labelled; questions to you come as cards.</p>
+  ${lockedFirst.length?`<p class="locked-note">Carried over from the first version of this page: ${lockedFirst.map(d=>`<b>${esc(d.q)}</b> → ${esc(label(d,A[d.id]))}`).join("; ")}. They stay locked; unlock any to change it.</p>`:""}
+  <div class="row"><button class="btn primary" id="start">Start with the first decision</button></div></div>`;
+}
+function decision(){
+  const d=ALL[cur],s=A[d.id]||{};const locked=!!s.locked;
+  const v=view[d.id]??(typeof s.pick==="number"?s.pick:d.r);
+  const opts=d.o.map((o,j)=>`<button type="button" class="opt ${j===v?'viewing':''}" data-j="${j}" aria-pressed="${s.pick===j}" ${locked?'disabled':''}>${j===d.r?'<span class="rec">Recommended</span>':''}<span class="t">${esc(o[0])}</span><span class="d">${esc(o[1])}</span><span class="cost">${esc(o[2])}</span></button>`).join("");
+  return `<div class="dec"><div class="brief"><div class="eyebrow">${cur+1} of ${ALL.length} · ${esc(d.g)}</div><h2>${esc(d.q)}</h2>
+   <div class="know"><span class="eyebrow">What you need to know</span>${d.know}<span class="src">From the thread “${esc(d.src)}”</span></div>
+   <div class="stage"><span class="eyebrow">${typeof v==="number"&&d.o[v]?"Showing: "+esc(d.o[v][0]):""}</span><div class="stage-body" id="stagebody">${d.stage(v)}</div></div>
+   <div class="pager"><button class="btn" id="prev">‹ Back</button><button class="btn" id="next">Next ›</button></div></div>
+  <aside class="ask ${locked?'done':''}"><span class="h">${locked?'Locked':'Needs you'}</span><span class="q">${esc(d.q)}</span>${opts}
+   <button type="button" class="opt else" data-j="else" aria-pressed="${s.pick==='else'}" ${locked?'disabled':''}><span class="t">Something else</span><span class="d">Say what you want instead in the note.</span></button>
+   <div class="why"><b>Why the recommendation:</b> ${esc(d.why)}</div>
+   <label for="note-${d.id}" class="status">Note (optional)</label><textarea id="note-${d.id}" ${locked?'disabled':''} placeholder="Anything Claude should know">${esc(s.text||"")}</textarea>
+   <div class="row">${locked?`<button class="btn" id="unlock">Unlock to change</button>`:`<button class="btn lock" id="lock" ${s.pick===undefined?'disabled':''}>Lock answer</button>`}<span class="status" id="st">${locked?esc(label(d,s)):'Tap an option to see it on the left, then lock it.'}</span></div></aside></div>`;
+}
+function sheetText(){return "Product Aviator decisions:\n"+ALL.map((d,i)=>{const s=A[d.id];return `${i+1}. ${d.q} ${s?.locked?label(d,s)+(s.text&&s.pick!=="else"?" (note: "+s.text+")":""):"(not locked)"}`}).join("\n")}
+function sheet(){
+  return `<div class="intro"><span class="eyebrow">Answer sheet</span><h2>Your decisions</h2><div class="tw"><table class="sheet">${ALL.map(d=>{const s=A[d.id];return `<tr><td>${esc(d.q)}</td><td>${s?.locked?'<b>'+esc(label(d,s))+'</b>'+(s.text&&s.pick!=="else"?'<br><span class="status">'+esc(s.text)+'</span>':''):'<span class="status">Not locked</span>'}</td></tr>`}).join("")}</table></div>
+  <div class="row"><button class="btn" id="fillrec">Lock the recommendation for everything unanswered</button><button class="btn primary" id="copy">Copy answers</button><span class="status" id="cst">Locked answers are already saved to this page for Claude. Copy is a backup to paste in chat.</span></div><pre class="copy" id="txt">${esc(sheetText())}</pre></div>`;
+}
+function render(){
+  nav();const m=document.getElementById("main");
+  if(cur===-1){m.innerHTML=intro();document.getElementById("start").onclick=()=>go(0);return}
+  if(cur===ALL.length){m.innerHTML=sheet();
+    document.getElementById("fillrec").onclick=async()=>{for(const d of ALL)if(!A[d.id]?.locked){A[d.id]={pick:d.r,text:A[d.id]?.text||"",locked:true};await persist(d.id)}render()};
+    document.getElementById("copy").onclick=()=>{const t=sheetText(),st=document.getElementById("cst");const sel=()=>{const r=document.createRange();r.selectNodeContents(document.getElementById("txt"));const g=getSelection();g.removeAllRanges();g.addRange(r);st.textContent="Copy was blocked, so the text is selected. Press ⌘C."};try{navigator.clipboard.writeText(t).then(()=>st.textContent="Copied.",sel)}catch(e){sel()}};return}
+  m.innerHTML=decision();const d=ALL[cur];
+  m.querySelectorAll(".opt").forEach(b=>{b.onclick=()=>{const j=b.dataset.j==="else"?"else":+b.dataset.j;A[d.id]={...(A[d.id]||{}),pick:j};if(j!=="else")view[d.id]=j;saveLocal();render()};
+    b.onmouseenter=()=>{if(b.dataset.j==="else")return;const j=+b.dataset.j;document.getElementById("stagebody").innerHTML=d.stage(j);hookStage(d)}});
+  m.querySelector(".ask").onmouseleave=()=>{const v=view[d.id]??(typeof A[d.id]?.pick==="number"?A[d.id].pick:d.r);document.getElementById("stagebody").innerHTML=d.stage(v);hookStage(d)};
+  hookStage(d);
+  const ta=document.getElementById("note-"+d.id);ta.oninput=()=>{A[d.id]={...(A[d.id]||{}),text:ta.value};saveLocal()};
+  const lk=document.getElementById("lock");if(lk)lk.onclick=async()=>{A[d.id]={...A[d.id],text:ta.value,locked:true};await persist(d.id);if(cur<ALL.length)go(cur+1)};
+  const ul=document.getElementById("unlock");if(ul)ul.onclick=async()=>{A[d.id]={...A[d.id],locked:false};await persist(d.id);render()};
+  document.getElementById("prev").onclick=()=>go(cur-1);document.getElementById("next").onclick=()=>go(cur+1);
+}
+function hookStage(d){document.querySelectorAll("#stagebody [data-pick]").forEach(el=>el.onclick=()=>{if(A[d.id]?.locked)return;const j=+el.dataset.pick;A[d.id]={...(A[d.id]||{}),pick:j};view[d.id]=j;saveLocal();render()})}
+document.getElementById("tosheet").onclick=()=>go(ALL.length);
+loadLocal();render();
+(async()=>{try{db=await window.claude?.use?.("db")}catch(e){db=null}
+  const sy=document.getElementById("sync");if(!db){sy.textContent="Saving in this browser only";return}
+  sy.textContent="Saving to the page";
+  try{const snap=await db.collection("answers").get();const have=new Set();snap.docs.forEach(x=>{have.add(x.id);const v=x.data();if(v&&!(A[x.id]&&A[x.id].locked&&!v.locked))A[x.id]={pick:v.pick,text:v.text,locked:v.locked,from:v.from}});
+    for(const id in A){if(A[id].pick!==undefined&&!have.has(id))await persist(id)}saveLocal();render()}catch(e){}
+})();
+</script>
+
+</body></html>

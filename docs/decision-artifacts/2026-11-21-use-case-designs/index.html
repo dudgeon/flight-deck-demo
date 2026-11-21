@@ -1,0 +1,99 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!-- decision-archive:start -->
+<div style="font:13px/1.45 system-ui,sans-serif;background:Canvas;color:CanvasText;border-bottom:1px solid GrayText;padding:8px 16px">Archived copy of <b>Product Aviator Use Case Designs</b>, a decision artifact from 2026-11-21. Nothing on this page is saved. The index of all of them is in <a href="../index.html">docs/decision-artifacts</a>.</div>
+<script>
+(function(){
+  var A={};
+  function snap(){var docs=Object.keys(A).map(function(k){return {id:k,data:function(){return A[k]},exists:true}});return {docs:docs,empty:!docs.length,size:docs.length,forEach:function(f){docs.forEach(f)}}}
+  function doc(id){return {id:id,get:async function(){return {id:id,exists:id in A,data:function(){return A[id]}}},set:async function(){},update:async function(){},delete:async function(){}}}
+  var db={collection:function(){return {get:async function(){return snap()},doc:doc,onSnapshot:function(f){setTimeout(function(){f(snap())},0);return function(){}},add:async function(){}}},doc:function(p){return doc(String(p).split("/").pop())}};
+  window.claude={use:async function(name){return name==="db"?db:null}};
+})();
+</script>
+<!-- decision-archive:end -->
+
+<title>Product Aviator Use Case Designs</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: a reading column with one instrument, a workspace schematic that redraws per work mode. */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --sunk:#e9edf2; --ink:#0a223d; --ink-2:#44566c; --ink-3:#7a8899;
+  --line:#d3dae3; --navy:#0a223d; --on-navy:#f3f5f8;
+  --you:#c2501f; --you-soft:#fbe6dc;
+  --exists:#2f5d8a; --exists-soft:#dfe9f3; --ours:#17756b; --ours-soft:#d9efec;
+  --extend:#8a6200; --extend-soft:#f6ecd0; --new:#c2501f; --new-soft:#fbe6dc;
+  --ok:#1d7a4f; --warn:#9a6a00; --attn:#b8323c; --idle:#7a8899;
+  --display:"Space Grotesk","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#07172a; --surface:#0e2238; --sunk:#0a1c30; --ink:#e8eef5; --ink-2:#a9b8c9; --ink-3:#74879c;
+  --line:#22384f; --navy:#16385f; --on-navy:#eef3f8;
+  --you:#ff9166; --you-soft:#3a2118;
+  --exists:#8fbbe6; --exists-soft:#15304c; --ours:#6fd0c3; --ours-soft:#103631;
+  --extend:#e6bd55; --extend-soft:#35290c; --new:#ff9166; --new-soft:#3a2118;
+  --ok:#5fcf98; --warn:#e6bd55; --attn:#ff7d86; --idle:#74879c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#07172a; --surface:#0e2238; --sunk:#0a1c30; --ink:#e8eef5; --ink-2:#a9b8c9; --ink-3:#74879c;
+  --line:#22384f; --navy:#16385f; --on-navy:#eef3f8;
+  --you:#ff9166; --you-soft:#3a2118;
+  --exists:#8fbbe6; --exists-soft:#15304c; --ours:#6fd0c3; --ours-soft:#103631;
+  --extend:#e6bd55; --extend-soft:#35290c; --new:#ff9166; --new-soft:#3a2118;
+  --ok:#5fcf98; --warn:#e6bd55; --attn:#ff7d86; --idle:#74879c; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+.wrap{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:56px}
+h1,h2,h3{font-family:var(--display);font-weight:600;text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);line-height:1.08}
+h2{font-size:24px;line-height:1.2}
+h3{font-size:16px}
+p{margin:0;max-width:68ch;color:var(--ink-2)}
+.eyebrow{font:500 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+section{display:flex;flex-direction:column;gap:18px}
+.head{display:flex;flex-direction:column;gap:10px}
+.lede{font-size:17px;color:var(--ink-2)}
+.thesis{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.thesis div{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.thesis b{font-family:var(--display);font-size:15px}
+.thesis span{color:var(--ink-2);font-size:14px}
+
+/* tags */
+.tag{display:inline-flex;align-items:center;gap:6px;font:500 11px/1 var(--mono);padding:4px 7px;border-radius:3px;white-space:nowrap}
+.tag::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.t-exists{color:var(--exists);background:var(--exists-soft)}
+.t-ours{color:var(--ours);background:var(--ours-soft)}
+.t-extend{color:var(--extend);background:var(--extend-soft)}
+.t-new{color:var(--new);background:var(--new-soft)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:13px;color:var(--ink-2)}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+
+</style>
+<style>
+.fig{display:flex;flex-direction:column;gap:12px}
+.fig .cap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:8px 28px;align-items:start}
+.fig h3{font-size:19px}
+.fig img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.tag{font:500 10.5px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:4px 6px;border-radius:4px;display:inline-block;margin-bottom:8px}
+.tag.live{background:var(--ours-soft);color:var(--ours)}.tag.target{background:var(--you-soft);color:var(--you)}
+.figs{display:flex;flex-direction:column;gap:44px}
+.key{display:flex;gap:18px;flex-wrap:wrap;font-size:13.5px;color:var(--ink-2)}
+@media(max-width:700px){.fig .cap{grid-template-columns:1fr}}
+</style>
+<div class="wrap">
+<section><div class="head"><span class="eyebrow">Product Aviator · the PRD example, screen by screen</span>
+<h1>One piece of work, in every way of working</h1>
+<p class="lede">A product manager takes a PRD to a reviewed requirements catalog, then to a map of platform dependencies. Six of these screens are the real app, running the branch built tonight with a live agent. Three are design targets that need one more change to the app.</p></div>
+<div class="key"><span><span class="tag live" style="margin:0">Running tonight</span> screenshots of the app itself</span><span><span class="tag target" style="margin:0">Design target</span> frames from the click-through preview</span></div>
+<p>All names and data are invented. "Visigoth Bank" and its Allowances feature do not exist.</p></section>
+<section class="figs"><figure class="fig" style="margin:0"><div class="cap"><div><span class="tag live">Running in the app tonight</span><h3>Starting out: what the agent may read, what it has made</h3></div><p>A Session panel sits beside the chat. Context lists the documents in the workspace's context folder; tick some and they are added to your next message as file mentions. Outputs lists what this session has produced, newest first.</p></div><img src="ucd/app-panel.jpg" alt="Starting out: what the agent may read, what it has made" loading="lazy" width="2400" height="1350"></figure><figure class="fig" style="margin:0"><div class="cap"><div><span class="tag live">Running in the app tonight</span><h3>A structured view fills the canvas</h3></div><p>Asked to catalog a PRD, the agent wrote 20 records to a dataset and the catalog drew itself from them. This is a real run from tonight: 55 seconds, three questions flagged. The agent wrote no HTML. The panel has stepped aside into the Session button.</p></div><img src="ucd/app-catalog.jpg" alt="A structured view fills the canvas" loading="lazy" width="2400" height="1350"></figure><figure class="fig" style="margin:0"><div class="cap"><div><span class="tag live">Running in the app tonight</span><h3>Reviewing one item</h3></div><p>Opening a row shows the record as a card: the question that needs an answer, the statement (editable), its source in the document, acceptance criteria, and the actions for its current state.</p></div><img src="ucd/app-catalog-detail.jpg" alt="Reviewing one item" loading="lazy" width="2400" height="1350"></figure><figure class="fig" style="margin:0"><div class="cap"><div><span class="tag live">Running in the app tonight</span><h3>Edits go through chat, and you press Send</h3></div><p>Changing a priority or locking a row marks it as edited in your color. Send to agent writes the changes into the message box as plain sentences. Nothing changes the data behind your back, and there is a record of every change in the conversation.</p></div><img src="ucd/app-edits.jpg" alt="Edits go through chat, and you press Send" loading="lazy" width="2400" height="1350"></figure><figure class="fig" style="margin:0"><div class="cap"><div><span class="tag live">Running in the app tonight</span><h3>Many pieces of work at once</h3></div><p>The next stage adds its own status to the same dataset and shows one tile per requirement, in a lane per state. Start runs one exploration as a sub-agent. Tiles move by themselves as explorers report, and the view keeps your place while it redraws.</p></div><img src="ucd/app-board.jpg" alt="Many pieces of work at once" loading="lazy" width="2400" height="1350"></figure><figure class="fig" style="margin:0"><div class="cap"><div><span class="tag live">Running in the app tonight</span><h3>Drilling down and choosing</h3></div><p>A requirement opens to its dependencies, a dependency opens to the capabilities that could meet it, with evidence quoted from the platform document. Choosing a different capability is an edit like any other.</p></div><img src="ucd/app-board-detail.jpg" alt="Drilling down and choosing" loading="lazy" width="2400" height="1350"></figure><figure class="fig" style="margin:0"><div class="cap"><div><span class="tag target">Design target · from the standalone preview</span><h3>Design target: a form inside the chat</h3></div><p>Short choices belong in the conversation, not the canvas. The same view files already render in this compact form. The app cannot place them inline yet, so tonight they open in the canvas instead. This frame is from the standalone preview.</p></div><img src="ucd/pv1-3.jpg" alt="Design target: a form inside the chat" loading="lazy" width="2400" height="1350"></figure><figure class="fig" style="margin:0"><div class="cap"><div><span class="tag target">Design target · from the standalone preview</span><h3>Design target: a review card inside the chat</h3></div><p>When one item needs you, the agent brings it to you as a card in the conversation, while the board stays in the canvas.</p></div><img src="ucd/pv2-6.jpg" alt="Design target: a review card inside the chat" loading="lazy" width="2400" height="1350"></figure><figure class="fig" style="margin:0"><div class="cap"><div><span class="tag target">Design target · from the standalone preview</span><h3>Design target: a summary inside the chat</h3></div><p>Where things stand, as counts and bars drawn from the same dataset, at the moment the agent reports.</p></div><img src="ucd/pv2-7.jpg" alt="Design target: a summary inside the chat" loading="lazy" width="2400" height="1350"></figure></section>
+<section><div class="head"><span class="eyebrow">Added 21 November</span><h2>Two things changed since these screens</h2></div>
+<p><b>State changes now go straight to the agent.</b> Start, approve and the lock box no longer wait for Send. They appear in the chat as a short "Canvas action" message. Content edits still collect and wait for you, as in the fourth screen.</p>
+<p><b>Other participants are designed but not built.</b> How a risk agent or a designer appears in this same conversation is worked through in <a href="../2026-11-21-conversation-participants/index.html" style="color:var(--you)">Conversation Participants</a>.</p></section>
+<section><div class="head"><span class="eyebrow">What is the same in every screen</span><h2>Three rules that hold throughout</h2></div>
+<p><b>Views are drawn from data.</b> The agent adds and changes records. The catalog, board, cards and summary are all pictures of one dataset, so they cannot disagree.</p>
+<p><b>Your marks are one color.</b> Anything you edited, sent back or wrote is shown in the same warm color. Everything else on screen is the agent's.</p>
+<p><b>You send.</b> Buttons write a sentence into the message box. The agent acts when you press Send.</p></section>
+</div>
+</body></html>

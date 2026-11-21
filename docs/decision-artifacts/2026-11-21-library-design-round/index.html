@@ -1,0 +1,527 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!-- decision-archive:start -->
+<div style="font:13px/1.45 system-ui,sans-serif;background:Canvas;color:CanvasText;border-bottom:1px solid GrayText;padding:8px 16px">Archived copy of <b>Library Design Round</b>, a decision artifact from 2026-11-21. It shows the answers recorded on 2026-11-21; changes made here are not saved. The index of all of them is in <a href="../index.html">docs/decision-artifacts</a>.</div>
+<script>
+(function(){
+  var A={"lib-again": {"at": "2026-11-21T18:34:49.174Z", "choice": "One project per demo: Continue or Start over", "note": ""}, "lib-fly": {"at": "2026-11-21T18:34:35.052Z", "choice": "Fly, with a Live turns switch", "note": ""}, "lib-hero": {"at": "2026-11-21T18:33:51.096Z", "choice": "The steps, without a picture", "note": "Steps won’t always be sequential, so I think about it as much as tasks/outcomes/goals as actual steps, but I think that the steps are the right level of granularity to show. We may want optionality in the future for imagery."}, "lib-layout": {"at": "2026-11-21T18:32:28.520Z", "choice": "One big spotlight, then a grid", "note": "I think we will have 4-6 hero skills (like intent shaping, problem discovery, etc), which should be shown, and many many “utility” skills (like persona builder, scenario builder, etc) that will not be shown — so the skills will need some kind of metadata field to show, and another for ordering (they should be shown in rough order of their sequence in the product development lifecycle)"}, "lib-templates": {"at": "2026-11-21T18:35:47.118Z", "choice": "Out of the Library, into the Hangar", "note": ""}, "lib-work": {"at": "2026-11-21T18:34:13.151Z", "choice": "One per workflow, plus optional extra starters", "note": ""}};
+  function snap(){var docs=Object.keys(A).map(function(k){return {id:k,data:function(){return A[k]},exists:true}});return {docs:docs,empty:!docs.length,size:docs.length,forEach:function(f){docs.forEach(f)}}}
+  function doc(id){return {id:id,get:async function(){return {id:id,exists:id in A,data:function(){return A[id]}}},set:async function(){},update:async function(){},delete:async function(){}}}
+  var db={collection:function(){return {get:async function(){return snap()},doc:doc,onSnapshot:function(f){setTimeout(function(){f(snap())},0);return function(){}},add:async function(){}}},doc:function(p){return doc(String(p).split("/").pop())}};
+  window.claude={use:async function(name){return name==="db"?db:null}};
+})();
+</script>
+<!-- decision-archive:end -->
+
+<title>Library Design Round</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* One reading column. A sequence map up top, then three parts in dependency order, each decision a card with context, visuals, options and a saved pick. Product Aviator tokens. */
+:root{
+  --bg:#f4f6f9;--surface:#fff;--sunk:#eaeef3;--ink:#0f1e30;--ink-2:#475a70;--ink-3:#71829a;--line:#d6dde6;--line-strong:#b4c0ce;
+  --navy:#0a223d;--chrome-ink:#f2f6fa;--chrome-ink-2:#9fb4cc;--chrome-active:#2a5486;
+  --build:#0d6e78;--build-soft:#d9f0f1;--on-build:#fff;--hangar-bg:#edf4f6;--hangar-grid:#d3e3e7;--hangar-paper:#fbfdfd;
+  --ok:#17794a;--ok-soft:#ddf1e6;--attn:#8d5a00;--attn-soft:#f9ebcf;--fail:#b3261e;--fail-soft:#f9dedc;
+  --agent:#4f46b8;--agent-soft:#e8e6f8;--you:#b0237a;--new:#c99a00;
+  --f-body:"Inter",-apple-system,"Segoe UI",system-ui,sans-serif;--f-head:"Space Grotesk","Inter",system-ui,sans-serif;--f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#071526;--surface:#0c1e33;--sunk:#091a2d;--ink:#e6edf5;--ink-2:#a6b6c8;--ink-3:#71849a;--line:#1e3550;--line-strong:#3a5676;
+  --navy:#0d2138;--chrome-ink:#f2f6fa;--chrome-ink-2:#8ea6c2;--chrome-active:#1f4470;
+  --build:#5cc3cc;--build-soft:#0f3337;--on-build:#04262a;--hangar-bg:#0a1c26;--hangar-grid:#13303b;--hangar-paper:#0c2029;
+  --ok:#5bcb93;--ok-soft:#0f3123;--attn:#e9b44c;--attn-soft:#362808;--fail:#ff8a80;--fail-soft:#3d1715;--agent:#a9a3f5;--agent-soft:#221f4a;--you:#f07cc0;--new:#f5c518;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#071526;--surface:#0c1e33;--sunk:#091a2d;--ink:#e6edf5;--ink-2:#a6b6c8;--ink-3:#71849a;--line:#1e3550;--line-strong:#3a5676;
+  --navy:#0d2138;--chrome-ink:#f2f6fa;--chrome-ink-2:#8ea6c2;--chrome-active:#1f4470;
+  --build:#5cc3cc;--build-soft:#0f3337;--on-build:#04262a;--hangar-bg:#0a1c26;--hangar-grid:#13303b;--hangar-paper:#0c2029;
+  --ok:#5bcb93;--ok-soft:#0f3123;--attn:#e9b44c;--attn-soft:#362808;--fail:#ff8a80;--fail-soft:#3d1715;--agent:#a9a3f5;--agent-soft:#221f4a;--you:#f07cc0;--new:#f5c518;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;margin:0}
+.wrap{max-width:1000px;margin:0 auto;padding-block:40px 120px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:40px}
+h1,h2,h3{font-family:var(--f-head);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:34px;line-height:1.15}h2{font-size:26px}h3{font-size:19px;line-height:1.3}
+p{margin:0;max-width:70ch}
+.lede{font-size:17px;color:var(--ink-2)}
+.muted{color:var(--ink-2)}.small{font-size:13px}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+code{font-family:var(--f-mono);font-size:.85em;background:var(--sunk);padding:1px 5px;border-radius:4px}
+section{display:flex;flex-direction:column;gap:18px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px 22px;display:flex;flex-direction:column;gap:12px}
+.panel ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.scroll{overflow-x:auto}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;padding:1px 8px;border-radius:99px;white-space:nowrap}
+.pill.rec{background:var(--ok-soft);color:var(--ok)}
+.pill.built{background:var(--build-soft);color:var(--build)}
+.pill.warn{background:var(--attn-soft);color:var(--attn)}
+.pill.agent{background:var(--agent-soft);color:var(--agent)}
+
+/* sequence map */
+.seq{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.part{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:14px;display:flex;flex-direction:column;gap:8px}
+.part h4{margin:0;font-family:var(--f-head);font-size:15px}
+.part ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
+.part li a{display:flex;gap:8px;align-items:baseline;color:var(--ink);text-decoration:none;font-size:13.5px;padding:3px 6px;border-radius:6px}
+.part li a:hover{background:var(--sunk)}
+.part li .n{font-family:var(--f-mono);font-size:12px;color:var(--ink-3);width:18px;flex:none}
+.part li .st{margin-left:auto;font-size:11px;color:var(--ink-3);white-space:nowrap}
+.part li .st.done{color:var(--ok);font-weight:600}
+@media (max-width:760px){.seq{grid-template-columns:1fr}}
+
+/* dependency diagram */
+.dia{min-width:760px}
+.dia text{font-family:var(--f-body);font-size:12.5px;fill:var(--ink)}
+.dia .h{font-family:var(--f-head);font-weight:600;font-size:13px}
+.dia .s{font-size:11px;fill:var(--ink-2)}
+.dia .z{font-size:10.5px;font-weight:600;letter-spacing:.07em;fill:var(--ink-3)}
+.dia .box{fill:var(--surface);stroke:var(--line-strong);stroke-width:1.2}
+.dia .zone{fill:var(--sunk)}
+.dia .ln{stroke:var(--build);stroke-width:1.5;fill:none}
+.dia .num{fill:var(--build);font-family:var(--f-mono);font-size:11px;font-weight:600}
+
+/* decision card */
+.dec{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:16px;scroll-margin-top:16px}
+.dec.answered{border-color:var(--ok)}
+.dhead{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.dnum{font-family:var(--f-mono);font-size:13px;color:var(--build);font-weight:600}
+.deps{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.deps div{font-size:13px;color:var(--ink-2);background:var(--bg);border-radius:8px;padding:8px 10px}
+.deps b{color:var(--ink);font-weight:600}
+.ctx{display:flex;flex-direction:column;gap:10px}
+.shot{border:1px solid var(--line-strong);border-radius:10px;overflow:hidden;background:var(--sunk)}
+.shot img{display:block;width:100%;height:auto}
+.cap{font-size:12.5px;color:var(--ink-3);padding:8px 12px;background:var(--surface);border-top:1px solid var(--line)}
+.opts{display:grid;gap:10px}
+.opt{border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;grid-template-columns:20px minmax(0,1fr);gap:10px;cursor:pointer;background:var(--bg)}
+.opt:has(input:checked){border-color:var(--build);background:var(--build-soft);box-shadow:inset 0 0 0 1px var(--build)}
+.opt input{margin-top:5px;accent-color:var(--build)}
+.opt .t{font-family:var(--f-head);font-weight:600;font-size:15px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.opt p{font-size:13.5px;color:var(--ink-2)}
+.opt .pc{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-top:4px}
+.opt ul{margin:0;padding-left:16px;font-size:12.5px}
+.opt ul.pro li::marker{content:"+  ";color:var(--ok)}
+.opt ul.con li::marker{content:"–  ";color:var(--fail)}
+@media (max-width:620px){.opt .pc{grid-template-columns:1fr}}
+.why{font-size:13.5px;color:var(--ink-2);border-left:3px solid var(--ok);padding-left:10px}
+.dec textarea{font:inherit;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:8px;padding:8px 10px;min-height:56px;resize:vertical;width:100%}
+.dec textarea:focus-visible,.opt input:focus-visible{outline:2px solid var(--build);outline-offset:1px}
+.status{font-size:12.5px;color:var(--ink-3);min-height:1em}
+.status.ok{color:var(--ok)}
+
+/* wire thumbnails */
+.thumbs{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.th{display:flex;flex-direction:column;gap:5px}
+.th .lab{font-size:12px;color:var(--ink-2);font-weight:600}
+.w{border:1px solid var(--line-strong);border-radius:7px;display:grid;grid-template-columns:52px 1fr;height:120px;overflow:hidden;font-size:9.5px;line-height:1.3;position:relative;background:var(--bg)}
+.w .s{background:var(--navy);padding:6px 4px;display:flex;flex-direction:column;gap:3px;color:var(--chrome-ink-2)}
+.w .s i{font-style:normal;padding:1px 3px;border-radius:3px;white-space:nowrap;overflow:hidden}
+.w .s i.on{background:var(--chrome-active);color:var(--chrome-ink)}
+.w .s i.hot{outline:1.5px dashed var(--new)}
+.w .s i.sub{padding-left:8px;font-size:8.5px}
+.w .m{padding:6px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.w .m b{font-size:10px;color:var(--ink)}
+.w .r{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
+.w .r span{height:15px;background:var(--surface);border:1px solid var(--line);border-radius:3px}
+.w .r span.d{background:var(--agent-soft);border-color:var(--agent)}
+.w.hg{background:var(--hangar-bg)}
+.w.hg .s{background:var(--hangar-paper);border-right:1px dashed var(--build);color:var(--ink-2)}
+.w.hg .s i.on{background:var(--build-soft);color:var(--build)}
+.w .f{display:flex;flex-wrap:wrap;gap:3px}
+.w .f span{font-family:var(--f-mono);font-size:8px;background:var(--surface);border:1px solid var(--line);border-radius:3px;padding:0 3px}
+.w .f span.inv{border-color:var(--fail);color:var(--fail)}
+.w .blk{background:var(--surface);border:1px solid var(--line);border-radius:3px}
+.w .ch{position:absolute;background:var(--surface);border:1.5px solid var(--navy);border-radius:4px}
+.w .ch::before{content:"";position:absolute;inset:0 0 auto;height:8px;background:var(--navy)}
+.w .ed{border:1px dashed var(--build);background:var(--surface);border-radius:3px}
+.mini{border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:10px 12px;font-size:13px;display:flex;flex-direction:column;gap:6px}
+.tag{font-size:12px;padding:2px 9px;border-radius:99px;background:var(--build-soft);color:var(--build);display:inline-block}
+.tag.add{background:transparent;border:1px dashed var(--build)}
+table.cmp{border-collapse:collapse;width:100%;font-size:13.5px;min-width:520px}
+table.cmp th,table.cmp td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+table.cmp th{font-size:11.5px;color:var(--ink-3);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.yes{color:var(--ok);font-weight:600}.no{color:var(--ink-3)}
+.flow{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}
+.flow .box{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13px}
+.flow .box b{display:block;font-family:var(--f-head)}
+.flow .arr{color:var(--ink-3);font-size:18px}
+@media (max-width:620px){.flow{grid-template-columns:1fr}.flow .arr{display:none}}
+
+.tally{position:sticky;bottom:12px;align-self:center;background:var(--navy);color:var(--chrome-ink);border-radius:99px;padding:8px 18px;font-size:13.5px;box-shadow:0 8px 24px rgba(10,34,61,.3);display:flex;gap:12px;align-items:center;z-index:5}
+.tally a{color:var(--chrome-ink);font-weight:600}
+.bar{width:120px;height:6px;border-radius:3px;background:var(--chrome-active);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok);width:0;transition:width .3s}
+</style>
+<style>
+/* Library mockup */
+.app{display:grid;grid-template-columns:200px minmax(0,1fr);border:1px solid var(--line-strong);border-radius:12px;overflow:hidden;min-width:900px;font-size:13px;line-height:1.45;background:var(--bg)}
+.side{background:var(--navy);color:var(--chrome-ink);padding:12px 10px;display:flex;flex-direction:column;gap:3px}
+.side .brand{font-family:var(--f-head);font-weight:600;padding:2px 6px 10px}
+.side .nav{padding:5px 8px;border-radius:6px;color:var(--chrome-ink-2)}
+.side .nav.on{background:var(--chrome-active);color:var(--chrome-ink)}
+.side .grp{font-size:11px;color:var(--chrome-ink-2);padding:10px 8px 2px}
+.side .proj{padding:4px 8px}
+.side .sess{padding:2px 8px 2px 20px;color:var(--chrome-ink-2);font-size:12px}
+.side .demo::before{content:"◆ ";color:#f5c518}
+.lib{padding:18px 22px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.lib h4{margin:0;font-family:var(--f-head);font-size:19px}
+.lib h5{margin:6px 0 0;font-size:14px;font-family:var(--f-head);display:flex;gap:10px;align-items:baseline}
+.lib h5 small{font-family:var(--f-body);font-weight:400;color:var(--ink-3);font-size:12px}
+.chipsrow{display:flex;gap:6px;flex-wrap:wrap}
+.fchip{font:inherit;font-size:12px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink-2);border-radius:99px;padding:2px 10px;cursor:pointer}
+.fchip[aria-pressed=true]{background:var(--navy);color:var(--chrome-ink);border-color:var(--navy)}
+.inflight{display:flex;gap:8px;flex-wrap:wrap}
+.ifc{background:var(--surface);border:1px solid var(--line);border-left:3px solid #f5c518;border-radius:8px;padding:8px 10px;display:flex;gap:10px;align-items:center}
+.ifc b{font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.lc{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:11px 12px;display:flex;flex-direction:column;gap:6px;position:relative;min-width:0}
+.lc .kind{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.lc b.t{font-size:14px;font-family:var(--f-head);font-weight:600}
+.lc .d{color:var(--ink-2);font-size:12.5px}
+.lc .meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:11.5px;color:var(--ink-3)}
+.wchip{font-size:11px;background:var(--sunk);border-radius:4px;padding:0 6px;color:var(--ink-2)}
+.marks{display:inline-flex}
+.mk{width:18px;height:18px;border-radius:50%;font-size:8.5px;font-weight:700;display:inline-grid;place-items:center;color:#fff;border:2px solid var(--surface);margin-left:-5px}
+.mk:first-child{margin-left:0}
+.meter{display:inline-flex;gap:1px;vertical-align:middle}
+.meter i{width:6px;height:9px;border-radius:1px;background:var(--line-strong)}
+.meter i.live{background:var(--agent)}
+.acts{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:auto;padding-top:4px}
+.b{font:inherit;font-size:12px;padding:3px 10px;border-radius:6px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);cursor:pointer;white-space:nowrap}
+.b.pri{background:var(--navy);color:var(--chrome-ink);border-color:var(--navy)}
+.sw{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-2);cursor:pointer}
+.sw input{accent-color:var(--agent)}
+.wr{position:absolute;right:8px;top:8px;opacity:0;transition:opacity .15s;font-size:12px;color:var(--ink-3)}
+.lc:hover .wr{opacity:.55}
+.form{border-top:1px dashed var(--line-strong);padding-top:6px;display:flex;flex-direction:column;gap:5px}
+.form input{font:inherit;font-size:12px;border:1px solid var(--line-strong);border-radius:5px;padding:4px 6px;background:var(--bg);color:var(--ink)}
+.toast{background:var(--navy);color:var(--chrome-ink);border-radius:8px;padding:8px 12px;font-size:12.5px}
+.anat{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:760px){.anat{grid-template-columns:1fr}}
+.keys{font-family:var(--f-mono);font-size:12px;background:var(--sunk);border-radius:10px;padding:14px 16px;white-space:pre;overflow-x:auto;line-height:1.65}
+.keys .c{color:var(--ink-3)}
+.keys .n{color:var(--ok);font-weight:600}
+.heroes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.hero{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;position:relative;min-width:0}
+.hero .pic{height:130px;background:var(--sunk);overflow:hidden;border-bottom:1px solid var(--line)}
+.hero .pic img{width:165%;max-width:none;height:auto;margin-left:-62%;margin-top:-2%;display:block}
+.hero .bd{padding:12px 14px;display:flex;flex-direction:column;gap:7px;flex:1}
+.hero b.t{font-family:var(--f-head);font-size:17px;font-weight:600}
+.hero .d{color:var(--ink-2);font-size:12.5px}
+.hero ol{margin:0;padding-left:18px;font-size:12px;color:var(--ink-2);display:grid;gap:1px}
+.hero .box{display:flex;gap:6px}
+.hero .box input{flex:1;min-width:0;font:inherit;font-size:12.5px;border:1px solid var(--line-strong);border-radius:7px;padding:6px 8px;background:var(--bg);color:var(--ink)}
+.hero .demo{font-size:11.5px;color:var(--ink-3)}
+.hero .demo a{color:var(--build)}
+.hero:hover .wr{opacity:.55}
+.more{display:flex;gap:8px;flex-wrap:wrap}
+.more .m1{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12.5px;display:flex;gap:8px;align-items:center}
+.half{border-top:2px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:12px}
+.vtog{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--ink-2)}
+.num{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:50%;background:var(--build);color:var(--on-build);font-size:10px;font-weight:700;font-family:var(--f-mono);margin-right:4px;vertical-align:1px}
+</style>
+
+<div class="wrap">
+
+<header style="display:flex;flex-direction:column;gap:12px">
+  <div class="eyebrow">Flight Deck · Library design round · 21 Nov 2026</div>
+  <h1>The Library: where every piece of work and every demo starts</h1>
+  <p class="lede">You want to keep the Library and use it to start two things: real work, such as a PRD review, and demos of scenarios. Each entry should describe itself from its own metadata. Today's contents are temporary. This page shows what's settled, a working mockup, where each card's words come from, and five choices. Your picks save as you make them.</p>
+</header>
+
+<section class="panel">
+  <div class="eyebrow">The short version</div>
+  <ul>
+    <li><b>Top half: a hero card for each featured product skill</b>, such as Intent shaping, so you start real work from the Library. Skills that aren't featured sit in a slim row underneath.</li><li><b>Bottom half: scenarios and demos</b>, including the ones you've already flown.</li><li><b>The Library stops being a folder of hand-written prompts.</b> It's built from what's published in the Hangar. A skill is featured by one line in its <code>workflow.json</code>.</li>
+    <li><b>Every word on a card comes from the thing itself:</b> <code>workflow.json</code> or <code>scenario.json</code>. Publish a scenario in the Hangar and its card appears. There is nothing else to keep in sync.</li>
+    <li><b>Today's 13 canned sessions and 6 templates are retired.</b> Seven become generated Start cards. The other six were free-standing prompts with no workflow behind them, and they go.</li>
+  </ul>
+</section>
+
+<section>
+  <div class="eyebrow">1 · What's settled, which the Library builds on</div>
+  <h2>Your answers so far</h2>
+  <div class="scroll"><table class="cmp">
+    <tr><th>Settled</th><th>What it means for the Library</th></tr>
+    <tr><td><b>A scenario is what you build. A demo is what you fly.</b> (F2)</td><td>Library cards for stories say "Demo" and are built from a scenario.</td></tr>
+    <tr><td><b>Each turn in a screenplay is either canned or handed to a real agent.</b> (your F2 note)</td><td>A card can show how live a demo is, from its screenplay. That's the little bar on the cards below.</td></tr>
+    <tr><td><b>Flying a demo opens a project of its own, marked as a demo.</b> (D-61 and your note)</td><td>Demo projects show in the sidebar as "◆ Demo · …". The Library can list the ones you've already flown.</td></tr>
+    <tr><td><b>Demos start from both the Hangar and the Library.</b> (your launch answer)</td><td>The Library carries a Demos section. The Hangar gets its own "Fly this" button.</td></tr>
+    <tr><td><b>A demo always runs as flying.</b> (your D-60 note)</td><td>Fly leaves the Library and lands in the demo project, in flying mode. No Hangar framing appears.</td></tr>
+    <tr><td><b>Others can pull the user into their sessions.</b> (your Inbox note)</td><td>Some demos open with a message in the Inbox rather than a line in the composer. The card says where it opens.</td></tr>
+    <tr><td><b>Config travels with the repo.</b> (your person-editor note)</td><td>Workflows and scenarios already live in the repo, so the Library is the same on every machine.</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <div class="eyebrow">2 · What's there today</div>
+  <h2>Nineteen entries, all temporary</h2>
+  <div class="scroll"><table class="cmp">
+    <tr><th>Today</th><th>Count</th><th>What happens</th></tr>
+    <tr><td>Canned sessions backed by a workflow: <i>Walk me through open decisions, Review a document with others, Update delivery status, Shape an idea, Find the problems worth solving, Catalog requirements, Map platform dependencies</i></td><td>7</td><td><b>Replaced</b> by Start cards generated from each <code>workflow.json</code>.</td></tr>
+    <tr><td>Canned sessions with no workflow: <i>Compare options, Weekly metrics review, Draft a PRD one-pager, Interview me about requirements, Now / next / later roadmap, Synthesize interviews</i></td><td>6</td><td><b>Removed.</b> Any worth keeping comes back later as a real workflow built in the Hangar.</td></tr>
+    <tr><td>Artifact templates: <i>Decision matrix, Interview synthesis, Metrics dashboard, PRD one-pager, Question form, Roadmap</i></td><td>6</td><td>Choice 5 below.</td></tr>
+    <tr><td>Scenarios in the Hangar (not in the Library today)</td><td>7</td><td><b>Added</b> as Demo cards. Their titles and summaries need a rewrite, see section 5.</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <div class="eyebrow">3 · The mockup</div>
+  <h2>Heroes on top, scenarios and demos below</h2>
+  <p class="muted">Click around. Switch the hero card style above the mockup, type into a hero card or press <b>Start</b>, filter by kind of work, or press <b>Fly</b> on a demo. Hover a card to see the near-invisible wrench (D-51) that opens it in the Hangar. The titles and blurbs are rewritten examples, not today's text, and "Risk wants a word" is an imagined demo that opens in the Inbox.</p>
+  <div class="fig" style="padding:14px">
+    <div class="vtog" style="margin-bottom:10px"><b>Hero card style:</b><button class="fchip" type="button" data-v="a" aria-pressed="true">A · Picture and a start box</button><button class="fchip" type="button" data-v="b" aria-pressed="false">B · Picture and a Start button</button><button class="fchip" type="button" data-v="c" aria-pressed="false">C · Steps, no picture</button></div>
+    <div class="scroll">
+    <div class="app" id="app">
+      <div class="side">
+        <div class="brand">✈ Product Aviator</div>
+        <div class="nav">New session</div>
+        <div class="nav on">Library</div>
+        <div class="nav">Automations</div>
+        <div class="nav">Inbox</div>
+        <div class="grp">Projects</div>
+        <div class="proj">Workspace</div>
+        <div class="sess">PRD for allowances v2</div>
+        <div class="proj demo">Demo · Steering prep</div>
+        <div class="sess">Steering prep</div>
+        <div id="newProj"></div>
+      </div>
+      <div class="lib">
+        <div><h4>Library</h4><div class="muted" style="font-size:12.5px">Start real work on your own material, or fly a demo of how the work goes.</div></div>
+        <div class="chipsrow" id="filters"></div>
+
+        <h5>Start with a skill <small>featured product skills · your own material</small></h5>
+        <div class="heroes" id="heroes"></div>
+        <div class="more" id="more"></div>
+        <div class="half">
+        <h5>Scenarios and demos <small>invented stories · safe to show</small></h5>
+        <h5 style="font-size:12.5px;margin:0">In flight <small>demos you've flown · pick up where you left off</small></h5>
+        <div class="inflight" id="inflight">
+          <div class="ifc"><span>◆</span><div><b>Steering prep</b><div class="muted" style="font-size:11.5px">Decision review · 3 of 7 decided · yesterday</div></div><button class="b pri" type="button">Continue</button><button class="b" type="button">Start over</button></div>
+        </div>
+        <div class="grid" id="demos"></div>
+        </div>
+        <div id="toast"></div>
+      </div>
+    </div>
+    </div>
+    <p class="cap">The hero picture is the skill's own main view, taken from its preview. "Templates" is gone from this mockup because choice 6 recommends moving templates out of the Library. The filter chips are the kinds of work, read from the workflows.</p>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">4 · Where every word on a card comes from</div>
+  <h2>Card anatomy</h2>
+  <p>Each numbered part of the demo card reads one field of the scenario's own file. Fields marked <span style="color:var(--ok);font-weight:600">new</span> don't exist yet. The scenario builder would ask for them.</p>
+  <div class="anat">
+    <div class="lc" style="pointer-events:none">
+      <span class="kind"><span class="num">1</span>Demo · Mixed</span>
+      <b class="t"><span class="num">2</span>Steering prep</b>
+      <span class="d"><span class="num">3</span>Seven decisions stand between Allowances and the steering group. Risk Review won't sign off on one of them.</span>
+      <span class="meta"><span class="num">4</span><span class="wchip">Decision review</span><span class="num">5</span><span class="marks"><span class="mk" style="background:#b3261e">RR</span><span class="mk" style="background:#1e6aa6">MO</span><span class="mk" style="background:#4d6b1f">CP</span></span></span>
+      <span class="meta"><span class="num">6</span><span class="meter"><i></i><i></i><i class="live"></i><i></i><i class="live"></i><i></i></span> 2 of 6 turns live · <span class="num">7</span>about 4 min · <span class="num">8</span>opens in chat</span>
+      <div class="acts"><button class="b pri" type="button">✈ Fly</button><label class="sw"><input type="checkbox" checked> Live turns</label></div>
+    </div>
+<div class="keys"><span class="c">// workspace/scenarios/decision-review/scenario.json</span>
+{
+  "scenario": "decision-review",
+  <span class="num">2</span>"title": "Steering prep",
+  <span class="num">3</span>"summary": "Seven decisions stand between …",
+  <span class="num">4</span>"workflows": ["decision-review"],      <span class="c">← today "workflow"</span>
+  <span class="num">5</span>"participants": ["risk-review", …],
+  <span class="n">new</span> <span class="num">7</span>"length_minutes": 4,
+  <span class="n">new</span> <span class="num">8</span>"opens_in": "chat",                   <span class="c">or "inbox"</span>
+  <span class="n">new</span>    "opening": "Before we take this …",
+  <span class="n">new</span>    "library": { "featured": true, "order": 1 },
+  "script": "script.md"
+}
+<span class="c">// 1 and 6 are worked out from script.md:</span>
+<span class="c">// count the canned turns and the live ones.</span>
+<span class="c">// All canned = "Scripted", all live = "Live",</span>
+<span class="c">// a mix = "Mixed".</span></div>
+  </div>
+  <p class="muted small">A work card reads <code>workflow.json</code> the same way: title, summary, and its <code>inputs</code>, which become the short form you fill in before Start. Nothing on either card is typed into the Library itself.</p>
+</section>
+
+<section>
+  <div class="eyebrow">5 · Writing that the cards need</div>
+  <h2>Today's titles describe the plumbing, not the story</h2>
+  <p>Generated cards are only as good as the metadata. Today's scenario summaries read "The Decision review workflow played with invented open decisions on the Allowances launch." That tells a builder what it is, but it won't make anyone want to watch. The scenario builder should ask for a title that names the situation and a summary that states the tension, in at most 25 words. I'll rewrite the seven existing ones when this is built.</p>
+  <div class="scroll"><table class="cmp">
+    <tr><th>Today</th><th>Rewritten</th></tr>
+    <tr><td>Allowances: open decisions · <span class="muted">The Decision review workflow played with invented open decisions…</span></td><td><b>Steering prep</b> · Seven decisions stand between Allowances and the steering group. Risk Review won't sign off on one of them.</td></tr>
+    <tr><td>Release dates: status update · <span class="muted">The Delivery status update workflow played with…</span></td><td><b>The launch slips</b> · A load test fails two weeks out. Find a way to hold the date and write the update.</td></tr>
+    <tr><td>Business onboarding problems · <span class="muted">The Problem discovery workflow played with invented evidence…</span></td><td><b>Why businesses stall at sign-up</b> · Forty interviews and a ticket dump. Which three problems are worth a team?</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <div class="eyebrow">6 · Six choices</div>
+  <h2>What I need you to decide</h2><p class="muted">Choices 1 and 2 are new, from your note about hero cards. The rest are as before.</p>
+  <p class="muted">Each has my recommendation and a "Something else" option. Add a note anywhere.</p>
+  <div id="decisions" style="display:flex;flex-direction:column;gap:22px"></div>
+  <p class="small muted" id="dbNote"></p>
+</section>
+
+<section class="panel">
+  <div class="eyebrow">After you pick</div>
+  <p>I'll write this into the product docs as decisions, send the metadata fields to the scenario builder thread, and build the new Library. That means deleting the old canned sessions, generating cards from the workflows and scenarios, and rewriting the seven scenario titles and summaries. Screenshots come back to you before anything merges.</p>
+</section>
+
+<div class="tally" id="tally"><span id="tallyText">0 of 6 answered</span><span class="bar"><i id="tallyBar"></i></span><a href="#decisions" id="nextLink">Next open</a></div>
+</div>
+
+<script>
+(() => {
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const P = { rr:["RR","#b3261e"], mo:["MO","#1e6aa6"], cp:["CP","#4d6b1f"], si:["SI","#7a4fb3"] };
+const WF = [
+  ["intent-shaping","Shape an idea","Take an idea from a sentence to something a team could commit to.",["The idea, in a sentence"]],
+  ["decision-review","Decision review","Gather what's waiting on you, prepare each decision with options, and record what you pick.",["Where the open questions are"]],
+  ["document-review","Review a document","Review a document, then call in people and agents for second opinions.",["Which document"]],
+  ["delivery-status","Delivery status","Check a plan against what's happening, ask the owners, and draft the update.",["Which plan"]],
+  ["problem-discovery","Find the problems","Read interviews, tickets or data and lay out the problems worth solving.",["Where the raw material is"]],
+  ["prd-to-requirements","PRD to requirements","Turn a requirements document into a catalog of testable requirements.",["Which PRD"]],
+  ["requirements-to-dependencies","Map dependencies","For each requirement, find the platform capabilities that could meet it.",["Requirements dataset","Platform map"]],
+];
+const DEMOS = [
+  ["Steering prep","Seven decisions stand between Allowances and the steering group. Risk Review won't sign off on one of them.",["decision-review"],["rr","mo","cp"],[0,0,1,0,1,0],4,"chat"],
+  ["The launch slips","A load test fails two weeks out. Find a way to hold the date and write the update.",["delivery-status"],["cp","rr","mo"],[0,0,0,0,0],5,"chat"],
+  ["Risk wants a word","Risk Review pulls you into their review of the Allowances consent flow before you've read it.",["document-review"],["rr","mo"],[0,1,1,1],6,"inbox"],
+  ["Why businesses stall at sign-up","Forty interviews and a ticket dump. Which three problems are worth a team?",["problem-discovery"],["mo","si"],[0,0,0,0,0,0],4,"chat"],
+  ["Allowances, PRD to plan","From the Allowances PRD to a requirements catalog and the platform work it depends on.",["prd-to-requirements","requirements-to-dependencies"],[],[0,0,0,0,0,0,0],7,"chat"],
+  ["Release dates, from a hunch","A one-line idea about showing release dates, shaped into something a team could commit to.",["intent-shaping"],["rr","cp","mo","si"],[1,1,1,1],8,"chat"],
+];
+const wfName = Object.fromEntries(WF.map(w => [w[0], w[1]]));
+const HERO = {
+  "intent-shaping":["img/intent-shaping.jpg",["Capture the idea","Frame it","Shape it","Test it","Make it committable"],"The idea, in a sentence","Release dates, from a hunch"],
+  "decision-review":["img/decision-review.jpg",["Gather what is open","Prepare each decision","Your decisions","Record and follow up"],"Where the open questions are","Steering prep"],
+  "delivery-status":["img/delivery-status.jpg",["Load the plan","Check each milestone with its owner","Project the date","Explore ways to recover","Write the update"],"The plan: a doc, a dataset or a list","The launch slips"],
+  "problem-discovery":["img/problem-discovery.jpg",["Read the sources","Find candidate problems","Weigh the evidence","Choose what is worth solving","Write the problem brief"],"A folder of interviews, tickets or data","Why businesses stall at sign-up"],
+};
+let variant = "a";
+document.querySelectorAll(".vtog .fchip").forEach(b => b.onclick = () => { variant = b.dataset.v; document.querySelectorAll(".vtog .fchip").forEach(x => x.setAttribute("aria-pressed", String(x === b))); render(); });
+let filter = "all";
+const fl = $("filters");
+[["all","All"]].concat(WF.map(w=>[w[0],w[1]])).forEach(([id,t]) => { const b=document.createElement("button"); b.type="button"; b.className="fchip"; b.textContent=t; b.dataset.id=id; b.setAttribute("aria-pressed", String(id==="all")); b.onclick=()=>{filter=id; fl.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.id===id))); render();}; fl.append(b); });
+function mode(m){ const l=m.filter(Boolean).length; return l===0?"Scripted":l===m.length?"Live":"Mixed"; }
+function render(){
+  const hz=$("heroes"); hz.textContent=""; const mo=$("more"); mo.textContent="";
+  WF.filter(x=>filter==="all"||x[0]===filter).forEach(([id,t,d,ins])=>{
+    const h=HERO[id];
+    if(!h){ const m=document.createElement("div"); m.className="m1"; m.innerHTML=`<span>${esc(t)}</span><button class="b" type="button">Start</button>`; mo.append(m); return; }
+    const c=document.createElement("div"); c.className="hero";
+    const pic = variant==="c" ? "" : `<div class="pic"><img src="${h[0]}" alt="${esc(t)} view"></div>`;
+    let body = `<b class="t">${esc(t)}</b><span class="d">${esc(d)}</span>`;
+    if(variant==="c") body += `<ol>${h[1].map(x=>`<li>${esc(x)}</li>`).join("")}</ol><div class="acts"><button class="b pri" type="button">Start</button></div>`;
+    else if(variant==="a") body += `<div class="box"><input type="text" placeholder="${esc(h[2])}" aria-label="${esc(h[2])}"><button class="b pri" type="button">Start</button></div>`;
+    else body += `<div class="acts"><button class="b pri" type="button">Start</button><span class="muted" style="font-size:11.5px">${h[1].length} steps</span></div>`;
+    body += `<span class="demo">See it flown: <a href="#demos">${esc(h[3])}</a></span>`;
+    c.innerHTML=`<span class="wr" title="Open in Hangar">🔧</span>${pic}<div class="bd">${body}</div>`;
+    c.querySelector(".b.pri").onclick=()=>{ $("toast").innerHTML=`<div class="toast">A new <b>${esc(t)}</b> session opens in Workspace${variant==="a"?" with what you typed":", asking what to work on"}. Nothing is sent until you press Send.</div>`; };
+    hz.append(c);
+  });
+  if(mo.childElementCount){ const l=document.createElement("span"); l.className="muted"; l.style.fontSize="12px"; l.style.alignSelf="center"; l.textContent="More skills:"; mo.prepend(l); }
+  const dm=$("demos"); dm.textContent="";
+  DEMOS.filter(x=>filter==="all"||x[2].includes(filter)).forEach(([t,d,wfs,cast,turns,mins,opens])=>{
+    const c=document.createElement("div"); c.className="lc";
+    const live=turns.filter(Boolean).length;
+    c.innerHTML=`<span class="wr" title="Open in Hangar">🔧</span><span class="kind">Demo · ${mode(turns)}</span><b class="t">${esc(t)}</b><span class="d">${esc(d)}</span>
+      <span class="meta">${wfs.map(x=>`<span class="wchip">${esc(wfName[x])}</span>`).join("")}<span class="marks">${cast.map(p=>`<span class="mk" style="background:${P[p][1]}">${P[p][0]}</span>`).join("")}</span></span>
+      <span class="meta"><span class="meter">${turns.map(x=>`<i class="${x?"live":""}"></i>`).join("")}</span> ${live} of ${turns.length} turns live · about ${mins} min · opens in ${opens}</span>
+      <div class="acts"><button class="b pri" type="button">✈ Fly</button>${live?`<label class="sw"><input type="checkbox" checked> Live turns</label>`:""}</div>`;
+    c.querySelector(".b.pri").onclick=()=>{
+      const sw=c.querySelector(".sw input"); const allCanned = sw && !sw.checked;
+      $("toast").innerHTML=`<div class="toast">Opening <b>◆ Demo · ${esc(t)}</b> ${t==="Steering prep"?" (you've flown this one before, so you'd be asked: Continue or Start over)":" in a project of its own"}${allCanned?", every turn canned":""}. You'd now be in flying mode, ${opens==="inbox"?"with a new message waiting in your Inbox":"with the opening line in the composer"}.</div>`;
+      if(t!=="Steering prep") $("newProj").innerHTML=`<div class="proj demo" style="color:#fff">Demo · ${esc(t)}</div>`;
+    };
+    dm.append(c);
+  });
+}
+render();
+
+// decisions
+const TH=(lab,inner,cls)=>`<div class="th"><div class="lab">${lab}</div><div class="w ${cls||""}">${inner}</div></div>`;
+const SIDE=(items)=>`<div class="s">${items.map(([t,c])=>`<i class="${c||""}">${t}</i>`).join("")}</div>`;
+const DEC=[
+ {id:"lib-layout",q:"How should the top half, the skills, be laid out?",
+  ctx:`<p>You asked for a hero card for each featured product skill on top, and scenarios and demos below. The open question is what happens to skills that aren't featured, and how many heroes there are.</p><div class="thumbs">`+
+   TH("A · Heroes, then a slim row of the rest",SIDE([["New"],["Library","on"],["Inbox"]])+`<div class="m"><div class="r" style="grid-template-columns:1fr 1fr"><span style="height:26px"></span><span style="height:26px"></span></div><div class="f"><span>More: Review a doc</span><span>PRD→reqs</span></div><div class="r" style="border-top:1px solid var(--line);padding-top:3px"><span class="d"></span><span class="d"></span><span class="d"></span></div></div>`)+
+   TH("B · Heroes only",SIDE([["New"],["Library","on"],["Inbox"]])+`<div class="m"><div class="r" style="grid-template-columns:1fr 1fr"><span style="height:26px"></span><span style="height:26px"></span></div><div class="r" style="grid-template-columns:1fr 1fr"><span style="height:20px"></span><span style="height:20px"></span></div><div class="r" style="border-top:1px solid var(--line);padding-top:3px"><span class="d"></span><span class="d"></span><span class="d"></span></div></div>`)+
+   TH("C · One spotlight, then a grid",SIDE([["New"],["Library","on"],["Inbox"]])+`<div class="m"><div class="blk" style="height:30px"></div><div class="r"><span></span><span></span><span></span></div><div class="r" style="border-top:1px solid var(--line);padding-top:3px"><span class="d"></span><span class="d"></span><span class="d"></span></div></div>`)+
+   `</div><p class="small muted">Purple tiles are demos. Featured means one line in the skill's <code>workflow.json</code>, set in the Hangar.</p>`,
+  opts:[
+   ["Heroes for featured skills, then a slim row of the rest","Two to four large cards for the featured skills. Every other published skill is a small chip-sized card underneath.",["The featured skills get the stage","Nothing published is hidden"],["Two sizes of card to maintain"],true],
+   ["Heroes only","Only featured skills appear. The rest are started by asking Aviator, or from the Hangar.",["The cleanest page for a demo recording"],["A published skill can be invisible while flying"]],
+   ["One big spotlight, then a grid","One featured skill gets a wide banner. Everything else is a regular card.",["A strong focal point for a launch or demo"],["Only one skill gets the stage at a time"]],
+  ],why:"It puts the featured skills on stage without hiding the rest, and the slim row costs almost no space."},
+ {id:"lib-hero",q:"What should a hero card show?",
+  ctx:`<p>Switch between the three styles in the mockup above to see each one with real views. The picture is each skill's own main view, from its preview.</p>`,
+  opts:[
+   ["A picture of the work, and a box to start","Its main view as a picture, one line on what it does, and a text box: type your idea or point at a file, press Start.",["Shows what you'll get, and starts in one step","Feels like the product, not a catalogue"],["Pictures must be kept current as views change"],true],
+   ["A picture, and a Start button","The same picture and line. Start opens a session that asks what to work on.",["Simpler card"],["One more step before the work starts"]],
+   ["The steps, without a picture","The skill's steps from workflow.json as a short list, and Start.",["No pictures to maintain","Says exactly what will happen"],["Plainer: less sense of what you'll see"]],
+  ],why:"A picture tells a PM what they'll get faster than any description, and the start box makes the hero the place work begins. The picture can be made automatically from each skill's preview, so it stays current."},
+ {id:"lib-work",q:"Where do the skill cards come from?",
+  ctx:`<div class="thumbs"><div class="mini"><b>From workflow.json</b><div class="small">"title": "Decision review"<br>"summary": "Gather what's waiting on you…"<br>"inputs": [{"name":"source", "hint":"Where the open questions are"}]</div><div class="small muted">↓ becomes a Start card with a one-field form</div></div><div class="mini"><b>An extra starter (optional)</b><div class="small">Built on the Hangar's Starters shelf: "Prep for a steering group", which runs Decision review with a fixed first question.</div><div class="small muted">↓ becomes a second card under the same kind of work</div></div></div>`,
+  opts:[
+   ["One per workflow, plus optional extra starters","Every published workflow makes a card automatically (a hero if featured). Extra starters built in the Hangar add more ways in.",["Nothing to keep in sync for the basic case","Room for task-shaped entry points later"],["Two sources of cards"],true],
+   ["Only one card per workflow","The Library shows exactly the published workflows.",["Simplest, always matches the Hangar"],["No way to offer a specific task, like \"prep for steering\""]],
+   ["Only hand-written starters","Like today: each card is a prompt file someone writes.",["Full control of the wording"],["Drifts from the workflows, which is how today's mess happened"]],
+  ],why:"It meets your \"pulled from the metadata\" rule by default, and leaves room for task-shaped starters without bringing back loose prompt files."},
+ {id:"lib-fly",q:"What controls should a demo card have?",
+  ctx:`<p>A mixed demo hands some turns to a real agent, and those can surprise you in front of an audience. The question is whether the presenter can switch them off without going to the Hangar.</p><div class="thumbs"><div class="mini"><b>A · Fly, with a Live turns switch</b><div><span class="tag" style="background:var(--navy);color:var(--chrome-ink)">✈ Fly</span> <label class="small"><input type="checkbox" checked disabled> Live turns</label></div><div class="small muted">Off: every turn plays its canned version. It only shows on mixed or live demos.</div></div><div class="mini"><b>B · Fly only</b><div><span class="tag" style="background:var(--navy);color:var(--chrome-ink)">✈ Fly</span></div><div class="small muted">Plays exactly as the screenplay says.</div></div><div class="mini"><b>C · Fly, plus Preview</b><div><span class="tag" style="background:var(--navy);color:var(--chrome-ink)">✈ Fly</span> <span class="tag">▶ Preview</span></div><div class="small muted">Preview plays it inside the Library with no project, like the old player.</div></div></div>`,
+  opts:[
+   ["Fly, with a Live turns switch","One button to fly. A switch on mixed demos turns every live turn back to its canned version.",["A safe run for recordings is one click away","The screenplay stays the one source"],["Each live turn needs a canned fallback written"],true],
+   ["Fly only","The demo plays as authored. To make it safer, edit it in the Hangar.",["Simplest card"],["A shaky live turn can only be fixed in the Hangar"]],
+   ["Fly, plus a Preview in the Library","Preview plays the demo inline with no project, for a quick look.",["Quick look without making a project"],["The preview isn't flying, which your D-60 note rules out for showing"]],
+  ],why:"It gives the presenter a safety net in the moment and keeps one screenplay. Writing a canned fallback for each live turn is good practice anyway."},
+ {id:"lib-again",q:"What happens when you fly a demo you've flown before?",
+  ctx:`<div class="thumbs">`+
+   TH("A · One project per demo",SIDE([["Library"],["Workspace"],["Demo · Steering","hot"]])+`<div class="m"><b>Steering prep</b><div class="f"><span>Continue</span><span>Start over</span></div><div class="small" style="font-size:8.5px;color:var(--ink-3)">Start over resets its files and data</div></div>`)+
+   TH("B · A new project each time",SIDE([["Library"],["Demo · Steering"],["Demo · Steering 2"],["Demo · Steering 3","hot"]])+`<div class="m"><b>Steering prep 3</b><div class="small" style="font-size:8.5px;color:var(--ink-3)">fresh every time</div></div>`)+
+   `</div>`,
+  opts:[
+   ["One project per demo: Continue or Start over","Flying it again offers Continue, or Start over, which resets the project to the story's start.",["The sidebar stays tidy","Rehearse, then reset just before recording"],["Start over throws away the earlier run"],true],
+   ["A new project every time","Every Fly makes a fresh, numbered project.",["Earlier runs are kept to compare"],["The sidebar fills with demo projects"]],
+   ["Ask each time","A small dialog asks: continue, start over, or keep a copy.",["Flexible"],["One more click before every demo"]],
+  ],why:"It's how you'd rehearse a demo: run it, reset it, run it for real. The In flight strip makes Continue one click."},
+ {id:"lib-templates",q:"Where should artifact templates go?",
+  ctx:`<p>The six templates (decision matrix, PRD one-pager and so on) are blank pages the agent fills in. Nobody starts work from a blank decision matrix. You ask for one, or a workflow uses one.</p>`,
+  opts:[
+   ["Out of the Library, into the Hangar","They're managed in the Hangar next to views. In flight you just ask (\"make me a decision matrix\") and the agent finds them.",["The Library is only about starting things","Templates sit with the other building material"],["You can't browse them while flying"],true],
+   ["Keep a Templates shelf in the Library","A third shelf, as today.",["Browsable while flying"],["Mixes building material with ways to start"]],
+   ["Fold them into Start cards","A template becomes a small Start card: \"Make a decision matrix\".",["Still one-click"],["Adds six thin cards that aren't really workflows"]],
+  ],why:"It keeps the Library about starting work or a demo. The templates still work: the agent already looks them up."},
+];
+const answers={}; let db=null;
+const host=$("decisions");
+DEC.forEach((dc,i)=>{
+  const box=document.createElement("div"); box.className="dec"; box.id=dc.id;
+  let h=`<div class="dhead"><span class="dnum">L${i+1}</span><span class="pill warn">Waiting on you</span></div><h3>${esc(dc.q)}</h3><div class="ctx">${dc.ctx}</div><div class="opts">`;
+  dc.opts.concat([["Something else","Tell me in the note below what you'd rather do.",[],[]]]).forEach(([l,t,pro,con,rec],j)=>{
+    h+=`<label class="opt"><input type="radio" name="d-${dc.id}" value="${esc(l)}"><div><div class="t">${String.fromCharCode(65+j)} · ${esc(l)} ${rec?'<span class="pill rec">Recommended</span>':""}</div><p>${esc(t)}</p>${(pro.length||con.length)?`<div class="pc"><ul class="pro">${pro.map(x=>`<li>${esc(x)}</li>`).join("")}</ul><ul class="con">${con.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}</div></label>`;
+  });
+  h+=`</div><div class="why"><b>Why I recommend A:</b> ${esc(dc.why)}</div><textarea id="n-${dc.id}" placeholder="A note, if you have one" aria-label="Note"></textarea><div class="status" id="st-${dc.id}"></div>`;
+  box.innerHTML=h; host.append(box);
+  box.querySelectorAll("input[type=radio]").forEach(r=>r.addEventListener("change",()=>save(dc.id)));
+  let t; $("n-"+dc.id).addEventListener("input",()=>{clearTimeout(t);t=setTimeout(()=>save(dc.id),800);});
+});
+function refresh(){ let n=0,next=null; DEC.forEach(dc=>{const d=answers[dc.id]&&answers[dc.id].choice; if(d)n++; else if(!next)next=dc.id; $(dc.id).classList.toggle("answered",!!d);});
+  $("tallyText").textContent=next?`${n} of ${DEC.length} answered`:`All ${DEC.length} answered. Thank you.`; $("tallyBar").style.width=(100*n/DEC.length)+"%"; const nl=$("nextLink"); nl.hidden=!next; if(next) nl.href="#"+next; }
+function st(id,t,ok){const s=$("st-"+id); s.textContent=t; s.classList.toggle("ok",!!ok);}
+async function save(id){ const c=document.querySelector(`input[name="d-${id}"]:checked`); const body={choice:c?c.value:"",note:$("n-"+id).value,at:new Date().toISOString()}; answers[id]=body; refresh();
+  if(!db){st(id,"Not saved: open this page on claude.ai while signed in.");return;} st(id,"Saving…");
+  try{await db.doc("answers/"+id).set(body); st(id,"Saved",true);}catch(e){st(id,"Couldn't save ("+((e&&e.code)||"error")+"). Try again.");} }
+refresh();
+(async()=>{ try{db=window.claude&&window.claude.use?await window.claude.use("db"):null;}catch{db=null;}
+  if(!db){$("dbNote").textContent="Picks save when this page is opened on claude.ai while signed in.";return;}
+  const timer=setTimeout(()=>{$("dbNote").textContent="Saved picks can't be reached yet. New picks will still try to save.";},10000);
+  db.collection("answers").onSnapshot(snap=>{clearTimeout(timer);$("dbNote").textContent="";
+    snap.docs.forEach(doc=>{const v=doc.data()||{}; const id=doc.id; if(!$(id))return; answers[id]=v;
+      const r=[...document.querySelectorAll(`input[name="d-${id}"]`)].find(x=>x.value===v.choice); if(r)r.checked=true;
+      const ta=$("n-"+id); if(document.activeElement!==ta) ta.value=v.note||""; if(v.choice||v.note) st(id,"Saved",true);});
+    refresh();},()=>{clearTimeout(timer);$("dbNote").textContent="Saved picks can't be reached right now.";});
+})();
+})();
+</script>
+
+</body></html>

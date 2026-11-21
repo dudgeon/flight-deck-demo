@@ -177,6 +177,17 @@ Still open:
   draft; both now conflict with `main`.
 - **PR 25**: avatars, held (see above).
 
+After that:
+
+- **PR 30** (20:34): this history, the roadmap and the decision index brought
+  up to PR 29, with a "Not yet verified" list in the roadmap.
+- **Decision artifacts and the docs-refresh skill** (D-115): Geoff asked for
+  the docs pass to become a repeatable skill, and for every decision page to
+  be kept in the repository as offline HTML, so the record and its examples
+  can be seen without his claude.ai account. Nineteen pages were archived in
+  `docs/decision-artifacts/`, with the answers recorded on them; one, a
+  Claude Doc, has no page to copy and is listed with a note.
+
 ## Still waiting
 
 - Geoff's first install on the work Mac with `setup.sh` (D-100, D-107,

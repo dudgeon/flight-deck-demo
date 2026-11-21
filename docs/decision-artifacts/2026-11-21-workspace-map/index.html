@@ -1,0 +1,502 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!-- decision-archive:start -->
+<div style="font:13px/1.45 system-ui,sans-serif;background:Canvas;color:CanvasText;border-bottom:1px solid GrayText;padding:8px 16px">Archived copy of <b>Product Aviator Workspace Map</b>, a decision artifact from 2026-11-21. Nothing on this page is saved. The index of all of them is in <a href="../index.html">docs/decision-artifacts</a>.</div>
+<script>
+(function(){
+  var A={};
+  function snap(){var docs=Object.keys(A).map(function(k){return {id:k,data:function(){return A[k]},exists:true}});return {docs:docs,empty:!docs.length,size:docs.length,forEach:function(f){docs.forEach(f)}}}
+  function doc(id){return {id:id,get:async function(){return {id:id,exists:id in A,data:function(){return A[id]}}},set:async function(){},update:async function(){},delete:async function(){}}}
+  var db={collection:function(){return {get:async function(){return snap()},doc:doc,onSnapshot:function(f){setTimeout(function(){f(snap())},0);return function(){}},add:async function(){}}},doc:function(p){return doc(String(p).split("/").pop())}};
+  window.claude={use:async function(name){return name==="db"?db:null}};
+})();
+</script>
+<!-- decision-archive:end -->
+
+<title>Product Aviator Workspace Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: a reading column with one instrument, a workspace schematic that redraws per work mode. */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --sunk:#e9edf2; --ink:#0a223d; --ink-2:#44566c; --ink-3:#7a8899;
+  --line:#d3dae3; --navy:#0a223d; --on-navy:#f3f5f8;
+  --you:#c2501f; --you-soft:#fbe6dc;
+  --exists:#2f5d8a; --exists-soft:#dfe9f3; --ours:#17756b; --ours-soft:#d9efec;
+  --extend:#8a6200; --extend-soft:#f6ecd0; --new:#c2501f; --new-soft:#fbe6dc;
+  --ok:#1d7a4f; --warn:#9a6a00; --attn:#b8323c; --idle:#7a8899;
+  --display:"Space Grotesk","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#07172a; --surface:#0e2238; --sunk:#0a1c30; --ink:#e8eef5; --ink-2:#a9b8c9; --ink-3:#74879c;
+  --line:#22384f; --navy:#16385f; --on-navy:#eef3f8;
+  --you:#ff9166; --you-soft:#3a2118;
+  --exists:#8fbbe6; --exists-soft:#15304c; --ours:#6fd0c3; --ours-soft:#103631;
+  --extend:#e6bd55; --extend-soft:#35290c; --new:#ff9166; --new-soft:#3a2118;
+  --ok:#5fcf98; --warn:#e6bd55; --attn:#ff7d86; --idle:#74879c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#07172a; --surface:#0e2238; --sunk:#0a1c30; --ink:#e8eef5; --ink-2:#a9b8c9; --ink-3:#74879c;
+  --line:#22384f; --navy:#16385f; --on-navy:#eef3f8;
+  --you:#ff9166; --you-soft:#3a2118;
+  --exists:#8fbbe6; --exists-soft:#15304c; --ours:#6fd0c3; --ours-soft:#103631;
+  --extend:#e6bd55; --extend-soft:#35290c; --new:#ff9166; --new-soft:#3a2118;
+  --ok:#5fcf98; --warn:#e6bd55; --attn:#ff7d86; --idle:#74879c; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+.wrap{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:56px}
+h1,h2,h3{font-family:var(--display);font-weight:600;text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.4vw,44px);line-height:1.08}
+h2{font-size:24px;line-height:1.2}
+h3{font-size:16px}
+p{margin:0;max-width:68ch;color:var(--ink-2)}
+.eyebrow{font:500 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+section{display:flex;flex-direction:column;gap:18px}
+.head{display:flex;flex-direction:column;gap:10px}
+.lede{font-size:17px;color:var(--ink-2)}
+.thesis{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.thesis div{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.thesis b{font-family:var(--display);font-size:15px}
+.thesis span{color:var(--ink-2);font-size:14px}
+
+/* tags */
+.tag{display:inline-flex;align-items:center;gap:6px;font:500 11px/1 var(--mono);padding:4px 7px;border-radius:3px;white-space:nowrap}
+.tag::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.t-exists{color:var(--exists);background:var(--exists-soft)}
+.t-ours{color:var(--ours);background:var(--ours-soft)}
+.t-extend{color:var(--extend);background:var(--extend-soft)}
+.t-new{color:var(--new);background:var(--new-soft)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:13px;color:var(--ink-2)}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+
+/* mode switcher */
+.modes{display:flex;flex-wrap:wrap;gap:6px}
+.modes button,.filters button{font:500 13px/1 var(--body);color:var(--ink-2);background:transparent;border:1px solid var(--line);
+  border-radius:4px;padding:9px 11px;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+.modes button i{font:500 11px var(--mono);font-style:normal;color:var(--ink-3)}
+.modes button:hover,.filters button:hover{border-color:var(--ink-3);color:var(--ink)}
+.modes button[aria-pressed="true"],.filters button[aria-pressed="true"]{background:var(--navy);color:var(--on-navy);border-color:var(--navy)}
+.modes button[aria-pressed="true"] i{color:var(--on-navy);opacity:.7}
+button:focus-visible{outline:2px solid var(--you);outline-offset:2px}
+
+/* schematic */
+.stage{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+.ws{display:grid;grid-template-columns:54px minmax(0,1fr) minmax(0,1.45fr) minmax(0,.62fr);border:1.5px solid var(--ink);border-radius:8px;overflow:hidden;background:var(--surface);min-height:360px}
+.rg{padding:12px;display:flex;flex-direction:column;gap:8px;border-left:1px solid var(--line);min-width:0;opacity:.38;transition:opacity .2s}
+.rg:first-child{border-left:0;align-items:center;background:var(--sunk);padding-inline:6px}
+.rg.on{opacity:1}
+.rg>.eyebrow{display:flex;justify-content:space-between;gap:6px;align-items:center}
+.rg.on>.eyebrow{color:var(--ink)}
+.dot{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--ink-3)}
+.dot.hot{border-color:var(--you);background:var(--you-soft)}
+.bub{font-size:12.5px;line-height:1.4;padding:7px 9px;border-radius:8px;border:1px solid var(--line);max-width:94%;color:var(--ink)}
+.bub.pm{align-self:flex-end;background:var(--you-soft);border-color:var(--you)}
+.bub.sys{font:500 11px var(--mono);color:var(--ink-2);background:var(--sunk);border-style:dashed;max-width:100%}
+.wid{border:1.5px solid var(--you);border-radius:8px;padding:9px;display:flex;flex-direction:column;gap:7px;font-size:12.5px}
+.wid b{font-family:var(--display)}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{font-size:11.5px;border:1px solid var(--line);border-radius:99px;padding:2px 8px;color:var(--ink-2)}
+.chip.sel{background:var(--navy);color:var(--on-navy);border-color:var(--navy)}
+.btnrow{display:flex;gap:6px;flex-wrap:wrap}
+.fbtn{font:500 11.5px var(--body);border-radius:4px;padding:4px 9px;border:1px solid var(--ink);color:var(--ink)}
+.fbtn.pri{background:var(--navy);color:var(--on-navy);border-color:var(--navy)}
+.cv{border:1px solid var(--line);border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:7px;flex:1;min-width:0;font-size:12.5px}
+.cv h4{margin:0;font:600 13.5px var(--display)}
+.cv .meta{font:400 10.5px var(--mono);color:var(--ink-3)}
+.ln{height:7px;border-radius:2px;background:var(--sunk)}
+.row{display:grid;grid-template-columns:14px minmax(0,1fr) auto;gap:7px;align-items:center;padding:4px 0;border-top:1px solid var(--line)}
+.row.kid{padding-left:16px}
+.row span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bx{width:12px;height:12px;border:1.5px solid var(--ink-3);border-radius:2px}
+.bx.y{background:var(--you);border-color:var(--you)}
+.pill{font:500 10px/1 var(--mono);padding:3px 6px;border-radius:3px;border:1px solid currentColor;white-space:nowrap}
+.s-rev{color:var(--ok)} .s-rdy{color:var(--exists)} .s-wrk{color:var(--warn)} .s-you{color:var(--attn)} .s-que{color:var(--idle)}
+.board{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+.tile{border:1px solid var(--line);border-left:3px solid currentColor;border-radius:3px;padding:5px 5px 6px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.tile b{font:500 10px var(--mono);color:var(--ink)}
+.tile em{font:400 9.5px var(--mono);font-style:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.counts{display:flex;flex-wrap:wrap;gap:5px}
+.rl{font-size:12px;display:flex;flex-direction:column;gap:3px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.rl b{font:500 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.rl span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rl .need{color:var(--attn);font-weight:600}
+.empty{flex:1;display:grid;place-items:center;text-align:center;color:var(--ink-3);font-size:12.5px;border:1px dashed var(--line);border-radius:6px;padding:14px}
+.lib{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.lib div{border:1px solid var(--line);border-radius:4px;padding:7px;font-size:12px}
+.lib div.hot{border-color:var(--you);background:var(--you-soft)}
+
+.brief{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+.brief>div{display:flex;flex-direction:column;gap:8px;min-width:0}
+.brief ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+.brief li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:9px;align-items:start;font-size:14px;color:var(--ink-2)}
+.brief li .tag{margin-top:2px}
+.what{font-size:16px;color:var(--ink);max-width:70ch}
+
+/* journey */
+.track{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.track-in{min-width:760px;padding:14px 16px 16px;display:grid;grid-template-columns:104px minmax(0,1fr);gap:0 10px}
+.lanes{display:flex;flex-direction:column;justify-content:space-between;height:74px;padding-block:6px;font:500 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.plot{position:relative;height:74px}
+.plot svg{position:absolute;inset:0;width:100%;height:100%}
+.steps{grid-column:2;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin-top:8px}
+.step{font-size:12.5px;color:var(--ink-2);display:flex;flex-direction:column;gap:4px;min-width:0}
+.step b{font:600 13px var(--display);color:var(--ink)}
+.step i{font:500 10.5px var(--mono);font-style:normal;color:var(--ink-3)}
+
+/* inventory */
+.filters{display:flex;flex-wrap:wrap;gap:6px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:14px}
+th{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);text-align:left;padding:10px 14px;border-bottom:1px solid var(--line)}
+td{padding:10px 14px;border-top:1px solid var(--line);vertical-align:top;color:var(--ink-2)}
+td:first-child{color:var(--ink);font-weight:500;width:30%}
+tr.grp td{background:var(--sunk);font:600 13px var(--display);color:var(--ink);border-top:1px solid var(--line)}
+.count{font:500 12px var(--mono);color:var(--ink-3)}
+
+/* paradigm */
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.card p{font-size:14px}
+.kv{display:grid;grid-template-columns:96px minmax(0,1fr);gap:6px 12px;font-size:13.5px}
+.kv dt{font:500 11px var(--mono);color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;padding-top:2px}
+.kv dd{margin:0;color:var(--ink-2)}
+pre{margin:0;font:400 12px/1.5 var(--mono);background:var(--sunk);border-radius:4px;padding:12px;overflow-x:auto;color:var(--ink)}
+.states{display:flex;flex-wrap:wrap;gap:8px}
+.states div{display:flex;flex-direction:column;gap:4px;border:1px solid var(--line);border-radius:4px;padding:9px 11px;background:var(--surface);flex:1 1 150px;font-size:13px;color:var(--ink-2)}
+.states .pill{align-self:flex-start;font-size:11px}
+
+.q{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.q div{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.q b{color:var(--ink);font-family:var(--display);font-size:15px}
+.q span{color:var(--ink-2)}
+.q em{font-style:normal;color:var(--ink);font-size:13.5px;border-left:2px solid var(--you);padding-left:9px}
+.next{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.next .card{gap:6px}
+.next .card span{font-size:13.5px;color:var(--ink-2)}
+@media (max-width:760px){
+  .ws{grid-template-columns:minmax(0,1fr)}
+  .rg{border-left:0;border-top:1px solid var(--line)}
+  .rg:first-child{flex-direction:row;border-top:0}
+  .rg:not(.on){display:none}
+}
+@media (prefers-reduced-motion:reduce){.rg{transition:none}}
+</style>
+
+<div class="wrap">
+  <header class="head">
+    <span class="eyebrow">Product Aviator · workspace design · draft 1 · 20 Nov 2026</span>
+    <h1>A map of the work a product agent has to hold</h1>
+    <p class="lede">A product manager moves between loose thinking and structured work many times in one sitting. This page names eight ways of working, shows where each one lives in the workspace, and sorts every piece of interface into what Omnigent already gives us and what we have to make.</p>
+    <div class="thesis">
+      <div><b>The chat coaches</b><span>Conversation, questions, and small interactive widgets that appear in the flow.</span></div>
+      <div><b>The canvas holds structure</b><span>Documents, catalogs, boards and reviews the PM can touch and the agent can see and change.</span></div>
+      <div><b>The rail keeps your place</b><span>Progress, outputs, context and what is waiting on you.</span></div>
+      <div><b>Skills bring the templates</b><span>A skill that knows this surface can build the interface the work needs.</span></div>
+    </div>
+  </header>
+
+  <section>
+    <div class="head">
+      <span class="eyebrow">Part 1</span>
+      <h2>Eight ways of working</h2>
+      <p>Pick a mode. The drawing shows which parts of the workspace are in use, and the notes say what exists today and what we add.</p>
+    </div>
+    <div class="modes" id="modes" role="group" aria-label="Work modes"></div>
+    <div class="stage">
+      <div class="ws" id="ws" aria-live="polite"></div>
+      <p class="what" id="what"></p>
+      <div class="brief">
+        <div><h3>Already there</h3><ul id="have"></ul></div>
+        <div><h3>To build</h3><ul id="build"></ul></div>
+      </div>
+    </div>
+    <div class="legend">
+      <span><span class="tag t-exists">In Omnigent</span> ships upstream</span>
+      <span><span class="tag t-ours">In our build</span> added in omnigent-slim</span>
+      <span><span class="tag t-extend">Extend</span> exists, needs more</span>
+      <span><span class="tag t-new">New</span> ours to design</span>
+    </div>
+  </section>
+
+  <section>
+    <div class="head">
+      <span class="eyebrow">Part 2</span>
+      <h2>One PRD, followed through the modes</h2>
+      <p>Your real example, drawn as a path. The line moves between unstructured and structured work, and it comes back: what the dependency mapping finds changes the PRD.</p>
+    </div>
+    <div class="track"><div class="track-in">
+      <div class="lanes"><span>Unstructured</span><span>Structured</span></div>
+      <div class="plot" id="plot"></div>
+      <div class="steps" id="steps"></div>
+    </div></div>
+  </section>
+
+  <section>
+    <div class="head">
+      <span class="eyebrow">Part 3</span>
+      <h2>Every element, sorted</h2>
+      <p>What we can lean on and what is ours to design. Upstream pieces were checked against the code in omnigent-slim, not against documentation.</p>
+    </div>
+    <div class="filters" id="filters" role="group" aria-label="Filter by status"></div>
+    <div class="tbl"><table><thead><tr><th>Element</th><th>Status</th><th>Notes</th></tr></thead><tbody id="inv"></tbody></table></div>
+  </section>
+
+  <section>
+    <div class="head">
+      <span class="eyebrow">Part 4</span>
+      <h2>Two kinds of template, one contract</h2>
+      <p>Chat widgets and canvas templates differ in size and lifespan, but a skill should drive both the same way: name a template, hand it data, and get structured answers back. The proposal is one primitive, a view, made of a template, a dataset and a list of actions. The same view file runs in three places: inline in the chat, in the canvas, and standalone in a browser as a demo. The app then needs only three general mechanisms (a frame in the chat, a dataset the view is bound to, and a channel for actions) instead of one native component per idea.</p>
+    </div>
+    <div class="two">
+      <div class="card">
+        <h3>Chat widget</h3>
+        <p>Small, appears in the conversation, usually answered once. The multiple-choice question is the simplest member of this family.</p>
+        <dl class="kv">
+          <dt>Lives</dt><dd>In the transcript, at the point it was asked.</dd>
+          <dt>Made of</dt><dd>The same kit as the canvas, at chat size: choice, form, table, chart, status list, review card. Whether these are HTML views or native parts is the first open question.</dd>
+          <dt>Answers</dt><dd>The agent waits. The answer comes back as data, and the widget stays as a read-only record.</dd>
+          <dt>Good for</dt><dd>Scoping a job, confirming a finding, a quick look at numbers.</dd>
+        </dl>
+<pre>widget_ask({
+  template: "scope-form",
+  data: { title: "Catalog setup", fields: [...] }
+})  →  { sections: ["4", "5"], depth: "atomic" }</pre>
+      </div>
+      <div class="card">
+        <h3>Canvas template</h3>
+        <p>Large, stays open, edited by the PM and the agent over hours or weeks. It shows a dataset; it does not own it.</p>
+        <dl class="kv">
+          <dt>Lives</dt><dd>In the canvas, backed by a data file in the project folder.</dd>
+          <dt>Made of</dt><dd>A shared kit: tree table, status pill, board, drill-in panel, review bar.</dd>
+          <dt>Answers</dt><dd>Direct edits save to the data file. Requests that need the agent go to the chat as a message you can see.</dd>
+          <dt>Good for</dt><dd>A requirements catalog, a dependency board, a decision table.</dd>
+        </dl>
+<pre>canvas_open({
+  template: "work-board",
+  data: "data/dependency-map.json"
+})  // agents write the file, the canvas refreshes</pre>
+      </div>
+    </div>
+    <div class="head"><h3>One status vocabulary for every work item</h3><p>Twenty workflows are only manageable if each one is always in exactly one of these states, on the board, in the rail and in chat.</p></div>
+    <div class="states">
+      <div><span class="pill s-que">Queued</span>Not started yet.</div>
+      <div><span class="pill s-wrk">Working</span>An agent is on it.</div>
+      <div><span class="pill s-you">Needs you</span>Blocked on a question for the PM.</div>
+      <div><span class="pill s-rdy">Ready for review</span>Finished, not yet looked at.</div>
+      <div><span class="pill s-rev">Reviewed</span>The PM signed it off.</div>
+      <div><span class="pill s-you">Returned</span>Sent back with a note.</div>
+      <div><span class="pill s-que">Failed</span>Stopped with an error; can be retried.</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="head">
+      <span class="eyebrow">Part 5</span>
+      <h2>Tooling for the prototyping sprint</h2>
+      <p>You will be building many scenarios quickly. These make a new flow cheap to write and hard to get wrong.</p>
+    </div>
+    <div class="next">
+      <div class="card"><h3>Component kit</h3><span>One inlined stylesheet and script that every template shares, so a skill writes data, not layout. Works offline.</span></div>
+      <div class="card"><h3>Template gallery</h3><span>A Library view that shows each widget and canvas template rendered with fixture data, so you can browse and copy.</span></div>
+      <div class="card"><h3>Fixture packs</h3><span>Invented but realistic datasets (a PRD, 20 requirements, a platform map) so a flow can be demoed with no real documents.</span></div>
+      <div class="card"><h3>Flow manifest</h3><span>A short file in each skill that lists its templates, its launchers and its data shapes. The Library and the rail read it.</span></div>
+      <div class="card"><h3>Template check</h3><span>A script that confirms a template is self-contained, matches its data shape, and renders in light and dark.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="head">
+      <span class="eyebrow">Part 6</span>
+      <h2>Open questions</h2>
+      <p>Each has the answer this draft assumes. Changing one changes the parts of the map marked New.</p>
+    </div>
+    <div class="q" id="qs"></div>
+  </section>
+
+  <section>
+    <div class="head">
+      <span class="eyebrow">Next</span>
+      <h2>Reference templates to pressure-test this</h2>
+      <p>Four pieces, all drawn from the PRD example, built once the questions above are settled.</p>
+    </div>
+    <div class="next">
+      <div class="card"><span class="tag t-new">Chat widget</span><h3>Scope form</h3><span>Grouped choices, toggles and a note field. Asked before cataloging a PRD.</span></div>
+      <div class="card"><span class="tag t-new">Chat widget</span><h3>Review card</h3><span>One finding with its evidence table, a small chart, and Approve or Return.</span></div>
+      <div class="card"><span class="tag t-new">Canvas template</span><h3>Requirements catalog</h3><span>A nested table with types, priorities, statuses, checkboxes and inline edits, each row linked to its PRD line.</span></div>
+      <div class="card"><span class="tag t-new">Canvas template</span><h3>Work board</h3><span>Twenty dependency workflows by state, with counts, a drill-in panel and a review queue.</span></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const tag = (k) => ({e:'<span class="tag t-exists">In Omnigent</span>',o:'<span class="tag t-ours">In our build</span>',x:'<span class="tag t-extend">Extend</span>',n:'<span class="tag t-new">New</span>'}[k]);
+const bub = (who, t) => `<div class="bub ${who}">${t}</div>`;
+const lines = (ws) => ws.map((w) => `<div class="ln" style="width:${w}%"></div>`).join("");
+const ST = {rev:["s-rev","Reviewed"],rdy:["s-rdy","Ready"],wrk:["s-wrk","Working"],you:["s-you","Needs you"],que:["s-que","Queued"]};
+const pill = (s) => `<span class="pill ${ST[s][0]}">${ST[s][1]}</span>`;
+const boardStates = "rev rev rdy wrk rev rdy you rev wrk rdy rev wrk rdy you wrk rev rdy wrk que que".split(" ");
+const board = () => `<div class="board">${boardStates.map((s, i) => `<div class="tile ${ST[s][0]}"><b>R-${String(i + 1).padStart(2, "0")}</b><em>${ST[s][1]}</em></div>`).join("")}</div>`;
+const counts = () => `<div class="counts">${["rev","rdy","wrk","you","que"].map((s) => `<span class="pill ${ST[s][0]}">${boardStates.filter((x) => x === s).length} ${ST[s][1].toLowerCase()}</span>`).join("")}</div>`;
+const rail = (o) => Object.entries(o).map(([k, v]) => `<div class="rl"><b>${k}</b>${v.map((x) => `<span${x.startsWith("!") ? ' class="need"' : ""}>${x.replace(/^!/, "")}</span>`).join("")}</div>`).join("");
+const railFull = rail({Progress:["4 of 7 steps","Now: mapping dependencies"],"Needs you":["!R-07 has a question","!R-14 has a question"],Outputs:["Allowances PRD","Requirements catalog","Dependency board"],Context:["platform-map.md","card-limits-api.md","6 more"]});
+const railLite = rail({Progress:["No plan yet"],Context:["3 files read"]});
+const catalog = `<div class="cv"><div class="meta">Template · Requirements catalog</div><h4>Allowances: 20 requirements in 5 groups</h4>
+  <div class="row"><div class="bx y"></div><span><b>Set an allowance</b> · 4</span>${pill("rev")}</div>
+  <div class="row kid"><div class="bx y"></div><span>R-01 Cardholder sets a monthly amount</span><span class="chip">Must</span></div>
+  <div class="row kid"><div class="bx y"></div><span>R-02 Amount resets on a chosen day</span><span class="chip">Must</span></div>
+  <div class="row kid"><div class="bx"></div><span>R-03 Change takes effect mid-cycle</span><span class="chip">Should</span></div>
+  <div class="row"><div class="bx"></div><span><b>Enforce at purchase</b> · 5</span>${pill("rdy")}</div>
+  <div class="row"><div class="bx"></div><span><b>Tell the card user</b> · 4</span>${pill("rdy")}</div></div>`;
+
+const MODES = [
+ {n:"Talk it through", on:["chat"], what:"Loose thinking with the agent: is this a real problem, who has it, what would we try. Nothing structured yet, and the canvas stays out of the way.",
+  chat: bub("pm","Parents keep asking to cap a teenager's spending. Is that a real problem?") + bub("ag","Two questions before I look. Who is asking, and what happens today when the cap is missed?") + bub("pm","Cardholders with a teen on the account. Today they find out on the statement."),
+  canvas:`<div class="empty">Nothing open. The canvas waits until there is something worth showing.</div>`, rail:railLite,
+  have:[["e","Chat with Markdown, attachments and side chats"],["e","Multiple-choice questions from the agent"],["e","A plan's steps pinned above the chat once the agent makes one"]],
+  build:[["n","Nothing in the interface. The coaching behavior comes from skills."]]},
+ {n:"Work on a document", on:["chat","canvas"], what:"The PRD is a Markdown file open in the canvas. The PM and the agent both edit it, and the PM points at passages instead of describing them.",
+  chat: bub("pm","Tighten section 4. The limit must hold on every charge.") + bub("ag","Rewrote 4.2 and 4.3. One line needs your call; I left a comment on it."),
+  canvas:`<div class="cv"><div class="meta">prd/allowances.md</div><h4>Allowances PRD</h4>${lines([92,78,85])}<h4 style="font-size:12.5px">4. Enforcement</h4>${lines([88,60])}<div class="bub pm" style="align-self:stretch;max-width:100%">Comment on 4.3: does this cover offline charges?</div>${lines([82,70,40])}</div>`, rail:railLite,
+  have:[["e","The viewer renders Markdown, code, tables and images, and the file can be edited in place"],["e","Comment on a selection; the agent reads and resolves comments"],["e","A Changes view of what the agent edited"]],
+  build:[["n","A launcher on the open file: use this document in a structured flow"],["x","Show which passages a later flow drew from, so the PRD and the catalog stay linked"]]},
+ {n:"Answer in the flow", on:["chat"], what:"The agent needs a structured answer or wants to show something compact. A widget appears in the conversation, the PM answers it there, and it stays as a record.",
+  chat: bub("pm","Catalog the requirements in this PRD.") + `<div class="wid"><b>Catalog setup</b><div>Which sections?</div><div class="chips"><span class="chip sel">4 Enforcement</span><span class="chip sel">5 Alerts</span><span class="chip">6 Servicing</span></div><div>How fine?</div><div class="chips"><span class="chip">By capability</span><span class="chip sel">One testable statement each</span></div><div class="btnrow"><span class="fbtn pri">Start</span><span class="fbtn">Skip</span></div></div>`,
+  canvas:`<div class="cv"><div class="meta">prd/allowances.md</div><h4>Allowances PRD</h4>${lines([92,78,85,60,88,70])}</div>`, rail:railLite,
+  have:[["e","Multiple-choice question form"],["e","Simple forms from a schema: select, checkbox, number, text"],["e","Approve or deny cards, and plan review"]],
+  build:[["n","A rich widget block: grouped forms, tables, charts, status lists, review cards"],["n","Widget templates a skill fills with data"],["n","The answered widget kept in the transcript as a read-only record"],["n","A sandboxed HTML widget for anything the native parts cannot do"]]},
+ {n:"Shape a structured artifact", on:["chat","canvas"], what:"The agent turns the PRD into a dataset and shows it with the structure the task deserves: nesting, fields, statuses, checkboxes, inline edits.",
+  chat: bub("ag","20 requirements in 5 groups. Three are ambiguous; I marked them.") + bub("pm","Merge R-08 and R-09. They are the same rule.") + bub("ag","Merged into R-08. The catalog is updated."),
+  canvas:catalog, rail:railFull,
+  have:[["o","HTML templates that render from a block of data"],["o","An artifact can hand text to the chat box"],["o","The agent can read, click and edit what is open in the canvas"],["e","Comments on a rendered artifact"]],
+  build:[["n","The dataset as its own file, with the canvas refreshing when anyone changes it"],["n","Direct edits saved without a trip through the chat"],["n","A shared component kit so templates look and behave alike"],["x","Typed actions from canvas to agent, beyond plain text"]]},
+ {n:"Run many things at once", on:["canvas","rail"], what:"One sub-agent per requirement goes off to map dependencies. Twenty pieces of work, each in a clear state, visible together.",
+  chat: bub("ag","Started 20 mapping runs. I will flag any that need you.") + bub("sys","R-07 needs you · R-14 needs you"),
+  canvas:`<div class="cv"><div class="meta">Template · Work board</div><h4>Dependency mapping · 20 requirements</h4>${counts()}${board()}</div>`, rail:railFull,
+  have:[["e","Sub-agent sessions the main agent starts, messages and collects"],["e","An Agents tab and an Inbox"],["e","A Workflows engine with steps and runs, switched off by default and not yet evaluated"]],
+  build:[["n","A work board template with one status vocabulary"],["n","A contract for how each sub-agent reports its state to the board"],["n","A needs-you queue that gathers every open question in one place"]]},
+ {n:"Review and sign off", on:["chat","canvas"], what:"The PM opens one finished item, reads the evidence, and approves it or returns it with a note. The record says who reviewed what, and when.",
+  chat: bub("ag","R-07 maps to three subsystems. Confidence is low on one.") + bub("pm","Return it. The ledger service is not involved."),
+  canvas:`<div class="cv"><div class="meta">Work board · R-07</div><h4>Limit holds on charges that skip live approval</h4><div class="row"><div class="bx y"></div><span>Card processor · limits API</span><span class="chip">High</span></div><div class="row"><div class="bx y"></div><span>Fraud rules · decline reasons</span><span class="chip">High</span></div><div class="row"><div class="bx"></div><span>Ledger service · posting</span><span class="chip">Low</span></div><div class="btnrow" style="margin-top:6px"><span class="fbtn pri">Approve</span><span class="fbtn">Return with note</span></div></div>`, rail:railFull,
+  have:[["e","Comments, and approve or deny cards"],["e","Line-by-line review of file changes"]],
+  build:[["n","A review card, used in chat and in the canvas"],["n","A reviewed-by stamp stored with the item"],["n","Returned as a first-class state, with the note attached"]]},
+ {n:"Find your place", on:["rail"], what:"After an hour away, or a week: what has been made, what was read, how far the plan is, and what is waiting on me.",
+  chat: bub("sys","Tasks 4/7 · Mapping dependencies"), canvas:`<div class="empty">The rail answers this without opening anything.</div>`, rail:railFull,
+  have:[["e","Tasks bar above the chat and a Tasks tab"],["e","Files, Changes and Agents tabs"],["e","An unfinished Session overview card, switched off by default"],["e","Inbox, reminders and schedules"]],
+  build:[["n","Outputs: every artifact in the project, opened with one click"],["n","Context: the files and sources the agent has read"],["n","Needs you: open questions across all work items"],["x","Turn the Session overview into this rail, open by default"]]},
+ {n:"Start from a template", on:["nav","chat","canvas"], what:"A known kind of work starts from a known shape: a canned session, a template, or a flow offered at the moment it applies.",
+  chat: bub("sys","Draft a PRD one-pager · idea: ____ · users: ____"),
+  canvas:`<div class="cv"><div class="meta">Library</div><h4>Flows and templates</h4><div class="lib"><div class="hot"><b>Catalog requirements</b><br>from the open PRD</div><div><b>Map dependencies</b><br>from a catalog</div><div><b>Decision table</b></div><div><b>PRD one-pager</b></div></div></div>`, rail:railLite,
+  have:[["o","A Library page with canned sessions and fill-in fields"],["o","Six artifact templates, including a question form and a decision matrix"],["o","Skills bundled into every session, with skill-writer docs"]],
+  build:[["n","Flows offered in context, on a file or an artifact"],["n","A manifest in each skill that declares its templates and launchers"],["n","A gallery that previews every template with fixture data"]]},
+];
+
+function drawMode(i){
+  const m = MODES[i], on = (k) => m.on.includes(k) ? " on" : "";
+  $("ws").innerHTML =
+   `<div class="rg${on("nav")}"><div class="dot"></div><div class="dot"></div><div class="dot${m.on.includes("nav") ? " hot" : ""}"></div><div class="dot"></div></div>
+    <div class="rg${on("chat")}"><div class="eyebrow">Chat</div>${m.chat}</div>
+    <div class="rg${on("canvas")}"><div class="eyebrow">Canvas</div>${m.canvas}</div>
+    <div class="rg${on("rail")}"><div class="eyebrow">Rail</div>${m.rail}</div>`;
+  $("what").textContent = m.what;
+  const li = ([k, t]) => `<li>${tag(k)}<span>${t}</span></li>`;
+  $("have").innerHTML = m.have.map(li).join("");
+  $("build").innerHTML = m.build.map(li).join("");
+  [...$("modes").children].forEach((b, j) => b.setAttribute("aria-pressed", j === i));
+  try { localStorage.setItem("pa-mode", i); } catch (e) {}
+}
+$("modes").innerHTML = MODES.map((m, i) => `<button type="button" id="mode-${i}" aria-pressed="false"><i>${i + 1}</i>${m.n}</button>`).join("");
+$("modes").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) drawMode(+b.id.split("-")[1]); });
+let start = 3; try { const s = +localStorage.getItem("pa-mode"); if (s >= 0 && s < MODES.length && localStorage.getItem("pa-mode") !== null) start = s; } catch (e) {}
+drawMode(start);
+
+const STEPS = [
+ [0,"Draft the PRD","Chat and a Markdown file.","Modes 1, 2"],
+ [1,"Set up the catalog","A scope form in the chat.","Mode 3"],
+ [1,"Shape the catalog","20 requirements, edited in the canvas.","Mode 4"],
+ [1,"Map dependencies","20 sub-agents, one board.","Mode 5"],
+ [0,"Answer R-07","A question only the PM can settle.","Modes 1, 3"],
+ [1,"Review each item","Approve, or return with a note.","Mode 6"],
+ [0,"Revise the PRD","A finding changes section 4. Round again.","Mode 2"],
+];
+(function(){
+  const n = STEPS.length, x = (i) => (i + .5) / n * 700, y = (l) => l ? 62 : 12;
+  const pts = STEPS.map((s, i) => `${x(i)},${y(s[0])}`).join(" ");
+  $("plot").innerHTML = `<svg viewBox="0 0 700 74" preserveAspectRatio="none" role="img" aria-label="Path alternating between unstructured and structured work">
+    <line x1="0" y1="12" x2="700" y2="12" stroke="var(--line)" stroke-dasharray="3 4" vector-effect="non-scaling-stroke"/>
+    <line x1="0" y1="62" x2="700" y2="62" stroke="var(--line)" stroke-dasharray="3 4" vector-effect="non-scaling-stroke"/>
+    <polyline points="${pts}" fill="none" stroke="var(--ink)" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>` +
+    STEPS.map((s, i) => `<span style="position:absolute;left:calc(${(i + .5) / n * 100}% - 7px);top:${y(s[0]) - 7}px;width:14px;height:14px;border-radius:50%;background:${s[0] ? "var(--navy)" : "var(--you)"};border:2px solid var(--surface)"></span>`).join("");
+  $("steps").innerHTML = STEPS.map((s) => `<div class="step"><b>${s[1]}</b><span>${s[2]}</span><i>${s[3]}</i></div>`).join("");
+})();
+
+const INV = [
+ ["Chat"],
+ ["Transcript with Markdown, attachments, side chats","e","The base conversation."],
+ ["Multiple-choice question","e","The simplest chat widget. Keep it."],
+ ["Schema form","e","Flat fields only: select, checkbox, number, text. No groups, tables or charts."],
+ ["Approve or deny card, plan review","e","Good models for the review card."],
+ ["Tasks bar above the chat","e","Hidden until the agent makes a plan."],
+ ["Rich widget block","n","Grouped forms, tables, charts, status lists, review cards, rendered natively."],
+ ["Widget templates","n","A skill names a template and passes data."],
+ ["Answered-widget record","n","What was asked and what was answered, kept in place."],
+ ["HTML widget","n","A sandboxed frame inline in the chat, for one-off needs."],
+ ["Canvas"],
+ ["File viewer","e","Markdown, code, CSV, images and HTML with scripts, in tabs."],
+ ["Comments on a selection","e","Works on documents and rendered artifacts; the agent reads them."],
+ ["Templates filled from data","o","Six today. Data sits inside each HTML file."],
+ ["Artifact hands text to the chat box","o","The PM must press Send each time."],
+ ["Agent reads and operates the canvas","o","Read the page, click, type, run script."],
+ ["Dataset file with live refresh","n","One file many agents and the PM can change; the view follows."],
+ ["Direct-edit save","n","Ticks, status changes and field edits saved without the chat."],
+ ["Typed actions to the agent","x","Named actions with data, in addition to plain text."],
+ ["Component kit","n","Tree table, status pill, board, drill-in panel, review bar."],
+ ["Work board and drill-in","n","Many items by state, and one item in depth."],
+ ["Rail and navigation"],
+ ["Workspace tabs","e","Files, Changes, Agents, Tasks. Built for developers; keep one click away."],
+ ["Session overview card","x","Upstream's unfinished summary card, off by default. The natural home for our rail."],
+ ["Inbox, reminders, schedules","e","Useful for long-running flows."],
+ ["Library and canned sessions","o","Prompts with fill-in fields, and the template list."],
+ ["Outputs list","n","Artifacts made in this project."],
+ ["Context list","n","Files and sources the agent has read."],
+ ["Needs-you queue","n","Every open question across work items."],
+ ["Flow strip","n","Where you are in a structured flow. Optional; the film shows one."],
+ ["Engine"],
+ ["Sub-agent sessions","e","Start, message, collect results, close."],
+ ["Workflows with steps and runs","e","Present upstream but off by default. Worth evaluating before we build our own."],
+ ["Work-item status contract","n","How each sub-agent reports state to the dataset."],
+ ["Bundled skills and skill-writer docs","o","The way flows get into every session."],
+ ["Flow manifest","n","A skill declares its templates, launchers and data shapes."],
+ ["Authoring"],
+ ["Template gallery with fixtures","n","Browse every template rendered with sample data."],
+ ["Template check","n","Self-contained, matches its data shape, works in light and dark."],
+ ["Fixture packs","n","Invented datasets for demos with no real documents."],
+];
+const FL = [["all","All"],["e","In Omnigent"],["o","In our build"],["x","Extend"],["n","New"]];
+function drawInv(f){
+  let out = "", pending = "";
+  INV.forEach((r) => {
+    if (r.length === 1) { pending = `<tr class="grp"><td colspan="3">${r[0]}</td></tr>`; return; }
+    if (f !== "all" && r[1] !== f) return;
+    out += pending + `<tr><td>${r[0]}</td><td>${tag(r[1])}</td><td>${r[2]}</td></tr>`; pending = "";
+  });
+  $("inv").innerHTML = out;
+  [...$("filters").children].forEach((b) => b.setAttribute("aria-pressed", b.dataset.f === f));
+}
+$("filters").innerHTML = FL.map(([k, l]) => `<button type="button" id="filter-${k}" data-f="${k}" aria-pressed="false">${l} <span class="count">${k === "all" ? INV.filter((r) => r.length > 1).length : INV.filter((r) => r[1] === k).length}</span></button>`).join("");
+$("filters").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) drawInv(b.dataset.f); });
+drawInv("all");
+
+const QS = [
+ ["Where does structured data live?","In the template's HTML, or in its own file?","Assumed: its own JSON file in the project folder. Templates only render it."],
+ ["What happens when you edit in the canvas?","Does every change go through the chat?","Assumed: direct edits save silently. Requests for agent work appear in chat."],
+ ["Are chat widgets and canvas templates one system?","The same HTML views in both places, or native widgets in chat?","Leaning: one system. A view runs in chat, in the canvas and standalone as a demo."],
+ ["How do the 20 sub-workflows run at work?","Sub-agents inside one Claude Code session, or separate Omnigent sessions?","Not assumed. This decides the status contract."],
+ ["Does work span sessions?","Is the unit a session or a project?","Assumed: the project folder holds datasets and artifacts across sessions."],
+ ["Who uses the prototypes?","You demoing with fixtures, or PMs hands-on with real documents?","Assumed: you, with fixtures, at demo fidelity."],
+ ["How do new elements reach the work team?","Fork edits, or contracts they reimplement?","Assumed: each new element is a tool plus a data shape, with small marked fork edits."],
+];
+$("qs").innerHTML = QS.map((q) => `<div><b>${q[0]}</b><span>${q[1]}</span><em>${q[2]}</em></div>`).join("");
+</script>
+
+</body></html>

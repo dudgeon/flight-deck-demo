@@ -1,0 +1,29 @@
+{
+  "attn": {
+    "at": "2026-11-21T14:42:08.944Z",
+    "locked": true,
+    "pick": 0
+  },
+  "frame": {
+    "at": "2026-11-21T14:44:45.932Z",
+    "locked": true,
+    "pick": 0,
+    "text": "This is a lot. We will need to figure out how to progressively add and remove complexity, focus the user on a single task in depth, or multiple tasks at a high level, progressive disclosure to human and agent, etc. But your task was to pressure test the system and I think you have accomplished it.\n\nOne affordance to explore: the agent needs to be able to direct the user’s attention. Perhaps when a canvas is open but the agent needs the user’s attention in chat, the canvas could flip grayscale or something to make the relative attention focus obvious."
+  },
+  "navy": {
+    "at": "2026-11-21T14:40:31.413Z",
+    "locked": true,
+    "pick": 0
+  },
+  "views": {
+    "at": "2026-11-21T14:42:37.638Z",
+    "locked": true,
+    "pick": 0
+  },
+  "you": {
+    "at": "2026-11-21T14:41:53.140Z",
+    "locked": true,
+    "pick": 0,
+    "text": "I like your rec — please document the decision with your rationale. We will likely adopt a design system later with corporate guidelines, so the specific color you choose will likely be superseded. I like your rec, we just need to be able to keep the spirit of it in the future if the actual color is superseded."
+  }
+}
