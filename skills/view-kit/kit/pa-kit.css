@@ -207,6 +207,7 @@ button { cursor: pointer; }
 .pa-pill { display: inline-flex; align-items: center; gap: 5px; font: 550 11.5px/1.2 var(--pa-font); padding: 3px 8px 3px 6px; border-radius: 4px; white-space: nowrap; color: var(--pa-tone); background: var(--pa-tone-soft); }
 .pa-pill svg { flex: none; }
 .pa-flag { display: inline-flex; align-items: center; gap: 3px; font: 550 11px/1 var(--pa-font); padding: 3px 5px; border-radius: 3px; border: 1px dashed currentColor; white-space: nowrap; }
+.pa-link { display: inline-block; font: 500 11.5px/1.3 var(--pa-font); padding: 1px 8px; border-radius: 99px; white-space: nowrap; color: var(--pa-tone); background: var(--pa-tone-soft); }
 .pa-flag.stale { color: var(--pa-you); }
 .pa-flag.locked { color: var(--pa-ink-2); border-style: solid; }
 .pa-flag.edited { color: var(--pa-you); border-style: solid; background: var(--pa-you-soft); }

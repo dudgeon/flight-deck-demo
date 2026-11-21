@@ -99,6 +99,15 @@ A workflow skill keeps these true with `pa flow --pause --note`, `--resume`,
 `--stop` and `--state`; `pa runs` lists them. A file without `"state"` is read
 as working, or finished when `current` is past the last step.
 
+A project's meaning is a file, `projects/<slug>.json`: `"name"`, `"goal"`,
+`"area"`, `"team"`, `"state"` (`shaping`, `in-delivery`, `shipped`,
+`slipped`, `paused` or `stopped`) and `"state_note"`, written with
+`pa project`. A dataset names its project in a top-level `"project"`. A
+record's links to other projects are `"links": [{"type", "project"}]` with
+type `handed-to`, `started` or `relies-on`, written with `pa link`; views get
+the linked projects' cards as `projects` in their data and draw a chip.
+`GET /v1/slim/projects/connections?project=<name>` groups them for a page.
+
 A run started in a thread by a director also carries `"director"` (the
 director's session), `"brief"` (the brief file) and `"reports"`: the lines
 the thread sent with `pa report`, each `{"at", "kind", "step", "text"}` with

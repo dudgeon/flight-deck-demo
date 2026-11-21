@@ -178,14 +178,15 @@ decided but nothing is built yet.
 | D-94 | One mode has the floor at a time, with a way back | Geoff | Decided, not built |
 | D-95 | Any record can have its own thread | Geoff | Decided, not built |
 | D-96 | In-flight work shows in an "In flight" section on the project page | Geoff | Built |
-| D-97 | A project is one in-market goal inside a lasting area | Geoff | Decided, not built |
+| D-97 | A project is one in-market goal inside a lasting area | Geoff | Built in part: goal, area and state on the project page; no area page yet |
 | D-98 | The intent graph's detail is held until it blocks something | Geoff | Decided, not built |
 | D-99 | The smaller calls stand (every workflow makes a mode, no mode color, and so on) | Claude, accepted by Geoff | Decided, not built |
 | D-116 | The director shows a mode through a direct line to its thread; Aviator is not in the path | Geoff | Built, not yet flown live |
 | D-117 | Stepping into a thread puts it in place of the chat, the director folded to a bar, the canvas kept | Geoff | Built |
 | D-118 | A thread reports milestones, progress, blockers and state, at its own discretion, never everything | Geoff | Built (`pa report`), not yet flown with a live agent |
-| D-119 | A project's connections: a chip on the linked item and a Connections card on the project page | Geoff | Decided, not built |
+| D-119 | A project's connections: a chip on the linked item and a Connections card on the project page | Geoff | Built |
 | D-120 | Routing is modular: each workflow carries its own routing, stage and persona; Aviator reads them with `pa workflows` (PR 34) | Geoff asked, Claude chose | Decided, not built |
+| D-121 | A project is a file (`projects/<slug>.json`); a link is one line on its record, read both ways | Claude | Built |
 
 
 ## Backfilled (decided earlier, logged on 21 Nov)

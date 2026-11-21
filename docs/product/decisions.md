@@ -643,6 +643,20 @@ the Hangar by people who should not have to touch the director, and the
 production team will add more; a hard-coded list would drift the first time
 one is added. See [director-coordination.md](director-coordination.md).*
 
+**D-121 · 2026-11-21 · Claude.** What a project is lives in a small file of
+our own, `projects/<slug>.json` in the workspace: its name, goal, area, team,
+state and a few words on the state. A link is one line on the record it
+hangs from (`"links": [{"type", "project"}]`), a dataset names the project it
+belongs to, and three types are stored: `handed-to`, `started` and
+`relies-on`. The far end is never stored; it is read from the same line. A
+project file may describe a project that is not in this app, such as another
+team's. `pa project` and `pa link` write them. *Upstream's project table is
+left alone so the production team can follow upstream; one line per link is
+what D-119 asked for and cannot fall out of step with itself; and files
+assembled on request work from a ZIP and are easy to replace with a service
+when the intent graph is designed (D-98). Another team's project has to be
+describable, because that is exactly Geoff's example in D-97.*
+
 ## Backfilled
 
 Decisions Geoff made on 20 and 21 November that were acted on but never
