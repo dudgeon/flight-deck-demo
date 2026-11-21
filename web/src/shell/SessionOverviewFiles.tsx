@@ -251,6 +251,8 @@ export interface WorkflowProgress {
   current: number;
   note: string;
   counts: { done: number; total: number; noun: string; label: string; waiting: number } | null;
+  /** Ids of the participants this workflow may call; ``null`` when it does not say. */
+  participants: string[] | null;
 }
 
 /**
@@ -287,6 +289,9 @@ export function parseWorkflowProgress(path: string, text: string): WorkflowProgr
     steps,
     current: Math.min(steps.length + 1, Math.max(1, count(data.current) || 1)),
     note: label(data.note),
+    participants: Array.isArray(data.participants)
+      ? data.participants.filter((id): id is string => typeof id === "string")
+      : null,
     counts:
       rawCounts && count(rawCounts.total) > 0
         ? {
@@ -461,8 +466,17 @@ export function callMessage(entry: RosterEntry): string {
 
 /** Other agents and people the agent can call into this conversation. */
 function Roster({ sessionId }: { sessionId: string }) {
-  const roster = useRoster(sessionId);
-  if (roster.length === 0) return null;
+  const everyone = useRoster(sessionId);
+  // A workflow can name who may take part in it. While one that does is under way,
+  // the list shows those people; the rest of the roster is one click away.
+  const limits = useWorkflows(sessionId)
+    .map((flow) => flow.participants)
+    .filter((ids): ids is string[] => ids !== null);
+  const eligible = limits.length > 0 ? new Set(limits.flat()) : null;
+  const [showAll, setShowAll] = useState(false);
+  if (everyone.length === 0) return null;
+  const roster = eligible && !showAll ? everyone.filter((entry) => eligible.has(entry.id)) : everyone;
+  const others = everyone.length - roster.length;
   const call = (entry: RosterEntry) => {
     const detail: ArtifactPromptDetail = { text: callMessage(entry) };
     window.dispatchEvent(new CustomEvent(ARTIFACT_PROMPT_EVENT, { detail }));
@@ -495,6 +509,15 @@ function Roster({ sessionId }: { sessionId: string }) {
           </li>
         ))}
       </ul>
+      {eligible && (others > 0 || showAll) && (
+        <button
+          type="button"
+          className="cursor-pointer self-start rounded px-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+          onClick={() => setShowAll((value) => !value)}
+        >
+          {showAll ? "Show this workflow's only" : `${others} more on the roster`}
+        </button>
+      )}
     </Section>
   );
 }

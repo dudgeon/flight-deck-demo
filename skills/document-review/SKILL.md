@@ -61,7 +61,7 @@ The steps: 1 first read, 2 call in others, 3 their reviews, 4 the user's decisio
 
 ## 3. Ask who else should look
 
-Run `$PA who`. If the user already named people, call them. Otherwise suggest
+Run `$PA who --scenario SKILL_DIR` for who is eligible for this workflow. If the user already named people, call them. Otherwise suggest
 the participants whose `call for` fits the document and ask, in one line,
 whether to call them. Do not call anyone the user has not agreed to.
 

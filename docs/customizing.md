@@ -182,7 +182,8 @@ with internet, and commit `vendor/wheels/`.
 ## Structured workflows (scenarios)
 
 A scenario is a skill folder that also carries a dataset shape, view specs,
-invented fixture data and a click-through script. See `skills/scenario-builder`
+invented fixture data and a click-through script (`script.md`, a markdown
+screenplay described in `skills/view-kit/references/script.md`). See `skills/scenario-builder`
 for how to make one, `skills/view-kit` for the views and the `pa` command, and
 `skills/prd-to-requirements` for a worked example. To see one without starting
 the app:
@@ -200,9 +201,11 @@ The Session panel (Outputs, Context, People and agents) is
 
 ### Other participants
 
-`workspace/participants/` is the roster of agents and people the session's
-agent can call into a conversation. Add a file to add someone; the format is
-at the end of `skills/participants/SKILL.md`. `backing: session` plays them in
+`workspace/participants/` is the one roster of agents and people the session's
+agent can call into a conversation. Add a file to add someone, or ask the
+agent to; `workspace/participants/README.md` is the guide for people and the
+`participants` skill is the guide for the agent. A scenario narrows the roster
+by listing ids under `participants` in its `scenario.json`. `backing: session` plays them in
 a background session from their brief, `backing: script` answers from text in
 the file. Their turns are drawn by `web/src/components/chat/ParticipantTurn.tsx`
 from a fenced block described in `web/src/lib/participantTurn.ts`.

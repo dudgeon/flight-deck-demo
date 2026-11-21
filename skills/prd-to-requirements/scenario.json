@@ -10,7 +10,7 @@
  "views": { "scope": "views/scope-form.json", "catalog": "views/catalog.json", "summary": "views/summary.json" },
  "work_products": [ { "name": "Requirements catalog", "view": "catalog", "out": "artifacts/{slug}-requirements.html" } ],
  "fixtures": { "dataset": "fixtures/allowances.json", "document": "fixtures/allowances-prd.md" },
- "script": "script.json",
+ "script": "script.md",
  "launchers": [ { "label": "Catalog requirements", "on": "markdown", "prompt": "Catalog the requirements in {path}." } ],
  "next": ["requirements-to-dependencies"]
 }

@@ -24,7 +24,7 @@ skills/<scenario-name>/
   schemas/records.json  the record types this scenario reads and adds
   views/*.json        view specs (see the view-kit skill)
   fixtures/           an invented dataset in its finished state, plus any documents
-  script.json         the click-through: who says what, which view appears, where it waits
+  script.md           the click-through, a markdown screenplay: who says what, which view appears, where it waits
   references/         briefs for sub-agents, if it uses them
 ```
 
@@ -79,18 +79,15 @@ Do not ask about field names, colors or layout. Propose them and show them.
    that says which records count and which statuses mean done. Have `SKILL.md`
    call `$PA flow` at each stage, as the reference scenarios do, so the
    Session panel shows where the work is.
-6. Write `script.json`. Step kinds: `pm` and `agent` (chat lines), `task` (the
-   progress line), `doc` (open a document), `canvas` and `widget` (show a
-   view), `reveal`, `status`, `restore` and `patch` (make data appear or
-   change as if the agent did it), `await` with a `hint` (wait for the person
-   to try something), `apply` (save their edits). Keep it under twenty steps.
-   When other participants take part (a `participants/` folder in the
-   scenario, see the `participants` skill and `skills/document-review`):
-   `call` with `by` and `ask` (someone joins, as a foldable block), `from`
-   with `says` (their turn; add `widget` for a view they put in the chat, or
-   `canvas` for one they open), `end_call` (they leave, with a one-line
-   result), `comment` (`{doc, on, by, text}` marks a passage of a document;
-   `{doc, resolve}` settles it) and `tab` (bring a canvas tab to the front).
+6. Write `script.md`, the screenplay for the preview. It is plain markdown:
+   `**You:**` and `**Aviator:**` lines for the chat, and bracketed directions
+   such as `[show catalog]`, `[reveal R-01, R-02]` and `[wait]` for everything
+   else. The whole vocabulary is in the view-kit skill's
+   `references/script.md`. Keep it under about thirty steps.
+   If other agents or people take part, list their ids under `participants`
+   in `scenario.json`. They must be on the roster (the `participants` skill
+   explains how to add one). Then they can speak in the script by name, be
+   called and leave. `skills/document-review` is the example.
 7. Check and preview:
 
 ```bash

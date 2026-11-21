@@ -1,6 +1,6 @@
 ---
 name: participants
-description: Bring another agent or person into the conversation and show what they say under their own name. Use when the user asks to check in with, call, ask, loop in or get a view from someone else (for example "check in with Mara from design and the risk agent"), asks who is available, or when a skill tells you to call a participant.
+description: Bring another agent or person into the conversation and show what they say under their own name, and manage the roster of who can be called. Use when the user asks to check in with, call, ask, loop in or get a view from someone else (for example "check in with Mara from design and the risk agent"), asks who is available, asks to add, change or remove a participant, persona, stakeholder or platform agent, or when a skill tells you to call a participant.
 ---
 
 # Participants
@@ -23,6 +23,7 @@ PA="python3 <this skill's folder>/../view-kit/scripts/pa.py"
 
 ```bash
 $PA who                 # the roster: id, name, kind, role, what to call them for
+$PA who --scenario DIR  # only those eligible for a workflow (see "Who is eligible")
 $PA who mara            # one participant, by id or part of a name or role
 ```
 
@@ -120,26 +121,52 @@ session open so the user can come back to them; do not close it unless asked.
 - If the user pushes back on something a participant raised, send the push
   back to that participant and pass on the answer.
 
-## Adding a participant
+## Who is eligible
 
-One file per participant, `participants/<id>.md`:
+`participants/` is the one roster for the whole workspace. A demo or a session
+can narrow it:
 
-```
----
-name: Mara Okafor
-kind: person            # agent or person
-role: Design lead, Cards
-initials: MO
-stand_in: true          # required for a person played by an agent
-backing: session        # session or script
-call_for: the customer's experience, wording, flows
----
-The brief: who they are, what they care about, how they talk.
-```
+- **A workflow.** A scenario's `scenario.json` may list `participants`, the ids
+  that may take part in it. While you are running that workflow, use
+  `$PA who --scenario <scenario folder>` instead of `$PA who`.
+- **A session.** If the user's opening message names who is available
+  ("Participants for this session: risk-review, mara-okafor"), that is the
+  list for the session.
+- Otherwise everyone on the roster is eligible.
 
-`pa check <scenario>` checks the files of a scenario's own `participants/`
-folder. To use a scenario's participants in the workspace, copy them into
-`participants/` if files with those names are not already there.
+If the user asks for someone who is on the roster but not eligible here, say
+so and ask whether to call them anyway. Their answer decides.
+
+## Adding or changing a participant
+
+Use this when the user asks to add a person, an agent, a platform or a persona
+to the roster, or to change one. The files are plain markdown, so the user can
+also edit them by hand; `participants/README.md` explains the format to people.
+
+1. Ask only for what you do not have: their name; whether they are an agent
+   or a real person; their role; what they should be called for; and whether
+   they answer from a brief (`session`) or from fixed lines (`script`). For a
+   real person, an agent always stands in, and you need notes on what they
+   care about and how they talk. Never write a brief for a real person from
+   your own guesses: use what the user gives you, and say what you assumed.
+2. Copy `participants/_template.md` to `participants/<id>.md`. The id is the
+   name in lower case with hyphens.
+3. Fill in the header and the body:
+   - `backing: session`: the body is the brief. Who they are, what they look
+     for, how they work, how they talk. A page at most. Write it to them
+     ("You are...").
+   - `backing: script`: one or two lines on who they are, then `## Script`
+     with a `### <kind of question>` heading above each answer, and a last
+     entry for anything else. Answers are passed on word for word, so write
+     them as that participant would say them.
+4. Run `$PA who --check`, fix what it reports, then `$PA who <id>` and show the
+   user the result in two lines.
+5. To make them eligible for a workflow that lists its participants, add
+   their id to `participants` in that scenario's `scenario.json`, and run
+   `$PA check <scenario folder>`.
+
+To retire someone, delete their file and remove their id from any scenario
+that lists it.
 
 ## Without Omnigent
 

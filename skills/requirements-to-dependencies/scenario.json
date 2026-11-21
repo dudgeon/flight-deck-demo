@@ -13,7 +13,7 @@
  "views": { "board": "views/board.json", "summary": "views/summary.json", "review": "views/review-card.json" },
  "work_products": [ { "name": "Dependency board", "view": "board", "out": "artifacts/{slug}-dependencies.html" } ],
  "fixtures": { "dataset": "fixtures/allowances.json", "platform": "fixtures/platform-map.md" },
- "script": "script.json",
+ "script": "script.md",
  "launchers": [ { "label": "Map dependencies", "on": "dataset", "prompt": "Map the platform dependencies for the requirements in {path}." } ],
  "needs": ["prd-to-requirements"],
  "next": []

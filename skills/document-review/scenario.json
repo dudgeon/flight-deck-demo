@@ -9,8 +9,8 @@
  "schemas": "schemas/records.json",
  "views": { "findings": "views/findings.json", "who": "views/who-form.json", "question": "views/consent-question.json", "summary": "views/summary.json" },
  "work_products": [ { "name": "Review findings", "view": "findings", "out": "artifacts/{slug}-review.html" } ],
- "participants": "participants",
+ "participants": ["risk-review", "mara-okafor"],
  "fixtures": { "dataset": "fixtures/allowances-review.json", "document": "fixtures/allowances-prd.md" },
- "script": "script.json",
+ "script": "script.md",
  "launchers": [ { "label": "Review with others", "on": "markdown", "prompt": "Review {path} and call in whoever should look at it." } ]
 }
