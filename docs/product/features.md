@@ -319,7 +319,7 @@ values. When a corporate palette replaces ours, swap the values but keep the
 meanings, in particular one hue reserved for the person's own marks and red
 only for failures (decisions D-48 to D-50).
 
-## The Hangar (builder mode): look-around version built
+## The Hangar (builder mode): look-around and person builder built
 
 **Intent.** Defining people, workflows, views and scenarios should happen in
 the app, by product managers, without being able to break what others use.
@@ -337,10 +337,27 @@ looks when flying (a real participant turn, views and templates drawn over
 sample data, the scenario player) beside what it is made of, with every "uses"
 and "used in" as a link. A hover-only wrench on participant turns, the
 workflow card and Library cards jumps to the same thing in the Hangar (D-51).
-Nothing in the Hangar writes a file yet: drafts, trial and publish are slice 2.
+
+**Person builder (slice 2).** People and agents are the first thing you can
+build. "New person or agent", Edit, Duplicate and Remove each start a draft
+(a copy under `workspace/.hangar/`, D-56) and, for building, open a session in
+the Hangar project with the build-person skill, which walks five steps: who
+they are, how they answer, where they can be called, try them, publish. The
+draft page shows the turn as people will see it, every check, who is affected
+and a line diff against the live file. Publish stays disabled while a check
+fails, asks for one line on what changed, and keeps the replaced version.
+Removing someone is blocked while any workflow or starter still uses them.
+History lists every kept version with its note and a diff, and Restore goes
+back through the same gate (D-57). The same moves exist for agents and scripts
+as `pa draft`, `pa publish`, `pa history` and `pa uses`. *Why:* PMs can shape
+the cast without editing files and without breaking a workflow someone else is
+flying. Not yet: a separate trial strip (trying uses a builder session, D-58),
+and adding a person to a workflow's cast from the builder (the skill says
+which `scenario.json` to change; workflow building is slice 3).
 
 **Where.** Design in `hangar.md`. Server: `omnigent/server/routes/slim_hangar.py`
-(`GET /v1/slim/hangar`, plus rendered views, templates and scenario players).
+(`GET /v1/slim/hangar`, rendered views, templates and scenario players, and the
+draft, publish, history and restore routes). Builder skill: `skills/build-person/`.
 Web: `web/src/hangar/`. Colors: the `build` and `hangar-*` tokens.
 
 ## Views in the chat (asks in chat, work in canvas)

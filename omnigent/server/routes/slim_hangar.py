@@ -1,4 +1,4 @@
-"""omnigent-slim Hangar catalog: what people can fly, read-only (``/v1/slim/hangar``).
+"""omnigent-slim Hangar: what people can fly, and building people (``/v1/slim/hangar``).
 
 The Hangar is Product Aviator's builder mode (docs/product/hangar.md, D-39 to
 D-47). This first slice only looks: it lists the things other people fly and
@@ -16,7 +16,9 @@ how they refer to each other, all read from files that already exist:
 
 Checks and rendering come from the view kit's own ``pa`` command
 (``skills/view-kit/scripts/pa.py``), imported, so the Hangar can never disagree
-with ``pa check``. Every file is read on each request; nothing is written.
+with ``pa check``. Every file is read on each request. The only writes are
+drafts, publish and restore of people (slice 2), all done by ``pa`` under
+``<workspace>/.hangar/`` and ``<workspace>/participants/``.
 """
 
 from __future__ import annotations
@@ -343,6 +345,13 @@ def load_hangar() -> dict[str, Any]:
     pa = _pa()
     roster = _roster(pa)
     people = [_person_entry(pa, person) for person in roster.values()]
+    for person in people:
+        live = workspace_dir() / "participants" / f"{person['id']}.md"
+        person["text"] = _read_text(live) or ""
+        person["history"] = [
+            {k: v for k, v in version.items() if k != "text"}
+            for version in pa.person_history(workspace_dir(), person["id"])
+        ]
     by_person = {p["id"]: p for p in people}
     skills_root = slim_skills_dir()
     workflows = []
@@ -444,7 +453,67 @@ def load_hangar() -> dict[str, Any]:
         "skills": skills,
         "starters": starters,
         "frameworks": frameworks,
+        "drafts": _drafts(pa),
     }
+
+
+# ------------------------------------------------------------------ building
+#
+# Slice 2: people can be built. Every change is a draft under
+# ``<workspace>/.hangar/drafts/``; the work itself is done by ``pa``
+# (``draft``, ``publish``, ``history``), the same code the build-person skill
+# runs in a guided session, so the app and the agent can never disagree.
+
+
+def _drafts(pa: ModuleType) -> list[dict[str, Any]]:
+    try:
+        return pa.list_drafts(workspace_dir(), slim_skills_dir())
+    except Exception:
+        _logger.warning("could not read the Hangar drafts", exc_info=True)
+        return []
+
+
+def _pa_call(fn: Any, *args: Any, **kwargs: Any) -> Any:
+    pa = _pa()
+    try:
+        return fn(*args, **kwargs)
+    except pa.PaError as err:
+        raise HTTPException(status_code=409, detail=str(err)) from err
+
+
+def draft_detail(pid: str) -> dict[str, Any]:
+    pa = _pa()
+    return _pa_call(pa.draft_info, workspace_dir(), pid, slim_skills_dir())
+
+
+def start_person_draft(pid: str, remove: bool = False) -> dict[str, Any]:
+    pa = _pa()
+    _pa_call(pa.start_draft, workspace_dir(), pid=pid, remove=remove)
+    return draft_detail(pid)
+
+
+def publish_person(pid: str, summary: str) -> dict[str, Any]:
+    pa = _pa()
+    return _pa_call(pa.publish_draft, workspace_dir(), pid, summary, slim_skills_dir())
+
+
+def discard_person_draft(pid: str) -> dict[str, Any]:
+    pa = _pa()
+    _pa_call(pa.discard_draft, workspace_dir(), pid)
+    return {"id": pid, "discarded": True}
+
+
+def restore_person(pid: str, version: str) -> dict[str, Any]:
+    pa = _pa()
+    return _pa_call(pa.restore_version, workspace_dir(), pid, version, slim_skills_dir())
+
+
+def person_version(pid: str, version: str) -> dict[str, Any]:
+    pa = _pa()
+    for entry in _pa_call(pa.person_history, workspace_dir(), pid):
+        if entry["version"] == version:
+            return entry
+    raise HTTPException(status_code=404, detail="no such version")
 
 
 # --------------------------------------------------------------- rendering
@@ -516,7 +585,7 @@ def read_template(template: str) -> str:
 
 
 def create_slim_hangar_router(*, auth_provider: AuthProvider | None = None) -> APIRouter:
-    """Build the read-only Hangar routes under ``/v1/slim/hangar``."""
+    """Build the Hangar routes under ``/v1/slim/hangar``: the catalog, and drafts of people."""
     router = APIRouter()
 
     @router.get("/slim/hangar")
@@ -538,5 +607,39 @@ def create_slim_hangar_router(*, auth_provider: AuthProvider | None = None) -> A
     async def get_template(request: Request, template: str) -> HTMLResponse:
         require_user(request, auth_provider)
         return HTMLResponse(read_template(template))
+
+    @router.get("/slim/hangar/drafts/person/{pid}")
+    async def get_draft(request: Request, pid: str) -> dict[str, Any]:
+        require_user(request, auth_provider)
+        return draft_detail(pid)
+
+    @router.post("/slim/hangar/drafts/person/{pid}")
+    async def post_draft(
+        request: Request, pid: str, body: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        require_user(request, auth_provider)
+        return start_person_draft(pid, remove=bool((body or {}).get("remove")))
+
+    @router.delete("/slim/hangar/drafts/person/{pid}")
+    async def delete_draft(request: Request, pid: str) -> dict[str, Any]:
+        require_user(request, auth_provider)
+        return discard_person_draft(pid)
+
+    @router.post("/slim/hangar/drafts/person/{pid}/publish")
+    async def post_publish(
+        request: Request, pid: str, body: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        require_user(request, auth_provider)
+        return publish_person(pid, str((body or {}).get("summary") or "")[:200])
+
+    @router.get("/slim/hangar/history/person/{pid}/{version}")
+    async def get_version(request: Request, pid: str, version: str) -> dict[str, Any]:
+        require_user(request, auth_provider)
+        return person_version(pid, version)
+
+    @router.post("/slim/hangar/history/person/{pid}/{version}/restore")
+    async def post_restore(request: Request, pid: str, version: str) -> dict[str, Any]:
+        require_user(request, auth_provider)
+        return restore_person(pid, version)
 
     return router

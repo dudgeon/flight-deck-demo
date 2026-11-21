@@ -290,6 +290,28 @@ attention. First form, as he suggested: while a view in the chat is waiting
 for an answer, the canvas goes grey and returns when pointed at. This is an
 exploration to react to, not a settled design.
 
+**D-56 · 2026-11-21 · Claude.** Hangar drafts and the kept versions live in
+the workspace under `.hangar/` (`drafts/people/<id>.md`, `history/people/<id>/`),
+which is gitignored, and the live roster file is only ever replaced by
+`pa publish`. *A draft is a plain copy of the file it will become, so the same
+`pa` checks run on it, and nothing half-made can be picked up by a session.*
+
+**D-57 · 2026-11-21 · Claude.** Restoring an old version is a publish: it
+turns the old version into a draft and sends it through the same checks and
+used-by guard, and the version it replaces is kept too. *An old version may
+no longer fit what exists now; "always a way back" must not become a way
+around the gate.*
+
+**D-58 · 2026-11-21 · Claude.** For slice 2, "Try them" opens a builder
+session that loads the draft with `pa who --dir .hangar/drafts/people` and asks
+it the user's question, rather than a separate striped trial strip. *It uses
+the real participant turn, so what you try is what people will meet; the
+dedicated trial strip from the mockup can come later without changing files.*
+
+**D-59 · 2026-11-21 · Claude.** Builder sessions start in their own "Hangar"
+project (created at startup next to Workspace), so building never mixes into
+the flying session list. *Matches D-39's two modes without a second app.*
+
 ## Open
 
 - Progressive complexity (from D-54): how a workflow shows less at first and

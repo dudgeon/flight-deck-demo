@@ -458,3 +458,80 @@
   padding: 30px;
   text-align: center;
 }
+
+/* Slice 2: building. */
+.hangar .hangar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--pa-line-strong);
+  background: var(--pa-surface);
+  color: var(--pa-ink);
+  border-radius: var(--pa-r);
+  padding: 4px 12px;
+  font: 500 13px var(--pa-font);
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.hangar .hangar-btn:hover {
+  border-color: var(--pa-build);
+}
+.hangar .hangar-btn.pri {
+  background: var(--pa-build);
+  border-color: var(--pa-build);
+  color: var(--pa-on-build);
+}
+.hangar .hangar-btn.quiet {
+  background: transparent;
+  border-color: transparent;
+  color: var(--pa-ink-3);
+}
+.hangar .hangar-btn.quiet:hover {
+  color: var(--pa-fail);
+  border-color: transparent;
+}
+.hangar .hangar-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.hangar .hangar-input {
+  border: 1px solid var(--pa-line-strong);
+  border-radius: var(--pa-r);
+  background: var(--pa-surface);
+  color: var(--pa-ink);
+  padding: 5px 9px;
+  font: inherit;
+}
+.hangar .card.draft {
+  border-style: dashed;
+  border-color: var(--pa-build);
+}
+.hangar .steps span.done {
+  background: var(--pa-ok-soft);
+  color: var(--pa-ok);
+}
+.hangar .steps span.now {
+  background: var(--pa-build);
+  color: var(--pa-on-build);
+  font-weight: 600;
+}
+.hangar .text.diff span {
+  display: block;
+}
+.hangar .text.diff .add {
+  background: var(--pa-ok-soft);
+  color: var(--pa-ok);
+}
+.hangar .text.diff .del {
+  background: var(--pa-fail-soft);
+  color: var(--pa-fail);
+  text-decoration: line-through;
+}
+.hangar button.link {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+}

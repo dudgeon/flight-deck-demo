@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hangarPath, participantSlug, unwrap } from "./hangarApi";
+import { hangarPath, lineDiff, participantSlug, unwrap } from "./hangarApi";
 
 describe("hangar helpers", () => {
   it("maps a chat turn's name to the roster id", () => {
@@ -32,5 +32,18 @@ describe("hangar helpers", () => {
         "[widget who] next line",
       ].join("\n"),
     );
+  });
+});
+
+describe("lineDiff", () => {
+  it("marks removed and added lines around what stayed", () => {
+    const rows = lineDiff("a\nrole: lead\nc", "a\nrole: director\nc\nd");
+    expect(rows.map((r) => `${r.op}:${r.text}`)).toEqual([
+      "same:a",
+      "del:role: lead",
+      "add:role: director",
+      "same:c",
+      "add:d",
+    ]);
   });
 });
