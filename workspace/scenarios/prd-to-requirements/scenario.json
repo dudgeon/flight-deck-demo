@@ -5,7 +5,8 @@
  "workflow": "prd-to-requirements",
  "fixtures": {
   "dataset": "fixtures/allowances.json",
-  "document": "fixtures/allowances-prd.md"
+  "document": "context/allowances-prd.md"
  },
- "script": "script.md"
+ "script": "script.md",
+ "opening": "Catalog the requirements in this PRD."
 }

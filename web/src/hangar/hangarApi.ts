@@ -147,8 +147,57 @@ export interface HangarScenario {
   cast: string[];
   fixtures: string[];
   opening?: string;
+  /** The flown demo of this scenario, when there is one. */
+  demo?: DemoInfo | null;
   history?: FolderVersion[];
   problems: string[];
+}
+
+/** omnigent-slim: a scenario flown as a demo (D-76): its folder and "◆ Demo" project. */
+export interface DemoInfo {
+  folder: string;
+  scenario: string;
+  title: string;
+  opening: string;
+  turn: number;
+  turns: number;
+  started?: string;
+  finished: boolean;
+  project: string;
+}
+
+export interface FlyResult {
+  state: "exists" | "created" | "kept";
+  demo: DemoInfo;
+  project?: { id: string | null; name: string };
+  prompt?: string;
+}
+
+/** The one route that flies a scenario, used by the Hangar and the Library alike. */
+export const flyPath = (sid: string) => `/v1/slim/scenarios/${encodeURIComponent(sid)}/fly`;
+
+/** Where to land after flying: a new session in the demo's project, its opening line in the composer. */
+export function demoSessionLink(result: FlyResult): string {
+  const params = new URLSearchParams({ project: result.project?.name ?? result.demo.project });
+  if (result.prompt) params.set("prompt", result.prompt);
+  return `/?${params.toString()}`;
+}
+
+/**
+ * Fly a scenario. With no `mode`, an existing demo comes back as `state: "exists"`
+ * so the caller can offer "Reset to the start" or "Keep going".
+ */
+export function useFlyScenario() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, mode }: { id: string; mode?: "reset" | "keep" }) =>
+      send(flyPath(id), "POST", mode ? { mode } : {}) as Promise<FlyResult>,
+    onSuccess: (result) => {
+      if (result.state === "exists") return;
+      void client.invalidateQueries({ queryKey: ["slim-hangar"] });
+      void client.invalidateQueries({ queryKey: ["projects"] });
+    },
+  });
 }
 
 export interface FolderVersion {

@@ -146,12 +146,12 @@ feature notes of the time and marked *(reconstructed)*.
 
 | D | Decision | Who | Status |
 |---|---|---|---|
-| D-76 | Scenario you build, demo you fly; one "◆ Demo" project per demo | Geoff | Pending, PR 17 |
-| D-77 | Canned or live is set per turn (`[live]`); `pa demo next` | Geoff | Pending, PR 17 |
-| D-78 | One fly route and `FlyButton`, from the Hangar and the Library | Geoff | Pending, PR 17 |
-| D-79 | Scenario folder adds `context/`, `cast/`, `opening` | Geoff | Pending, PR 17 |
-| D-80 | Workflow skills never copy demo material themselves | Geoff | Pending, PR 17 |
-| D-81 | Flying again: Reset to the start or Keep going | Geoff | Pending, PR 17 |
+| D-76 | Scenario you build, demo you fly; one "◆ Demo" project per demo | Geoff | Built (PR 17) |
+| D-77 | Canned or live is set per turn (`[live]`); `pa demo next` | Geoff | Built (PR 17) |
+| D-78 | One fly route and `FlyButton`, from the Hangar and the Library | Geoff | Built (PR 17) |
+| D-79 | Scenario folder adds `context/`, `cast/`, `opening` | Geoff | Built (PR 17) |
+| D-80 | Workflow skills never copy demo material themselves | Geoff | Built (PR 17) |
+| D-81 | Flying again: Reset to the start or Keep going | Geoff | Built (PR 17) |
 | D-82 | Keep the Library; every card generated from metadata | Geoff | Pending, PR 19 |
 | D-83 | Top half: four to six featured skills (`library` block) | Geoff | Pending, PR 19 |
 | D-84 | Skill card: unnumbered steps, a short form, Start | Geoff | Pending, PR 19 |

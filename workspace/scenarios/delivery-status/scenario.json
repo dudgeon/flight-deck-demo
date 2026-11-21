@@ -12,5 +12,6 @@
   "dataset": "fixtures/release-dates-delivery.json",
   "document": "fixtures/status-update.md"
  },
- "script": "script.md"
+ "script": "script.md",
+ "opening": "It is Thursday. Update the status on release dates for held payments, steering is tomorrow."
 }

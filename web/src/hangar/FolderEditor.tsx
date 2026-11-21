@@ -382,7 +382,10 @@ function FolderEditor({ hangar, draft }: { hangar: Hangar; draft: FolderDraft })
               </span>
               <span className="sp" />
               {draft.kind === "scenario" && (
-                <span className="lab">**Name:** speaks · [show view] · [wait]</span>
+                <span className="lab">
+                  **Name:** speaks · [show view] · [wait] · [live] under a line: a real agent
+                  answers it when flown
+                </span>
               )}
             </div>
             <textarea

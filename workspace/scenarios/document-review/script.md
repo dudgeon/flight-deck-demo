@@ -72,6 +72,7 @@ A scripted run with invented data. Other participants are scripted too. Press Ne
 [wait]
 
 **Mara Okafor:** That works. I would cut 5.4 from launch then, and I have noted it on F-07.
+[live: Mara answers what the user actually said about the two alerts]
 [task: none]
 [Mara Okafor leaves: 3 findings, 1 High. Suggests cutting 5.4 from launch.]
 

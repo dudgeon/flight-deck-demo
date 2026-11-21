@@ -22,9 +22,9 @@ session's workspace folder. `SKILL_DIR` means this skill's folder.
 
 ## 1. Find the document
 
-Use the file the user named. Otherwise look in `context/` for a PRD. If there
-is none and the user wants a demo, copy the invented one:
-`mkdir -p context && cp scenarios/prd-to-requirements/fixtures/allowances-prd.md context/`.
+Use the file the user named. Otherwise look in `context/` for a PRD. Never copy files out of `scenarios/` yourself. A demo is flown from the
+Hangar ("Fly this"), which sets up its folder with the documents and data
+already in place. If there is nothing to work from, ask the user for it.
 Pick a short kebab-case slug for the initiative, e.g. `allowances`.
 
 ## 2. Ask how to catalog it (skip if the user already said)

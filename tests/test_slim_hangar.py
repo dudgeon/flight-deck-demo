@@ -328,6 +328,82 @@ def test_published_config_travels_with_the_repo() -> None:
     assert ignored("workspace/.hangar/drafts/people/someone.md")
 
 
+class _Projects:
+    """A stand-in project store: enough of ProjectStore for the demo route."""
+
+    def __init__(self) -> None:
+        from types import SimpleNamespace
+
+        self._ns = SimpleNamespace
+        self.rows = [
+            SimpleNamespace(id="w1", name="Workspace", config={"host_id": "h1", "agent_id": "a1"})
+        ]
+
+    def list(self, *, user_id):  # type: ignore[no-untyped-def]
+        return list(self.rows)
+
+    def create(self, project_id, name, user_id, config):  # type: ignore[no-untyped-def]
+        row = self._ns(id=project_id, name=name, config=config)
+        self.rows.append(row)
+        return row
+
+    def update(self, project_id, *, user_id, config=None):  # type: ignore[no-untyped-def]
+        row = next(r for r in self.rows if r.id == project_id)
+        row.config = config
+        return row
+
+
+def test_fly_a_scenario_as_a_demo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    ws = tmp_path / "ws"
+    shutil.copytree(REPO / "workspace", ws, ignore=shutil.ignore_patterns("demos", ".hangar"))
+    monkeypatch.setenv("OMNIGENT_SLIM_WORKSPACE", str(ws))
+    store = _Projects()
+
+    first = slim_hangar.fly_scenario("document-review", None, store, None)
+    assert first["state"] == "created"
+    assert first["prompt"] == "I have finished the Allowances PRD. Help me review it."
+    name = first["project"]["name"]
+    assert name == "◆ Demo · Allowances PRD review"
+    demo = ws / "demos" / "document-review"
+    project = next(r for r in store.rows if r.name == name)
+    # Settings follow the Workspace project; the folder is the demo's own.
+    assert project.config["workspace"] == str(demo) and project.config["host_id"] == "h1"
+    # Story documents, a starting dataset with the hidden records held back, and primed cast.
+    assert (demo / "context" / "allowances-prd.md").is_file()
+    data = (demo / "data" / "allowances-review.json").read_text()
+    assert "F-01" not in data
+    assert "## In this story" in (demo / "participants" / "mara-okafor.md").read_text()
+    assert "demo next" in (demo / "CLAUDE.md").read_text()
+
+    # The agent plays it turn by turn; data changes are done for it.
+    pa = slim_hangar._pa()
+    turn1 = pa.demo_next(demo)
+    assert "Say, word for word" in turn1 and "review comment artifacts/allowances-prd.md" in turn1
+    turn2 = pa.demo_next(demo)
+    assert "Done for you: added F-08" in turn2 and "wait for the user" in turn2
+    while "LIVE:" not in (turn := pa.demo_next(demo)):
+        assert "script is over" not in turn
+    assert "Mara answers what the user actually said" in turn
+
+    # Flying again asks first; Keep going leaves the story where it is.
+    again = slim_hangar.fly_scenario("document-review", None, store, None)
+    assert again["state"] == "exists" and again["demo"]["turn"] > 2
+    kept = slim_hangar.fly_scenario("document-review", "keep", store, None)
+    assert kept["state"] == "kept" and kept["prompt"] == ""
+    reset = slim_hangar.fly_scenario("document-review", "reset", store, None)
+    assert reset["state"] == "created" and reset["demo"]["turn"] == 0
+    assert len([r for r in store.rows if r.name == name]) == 1
+    entry = next(s for s in slim_hangar.load_hangar()["scenarios"] if s["id"] == "document-review")
+    assert entry["demo"]["project"] == name
+
+
+def test_live_marks_only_follow_a_line() -> None:
+    pa = slim_hangar._pa()
+    script = pa.parse_script("**You:** Hi\n\n**Aviator:** Hello\n[live: greet them]\n", {})
+    assert script["steps"][1]["live"] == "greet them"
+    with pytest.raises(pa.PaError):
+        pa.parse_script("**You:** Hi\n[live]\n", {})
+
 def test_send_to_repo_commits_published_config_to_a_new_branch(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

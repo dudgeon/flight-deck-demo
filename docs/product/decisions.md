@@ -468,6 +468,46 @@ overview lists published files not yet committed. *Geoff: "config, like
 personas, harness skills, workflows, scenarios should all travel with the repo.
 user sessions don't need to but can."*
 
+**D-76 · 2026-11-21 · Geoff.** "Scenario you build, demo you fly." The Hangar
+shelf stays "Scenarios": a scenario is the thing you build (story, cast, data,
+screenplay). Flying one makes a demo: a project named "◆ Demo · <title>" with
+its own folder (`workspace/demos/<id>/`, not committed) and real sessions in
+it. Most demos are projects, so their sessions are listed together.
+
+**D-77 · 2026-11-21 · Geoff.** Scripting is set per turn, not per scenario. A
+flown demo plays each turn of the screenplay either canned (said word for word,
+the default) or live, where a real agent answers. A live turn is marked with
+`[live]` or `[live: what the turn is about]` under its Aviator or participant
+line; the written line stays as a guide, and "Play it" shows it as live. The
+agent in the demo steps through the script with `pa demo next`, which also does
+the data changes (revealing records, setting statuses) itself.
+
+**D-78 · 2026-11-21 · Geoff.** A demo is launched with "Fly this" on the
+scenario's Hangar page, and from the Library. Both call one route,
+`POST /v1/slim/scenarios/{id}/fly`, and the web UI's `FlyButton`. The Library
+lists demos from `scenario.json` and `workflow.json` (title, summary, cast,
+workflow), so those stay tidy. The Library's own design belongs to the Library
+redesign, not to this work.
+
+**D-79 · 2026-11-21 · Geoff.** A scenario folder holds `scenario.json` (with
+`opening`, the line the demo starts with), `fixtures/` (the dataset, and
+documents the work produces), `script.md`, `context/` (invented documents the
+story starts from, such as the Allowances PRD and the platform map, which moved
+out of `workspace/context/`) and `cast/<person>.md` (what each person knows in
+this story). Flying copies `context/` in, starts the dataset from the fixture
+with the records the script reveals held back, and appends each `cast/` note to
+that person's roster file in the demo under "In this story".
+
+**D-80 · 2026-11-21 · Geoff.** Workflow skills never copy demo material out of
+`scenarios/` themselves. A demo's documents and data are put in place by
+flying it; outside a demo the agent asks for what it needs.
+
+**D-81 · 2026-11-21 · Geoff.** Flying a scenario whose demo already exists
+offers "Reset to the start" (the folder is made again from the scenario as it
+is now) or "Keep going" (a new session in the same folder, the story where it
+was). A fresh demo's first session opens with the opening line in the
+composer, ready to send.
+
 **D-112 · 2026-11-21 · Geoff asked, Claude chose.** A workflow's widgets and
 views are shown and edited in the Hangar. The workflow page splits them into
 "Widgets · in the chat" and "Views · in the canvas"; a view's page and the

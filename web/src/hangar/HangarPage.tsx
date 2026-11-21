@@ -77,6 +77,7 @@ import {
   FolderHistory,
   NewScenarioButton,
 } from "./FolderEditor";
+import { FlyButton, demoNote } from "./FlyButton";
 import "./hangar.css";
 
 // ---------------------------------------------------------------- the frame
@@ -1239,6 +1240,15 @@ function ScenarioPage({ hangar }: { hangar: Hangar }) {
         )}
       </div>
       {scenario.summary && <p className="sub">{scenario.summary}</p>}
+      <div className="row flyrow">
+        <FlyButton scenarioId={scenario.id} demo={scenario.demo} disabled={broken} />
+        <span className="lab">{demoNote(scenario.demo)}</span>
+      </div>
+      {scenario.opening && (
+        <p className="lab">
+          Opening line: <q>{scenario.opening}</q>
+        </p>
+      )}
       <FolderActions hangar={hangar} kind="scenario" id={scenario.id} builtin={false} />
       <FolderHistory kind="scenario" id={scenario.id} versions={scenario.history ?? []} />
       <Section title="The player, as it runs in a demo">
@@ -1247,7 +1257,10 @@ function ScenarioPage({ hangar }: { hangar: Hangar }) {
           title={`${scenario.title} preview`}
           height={760}
         />
-        <p className="lab">Press Next to step through. Nothing reaches an agent.</p>
+        <p className="lab">
+          Press Next to step through. Nothing reaches an agent here; turns marked live are answered
+          for real when you fly it.
+        </p>
       </Section>
       <div className="halves" style={{ gridTemplateColumns: "minmax(0, 3fr) minmax(0, 2fr)" }}>
         <Section title="Screenplay · plain text">
