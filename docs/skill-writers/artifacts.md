@@ -97,6 +97,12 @@ Rules:
   "nothing is open in the canvas".
 - Don't use Claude in Chrome, computer use or any other browser for the
   canvas: they open a different copy of the page that the user can't see.
+- With the session open in several browser tabs, each tab is its own copy of
+  the page, so the tools use one of them: the tab where the canvas was opened
+  most recently while visible, or the one the user picked with "Use this tab".
+  The other tabs dim their canvas. When the tools move to another tab (the user
+  took over, or the active tab closed), the result carries a `note` saying so:
+  read the page again before relying on earlier state.
 - Screenshots are drawn inside the frame from the DOM (an SVG
   `foreignObject`), so they match the page closely but skip CSS pseudo-element
   content and cross-origin images. Chrome and Edge support it; if a browser
@@ -112,5 +118,7 @@ How it works: the runner sends each call through the server's action relay
 browser tools use, with `canvas_*` action names). The web UI tab showing that
 session's canvas claims it (`web/src/lib/canvasRelay.ts`) and posts it into the
 sandboxed frame, where the artifact bridge runs it
-(`web/src/lib/canvasFrameRuntime.ts`). Nothing leaves this machine and the frame
+(`web/src/lib/canvasFrameRuntime.ts`). The server keeps one active canvas tab
+per session (`POST /v1/sessions/<id>/canvas/viewer` heartbeats, take-overs and
+releases) and only that tab's claim succeeds. Nothing leaves this machine and the frame
 keeps its sandbox and Content Security Policy.

@@ -10,7 +10,12 @@
 // trust model.
 
 import { handleArtifactMessage, injectArtifactBridge } from "@/lib/artifactBridge";
-import { handleCanvasResult, registerCanvasFrame } from "@/lib/canvasRelay";
+import {
+  handleCanvasResult,
+  registerCanvasFrame,
+  takeCanvasForThisTab,
+  useCanvasViewerState,
+} from "@/lib/canvasRelay";
 import { createPortal } from "react-dom";
 import { ADD_COMMENT_BUTTON_CLASS_NAME } from "./addCommentButtonStyles";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -148,6 +153,8 @@ export function HtmlCommentViewer({
     if (!conversationId) return;
     return registerCanvasFrame(conversationId, () => iframeRef.current?.contentWindow, path);
   }, [conversationId, path]);
+  // omnigent-slim: another tab showing this session holds the canvas tools.
+  const canvasInactive = useCanvasViewerState(conversationId) === "inactive";
   const portRef = useRef<MessagePort | null>(null);
   const channelRef = useRef<MessageChannel | null>(null);
   const readyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -362,6 +369,24 @@ export function HtmlCommentViewer({
         <div className="h-full w-full" style={htmlPreviewZoomStyle(zoom)}>
           {preview}
         </div>
+        {canvasInactive && (
+          // omnigent-slim: dims and blocks this copy so it can't drift from the active one.
+          <div
+            data-testid="canvas-inactive"
+            className="absolute inset-0 z-10 flex items-center justify-center bg-background/70 backdrop-blur-[1px]"
+          >
+            <div className="mx-4 flex max-w-sm flex-col items-center gap-3 rounded-lg border border-border bg-popover px-5 py-4 text-center text-sm text-popover-foreground shadow-md">
+              <p>Claude is using this canvas in another tab. This copy may be out of date.</p>
+              <button
+                type="button"
+                className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                onClick={() => takeCanvasForThisTab(conversationId)}
+              >
+                Use this tab
+              </button>
+            </div>
+          </div>
+        )}
         <div
           role="status"
           data-testid="html-preview-zoom"
