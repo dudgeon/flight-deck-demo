@@ -1,15 +1,14 @@
 # Modes, runs, projects and the intent graph
 
-Status: **partly decided, nothing built.** Raised by Geoff on 2026-11-21. He
-answered the first walkthrough the same day
-(https://claude.ai/artifact/HRgpJURjcqasGSCmd3894d); those answers are D-89 to
-D-99 in [decisions.md](decisions.md) and are summarised under "Decided" below.
-Two of his answers asked for more design, which is the second walkthrough,
-https://claude.ai/artifact/YQcb4HDRGMnn6YW82uFNZd (answers in its database,
-collection `answers`): four questions, M-8 and M-12 to M-14, listed under
-"Open decisions". The sections "Proposed shape" and "What it would touch" were
-written before his answers and describe modes inside one chat; read them
-together with "The director model", which replaces that part.
+Status: **mostly decided; the first two slices are built.** Raised by Geoff on
+2026-11-21. He answered the first walkthrough the same day
+(https://claude.ai/artifact/HRgpJURjcqasGSCmd3894d): D-89 to D-99. He then
+answered three of the four questions in the second
+(https://claude.ai/artifact/YQcb4HDRGMnn6YW82uFNZd, answers in its database,
+collection `answers`): D-116 to D-118. One question, M-8, is still open. All
+are summarised under "Decided" below. The sections "Proposed shape" and "What
+it would touch" were written before his answers and describe modes inside one
+chat; read them together with "The director model", which replaces that part.
 
 ## What was asked
 
@@ -157,7 +156,10 @@ D-52) and can later be replaced by a service.
 | M-6 | Finding what is in flight | An "In flight" section on the project page. | D-96 |
 | M-7 | What a project is | A goal that ships, inside an area that lasts. Caveat: may need to be more graph-like; a requirement handed to another team becomes that team's project. | D-97 |
 | M-9 | Detail of the intent graph | Held until it blocks something. | D-98 |
-| M-8 | A project's relatives | Sent back: rethink in the light of M-7's caveat. | Open |
+| M-12 | How the director shows a mode | A direct line: the thread's questions appear in the director's chat inside the rail, and the person's messages go straight to the thread while it has the floor. | D-116 |
+| M-13 | Where a thread opens when you step in | In place of the chat, with the director folded to a bar and the canvas kept. Not the recommended tab: a side pane steals space from the canvas, and stepping in is a choice to focus. | D-117 |
+| M-14 | What a thread tells the director | Milestones, progress, blockers and state; the workflow's agent decides when and what, and never sends everything. | D-118 |
+| M-8 | A project's relatives | Sent back: rethink in the light of M-7's caveat. Asked again in round two; not answered yet. | Open |
 
 ## The director model (D-89)
 
@@ -215,25 +217,9 @@ the second walkthrough):
 ## Open decisions
 
 Put to Geoff with drawings at https://claude.ai/artifact/YQcb4HDRGMnn6YW82uFNZd.
-"Recommended" is the agent's recommendation, not a decision.
+"Recommended" is the agent's recommendation, not a decision. M-12 to M-14
+were answered there (D-116 to D-118); one remains.
 
-- **M-12 · How the director shows a mode.** A direct line: the thread's
-  questions appear in the director's chat inside the rail, and while it has
-  the floor the person's messages go straight to it, with `@aviator` or an
-  off-topic question answered by Aviator outside the rail (recommended; it
-  keeps D-90 to D-92 as chosen and puts no second agent in the path). Or a
-  live card per thread with the pending question answerable on it, and all
-  real conversation in the opened thread. Or Aviator relays every turn, as
-  for participants today. *The live card is the first slice of the
-  recommended option.*
-- **M-13 · Where a thread opens when the person steps in.** Beside the
-  director as a tab, expandable to full size, as upstream does (recommended);
-  as its own page with a trail back; or in place of the chat with the
-  director folded to a bar. *A tab shares the right-hand area with the
-  canvas.*
-- **M-14 · What a thread tells the director.** One line at each milestone
-  (step crossed, needs the person, blocked, finished), pointing at the files
-  (recommended); everything it says; or only the result.
 - **M-8 · A project's connections.** Reframed after D-97: a project lives in
   one area, but its other links are typed and hang from specific things
   (requirement R-07 *handed to* another team's project; this project *came
@@ -253,9 +239,10 @@ Put to Geoff with drawings at https://claude.ai/artifact/YQcb4HDRGMnn6YW82uFNZd.
    board, Resume, the sidebar count. **Built.**
 3. **Aviator as director**: a skill telling Aviator how to start a workflow
    in a thread, write the brief and read milestones; a live run card in the
-   director's chat. Needs M-14.
+   director's chat. Unblocked by D-118.
 4. **The direct line**: strip, rail and the thread's turns in the director's
-   chat. Needs M-12 and M-13.
+   chat, and stepping into a thread in place of the chat. Unblocked by D-116
+   and D-117.
 5. **Threads on items** (D-95). After step 3.
 6. **Projects with a goal** (D-97): a project names its goal and area; an
    area page; connections. Needs M-8.
