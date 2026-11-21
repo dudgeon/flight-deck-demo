@@ -1,0 +1,19 @@
+{
+ "view": "dependency-summary",
+ "layout": "summary",
+ "eyebrow": "Dependency mapping · where things stand",
+ "title": "{dataset.title}: dependencies at a glance",
+ "status_field": "explore_status",
+ "records": { "type": "requirement" },
+ "blocks": [
+  { "kind": "tiles", "tiles": [
+    { "label": "Requirements", "where": { "type": "requirement" } },
+    { "label": "Dependencies found", "where": { "type": "dependency" } },
+    { "label": "Ready for review", "where": { "type": "requirement", "explore_status": "ready" } },
+    { "label": "Need your answer", "where": { "type": "requirement", "explore_status": "needs-you" } }
+  ] },
+  { "kind": "bars", "label": "Explorations by status", "count_by": "explore_status" },
+  { "kind": "bars", "label": "Dependencies by owning team", "count_by": "owner_team", "records": { "type": "dependency" } },
+  { "kind": "list", "label": "Waiting on you", "records": { "type": "requirement", "explore_status": "needs-you" }, "field": "explore_question", "empty": "Nothing is waiting on you." }
+ ]
+}

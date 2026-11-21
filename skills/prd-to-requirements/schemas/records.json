@@ -1,0 +1,19 @@
+{
+ "capability": { "required": ["id", "type", "title"], "fields": { "title": { "type": "string" } } },
+ "requirement": {
+  "required": ["id", "type", "parent", "title", "statement", "kind", "priority", "status"],
+  "fields": {
+   "title": { "type": "string", "note": "One line, written as an outcome" },
+   "statement": { "type": "string", "note": "One testable sentence or two" },
+   "kind": { "enum": ["Functional", "Non-functional", "Constraint"] },
+   "priority": { "enum": ["Must", "Should", "Could"] },
+   "source": { "type": "string", "note": "Where in the document it came from" },
+   "acceptance": { "type": "array" },
+   "confidence": { "type": "number", "note": "1 to 5: how clearly the document states it" },
+   "question": { "type": "string", "note": "Set with status needs-you when only the person can settle it" },
+   "status": { "enum": ["draft", "ready", "needs-you", "reviewed", "returned"] },
+   "locked": { "type": "boolean" },
+   "stale": { "type": "boolean" }
+  }
+ }
+}

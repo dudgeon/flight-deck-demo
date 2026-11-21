@@ -11,6 +11,9 @@ import { cn } from "@/lib/utils";
 import { ShellCommandContext } from "@/shell/ShellCommandContext";
 import type { Comment } from "@/hooks/useComments";
 import { LOCAL_REVIEW_COMMENT_LANGUAGE, parseLocalReviewComment } from "@/lib/localReviewComments";
+// omnigent-slim: other participants' turns (see lib/participantTurn.ts).
+import { ParticipantTurnBlock } from "@/components/chat/ParticipantTurn";
+import { PARTICIPANT_LANGUAGE, parseParticipantTurn } from "@/lib/participantTurn";
 import type { UIMessage } from "ai";
 import { ChevronLeftIcon, ChevronRightIcon, PlayIcon, XIcon } from "lucide-react";
 import type { ComponentProps, HTMLAttributes, ReactElement, ReactNode } from "react";
@@ -718,6 +721,19 @@ export function ChatCodeBlockPre({ children }: ComponentProps<"pre">) {
   ) {
     const comment = parseLocalReviewComment(code);
     if (comment) return renderLocalReviewComment(comment);
+  }
+
+  // omnigent-slim: a ```participant fence is someone else's turn, not code. While the
+  // fence is still streaming it shows as it arrives, then settles into the turn.
+  if (language === PARTICIPANT_LANGUAGE) {
+    const turn = parseParticipantTurn(code);
+    if (turn) {
+      return (
+        <ParticipantTurnBlock turn={turn}>
+          <MessageResponse>{turn.body}</MessageResponse>
+        </ParticipantTurnBlock>
+      );
+    }
   }
 
   if (!isMermaid) return codeBlock(block);

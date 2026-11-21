@@ -18,6 +18,62 @@ Most tools need the user's approval the first time in a session, except
 
 From inside an artifact: `window.omnigent.prompt(text)` fills the chat box.
 
+An artifact is reloaded whenever its file changes, and it has no storage of its
+own. `window.omnigent.saveState(key, value)` keeps a small JSON value for that
+file, and the next load gets it back as `window.omnigent.state[key]`. Use it
+for the reader's place: an open card, a filter, edits not yet sent.
+
+## Structured views and scenarios
+
+For work that is many similar items reviewed one at a time, do not hand-write
+HTML. The bundled `view-kit` skill draws tables, boards, cards, summaries and
+forms from a JSON dataset and a small spec, with the `pa` command
+(`skills/view-kit/scripts/pa.py`, standard library only), and redraws them when
+the data changes. `skills/prd-to-requirements` and
+`skills/requirements-to-dependencies` and `skills/document-review` are complete examples, and the
+`scenario-builder` skill explains how to make another, including a standalone
+click-through built with `pa preview`.
+
+## Other participants in the conversation
+
+The session's agent can host other agents and people. Each is a file in the
+workspace's `participants/` folder (name, kind, role, how they are played and
+a brief); `pa who` lists them and the Session panel shows them under People
+and agents. The bundled `participants` skill is the procedure: it starts a
+background session per participant with `sys_session_create` (a real session
+the user can open and read), talks to it with `sys_session_send`, and passes
+each reply on in a fenced block the chat draws as that participant's turn:
+
+````
+```participant
+name: Risk Review
+kind: agent
+role: Risk and compliance
+session: <their session id>
+---
+Their reply, word for word.
+```
+````
+
+`kind: person` is drawn as a stand-in, because in this app a person is always
+played by an agent. Records a participant adds to a dataset carry
+`by: <their id>`, which a view shows with `"as": "who"`.
+`skills/document-review` is a complete example.
+
+## The Session panel
+
+The Session button in a session's header opens a panel that lists the
+workspace's `artifacts/` folder as Outputs and its `context/` folder as
+Context. Ticking context files adds `@context/...` mentions to the message box.
+A skill should write what it makes to `artifacts/` and look for the user's
+documents in `context/`.
+
+A Workflow card appears in the panel for each small JSON file in the
+workspace's `progress/` folder: `{"workflow", "subject", "steps": [...],
+"current": <1-based; past the end means done>, "note", "counts": {"done",
+"total", "noun", "label", "waiting"}}`. `pa flow` writes it from a scenario's
+`steps` and keeps the counts current as records change.
+
 ## This session
 
 | Tool | Use it to |

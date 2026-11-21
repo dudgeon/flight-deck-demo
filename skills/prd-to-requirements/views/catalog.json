@@ -1,0 +1,43 @@
+{
+ "view": "requirements-catalog",
+ "layout": "tree-table",
+ "eyebrow": "Template · Requirements catalog",
+ "title": "{dataset.title}: requirements",
+ "subtitle": "Drawn from {dataset.source}. Tick, edit and lock what you agree with, then send your edits.",
+ "records": { "type": ["capability", "requirement"] },
+ "summary": { "count_by": "status", "records": { "type": "requirement" } },
+ "columns": [
+  { "field": "title", "label": "Requirement" },
+  { "field": "kind", "as": "chip", "only": "requirement" },
+  { "field": "priority", "only": "requirement", "edit": { "options": ["Must", "Should", "Could"] } },
+  { "field": "confidence", "label": "Clarity", "as": "meter", "only": "requirement" },
+  { "field": "status", "as": "status", "only": "requirement" },
+  { "field": "locked", "label": "Lock", "as": "check", "edit": true, "only": "requirement" }
+ ],
+ "details": {
+  "requirement": {
+   "title": "{title}",
+   "sections": [
+    { "kind": "callout", "field": "question", "label": "Needs your answer", "tone": "attn" },
+    { "kind": "callout", "field": "return_note", "label": "You sent this back", "tone": "you" },
+    { "kind": "text", "field": "statement", "label": "Statement", "edit": true },
+    { "kind": "fields", "fields": [
+      { "field": "priority", "edit": { "options": ["Must", "Should", "Could"] } },
+      { "field": "kind", "edit": { "options": ["Functional", "Non-functional", "Constraint"] } },
+      { "field": "confidence", "label": "Clarity in the document", "as": "meter" },
+      { "field": "source" }
+    ] },
+    { "kind": "list", "field": "acceptance", "label": "Acceptance criteria" }
+   ]
+  }
+ },
+ "actions": [
+  { "id": "approve", "label": "Approve", "tone": "primary", "direct": true, "when": { "type": "requirement", "status": ["draft", "ready", "returned"] }, "set": { "status": "reviewed" }, "next": true },
+  { "id": "approve-lock", "label": "Approve and lock", "direct": true, "when": { "type": "requirement", "status": ["draft", "ready", "returned"] }, "set": { "status": "reviewed", "locked": true }, "next": true },
+  { "id": "return", "label": "Send back", "when": { "type": "requirement", "status": ["draft", "ready", "reviewed"] }, "ask": { "label": "What should change?", "field": "return_note" }, "set": { "status": "returned" }, "prompt": "Rework requirement {id} ({title}). My note: {note}" },
+  { "id": "answer", "label": "Answer in chat", "tone": "primary", "when": { "type": "requirement", "status": "needs-you" }, "prompt": "About requirement {id} ({title}): " },
+  { "id": "split", "label": "Split", "when": { "type": "requirement" }, "prompt": "Split requirement {id} ({title}) into separate testable requirements." },
+  { "id": "approve-all", "label": "Approve all ready", "scope": "view", "direct": true, "set": { "status": "reviewed" }, "records": { "type": "requirement", "status": "ready" }, "prompt": "Mark every requirement that is ready as reviewed." },
+  { "id": "map-dependencies", "label": "Map dependencies", "scope": "view", "tone": "primary", "prompt": "Map the platform dependencies for the reviewed requirements in {dataset}." }
+ ]
+}

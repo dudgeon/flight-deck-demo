@@ -9,7 +9,12 @@
 // over a private MessageChannel. See htmlCommentBridge.ts for the protocol and
 // trust model.
 
-import { handleArtifactMessage, injectArtifactBridge } from "@/lib/artifactBridge";
+import {
+  artifactStateScope,
+  handleArtifactMessage,
+  injectArtifactBridge,
+  readArtifactState,
+} from "@/lib/artifactBridge";
 import {
   handleCanvasResult,
   registerCanvasFrame,
@@ -121,6 +126,9 @@ export function HtmlCommentViewer({
   // A fresh nonce + srcDoc per content load. The nonce key remounts either frame,
   // re-running the bridge and clearing stale highlights; the frame reopens at the
   // reader's saved offset for this file.
+  // omnigent-slim: what the artifact saved with `omnigent.saveState`, handed
+  // back on every reload so a redrawn view keeps the reader's place.
+  const stateScope = artifactStateScope(conversationId, path);
   const { nonce, srcDoc } = useMemo(() => {
     const n = genNonce();
     return {
@@ -132,9 +140,10 @@ export function HtmlCommentViewer({
           loadBridgeExternally ? HTML_COMMENT_BRIDGE_RUNTIME_URL : undefined,
           scrollKey ? (getSavedScrollTop(scrollKey) ?? 0) : 0,
         ),
+        readArtifactState(stateScope),
       ),
     };
-  }, [content, loadBridgeExternally, scrollKey]);
+  }, [content, loadBridgeExternally, scrollKey, stateScope]);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
   // omnigent-slim: `omnigent.prompt(text)` calls from this artifact's frame.
@@ -143,11 +152,11 @@ export function HtmlCommentViewer({
       const frame = iframeRef.current?.contentWindow;
       if (!frame || event.source !== frame) return;
       if (handleCanvasResult(event.data)) return;
-      handleArtifactMessage(event.data);
+      handleArtifactMessage(event.data, stateScope);
     };
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, []);
+  }, [stateScope]);
   // omnigent-slim: this frame is the session's canvas for the canvas_* tools.
   useEffect(() => {
     if (!conversationId) return;

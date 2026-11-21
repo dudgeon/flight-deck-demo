@@ -1,0 +1,119 @@
+---
+name: view-kit
+description: Build and test structured, interactive views for the Omnigent canvas and chat from a dataset and a small JSON spec, using the `pa` command. Use when you need a table, board, detail card, summary or form that stays in step with a JSON dataset, when a workflow skill tells you to run `pa`, or when the user asks for a new view, widget or template for the product workspace.
+---
+
+# View kit
+
+A view is a **spec** (a small JSON file saying which layout, which records,
+which columns and which actions) drawn over a **dataset** (one JSON file of
+records). `pa` turns the two into a single self-contained HTML file and redraws
+that file whenever the data changes. The viewer picks up the change by itself.
+
+So the working rule is: **change data, never markup.**
+
+```bash
+PA="python3 <this skill's folder>/scripts/pa.py"     # standard library only
+```
+
+## The frame you are drawing into
+
+- One HTML file per view. Everything inline. The viewer blocks every network
+  request, so no CDN, remote font, remote image or fetch will ever work.
+- The file runs in a sandbox with no access to the app, to other files or to
+  storage. The only ways out are `window.omnigent.prompt(text)`, which puts
+  text in the chat box for the user to send, and `window.omnigent.saveState`.
+- The canvas is usually 480 to 900 px wide, and the user can make it narrower.
+  A view in chat is at most 720 px. Every layout here already adapts.
+- The viewer reloads the file when it changes. The kit keeps the user's open
+  card, filters and unsent edits across a reload.
+- Views follow the system light or dark setting. Never set colors by hand.
+  Use the tokens in `references/tokens.md`.
+
+## The commands
+
+| Command | Use |
+|---|---|
+| `$PA init data/x.json --title "Name"` | Start a dataset. `--from file.json` copies records in. `--meta key=value` adds dataset facts. |
+| `$PA add data/x.json --json '[{...}]'` | Add records, or replace ones with the same id. Ids are assigned when left out and printed back. |
+| `$PA set data/x.json R-01,R-02 field=value` | Change fields. `--where type=requirement --where status=ready` selects by value. `field=null` removes a field. `field=` in `--where` means "not set". |
+| `$PA get data/x.json [ids] [--where ...] [--fields a,b] [--count-by field]` | Read records, one JSON object per line. Read this instead of the whole file. |
+| `$PA render spec.json --data data/x.json --out artifacts/x.html` | Draw a view. It is then redrawn on every `add` and `set`. `--host chat` for the compact form, `--record R-01` for a detail view. |
+| `$PA refresh data/x.json` | Redraw every view of a dataset. |
+| `$PA flow <data> --scenario <folder>`, then `--step <n or name> [--note "..."]`, `--done` | Record which step of a workflow the work is at. The Session panel draws it as a card with the steps and how many items are done. |
+| `$PA who [id]` | List the participants in `participants/` (other agents and people), or show one. See the `participants` skill. |
+| `$PA check <scenario folder>` | Validate a scenario's specs, schemas and fixtures. |
+| `$PA preview <scenario folder> --out demo.html` | Build a standalone click-through of a scenario from its fixtures. |
+
+After `render`, show the file with `ui_open_file`. You do not need to open it
+again after later changes.
+
+## Records and state
+
+A record is a flat JSON object with `id`, `type` and `title`. `parent` puts it
+under another record. `derived_from` lists the records it was worked out from.
+
+State fields describe the work, not the content: `status`, `locked`, `stale`,
+`question`, `return_note`, and any field ending `_status`, `_question`,
+`_note`. Rules:
+
+- The statuses are `queued`, `working`, `needs-you`, `ready`, `reviewed`,
+  `returned`, `failed` and `draft`. A spec can add more.
+- `reviewed` and `locked` belong to the user. Never set them yourself. Never
+  rewrite a locked record unless the user asks for that record by id.
+- When a record's content changes, `pa` marks everything derived from it as
+  `stale`. Rewriting a stale record with `add` clears the mark.
+- A later stage of work keeps its own status in its own field, such as
+  `explore_status`, named by the spec's `status_field`. That way several
+  stages share one dataset without treading on each other.
+
+## Layouts
+
+| Layout | Shows | Typical use |
+|---|---|---|
+| `tree-table` | Records as rows under collapsible parents, with editable cells | A catalog the user reviews line by line |
+| `board` | Records as tiles in one lane per status | Many pieces of work running at once |
+| `detail` | One record, in sections | A review card in chat |
+| `summary` | Count tiles, bar breakdowns and short lists | Where things stand |
+| `form` | Questions with a submit button | A few choices before work starts |
+
+Every layout except `form` opens a detail card for a record, with drill-down
+into its children and breadcrumbs back. Full reference with every key:
+`references/spec.md`.
+
+## Building a new view
+
+1. Start from the nearest spec in a scenario's `views/` folder. Copy it.
+2. Write a small fixture dataset with every status and edge case you care
+   about: an empty group, a very long title, a record that needs the user, a
+   locked one, a stale one.
+3. Render and look at it: `$PA render my.json --data fixture.json --out artifacts/try.html --no-register`,
+   then `ui_open_file` and `canvas_read`. Check it at a narrow width and with
+   an empty dataset. Press every button: `canvas_eval` with `PA.pending()`
+   shows what an edit would send.
+4. If the scenario has a `SKILL.md`, every action id in the spec must be named
+   there with what the agent does about it. `$PA check` enforces this.
+
+If no layout fits, do not bend one. Either ask for a new layout to be added to
+the kit, or write a one-off HTML artifact using the kit's stylesheet
+(`kit/pa-kit.css`, inlined) so it still looks like it belongs. Any HTML file
+is still a valid artifact.
+
+## How actions reach you
+
+Buttons with only a `set` (approve, lock, edit a cell) collect in a bar at the
+bottom of the view as unsent edits. "Send to agent" puts one message in the
+chat box: `Save these edits from the "<view>" view to <dataset>:` and one line
+per change. Buttons with a `prompt` put that sentence in the chat box. In both
+cases the user presses Send. Nothing in a view changes data by itself.
+
+**Direct state changes.** Where the app supports it, a change that touches only
+state (`status`, `locked`, any `*_status`) skips the chat box. It reaches you
+as a message that starts `Canvas action on <dataset>:` followed by lines of the
+form `- <id> <field> = <value>`. The app writes that message itself from
+checked values, so it never contains anything but state. Apply the lines with
+`$PA set` and stay quiet unless one fails. Mark an action `"direct": true` in
+the spec to use this; give it a `prompt` as well for hosts without it.
+
+Before you rewrite records the user may be editing, read their unsent edits
+with `canvas_eval` and `PA.pending()` and keep them.

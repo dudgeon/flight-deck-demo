@@ -265,6 +265,8 @@ FEATURE_DEFINITIONS: tuple[FeatureDefinition, ...] = (
         description="Session cost sidebar beside chat, toggled from a header cost chip",
         owner="web",
         review_by_release="0.25.0",
+        # omnigent-slim: on, because the panel also lists the session's outputs and context.
+        default_enabled=True,
     ),
     FeatureDefinition(
         feature=Feature.PROJECT_KANBAN,

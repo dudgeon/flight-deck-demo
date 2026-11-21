@@ -1,0 +1,32 @@
+{
+ "capability": { "required": ["id", "type", "title"] },
+ "requirement": {
+  "required": ["id", "type", "title", "statement"],
+  "fields": {
+   "explore_status": { "enum": ["queued", "requested", "working", "needs-you", "ready", "reviewed", "returned", "failed"], "note": "This stage's own status field" },
+   "explore_question": { "type": "string" },
+   "explore_note": { "type": "string" }
+  }
+ },
+ "dependency": {
+  "required": ["id", "type", "parent", "derived_from", "title", "summary"],
+  "fields": {
+   "derived_from": { "type": "array", "note": "The requirement ids this was worked out from" },
+   "effort": { "enum": ["S", "M", "L"] },
+   "confidence": { "type": "number", "note": "1 to 5: how sure the explorer is" },
+   "selected_option": { "type": "string", "note": "The option id the explorer recommends or the person chose" },
+   "owner_team": { "type": "string" },
+   "evidence": { "type": "array", "note": "[{source, quote}] from the platform map" }
+  }
+ },
+ "option": {
+  "required": ["id", "type", "parent", "title", "fit", "summary"],
+  "fields": {
+   "fit": { "type": "number", "note": "1 to 5" },
+   "effort": { "enum": ["S", "M", "L"] },
+   "maturity": { "enum": ["Live", "Beta", "Planned"] },
+   "owner_team": { "type": "string" },
+   "gaps": { "type": "string" }
+  }
+ }
+}

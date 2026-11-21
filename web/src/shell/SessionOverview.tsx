@@ -11,6 +11,7 @@ import { createStoredChoicePreference } from "@/lib/storedChoicePreference";
 import { cn } from "@/lib/utils";
 import { useChatStore } from "@/store/chatStore";
 import { SessionOverviewChanges } from "./SessionOverviewChanges";
+import { SessionOverviewFiles } from "./SessionOverviewFiles";
 import { SessionOverviewSubagents } from "./SessionOverviewSubagents";
 
 // Tailwind's `xl` breakpoint: wide enough to dock the overview beside chat.
@@ -72,7 +73,7 @@ export function SessionCostButton({
   onOpenChange: (open: boolean) => void;
   children?: ReactNode;
 }) {
-  const action = open ? "Hide session overview" : "Show session overview";
+  const action = open ? "Hide session panel" : "Show session panel: outputs, context, cost";
   // One trigger for both placements keeps the chip mounted, and focused, when the
   // layout switches between them; only the popover content depends on placement.
   return (
@@ -96,8 +97,11 @@ export function SessionCostButton({
                     : "border-transparent text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
               >
-                <SessionCostValue unavailable="—" />
-                <span className="sr-only"> Session overview</span>
+                {/* omnigent-slim: the chip names the panel, since it also lists outputs and context. */}
+                <span className="font-sans">Session</span>
+                <span className="ml-1.5 empty:hidden">
+                  <SessionCostValue unavailable="" />
+                </span>
               </button>
             </PopoverTrigger>
           </span>
@@ -108,7 +112,7 @@ export function SessionCostButton({
         <PopoverContent
           align="end"
           aria-label="Session overview"
-          className="w-64 bg-transparent p-0 shadow-none ring-0 max-md:hidden"
+          className="w-72 bg-transparent p-0 shadow-none ring-0 max-md:hidden"
         >
           {children}
         </PopoverContent>
@@ -165,7 +169,7 @@ export function SessionOverview({
   return (
     <Card size="sm">
       <CardHeader>
-        <CardTitle className="text-ui">Session overview</CardTitle>
+        <CardTitle className="text-ui">Session</CardTitle>
         <CardAction>
           <button
             type="button"
@@ -191,6 +195,8 @@ export function SessionOverview({
         )}
         {changesSessionId && <SessionOverviewChanges sessionId={changesSessionId} />}
         <SessionOverviewSubagents />
+        {/* omnigent-slim: what the session made and what it may read. */}
+        {changesSessionId && <SessionOverviewFiles sessionId={changesSessionId} />}
       </CardContent>
     </Card>
   );

@@ -1,0 +1,17 @@
+{
+ "view": "catalog-scope",
+ "layout": "form",
+ "eyebrow": "Before I start",
+ "title": "How should I catalog this document?",
+ "fields": [
+  { "id": "grain", "label": "How fine should the requirements be?", "kind": "choice", "default": "One testable statement each",
+    "options": [ { "value": "One testable statement each", "hint": "More rows, easier to map and test" }, { "value": "Grouped by capability", "hint": "Fewer rows, quicker to read" } ] },
+  { "id": "include", "label": "What should I pull out?", "kind": "multi", "default": ["Functional", "Non-functional", "Constraints"],
+    "options": ["Functional", "Non-functional", "Constraints", "Open questions", "Out of scope items"] },
+  { "id": "priority", "label": "Set priorities?", "kind": "choice", "default": "Suggest them",
+    "options": [ { "value": "Suggest them", "hint": "Must, Should, Could" }, { "value": "Leave blank", "hint": "I will set them" } ] },
+  { "id": "strict", "label": "Flag anything the document contradicts or leaves unclear", "kind": "toggle", "default": true },
+  { "id": "note", "label": "Anything else I should know?", "kind": "text", "placeholder": "Optional. For example: section 7 is not final." }
+ ],
+ "submit": { "label": "Start cataloging", "prompt": "Catalog setup:\n{answers}", "skip": "Use your judgment", "skip_prompt": "Catalog the document using your own judgment on grain and priorities." }
+}

@@ -3299,10 +3299,11 @@ function AppShellImpl() {
                   </SubagentPanelOpenerContext.Provider>
                 </GridSessionMain>
 
+                {/* omnigent-slim: w-72 (was w-64) to fit file names. */}
                 {sessionOverviewOpen && sessionOverviewDocked && (
                   <aside
                     aria-label="Session overview"
-                    className="flex w-64 shrink-0 flex-col overflow-y-auto px-2 pb-3 pt-12"
+                    className="flex w-72 shrink-0 flex-col overflow-y-auto px-2 pb-3 pt-12"
                   >
                     {sessionOverviewCard}
                   </aside>

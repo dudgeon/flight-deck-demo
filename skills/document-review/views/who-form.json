@@ -1,0 +1,15 @@
+{
+ "view": "review-who",
+ "layout": "form",
+ "eyebrow": "Second opinions",
+ "title": "Who else should look at this?",
+ "fields": [
+  { "id": "who", "label": "Call in", "kind": "multi", "default": ["Risk Review", "Mara Okafor"],
+    "options": [
+     { "value": "Risk Review", "hint": "Agent · risk and compliance" },
+     { "value": "Mara Okafor", "hint": "Design lead · an agent stands in for her" }
+    ] },
+  { "id": "focus", "label": "Anything they should focus on?", "kind": "text", "placeholder": "Optional. For example: only sections 4 and 7." }
+ ],
+ "submit": { "label": "Call them in", "prompt": "Review with others:\n{answers}", "skip": "Not now", "skip_prompt": "Do not call anyone in for now." }
+}
