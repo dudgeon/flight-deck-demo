@@ -6,6 +6,8 @@ save data remotely, but Flight Deck and the associated skills should still
 build logs as files in the repo, that can later be aggregated and analyzed,
 and eventually could be sent to a remote server."
 
+Walkthrough put to Geoff: https://claude.ai/artifact/7tXLiAF95CZpCp81UKVVMB (offline copy in `docs/decision-artifacts/2026-11-21-usage-log/`).
+
 This page is the design. What is built is marked; the open questions (UL-1 to
 UL-3) are at the end, with the recommendation each was built to. Decisions:
 D-122 to D-127 in [decisions.md](decisions.md).

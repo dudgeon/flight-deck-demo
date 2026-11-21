@@ -576,7 +576,7 @@ def format_summary(summary: dict[str, Any]) -> str:
     ]
     sections = [
         ("By day", "by_day"), ("Where from", "by_source"), ("Mode", "by_mode"),
-        ("Pages", "pages"), ("Clicks", "clicks"), ("Workflows started", "workflows"),
+        ("Pages", "pages"), ("Clicks", "clicks"), ("Workflow activity (pa flow, pa brief)", "workflows"),
         ("Skills loaded", "skills"), ("Tools used", "tools"), ("pa commands", "pa_commands"),
         ("pa commands that failed", "pa_failures"), ("Hangar", "hangar"),
     ]
