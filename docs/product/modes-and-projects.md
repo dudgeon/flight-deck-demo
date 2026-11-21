@@ -238,8 +238,9 @@ None. The intent graph's level of detail is held until something needs it
    **Built**, not yet flown with a live agent; start, pause and resume
    markers still to do.
 5. **Threads on items** (D-95). After step 3.
-6. **Projects with a goal** (D-97): a project names its goal and area; an
-   area page; connections. Unblocked by D-119.
+6. **Projects with a goal** (D-97, D-119, D-121): a project names its goal
+   and area; the Connections card; the chip on linked items. **Built.** An
+   area page is not built.
 
 ### Smaller calls from round one (accepted, D-99)
 

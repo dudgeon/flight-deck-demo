@@ -71,6 +71,21 @@ text; then name the file and ask the question in words.
 After `render`, show the file with `ui_open_file`. You do not need to open it
 again after later changes.
 
+## Projects and links
+
+A project is one goal that ships, inside an area that lasts. Its page shows
+the goal and a Connections card; a linked record shows a chip naming the
+other project and how it stands.
+
+- `pa project "<name>" --goal "…" --area "…" [--team "…"] [--state shaping|in-delivery|shipped|slipped|paused|stopped] [--state-note "slipped 2 wks"] [--data data/x.json]`
+  writes `projects/<slug>.json`. `--data` says a dataset belongs to the
+  project. Describe another team's project the same way; it need not exist
+  in the app. `pa project` alone lists them.
+- `pa link data/x.json R-07 --to "<project>" --type handed-to|started|relies-on`
+  hangs a link from one record (`--remove` takes it off). Write it once, on
+  the item it is about. The other project reads it the other way: what was
+  handed to it is where it came from.
+
 ## Runs: pausing, resuming and stopping
 
 One workflow working on one subject is a **run**. It outlives the session: its

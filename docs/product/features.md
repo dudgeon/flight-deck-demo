@@ -259,6 +259,59 @@ with `omnigent-slim:` comments; `GET /v1/slim/directors/{session}`;
 `omnigent/server/routes/slim_runs.py`;
 the rule in `workspace/CLAUDE.md` ("Threads").
 
+## Projects with a goal, and their connections
+
+**What it is for.** A project is one in-market goal that ships and then ends,
+inside an area that lasts (D-97). So the project page should say what the
+goal is before it lists sessions. And projects are not a family tree: a
+requirement handed to another team is that team's project. The person needs
+to see that where they act on it, and to be able to ask "what does this
+project touch" (D-119).
+
+**What it does.**
+
+- **The goal line.** The project page opens with the goal in one line and a
+  chip for how the project stands (shaping, in delivery, shipped, slipped,
+  paused, stopped).
+- **The Connections card**, under the goal, groups links by what they mean:
+  Lives in (the area), Came from, Handed to others, Relies on, Others rely
+  on this. Each row names the item the link hangs from, the other project,
+  its team, and its state. No map is drawn.
+- **A chip on the linked item.** In any view of the dataset, a linked record
+  carries a chip: the other project, its team, and its state in a few words
+  ("Allowance alerts · Cards Platform · slipped 2 wks"). Amber only when the
+  other project has slipped, because that is the news the person acts on.
+- **Read both ways.** A link is written once, on the item it hangs from.
+  From the other project it reads the other way: what one project handed
+  over is where the other came from.
+- Nothing shows on a project nobody has described or linked.
+
+**How the agent keeps it.** `pa project "<name>" --goal … --area … --team …
+--state … --state-note … --data <dataset>` writes what a project is and which
+datasets belong to it. `pa link <dataset> <record id> --to "<project>"
+--type handed-to|started|relies-on` hangs a link from a record (`--remove`
+takes it off). `pa project` alone lists them. A project can be described
+without existing in the app, which is how another team's project appears.
+
+**Choices made while building (D-121).** Meaning lives in files of our own,
+not in upstream's project table. "Relies on" is shown as its own group next
+to the four D-119 named, because a link stored as relies-on has to read
+somewhere from the near end.
+
+**Not built yet.** An area page. Starting a goal project from a problem
+marked worth solving. Opening the linked item or the other project from a
+row. Aviator telling the person when a linked project slips. The intent
+graph's detail is held (D-98).
+
+**Where.** `pa project`, `pa link` and the `projects` block of a view's data
+in `skills/view-kit/scripts/pa.py`; the chip in `skills/view-kit/kit/`
+(`links()` in `pa-kit.js`, `.pa-link` in `pa-kit.css`);
+`omnigent/server/routes/slim_projects.py`
+(`GET /v1/slim/projects/connections?project=`);
+`web/src/projectHome/projectConnections.ts` and `ProjectConnections.tsx`,
+mounted in `pages/ProjectHomePage.tsx`. Files: `workspace/projects/*.json`
+(not committed, like `data/`).
+
 ## Participants
 
 **Intent.** Product work is done with other people and other systems. Their
