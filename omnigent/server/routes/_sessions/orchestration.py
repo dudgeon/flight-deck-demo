@@ -1456,21 +1456,13 @@ def _build_session_list_item(
         owner=owner,
         external_session_id=conv.external_session_id,
         shared_with_others=shared_with_others,
-        # The persisted row count is a CROSS-REPLICA mirror: the replica
-        # holding the runner's tunnel writes it, and a replica that doesn't
-        # hold it falls back to the row (max() prefers "shows the parked
-        # approval" whichever side lags). That fallback only makes sense for
-        # a runner-bound session — an unbound session (no runner_id) has no
-        # tunnel on any replica, so the local in-memory index is
-        # authoritative and the row (an async mirror that lags a resolve's
-        # decrement) must not override it. Gating on runner_id keeps the
-        # cross-replica fallback where it's needed while making the unbound
-        # path index-only and free of the persist-lag race.
-        pending_elicitations_count=(
-            max(pending_count, conv.pending_elicitation_count or 0)
-            if conv.runner_id is not None
-            else pending_count
-        ),
+        # omnigent-slim: one server process, one replica, so the in-memory
+        # index is always authoritative. The persisted row can't add anything
+        # here and can go stale (a resolve that never reached the row, or a
+        # restart that skipped the reconnect resync), which lit a phantom
+        # Inbox badge over an empty Inbox. Upstream: max() with the row when
+        # runner-bound, to cover replicas that don't hold the runner tunnel.
+        pending_elicitations_count=pending_count,
         background_work_running=conv.background_work_running is True,
         blocked_on=_blocked_on_for(conv.id, conv.blocked_on),
         workspace=conv.workspace,
