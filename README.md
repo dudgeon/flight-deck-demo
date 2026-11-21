@@ -73,6 +73,13 @@ The first run takes about a minute: it unpacks the bundled Python into
 a few seconds. When it prints `omnigent-slim is running: http://127.0.0.1:6767/library`,
 your browser opens the **Library** page.
 
+**Optional: a Dock icon.** `scripts/make_dock_app.sh --add-to-dock` builds
+`~/Applications/Product Aviator.app` and pins it to the Dock. Clicking it starts
+the server if it isn't running and opens the UI in its own Chrome app window (or
+your default browser without Chrome). It's built locally, so there's nothing to
+download or un-quarantine. Leave off `--add-to-dock` to drag it there yourself,
+and run the script again if you move this folder.
+
 ### Step 3. Run a canned session
 
 1. On the **Library** page, find **Interview me about requirements**.
