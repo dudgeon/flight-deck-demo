@@ -9946,6 +9946,12 @@ async def _auto_create_claude_terminal(
                         extra={"session_id": session_id},
                     )
                     launch_model = unpinned_launch_model
+        if launch_model is None:
+            # omnigent-slim: a session with no model pick launches on the slim
+            # default (Opus 5.5), not the CLI catalog's own default.
+            from omnigent.slim_policy import DEFAULT_CLAUDE_MODEL
+
+            launch_model = DEFAULT_CLAUDE_MODEL or None
         if launch_model is None and launch_catalog:
             # A stale entry's default is yesterday's answer: pinning it as
             # ``--model`` turns a provider-side retirement or entitlement
