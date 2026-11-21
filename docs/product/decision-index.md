@@ -170,7 +170,7 @@ decided but nothing is built yet.
 
 | D | Decision | Who | Status |
 |---|---|---|---|
-| D-89 | Aviator is a project director; modes run in threads with agent-to-agent messages | Geoff | Decided, not built |
+| D-89 | Aviator is a project director; modes run in threads with agent-to-agent messages | Geoff | Partly built: director skill, briefs and the run card, opt-in; the direct line is not |
 | D-90 | A mode shows as a strip on the message box | Geoff | Decided, not built |
 | D-91 | A mode's replies are marked by a rail with start, pause and resume markers | Geoff | Decided, not built |
 | D-92 | Side questions are answered outside the rail; the mode stays on | Geoff | Decided, not built |
@@ -183,7 +183,7 @@ decided but nothing is built yet.
 | D-99 | The smaller calls stand (every workflow makes a mode, no mode color, and so on) | Claude, accepted by Geoff | Decided, not built |
 | D-116 | The director shows a mode through a direct line to its thread; Aviator is not in the path | Geoff | Decided, not built |
 | D-117 | Stepping into a thread puts it in place of the chat, the director folded to a bar, the canvas kept | Geoff | Decided, not built |
-| D-118 | A thread reports milestones, progress, blockers and state, at its own discretion, never everything | Geoff | Decided, not built |
+| D-118 | A thread reports milestones, progress, blockers and state, at its own discretion, never everything | Geoff | Built (`pa report`), not yet flown with a live agent |
 | D-119 | A project's connections: a chip on the linked item and a Connections card on the project page | Geoff | Decided, not built |
 
 
