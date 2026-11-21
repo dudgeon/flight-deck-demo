@@ -30,7 +30,7 @@ in the same pull request.
 | [Canvas tools across several tabs](#canvas-tools-across-several-tabs) | Done |
 | [Dock launcher](#dock-launcher) | Done |
 | [Branding](#branding) | Done; repository renamed (D-114) |
-| [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | D-89 to D-99 and D-116 to D-118 decided; runs and In flight built (PR 24); one question open |
+| [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | D-89 to D-99 and D-116 to D-119 decided; runs and In flight built (PR 24) |
 
 ---
 
@@ -303,14 +303,12 @@ a project means something (a goal to ship) and knows its relatives.
 - **Built.** Runs that pause, resume and stop with a where-we-left-off note
   (`pa flow`, `pa runs`), and the "In flight" section on the project page
   with Resume and a sidebar count of runs that need the person.
-- **Next.** Geoff answered three of the round-two questions (D-116 to
-  D-118), which unblocks: the director skill and its run card; then the
-  direct line and stepping into a thread; then threads on items. Build order
-  is in modes-and-projects.md.
-- **Open.** One decision: M-8, how a project's connections show. It blocks
-  only the last slice (projects with a goal). The intent graph's detail is
-  deliberately held (D-98).
-- **Read.** [modes-and-projects.md](modes-and-projects.md); D-89 to D-99, D-116 to D-118;
+- **Next.** Geoff answered all four round-two questions (D-116 to D-119),
+  which unblocks every remaining slice: the director skill and its run card;
+  the direct line and stepping into a thread; threads on items; projects
+  with a goal and their connections. Build order is in modes-and-projects.md.
+- **Open.** Nothing. The intent graph's detail is deliberately held (D-98).
+- **Read.** [modes-and-projects.md](modes-and-projects.md); D-89 to D-99, D-116 to D-119;
   walkthroughs at https://claude.ai/artifact/HRgpJURjcqasGSCmd3894d and
   https://claude.ai/artifact/YQcb4HDRGMnn6YW82uFNZd.
 
@@ -354,5 +352,3 @@ skill's Gemini key is out of credit, and its OpenAI call names
 
 - Ignore the production build for now; the local demo is the product (D-29).
 - Progressive complexity (D-54).
-- The last modes round-two question (M-8, a project's connections), unanswered at
-  https://claude.ai/artifact/YQcb4HDRGMnn6YW82uFNZd.

@@ -618,6 +618,19 @@ The director needs the state of each piece of work to coordinate; copying
 the working would undo the context isolation that threads exist for (D-89).
 Answers M-14.*
 
+**D-119 · 2026-11-21 · Geoff.** A project's connections show in two places:
+a chip on the linked item, naming the other project and its state, and one
+Connections card on the project page that gathers them, grouped by what the
+link means (lives in, came from, handed to others, others rely on this). No
+map. A link is typed, hangs from a specific thing (a requirement, a
+problem), reads the other way from the far end, and is stored as one line
+with the item it hangs from. *This follows his caveat on D-97 that projects
+are more graph-like than a family tree: a requirement handed to another team
+is that team's project. The chip puts the news where the person acts on it,
+and the card answers "what does this project touch" without drawing a tree
+that is not there. It does not build the intent graph, whose detail stays
+held (D-98). Answers M-8.*
+
 ## Backfilled
 
 Decisions Geoff made on 20 and 21 November that were acted on but never
@@ -667,10 +680,4 @@ canvas reload work; reviewed and locked are the person's judgment.*
 
 - Progressive complexity (from D-54): how a workflow shows less at first and
   more on demand, to the person and to the agent. Not designed yet.
-- From the modes and projects work (see
-  [modes-and-projects.md](modes-and-projects.md)), put to Geoff with drawings
-  at https://claude.ai/artifact/YQcb4HDRGMnn6YW82uFNZd:
-  - M-12, M-13 and M-14 are answered: D-116 to D-118.
-  - M-8, still unanswered, sent back by Geoff to be rethought as a graph, not a tree: how a
-    project's connections show.
 - The intent graph's level of detail is deliberately held (D-98).
