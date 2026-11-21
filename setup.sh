@@ -188,7 +188,7 @@ use_zip() {
 newer_download() {
     stamp="$APP/.install-manifest.json"
     best=
-    # flight-deck-demo is the repository's name since D-112; omnigent-slim is
+    # flight-deck-demo is the repository's name since D-114; omnigent-slim is
     # its old name, which older downloads still carry.
     for d in "$HOME"/Downloads/flight-deck-demo*.zip "$HOME"/Downloads/flight-deck-demo-main* \
              "$HOME"/Downloads/omnigent-slim*.zip "$HOME"/Downloads/omnigent-slim-main*; do

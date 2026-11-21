@@ -206,7 +206,7 @@ from a preview.
 repository, folders and code identifiers keep `omnigent-slim` unless Geoff
 says otherwise. *He liked the name when it came up for the design direction.*
 
-**D-112 · 2026-11-21 · Geoff.** The GitHub repository is renamed from
+**D-114 · 2026-11-21 · Geoff.** The GitHub repository is renamed from
 `dudgeon/omnigent-slim` to `dudgeon/flight-deck-demo`. This refines D-35 for
 the repository only: local folders (the Mac mini checkout, `~/flight-deck` on
 the work Mac), the `~/.omnigent-slim` data folder, commands and code

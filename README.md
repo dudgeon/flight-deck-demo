@@ -4,7 +4,7 @@
 [Omnigent](https://github.com/omnigent-ai/omnigent), the open-source
 meta-harness from Databricks, for prototyping an agent workspace on a
 locked-down Mac. Its user interface is branded **Product Aviator**. The
-repository is `dudgeon/flight-deck-demo` (renamed from `omnigent-slim`, D-112);
+repository is `dudgeon/flight-deck-demo` (renamed from `omnigent-slim`, D-114);
 code identifiers, commands and the `~/.omnigent-slim` data folder keep the
 name `omnigent-slim`.
 
