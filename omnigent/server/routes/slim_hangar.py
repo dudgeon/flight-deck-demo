@@ -81,7 +81,7 @@ def _pa() -> ModuleType:
     """The view kit's ``pa`` module, loaded from the skills folder (once per path)."""
     global _PA, _PA_PATH
     path = slim_skills_dir() / "view-kit" / "scripts" / "pa.py"
-    if _PA is not None and _PA_PATH == path:
+    if _PA is not None and path == _PA_PATH:
         return _PA
     if not path.is_file():
         raise HTTPException(status_code=503, detail=f"the view kit is missing ({path})")
@@ -93,13 +93,6 @@ def _pa() -> ModuleType:
     spec.loader.exec_module(module)
     _PA, _PA_PATH = module, path
     return module
-
-
-def _rel(path: Path, root: Path, prefix: str) -> str:
-    try:
-        return f"{prefix}/{path.relative_to(root).as_posix()}"
-    except ValueError:
-        return str(path)
 
 
 def _json(path: Path) -> Any:
@@ -129,7 +122,7 @@ def _front_matter(text: str) -> tuple[dict[str, Any], str]:
 def _roster(pa: ModuleType) -> dict[str, dict[str, Any]]:
     try:
         return pa._participants(workspace_dir() / "participants")
-    except Exception:  # a bad file must not take the whole shelf down
+    except Exception:
         _logger.warning("could not read the roster", exc_info=True)
         return {}
 
@@ -163,18 +156,26 @@ def _person_entry(pa: ModuleType, person: dict[str, Any]) -> dict[str, Any]:
 def _check_workflow(pa: ModuleType, folder: Path) -> list[str]:
     """Run ``pa check`` on one workflow folder and return its problems."""
     out = io.StringIO()
-    args = argparse.Namespace(scenario=str(folder), participants=str(workspace_dir() / "participants"))
+    args = argparse.Namespace(
+        scenario=str(folder), participants=str(workspace_dir() / "participants")
+    )
     try:
         with contextlib.redirect_stdout(out):
             pa.cmd_check(args)
     except SystemExit:
-        return [line.strip()[2:] for line in out.getvalue().splitlines() if line.strip().startswith("- ")]
-    except Exception as err:  # PaError and friends: one problem, in its own words
+        return [
+            line.strip()[2:]
+            for line in out.getvalue().splitlines()
+            if line.strip().startswith("- ")
+        ]
+    except Exception as err:  # noqa: BLE001 -- PaError and friends: one problem, in its own words
         return [str(err) or type(err).__name__]
     return []
 
 
-def _script(pa: ModuleType, folder: Path, manifest: dict[str, Any], roster: dict[str, Any]) -> dict[str, Any] | None:
+def _script(
+    pa: ModuleType, folder: Path, manifest: dict[str, Any], roster: dict[str, Any]
+) -> dict[str, Any] | None:
     rel = manifest.get("script")
     if not rel or not (folder / rel).is_file():
         return None
@@ -184,7 +185,7 @@ def _script(pa: ModuleType, folder: Path, manifest: dict[str, Any], roster: dict
         parsed = pa.parse_script(text, eligible, rel)
         steps = parsed.get("steps", [])
         error = None
-    except Exception as err:
+    except Exception as err:  # noqa: BLE001 -- a script error is shown, not raised
         steps, error = [], str(err)
     title = _H1.search(text)
     hosts: dict[str, str] = {}
@@ -213,15 +214,17 @@ def _record_types(folder: Path, manifest: dict[str, Any]) -> list[dict[str, Any]
         if not isinstance(schema, dict):
             continue
         fields = schema.get("fields") or {}
-        types.append({
-            "name": name,
-            "required": [f for f in schema.get("required", []) if f not in ("id", "type")],
-            "fields": [
-                {"name": key, "enum": rule.get("enum"), "note": rule.get("note", "")}
-                for key, rule in fields.items()
-                if isinstance(rule, dict)
-            ],
-        })
+        types.append(
+            {
+                "name": name,
+                "required": [f for f in schema.get("required", []) if f not in ("id", "type")],
+                "fields": [
+                    {"name": key, "enum": rule.get("enum"), "note": rule.get("note", "")}
+                    for key, rule in fields.items()
+                    if isinstance(rule, dict)
+                ],
+            }
+        )
     return types
 
 
@@ -239,17 +242,25 @@ def _workflow(pa: ModuleType, folder: Path, roster: dict[str, Any]) -> dict[str,
     for name, rel in (manifest.get("views") or {}).items():
         spec = _json(folder / rel)
         spec = spec if isinstance(spec, dict) else {}
-        views.append({
-            "key": f"{wid}/{name}",
-            "name": name,
-            "workflow": wid,
-            "title": _PLACEHOLDER.sub("", str(spec.get("eyebrow") or spec.get("view") or name)).strip(" ·") or name,
-            "heading": _DATASET_FIELD.sub(lambda m: str(sample.get(m.group(1), "")), str(spec.get("title", ""))),
-            "layout": spec.get("layout", ""),
-            "host": hosts.get(name) or ("chat" if spec.get("layout") in ("form", "detail") else "canvas"),
-            "actions": len(spec.get("actions", [])) + (1 if spec.get("submit") else 0),
-            "path": f"skills/{wid}/{rel}",
-        })
+        views.append(
+            {
+                "key": f"{wid}/{name}",
+                "name": name,
+                "workflow": wid,
+                "title": _PLACEHOLDER.sub(
+                    "", str(spec.get("eyebrow") or spec.get("view") or name)
+                ).strip(" ·")
+                or name,
+                "heading": _DATASET_FIELD.sub(
+                    lambda m: str(sample.get(m.group(1), "")), str(spec.get("title", ""))
+                ),
+                "layout": spec.get("layout", ""),
+                "host": hosts.get(name)
+                or ("chat" if spec.get("layout") in ("form", "detail") else "canvas"),
+                "actions": len(spec.get("actions", [])) + (1 if spec.get("submit") else 0),
+                "path": f"skills/{wid}/{rel}",
+            }
+        )
     skill_meta, _ = _front_matter(_read_text(folder / "SKILL.md") or "")
     return {
         "id": wid,
@@ -283,18 +294,22 @@ def _skills(root: Path) -> list[dict[str, Any]]:
     for folder in sorted(p for p in root.iterdir() if p.is_dir() and (p / "SKILL.md").is_file()):
         text = _read_text(folder / "SKILL.md") or ""
         meta, body = _front_matter(text)
-        skills.append({
-            "id": folder.name,
-            "name": str(meta.get("name") or folder.name),
-            "description": str(meta.get("description") or ""),
-            "workflow": (folder / "scenario.json").is_file(),
-            "files": sorted(
-                p.relative_to(folder).as_posix() for p in folder.rglob("*") if p.is_file() and p.name != ".DS_Store"
-            )[:60],
-            "text": body,
-            "path": f"skills/{folder.name}/SKILL.md",
-            "used_by": [],
-        })
+        skills.append(
+            {
+                "id": folder.name,
+                "name": str(meta.get("name") or folder.name),
+                "description": str(meta.get("description") or ""),
+                "workflow": (folder / "scenario.json").is_file(),
+                "files": sorted(
+                    p.relative_to(folder).as_posix()
+                    for p in folder.rglob("*")
+                    if p.is_file() and p.name != ".DS_Store"
+                )[:60],
+                "text": body,
+                "path": f"skills/{folder.name}/SKILL.md",
+                "used_by": [],
+            }
+        )
     return skills
 
 
@@ -307,13 +322,15 @@ def _frameworks(folder: Path) -> list[dict[str, Any]]:
             continue
         text = _read_text(path) or ""
         title = _H1.search(text)
-        out.append({
-            "id": path.stem,
-            "title": title.group(1).strip() if title else path.stem,
-            "text": text,
-            "path": f"workspace/frameworks/{path.name}",
-            "used_by": [],
-        })
+        out.append(
+            {
+                "id": path.stem,
+                "title": title.group(1).strip() if title else path.stem,
+                "text": text,
+                "path": f"workspace/frameworks/{path.name}",
+                "used_by": [],
+            }
+        )
     return out
 
 
@@ -348,7 +365,9 @@ def load_hangar() -> dict[str, Any]:
         entry["workflows"] = [w for w in by_workflow if _mentions(entry["prompt"], w)]
         cast = _SESSION_CAST.search(entry["prompt"])
         entry["participants"] = [
-            pid.strip().rstrip(".") for pid in (cast.group(1).split(",") if cast else []) if pid.strip()
+            pid.strip().rstrip(".")
+            for pid in (cast.group(1).split(",") if cast else [])
+            if pid.strip()
         ]
         starters.append(entry)
     templates = []
@@ -474,7 +493,9 @@ def render_preview(workflow: str) -> str:
     with tempfile.TemporaryDirectory() as tmp:
         target = Path(tmp) / "preview.html"
         args = argparse.Namespace(
-            scenario=str(folder), out=str(target), participants=str(workspace_dir() / "participants")
+            scenario=str(folder),
+            out=str(target),
+            participants=str(workspace_dir() / "participants"),
         )
         try:
             with contextlib.redirect_stdout(out):

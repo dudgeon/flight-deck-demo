@@ -22,7 +22,16 @@ def _repo_folders(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_every_shelf_is_filled_and_healthy() -> None:
     hangar = slim_hangar.load_hangar()
-    for shelf in ("people", "workflows", "views", "templates", "scenarios", "skills", "starters", "frameworks"):
+    for shelf in (
+        "people",
+        "workflows",
+        "views",
+        "templates",
+        "scenarios",
+        "skills",
+        "starters",
+        "frameworks",
+    ):
         assert hangar[shelf], shelf
     # The shipped things all pass their checks; a failure here is a real bug.
     for item in hangar["people"] + hangar["workflows"]:
@@ -68,7 +77,9 @@ def test_bad_names_are_404(call) -> None:  # type: ignore[no-untyped-def]
     assert err.value.status_code == 404
 
 
-def test_a_broken_person_shows_its_problem(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_a_broken_person_shows_its_problem(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     workspace = tmp_path / "workspace"
     shutil.copytree(REPO / "workspace" / "participants", workspace / "participants")
     (workspace / "participants" / "no-role.md").write_text(
