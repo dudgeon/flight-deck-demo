@@ -93,7 +93,7 @@ as unsent changes and arrive together.
 | "Write up the decisions ... as a decision log." (`log`) | Step 5. |
 
 To put one decision in front of the user in the chat:
-`$PA render SKILL_DIR/views/card.json --data data/<slug>-decisions.json --record <id> --out artifacts/<slug>-decision-<id>.html`
+`$PA render SKILL_DIR/views/card.json --host chat --data data/<slug>-decisions.json --record <id> --out artifacts/<slug>-decision-<id>.html`
 
 Never set `choice` yourself except for `take-recommended`.
 

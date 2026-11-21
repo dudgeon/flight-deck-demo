@@ -34,6 +34,23 @@ the data changes. `skills/prd-to-requirements` and
 `scenario-builder` skill explains how to make another, including a standalone
 click-through built with `pa preview`.
 
+## Views in the chat
+
+A fenced block with the language `view` asks the app to draw a rendered view
+inside the conversation instead of the canvas:
+
+    ```view
+    file: artifacts/allowances-decision-D-1.html
+    title: Whose consent does an under-18 allowance need?
+    ```
+
+`file` is a workspace-relative `.html` path. The frame gets `window.omnigent`
+as in the canvas, and `data-host="chat"` on the root element before the page's
+own script runs. Post `{ source: "pa-kit", type: "size", height }` to the
+parent to set the height (pages that do not are measured). After the user's
+next message the view is folded and read-only. Use it for forms, single cards
+and summaries; `pa render --host chat` prints the block.
+
 ## Other participants in the conversation
 
 The session's agent can host other agents and people. Each is a file in the

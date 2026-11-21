@@ -87,7 +87,7 @@ cost, so doing nothing is a visible choice.
 Put the choice in front of the user:
 
 ```bash
-$PA render SKILL_DIR/views/milestone.json --data data/<slug>-delivery.json --record <id> --out artifacts/<slug>-milestone-<id>.html
+$PA render SKILL_DIR/views/milestone.json --host chat --data data/<slug>-delivery.json --record <id> --out artifacts/<slug>-milestone-<id>.html
 ```
 
 | Message | What you do |

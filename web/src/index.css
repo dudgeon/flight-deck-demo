@@ -3149,3 +3149,19 @@ main[data-shell-header="hidden"] .extension-view-status {
   background-color: var(--pa-bg) !important;
   background-image: none !important;
 }
+
+/* omnigent-slim: while a view in the chat is waiting for an answer, the canvas
+   steps back so it is plain where to look. It returns the moment the user
+   points at it or works in it. See lib/chatView.ts. */
+[data-testid="file-viewer"] {
+  transition: filter 240ms ease, opacity 240ms ease;
+}
+html[data-chat-asks] [data-testid="file-viewer"]:not(:hover):not(:focus-within) {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-testid="file-viewer"] {
+    transition: none;
+  }
+}

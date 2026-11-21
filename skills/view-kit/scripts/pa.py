@@ -654,6 +654,17 @@ def cmd_set(args: argparse.Namespace) -> None:
     print(message)
 
 
+def _fill_title(spec: dict[str, Any], data: dict[str, Any] | None = None) -> str:
+    """A one-line name for a view shown in the chat."""
+    data = data or {}
+    if spec.get("record"):
+        for record in data.get("records", []):
+            if record.get("id") == spec["record"] and record.get("title"):
+                return str(record["title"])[:120]
+    title = re.sub(r"\{dataset\.(\w+)\}", lambda m: str(data.get(m.group(1), "")), str(spec.get("title") or ""))
+    return re.sub(r"\{[^}]*\}", "", title).strip(" :·-")[:120]
+
+
 def cmd_render(args: argparse.Namespace) -> None:
     spec_path = Path(args.spec)
     spec = _read_json(spec_path)
@@ -679,6 +690,16 @@ def cmd_render(args: argparse.Namespace) -> None:
     else:
         _write_atomic(out, page(spec, {"records": []}, args.host))
     print(f"wrote {out}")
+    if args.host == "chat":
+        # Asks in chat, work in canvas: the host draws this block inline.
+        title = _fill_title(spec, _load(Path(args.data)) if args.data else None)
+        print(
+            "To show it in the chat, put this block in your reply as it is, "
+            "and do not open the file:\n\n```view\nfile: "
+            + str(out)
+            + (f"\ntitle: {title}" if title else "")
+            + "\n```"
+        )
 
 
 def cmd_refresh(args: argparse.Namespace) -> None:

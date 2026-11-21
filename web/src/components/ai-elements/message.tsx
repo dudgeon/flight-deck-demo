@@ -14,6 +14,9 @@ import { LOCAL_REVIEW_COMMENT_LANGUAGE, parseLocalReviewComment } from "@/lib/lo
 // omnigent-slim: other participants' turns (see lib/participantTurn.ts).
 import { ParticipantTurnBlock } from "@/components/chat/ParticipantTurn";
 import { PARTICIPANT_LANGUAGE, parseParticipantTurn } from "@/lib/participantTurn";
+// omnigent-slim: views the agent draws in the chat (see lib/chatView.ts).
+import { ChatViewBlock } from "@/components/chat/ChatViewBlock";
+import { CHAT_VIEW_LANGUAGE, parseChatView } from "@/lib/chatView";
 import type { UIMessage } from "ai";
 import { ChevronLeftIcon, ChevronRightIcon, PlayIcon, XIcon } from "lucide-react";
 import type { ComponentProps, HTMLAttributes, ReactElement, ReactNode } from "react";
@@ -734,6 +737,12 @@ export function ChatCodeBlockPre({ children }: ComponentProps<"pre">) {
         </ParticipantTurnBlock>
       );
     }
+  }
+
+  // omnigent-slim: a ```view fence is a view to draw here, once the fence has closed.
+  if (language === CHAT_VIEW_LANGUAGE && !fenceOpen) {
+    const view = parseChatView(code);
+    if (view) return <ChatViewBlock view={view} />;
   }
 
   if (!isMermaid) return codeBlock(block);

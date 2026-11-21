@@ -25,7 +25,7 @@ PA="python3 <this skill's folder>/../view-kit/scripts/pa.py"
 Render the setup form and open it, unless the user already said what matters:
 
 ```bash
-$PA render SKILL_DIR/views/focus.json --out artifacts/<slug>-focus.html
+$PA render SKILL_DIR/views/focus.json --host chat --out artifacts/<slug>-focus.html
 ```
 
 The answer arrives as "Discovery setup: ..." or "Use your judgment ...". If

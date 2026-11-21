@@ -329,3 +329,42 @@ itself a guided workflow, drafts are the only thing ever edited, and Publish
 is a strict gate with a way back (D-39 to D-47).
 
 **Where.** The full design is in `hangar.md`.
+
+## Views in the chat (asks in chat, work in canvas)
+
+**What it is for.** Before this, every view opened in the canvas, so a quick
+question took over the canvas and hid the document being read, and scrolling
+back did not show what had been answered. Now anything the person answers or
+glances at (a form, a single card, a summary) is drawn in the conversation,
+and anything they work in (a catalog, a board, a document) stays in the
+canvas (D-51).
+
+**What it does.** The agent renders the view with `pa render --host chat`,
+which prints a fenced block (language `view`, with `file:` and `title:`). The
+agent puts that block in its reply. The app draws the file there in a
+sandboxed frame with the same bridge a canvas view has, sized to its content,
+and redraws it when the file changes. Buttons in it put text in the message
+box, or act directly where the action is a plain state change, exactly as in
+the canvas. When the person has replied, the view folds to one line marked
+"Answered" with Show and "Open in canvas"; shown again it is read-only. Only
+`.html` files inside the workspace are accepted.
+
+**The attention cue (D-53).** While a view in the chat is live and the agent
+is waiting, the canvas turns grey and dims, and comes back as soon as the
+pointer or keyboard is in it. The intent is that it is always obvious which
+side of the screen wants the person. It is a first form to react to.
+
+**Where the code is.** `web/src/lib/chatView.ts`,
+`web/src/components/chat/ChatViewBlock.tsx`, the hook in `ChatCodeBlockPre`
+(`message.tsx`), one rule in `index.css`; `pa render --host chat` in
+`skills/view-kit/scripts/pa.py`; the rule for agents in
+`skills/view-kit/SKILL.md` and `workspace/CLAUDE.md`.
+
+**Tested live, 21 Nov.** Intent shaping with a real agent: the target form
+appeared in the chat, pressing its button filled the message box, sending
+folded it to "Answered", the intent map opened in the canvas, and the next
+question appeared as a card in the chat with the canvas greyed.
+
+**Not done.** Participants cannot yet put a view inside their own turn. The
+preview player has its own older way of showing chat widgets and does not
+fold them.
