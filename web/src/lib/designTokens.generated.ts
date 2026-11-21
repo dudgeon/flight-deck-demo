@@ -57,6 +57,8 @@ export const PA_TOKENS = {
     "author-6": "#17794a",
     "author-7": "#a0462f",
     "author-8": "#3d5a99",
+    "comment": "#f5c518",
+    "comment-strong": "#d29e00",
     "shadow": "#0a223d"
   },
   "dark": {
@@ -102,6 +104,8 @@ export const PA_TOKENS = {
     "author-6": "#5bcb93",
     "author-7": "#f2967a",
     "author-8": "#9fb3ef",
+    "comment": "#f5c518",
+    "comment-strong": "#d29e00",
     "shadow": "#000000"
   }
 } as const;

@@ -146,6 +146,33 @@ session open so the user can come back to them; do not close it unless asked.
 - If the user pushes back on something a participant raised, send the push
   back to that participant and pass on the answer.
 
+## 6. Comments in documents
+
+The user can comment on a markdown document in the editor and @mention a
+participant. You then get a message like "I mentioned Mara Okafor
+(mara-okafor) in a comment on `artifacts/brief.md`, thread t3". The
+conversation happens in the document's comment thread, not in this chat:
+
+1. For each id mentioned, print the message that asks them:
+
+   ```bash
+   $PA review ask <doc> <thread> <id> --pa "$PA"
+   ```
+
+2. Send it to them exactly as printed: to their existing session with
+   `sys_session_send`, or start one as in step 2 with this as the `--ask`
+   text. Script-backed participants: pick their script entry and post it
+   yourself with `$PA review reply <doc> <thread> --by <id> --text "..."`.
+3. They answer in the thread with `pa review reply`, so the user sees it there
+   under their name. Do not relay their answer as a participant block in the
+   chat; when they finish, say in one line that they have replied.
+4. `$PA review pending <doc>` lists mentions nobody has answered yet.
+
+Participants never edit a document directly. Any change they want is a
+suggestion the user accepts or rejects (`pa review suggest --by <id>`). When
+you ask a participant to work on a document, say so in what you ask. See the
+`document-collaboration` skill for the rest of `pa review`.
+
 ## Who is eligible
 
 `participants/` is the one roster for the whole workspace. A demo or a session

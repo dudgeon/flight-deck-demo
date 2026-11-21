@@ -374,6 +374,11 @@ has called you in. Aviator passes your replies on word for word, shown under you
   in your reply. Add them to the dataset Aviator names with the `pa` command it gives
   you, and set `by` to `{id}` on every record so they show as yours. Then say how many
   you added and what matters most.
+- Never edit a document yourself. Any change you want to a document is a suggestion the
+  product manager accepts or rejects: `pa review suggest <doc> --by {id} --replace "exact
+  text" --with "new text"` (or `--insert TEXT --after "exact text"`, or `--delete "exact
+  text"`), one line at a time, because a quoted passage cannot cross lines. To comment on
+  a passage, use `pa review comment <doc> --by {id} --quote "exact text" --text "..."`.
 - Do not open anything in the viewer and do not start sessions of your own.
 - Ask the product manager at most one question per reply, as the last line.
 - When you have nothing more to add, end your reply with a last line that starts with
@@ -1077,10 +1082,15 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--participants", help="the roster folder; default participants/ in the workspace")
     p.set_defaults(run=cmd_preview)
 
+    # Comments and suggested changes in markdown documents (docreview.py).
+    from docreview import ReviewError, register as register_review
+
+    register_review(sub)
+
     args = parser.parse_args(argv)
     try:
         args.run(args)
-    except PaError as err:
+    except (PaError, ReviewError) as err:
         print(f"pa: {err}", file=sys.stderr)
         return 2
     return 0

@@ -45,6 +45,14 @@ import {
   type SearchDecorationState,
 } from "./TipTapSearchExtension";
 import { createMarkdownDocumentExtensions } from "./markdownDocumentExtensions";
+// omnigent-slim: review layer (tracked changes, comment threads, fresh agent edits).
+import { ReviewPanel } from "./review/ReviewPanel";
+import { SuggestionDelete, SuggestionInsert, SuggestingMode } from "./review/TipTapSuggestions";
+import {
+  createReviewDecorations,
+  markFreshEdits,
+  type ThreadHighlightState,
+} from "./review/TipTapReviewDecorations";
 import { isUserEditUpdate } from "./codeBlockLanguageEdit";
 import { applyExternalMarkdown } from "./TipTapEditorHelpers";
 import { rememberSourceBlocks } from "./markdownSourceBlocks";
@@ -251,6 +259,8 @@ function MarkdownRichTextViewerInner({
     [],
   );
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  // omnigent-slim: shared with the review layer's thread highlights.
+  const reviewHighlightRef = useRef<ThreadHighlightState | null>(null);
   const linkMouseDownRef = useRef<{ x: number; y: number } | null>(null);
   // Persist/restore the editor's scroll position across unmount/remount and
   // session switches. Content is present at mount (the parent gates on the
@@ -357,6 +367,11 @@ function MarkdownRichTextViewerInner({
       ...createMarkdownDocumentExtensions(conversationId, path),
       createCommentDecorationExtension(commentStateRef),
       createSearchDecorationExtension(searchStateRef),
+      // omnigent-slim: review layer.
+      SuggestionInsert,
+      SuggestionDelete,
+      SuggestingMode,
+      createReviewDecorations(reviewHighlightRef),
     ],
     // commentStateRef is stable and a path change remounts this component
     // (editorKey), so the closed-over conversationId/path can't go stale;
@@ -435,7 +450,10 @@ function MarkdownRichTextViewerInner({
     setContentRef.current = (newContent: string) => {
       if (editor.isDestroyed) return;
       const savedScroll = scrollContainerRef.current?.scrollTop ?? 0;
+      const previousDoc = editor.state.doc;
       applyExternalMarkdown(editor, newContent);
+      // omnigent-slim: tint what changed on disk (the agent's direct edits).
+      markFreshEdits(editor.view as never, previousDoc);
       rememberSourceBlocks(editor, newContent);
       endsWithNewlineRef.current = newContent.endsWith("\n");
       baselineRef.current = readMarkdown(editor, endsWithNewlineRef.current);
@@ -486,69 +504,81 @@ function MarkdownRichTextViewerInner({
           hasExternalUpdate={hasExternalUpdate}
         />
       )}
-      <div
-        ref={scrollContainerRef}
-        onScroll={handleScrollPersist}
-        className="relative flex-1 overflow-auto px-8 py-6"
-        onMouseDown={(event) => {
-          linkMouseDownRef.current = { x: event.clientX, y: event.clientY };
-        }}
-        // Follow links with one click in both modes. Alt-click places the
-        // editing caret; Shift-click and dragging retain text selection.
-        onClick={(event) => {
-          const mouseDown = linkMouseDownRef.current;
-          linkMouseDownRef.current = null;
-          if (event.defaultPrevented || event.button !== 0) return;
-          const anchor = (event.target as Element).closest("a[href]");
-          if (!anchor) return;
-          const href = anchor.getAttribute("href");
-          // The editor may collapse a previous selection only after click.
-          // Suppress navigation for a selection gesture, not that stale range.
-          const selectingText =
-            window.getSelection()?.isCollapsed === false &&
-            (event.detail > 1 ||
-              (mouseDown &&
-                (Math.abs(event.clientX - mouseDown.x) > 4 ||
-                  Math.abs(event.clientY - mouseDown.y) > 4)));
-          if (
-            !href ||
-            /^[?#]/.test(href) ||
-            selectingText ||
-            (canEdit && !event.metaKey && !event.ctrlKey && (event.altKey || event.shiftKey))
-          ) {
-            event.preventDefault();
-            return;
-          }
-          if (isWorkspaceRelativeSrc(href)) {
-            event.preventDefault();
-            const filePath = resolveWorkspacePath(path, href);
-            if (filePath) openFile?.(filePath);
-            return;
-          }
-          followLinkWithPopupFallback(event, href, conversationId);
-          // Contenteditable anchors have no native navigation, including
-          // modified clicks and the desktop shell's external-browser path.
-          if (!event.defaultPrevented) {
-            event.preventDefault();
-            window.open(href, "_blank", "noopener,noreferrer");
-          }
-        }}
-      >
-        {!canEdit && (
-          <button
-            type="button"
-            title="Copy"
-            onClick={handleCopyContent}
-            className="absolute top-3 right-3 z-10 flex items-center gap-1 rounded px-2 py-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-          >
-            {isCopied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
-            {isCopied ? "Copied!" : "Copy"}
-          </button>
+      {/* omnigent-slim: the review panel sits beside the document. */}
+      <div className="flex min-h-0 flex-1">
+        <div
+          ref={scrollContainerRef}
+          onScroll={handleScrollPersist}
+          className="relative flex-1 overflow-auto px-8 py-6"
+          onMouseDown={(event) => {
+            linkMouseDownRef.current = { x: event.clientX, y: event.clientY };
+          }}
+          // Follow links with one click in both modes. Alt-click places the
+          // editing caret; Shift-click and dragging retain text selection.
+          onClick={(event) => {
+            const mouseDown = linkMouseDownRef.current;
+            linkMouseDownRef.current = null;
+            if (event.defaultPrevented || event.button !== 0) return;
+            const anchor = (event.target as Element).closest("a[href]");
+            if (!anchor) return;
+            const href = anchor.getAttribute("href");
+            // The editor may collapse a previous selection only after click.
+            // Suppress navigation for a selection gesture, not that stale range.
+            const selectingText =
+              window.getSelection()?.isCollapsed === false &&
+              (event.detail > 1 ||
+                (mouseDown &&
+                  (Math.abs(event.clientX - mouseDown.x) > 4 ||
+                    Math.abs(event.clientY - mouseDown.y) > 4)));
+            if (
+              !href ||
+              /^[?#]/.test(href) ||
+              selectingText ||
+              (canEdit && !event.metaKey && !event.ctrlKey && (event.altKey || event.shiftKey))
+            ) {
+              event.preventDefault();
+              return;
+            }
+            if (isWorkspaceRelativeSrc(href)) {
+              event.preventDefault();
+              const filePath = resolveWorkspacePath(path, href);
+              if (filePath) openFile?.(filePath);
+              return;
+            }
+            followLinkWithPopupFallback(event, href, conversationId);
+            // Contenteditable anchors have no native navigation, including
+            // modified clicks and the desktop shell's external-browser path.
+            if (!event.defaultPrevented) {
+              event.preventDefault();
+              window.open(href, "_blank", "noopener,noreferrer");
+            }
+          }}
+        >
+          {!canEdit && (
+            <button
+              type="button"
+              title="Copy"
+              onClick={handleCopyContent}
+              className="absolute top-3 right-3 z-10 flex items-center gap-1 rounded px-2 py-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            >
+              {isCopied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+              {isCopied ? "Copied!" : "Copy"}
+            </button>
+          )}
+          <EditorContent
+            editor={editor}
+            className="outline-none max-w-none text-ui text-foreground tiptap-md-content"
+          />
+        </div>
+        {!truncated && (
+          <ReviewPanel
+            editor={editor}
+            conversationId={conversationId}
+            path={path}
+            canEdit={canEdit}
+            highlightRef={reviewHighlightRef}
+          />
         )}
-        <EditorContent
-          editor={editor}
-          className="outline-none max-w-none text-ui text-foreground tiptap-md-content"
-        />
       </div>
       {canEdit && editor && (
         <TableHandles editor={editor} scrollContainerRef={scrollContainerRef} />

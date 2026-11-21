@@ -277,30 +277,30 @@
 
   /* Tertiary gray for lighter/disabled/placeholder text. */
   --foreground-tertiary: #a1a1aa;
-  --destructive: #c8324c;
+  --destructive: var(--pa-fail); /* omnigent-slim */
   --destructive-foreground: #fff;
   /* success/warning/info repointed onto the named status hues below so
      * the ~45 existing badges/indicators adopt the brand status palette. */
-  --success: #2ea65c;
-  --warning: #d4972a;
-  --info: #3b8ff5;
+  --success: var(--pa-ok); /* omnigent-slim */
+  --warning: var(--pa-warn); /* omnigent-slim */
+  --info: var(--pa-info); /* omnigent-slim */
   /* The warning amber, deepened to read as text on every palette's popover. */
   --search-match-foreground: #7b5300;
   /* Session active / idle-alive blue — a deeper, saturated azure
      * that harmonizes with the brand blues (#2272b4 / #3b8ff5) and reads
      * with strong contrast on the white card surface. */
-  --session-active: #2f7fd4;
+  --session-active: var(--pa-agent); /* omnigent-slim */
   /* Weaker panel border for low-contrast dividers. */
   --border-weak: #ececee;
   --button-icon-hover-color: #27272a;
   /* Pink tag surface — a translucent wash, so it tints whatever it sits on. */
   --tag-pink: rgba(240, 1, 150, 0.06);
   /* Named status hues. success/warning/info above mirror green/yellow/blue. */
-  --status-blue: #3b8ff5;
-  --status-green: #2ea65c;
-  --status-yellow: #d4972a;
-  --status-red: #f04858;
-  --status-gray: #8e99a4;
+  --status-blue: var(--pa-info); /* omnigent-slim */
+  --status-green: var(--pa-ok); /* omnigent-slim */
+  --status-yellow: var(--pa-warn); /* omnigent-slim */
+  --status-red: var(--pa-fail); /* omnigent-slim */
+  --status-gray: var(--pa-idle); /* omnigent-slim */
   --chart-1: #3b8ff5;
   --chart-2: #2272b4;
   --chart-3: #2ea65c;
@@ -344,27 +344,27 @@
   --onboarding-modal-border: #ffffff14;
   --onboarding-modal-shadow: 0 24px 80px 8px #00000038;
   --composer-shadow: 0 6px 20px -8px rgb(0 0 0 / 80%);
-  --destructive: #e65b77;
+  --destructive: var(--pa-fail); /* omnigent-slim */
   --destructive-foreground: #fff;
   /* success/warning/info repointed onto the status hues below, mirroring
      * light mode so dark mode doesn't carry a second green/yellow/blue. */
-  --success: #2ea65c;
-  --warning: #d4972a;
-  --info: #3b8ff5;
+  --success: var(--pa-ok); /* omnigent-slim */
+  --warning: var(--pa-warn); /* omnigent-slim */
+  --info: var(--pa-info); /* omnigent-slim */
   /* The warning amber, lightened to read as text on every dark palette's popover. */
   --search-match-foreground: #efb14a;
   /* Session active / idle-alive blue, lightened for the dark glass card so
      * the small dot keeps adequate contrast against the dark canvas (the
      * light-mode #2f7fd4 reads too dim here). */
-  --session-active: #5ca4f5;
+  --session-active: var(--pa-agent); /* omnigent-slim */
   /* Pink tag surface — a heavier wash than light, since 6% all but vanishes
      * against the dark canvas. */
   --tag-pink: rgba(240, 1, 150, 0.15);
-  --status-blue: #3b8ff5;
-  --status-green: #2ea65c;
-  --status-yellow: #d4972a;
-  --status-red: #f04858;
-  --status-gray: #8e99a4;
+  --status-blue: var(--pa-info); /* omnigent-slim */
+  --status-green: var(--pa-ok); /* omnigent-slim */
+  --status-yellow: var(--pa-warn); /* omnigent-slim */
+  --status-red: var(--pa-fail); /* omnigent-slim */
+  --status-gray: var(--pa-idle); /* omnigent-slim */
   --chart-1: oklch(0.64 0.22 254);
   --chart-2: oklch(0.65 0.14 200);
   --chart-3: oklch(0.68 0.15 145);
@@ -2492,6 +2492,41 @@ body {
 .md-comment-pending {
   background-color: color-mix(in oklch, var(--primary) 20%, transparent);
   border-bottom: 2px solid color-mix(in oklch, var(--primary) 50%, transparent);
+  border-radius: 2px;
+}
+
+/* omnigent-slim: review layer in the markdown editor (shell/review/). Suggestions
+   take their author's colour from --md-suggestion-color, set per author by the
+   review panel. */
+.md-suggestion {
+  --md-suggestion-color: var(--pa-author-1);
+  color: var(--md-suggestion-color);
+  background-color: color-mix(in oklch, var(--md-suggestion-color) 12%, transparent);
+  border-radius: 2px;
+}
+ins.md-suggestion-insert {
+  text-decoration: none;
+  border-bottom: 2px solid var(--md-suggestion-color);
+}
+del.md-suggestion-delete {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+.dark .md-suggestion {
+  color: color-mix(in oklch, var(--md-suggestion-color) 55%, white);
+}
+.md-review-thread {
+  background-color: color-mix(in oklch, var(--pa-comment) 35%, transparent);
+  border-radius: 2px;
+  cursor: pointer;
+}
+.md-review-thread-active {
+  background-color: color-mix(in oklch, var(--pa-comment) 60%, transparent);
+  outline: 2px solid color-mix(in oklch, var(--pa-comment-strong) 70%, transparent);
+}
+.md-review-fresh {
+  background-color: color-mix(in oklch, var(--pa-agent) 16%, transparent);
+  box-shadow: inset 0 -2px 0 color-mix(in oklch, var(--pa-agent) 70%, transparent);
   border-radius: 2px;
 }
 

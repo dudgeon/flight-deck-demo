@@ -42,6 +42,7 @@ looks right opened on its own, start from a template in
 | `--pa-idle` | Not started, queued |
 | `--pa-agent` | The main agent and work in progress by it |
 | `--pa-author-1` … `--pa-author-8` | Other agents and people, one hue each, in order of appearance |
+| `--pa-comment`, `--pa-comment-strong` | Highlight behind commented text, and its outline when selected |
 | `--pa-shadow` | Shadow color; only for things that float over the page |
 | `--pa-font`, `--pa-mono` | System fonts only (no web fonts work offline). Mono only for ids and code. |
 | `--pa-r`, `--pa-r-panel`, `--pa-gap` | Corners of controls, corners of panels, the standard gap |
