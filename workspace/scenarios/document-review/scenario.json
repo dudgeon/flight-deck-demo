@@ -9,7 +9,8 @@
  ],
  "fixtures": {
   "dataset": "fixtures/allowances-review.json",
-  "document": "fixtures/allowances-prd.md"
+  "document": "context/allowances-prd.md"
  },
- "script": "script.md"
+ "script": "script.md",
+ "opening": "I have finished the Allowances PRD. Help me review it."
 }

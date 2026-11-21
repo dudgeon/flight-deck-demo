@@ -43,6 +43,8 @@ showing people and for designing before building (D-06, D-08, D-09).
 the record shapes, view specs, invented fixture data and a markdown screenplay
 (D-21). `pa preview` turns it into one HTML file that plays the screenplay
 over the fixtures with the real views. `pa check` validates the package.
+Since D-42 the story lives in `workspace/scenarios/<id>/`, with `context/`
+documents and `cast/` notes beside the fixtures (D-79); flying it is below.
 
 **Where.** `skills/prd-to-requirements/`, `skills/requirements-to-dependencies/`,
 `skills/document-review/`; how to make one in `skills/scenario-builder/`; the
@@ -65,6 +67,38 @@ from the header otherwise.
 **Where.** `web/src/shell/SessionOverview.tsx`,
 `web/src/shell/SessionOverviewFiles.tsx`; `pa flow` writes the workflow card's
 data to `progress/`.
+
+## Flying a scenario as a demo
+
+**Intent.** "Scenario you build, demo you fly" (D-76). A demo should feel like
+the real product, because it is the real product: a real session in a project
+of its own, with the story's documents, data and people in place. The
+screenplay keeps it on rails where that matters, and hands over to a real
+agent on the turns that should show real reasoning (D-77). Demos are what the
+Library lists for people who want to see a kind of work, so launching one is
+one click and the same everywhere (D-78).
+
+**Behaviour.** "Fly this" on a scenario's Hangar page calls
+`POST /v1/slim/scenarios/{id}/fly`. That makes `workspace/demos/<id>/`
+(`pa.fly_demo`): the scenario's `context/` documents, a `data/` file started
+from the fixture with the records the script reveals held back, the roster
+with each cast member's `cast/<id>.md` notes appended under "In this story", a
+copy of a workflow built in the workspace, a `CLAUDE.md` that tells the agent
+how to run the demo, and `.demo/` with a snapshot of the scenario and a
+cursor. It creates or reuses the project "◆ Demo · <title>" (settings copied
+from the Workspace project, folder set to the demo's) and opens a new session
+there with the opening line in the composer. After each message the agent runs
+`pa demo next`, which prints the next turn: canned lines to say or pass on word
+for word (participant blocks included), the commands for documents, comments
+and views, and LIVE turns to answer for real; data changes are done for it. If
+the demo exists already, the button offers "Reset to the start" or "Keep
+going" (D-81).
+
+**Where.** `skills/view-kit/scripts/pa.py` (demos section, `pa demo
+next|status|fly`); `omnigent/server/routes/slim_hangar.py` (`fly_scenario`,
+the route); `web/src/hangar/FlyButton.tsx` and `useFlyScenario` /
+`demoSessionLink` in `web/src/hangar/hangarApi.ts`, for the Library to reuse;
+the `[live]` direction in `skills/view-kit/references/script.md`.
 
 ## Participants
 

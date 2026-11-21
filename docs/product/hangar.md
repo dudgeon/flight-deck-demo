@@ -143,6 +143,12 @@ files are keyed by scenario id).
    **Built**; editing in place with the Aviator pop-over (D-63 to D-66).
 3. Scenario and workflow builders, with the D-42 split. **Built** (D-67, D-71 to D-73).
 
+## Flying a scenario (D-76 to D-81)
+
+The scenario page has "◆ Fly this": a "◆ Demo · <title>" project and a real
+session that plays the screenplay, canned turns word for word and `[live]`
+turns answered for real. See "Flying a scenario as a demo" in features.md.
+
 ## Left for later
 
 Sharing a workflow or scenario with another PM as one file. A second

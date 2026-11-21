@@ -24,15 +24,13 @@ workspace folder.
 ## 1. Find the inputs
 
 - **The dataset.** Use the one the user named, else the one requirements
-  dataset in `data/`. If there is none and the user wants a demo, start from
-  the invented one:
-  `$PA init data/allowances.json --title Allowances --from scenarios/requirements-to-dependencies/fixtures/allowances.json`
-  That fixture is already half explored, which is good for showing the board.
-  For a clean run on it, reset first:
-  `$PA set data/allowances.json --where type=requirement explore_status=queued`.
+  dataset in `data/`. If there is none, ask for it, or offer to make one with
+  the PRD to requirements workflow. A demo flown from the Hangar already has
+  its dataset in `data/`. For a clean run on a dataset that was explored
+  before: `$PA set data/<x>.json --where type=requirement explore_status=queued`.
 - **The platform map.** What the platform offers, in the user's own files.
-  Look in `context/`. For a demo, copy
-  `scenarios/requirements-to-dependencies/fixtures/platform-map.md` into `context/`. If there is nothing to
+  Look in `context/` (a flown demo has its invented map there; never copy
+  one out of `scenarios/` yourself). If there is nothing to
   read, say so and ask where the capability documentation is. Do not invent
   capabilities.
 

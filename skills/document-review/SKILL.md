@@ -20,8 +20,9 @@ PA="python3 <this skill's folder>/../view-kit/scripts/pa.py"
 
 ## 1. Find the document and read it
 
-Use the file the user named, otherwise look in `context/`. For a demo with no
-document: `mkdir -p context && cp scenarios/document-review/fixtures/allowances-prd.md context/`.
+Use the file the user named, otherwise look in `context/`. Never copy files out of `scenarios/` yourself. A demo is flown from the
+Hangar ("Fly this"), which sets up its folder with the documents and data
+already in place. If there is nothing to work from, ask the user for it.
 Pick a short slug, e.g. `allowances`.
 
 ## 2. Your own review

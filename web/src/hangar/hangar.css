@@ -907,3 +907,8 @@
 .hangar .avatarpick input[type="file"] {
   display: none;
 }
+
+/* omnigent-slim: "Fly this" (D-76). */
+.hangar .flyrow { margin: 4px 0 2px; align-items: center; }
+.hangar .flybox { display: flex; flex-direction: column; gap: 6px; }
+.hangar .flychoice { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--pa-line); border-radius: var(--pa-r); background: var(--pa-build-soft); }

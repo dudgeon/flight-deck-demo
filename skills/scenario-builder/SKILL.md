@@ -32,11 +32,19 @@ skills/<workflow>/                 (shipped)  or  .claude/skills/<workflow>/ (bu
 scenarios/<scenario>/              (in the workspace)
   scenario.json       scenario (its id), title, summary, workflow (the id it runs),
                       participants (the cast), fixtures, script, opening (the first line)
-  fixtures/           an invented dataset in its finished state, plus any documents
-  script.md           the click-through, a markdown screenplay
-  context/            invented documents the demo starts from, if any
-  cast/<person>.md    story facts for a person in this demo, if any
+  fixtures/           an invented dataset in its finished state, plus documents the work produces
+  script.md           the screenplay: canned turns, and live ones marked [live]
+  context/            invented documents the story starts from (a PRD, a platform map)
+  cast/<person>.md    what each person in the cast knows in this story
 ```
+
+A scenario you build, a demo you fly. "Fly this" in the Hangar makes a
+"◆ Demo · <title>" project with its own folder: `context/` is copied in, the
+dataset starts from the fixture, each cast member's file gets their
+`cast/<id>.md` notes, and a session opens with the `opening` line ready to
+send. The agent there plays the script with `pa demo next`. Keep `title`,
+`summary`, the cast and the `workflow` id tidy: the Library lists demos from
+them. Workflow skills never copy anything out of `scenarios/` themselves.
 
 The first scenario of a workflow usually shares its id. Paths in `fixtures`
 and `script` are relative to the scenario folder.
@@ -128,6 +136,10 @@ spec names a status tone such as `ok` or `attn`, never a color.
    such as `[show catalog]`, `[reveal R-01, R-02]` and `[wait]` for everything
    else. The whole vocabulary is in the view-kit skill's
    `references/script.md`. Keep it under about thirty steps.
+   Mark a turn `[live]` (under its line) where a flown demo should show a real
+   answer, such as a reply to something the user types in their own words.
+   Write `cast/<id>.md` for each person in the cast: the facts of the story
+   they need to answer a live turn, in a few bullets.
    If other agents or people take part, list their ids under `participants`
    in `workflow.json` (who may be called) and in `scenario.json` (the cast). They must be on the roster (the `participants` skill
    explains how to add one). Then they can speak in the script by name, be

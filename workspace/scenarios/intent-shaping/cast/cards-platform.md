@@ -1,0 +1,1 @@
+In this story the product manager wants to show customers the release date of a held payment. The authorization platform already carries the hold. It would need one new field passed through to the app and the support console.

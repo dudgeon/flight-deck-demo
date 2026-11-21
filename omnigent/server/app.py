@@ -4422,7 +4422,7 @@ def create_app(
     )
     # omnigent-slim: the read-only Hangar catalog (builder mode, slice 1).
     app.include_router(
-        create_slim_hangar_router(auth_provider=auth_provider),
+        create_slim_hangar_router(auth_provider=auth_provider, project_store=project_store),
         prefix="/v1",
         tags=["slim"],
     )

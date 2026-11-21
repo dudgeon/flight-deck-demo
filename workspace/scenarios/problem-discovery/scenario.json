@@ -10,5 +10,6 @@
  "fixtures": {
   "dataset": "fixtures/business-onboarding-problems.json"
  },
- "script": "script.md"
+ "script": "script.md",
+ "opening": "I have a folder of interviews and support data on new business accounts. A lot of them go quiet in the first two months. Find me the problems worth solving."
 }

@@ -5,7 +5,8 @@
  "workflow": "requirements-to-dependencies",
  "fixtures": {
   "dataset": "fixtures/allowances.json",
-  "platform": "fixtures/platform-map.md"
+  "platform": "context/platform-map.md"
  },
- "script": "script.md"
+ "script": "script.md",
+ "opening": "Map the platform dependencies for these requirements."
 }

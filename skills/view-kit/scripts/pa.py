@@ -588,6 +588,394 @@ def _render_views(path: Path, data: dict[str, Any]) -> list[str]:
     return written
 
 
+
+# ------------------------------------------------------------------- demos
+#
+# "Scenario you build, demo you fly." Flying a scenario makes a demo folder
+# (by default `<workspace>/demos/<scenario id>/`) that a real session runs in:
+# the scenario's context/ documents, a starting dataset, the roster with each
+# cast member's story notes, and `.demo/` with a snapshot of the scenario and
+# a cursor. The agent there calls `pa demo next` after each user message and
+# gets the next turn of the script: canned turns to play word for word, live
+# turns to answer for real. See references/script.md.
+
+DEMOS_DIR = "demos"
+DEMO_STATE = ".demo"
+CAST_DIR = "cast"
+CONTEXT_DIR = "context"
+
+DEMO_CLAUDE = """# Demo: {title}
+
+This folder is a flown demo of the scenario **{title}**. {summary}
+The people, documents and data here are invented for the story.
+
+How to run it:
+
+1. After every message from the user, run `{pa} demo next` before you answer.
+   It prints the next turn of the script and does the data changes itself.
+2. Do what the turn says, in order. A **canned** line is said word for word,
+   with nothing added. A **live** turn is yours: answer it for real, the way
+   you would outside a demo, using the workflow skill `{workflow}`; the written
+   line is only a guide to what the turn is about.
+3. Participants: a canned participant line is passed on in a participant block
+   word for word (participants skill, step 4), with no session behind it. A
+   live participant turn means calling them for real (participants skill,
+   step 2); what they know in this story is in their file under
+   "In this story".
+4. If the user says something the script did not expect, answer them for real
+   and do not run `demo next` again until they come back to the story.
+5. When `demo next` says the script is over, carry on as a normal session.
+
+Do not copy anything from `.demo/` into the conversation, and do not edit it.
+`{pa} demo status` says where the story is.
+"""
+
+
+def demo_dir(workspace: Path, sid: str) -> Path:
+    return workspace / DEMOS_DIR / sid
+
+
+def demo_state(folder: Path) -> dict[str, Any] | None:
+    path = folder / DEMO_STATE / "demo.json"
+    return _read_json(path) if path.is_file() else None
+
+
+def _save_demo_state(folder: Path, state: dict[str, Any]) -> None:
+    _write_atomic(folder / DEMO_STATE / "demo.json", json.dumps(state, indent=1, ensure_ascii=False) + "\n")
+
+
+def scenario_opening(sdir: Path, scenario: dict[str, Any] | None = None) -> str:
+    """The line the user starts the demo with: `opening` in scenario.json, else the script's first You line."""
+    scenario = scenario if scenario is not None else _read_json(sdir / SCENARIO_FILE)
+    if scenario.get("opening"):
+        return str(scenario["opening"])
+    script = sdir / str(scenario.get("script") or "script.md")
+    if script.is_file():
+        for line in script.read_text(encoding="utf-8").splitlines():
+            m = _SPEECH.match(line.strip())
+            if m and m.group(1).strip().lower() in ("you", "pm"):
+                return m.group(2).strip()
+    return ""
+
+
+def _turn_count(steps: list[dict[str, Any]]) -> int:
+    return max(1, sum(1 for s in steps if "pm" in s or s.get("await")))
+
+
+def _apply_start(data: dict[str, Any], start: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    """(the full fixture after `start: set`, the starting dataset without hidden records)."""
+    full = json.loads(json.dumps(data))
+    full.pop("views", None)
+    rule = start.get("set")
+    if rule:
+        for record in full["records"]:
+            if all(record.get(k) == v for k, v in rule["where"].items()):
+                record.update(rule["fields"])
+    shown = json.loads(json.dumps(full))
+    hide = set(start.get("hide") or [])
+    shown["records"] = [r for r in shown["records"] if r.get("type") not in hide]
+    return full, shown
+
+
+def fly_demo(scenario_dir: Path, workspace: Path, *, reset: bool = False, dest: Path | None = None) -> dict[str, Any]:
+    """Make (or keep) the demo folder for a scenario. Returns what the caller needs to open a session.
+
+    With `reset`, an existing demo folder is emptied and set up again from the
+    scenario as it is now. Without it, an existing demo is kept as it is.
+    """
+    import shutil
+
+    scenario_dir = Path(scenario_dir)
+    scenario = _read_json(scenario_dir / SCENARIO_FILE)
+    sid = str(scenario.get("scenario") or scenario_dir.name)
+    folder = dest or demo_dir(workspace, sid)
+    existing = demo_state(folder)
+    if existing and not reset:
+        return {**_demo_summary(folder, existing), "created": False}
+    if folder.exists():
+        if any(folder.iterdir()) and not (folder / DEMO_STATE).is_dir():
+            raise PaError(f"{folder} exists and is not a demo folder; move it away first")
+        shutil.rmtree(folder)
+    run = resolve_run(scenario_dir, workspace)
+    folder.mkdir(parents=True)
+    state_dir = folder / DEMO_STATE
+    _copy_folder(scenario_dir, state_dir / "scenario")
+    for sub in ("artifacts", "data", "progress", CONTEXT_DIR):
+        (folder / sub).mkdir(exist_ok=True)
+    # Invented documents the story starts from.
+    if (scenario_dir / CONTEXT_DIR).is_dir():
+        shutil.copytree(scenario_dir / CONTEXT_DIR, folder / CONTEXT_DIR, dirs_exist_ok=True)
+    # The roster, with what each cast member knows in this story.
+    roster_src = workspace / PARTICIPANTS_DIR
+    if roster_src.is_dir():
+        shutil.copytree(roster_src, folder / PARTICIPANTS_DIR, dirs_exist_ok=True)
+    primed = []
+    for note in sorted((scenario_dir / CAST_DIR).glob("*.md")) if (scenario_dir / CAST_DIR).is_dir() else []:
+        target = folder / PARTICIPANTS_DIR / note.name
+        if target.is_file():
+            story = note.read_text(encoding="utf-8").strip()
+            text = target.read_text(encoding="utf-8").rstrip()
+            _write_atomic(target, f"{text}\n\n## In this story\n\n{story}\n")
+            primed.append(note.stem)
+    # A workflow built in the Hangar travels with the demo; shipped ones reach every session anyway.
+    wdir = run["workflow_dir"]
+    if not is_builtin(workspace, wdir):
+        _copy_folder(wdir, folder / ".claude" / "skills" / wdir.name)
+    # The starting dataset, and the whole fixture that canned turns reveal records from.
+    manifest = run["manifest"]
+    dataset = None
+    fixture = (manifest.get("fixtures") or {}).get("dataset")
+    script = _read_script(scenario_dir / str(manifest.get("script") or "script.md"), _participants(folder / PARTICIPANTS_DIR))
+    if fixture:
+        full, shown = _apply_start(_load(scenario_dir / fixture), script.get("start") or {})
+        dataset = f"data/{Path(fixture).stem}.json"
+        _save(state_dir / "full.json", full)
+        _save(folder / dataset, shown)
+    pa_cmd = f"python3 {Path(__file__).resolve()}"
+    title = str(scenario.get("title") or sid)
+    _write_atomic(folder / "CLAUDE.md", DEMO_CLAUDE.format(
+        title=title, summary=str(scenario.get("summary") or ""), pa=pa_cmd, workflow=run["workflow_id"]))
+    state = {
+        "scenario": sid,
+        "title": title,
+        "workflow": run["workflow_id"],
+        "dataset": dataset,
+        "status_field": ((manifest.get("dataset") or {}).get("status_field")) or "status",
+        "cursor": 0,
+        "turn": 0,
+        "turns": _turn_count(script["steps"]),
+        "opening": scenario_opening(scenario_dir, scenario),
+        "primed": primed,
+        "started": _now(),
+    }
+    _save_demo_state(folder, state)
+    return {**_demo_summary(folder, state), "created": True}
+
+
+def _demo_summary(folder: Path, state: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "folder": str(folder),
+        "scenario": state.get("scenario"),
+        "title": state.get("title"),
+        "opening": state.get("opening", ""),
+        "turn": state.get("turn", 0),
+        "turns": state.get("turns", 0),
+        "started": state.get("started"),
+        "finished": bool(state.get("finished")),
+    }
+
+
+def _demo_doc(folder: Path, sdir: Path, fixtures: dict[str, Any], name: str) -> str:
+    """The working copy in artifacts/ of a document the script opens. Nobody changes context/, so comments go on the copy."""
+    rel = str(fixtures.get(name) or name)
+    target = Path("artifacts") / Path(rel).name
+    source = folder / rel if (folder / rel).is_file() else sdir / rel
+    if source.is_file() and not (folder / target).exists():
+        (folder / target).write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+    return str(target)
+
+
+def _demo_data(folder: Path, state: dict[str, Any], step: dict[str, Any]) -> str | None:
+    """Apply a step's data changes to the demo's dataset; a line saying what changed, or None."""
+    keys = ("reveal", "restore", "status", "patch", "fact")
+    empty = step.get("canvas") and step.get("data") == "empty"
+    if not state.get("dataset") or not (any(k in step for k in keys) or empty):
+        return None
+    path = folder / state["dataset"]
+    full = _load(folder / DEMO_STATE / "full.json")
+    by_full = {r.get("id"): r for r in full["records"]}
+    done = []
+    with _locked(path):
+        data = _load(path)
+        index = {r.get("id"): i for i, r in enumerate(data["records"])}
+
+        def put(record: dict[str, Any]) -> None:
+            if record.get("id") in index:
+                data["records"][index[record["id"]]] = json.loads(json.dumps(record))
+            else:
+                index[record["id"]] = len(data["records"])
+                data["records"].append(json.loads(json.dumps(record)))
+
+        if empty:
+            data["records"] = []
+            index.clear()
+            done.append("emptied the dataset")
+        for rid in step.get("reveal") or []:
+            if rid in by_full:
+                put(by_full[rid])
+        if step.get("reveal"):
+            done.append("added " + ", ".join(step["reveal"]))
+        for rid in step.get("restore") or []:
+            if rid in by_full:
+                put(by_full[rid])
+                kids = [r for r in full["records"] if r.get("parent") == rid]
+                while kids:
+                    kid = kids.pop()
+                    put(kid)
+                    kids += [r for r in full["records"] if r.get("parent") == kid.get("id")]
+        if step.get("restore"):
+            done.append("restored " + ", ".join(step["restore"]))
+        if step.get("status"):
+            field = state.get("status_field") or "status"
+            for rid in step["status"]["ids"]:
+                if rid in index:
+                    data["records"][index[rid]][field] = step["status"]["to"]
+            done.append(f"set {field}={step['status']['to']} on " + ", ".join(step["status"]["ids"]))
+        for patch in step.get("patch") or []:
+            if patch["id"] in index:
+                record = data["records"][index[patch["id"]]]
+                for key, value in patch.items():
+                    if value is None:
+                        record.pop(key, None)
+                    else:
+                        record[key] = value
+                done.append(f"changed {patch['id']}")
+        if step.get("fact"):
+            data.update(step["fact"])
+            done.append("changed " + ", ".join(step["fact"]))
+        _save(path, data)
+        _render_views(path, data)
+    return "; ".join(done)
+
+
+def _demo_lines(folder: Path, state: dict[str, Any], steps: list[dict[str, Any]], run: dict[str, Any], roster: dict[str, dict[str, Any]], pa_cmd: str) -> list[str]:
+    manifest, sdir, wdir = run["manifest"], folder / DEMO_STATE / "scenario", run["workflow_dir"]
+    fixtures = manifest.get("fixtures") or {}
+    views = manifest.get("views") or {}
+    dataset = state.get("dataset")
+
+    def name(pid: str) -> str:
+        return "Aviator" if pid == "aviator" else str((roster.get(pid) or {}).get("name") or pid)
+
+    def spec(view: str) -> str:
+        rel = views.get(view)
+        return str((wdir / rel).resolve()) if rel else view
+
+    lines: list[str] = []
+    for step in steps:
+        live = step.get("live")
+        guide = "" if live in (None, True) else f" ({live})"
+        if "agent" in step:
+            if live:
+                lines.append(f"LIVE: answer this part yourself, for real{guide}. The script's line, as a guide only: \"{step['agent']}\"")
+            else:
+                lines.append(f"Say, word for word: \"{step['agent']}\"")
+        if "says" in step:
+            who = name(step["from"])
+            if live:
+                lines.append(f"LIVE: ask {who} for real and pass on their answer{guide}. The script's line, as a guide only: \"{step['says']}\"")
+            else:
+                person = roster.get(step["from"]) or {}
+                head = "\n".join(f"{k}: {person[k]}" for k in ("name", "kind", "role") if person.get(k))
+                fence = "````" if "```" in step["says"] else "```"
+                lines.append(f"Canned line from {who}. Put this block in your reply exactly as it is (no session behind it):\n{fence}participant\n{head}\n---\n{step['says']}\n{fence}")
+        if step.get("call"):
+            ask = f" They are asked: {step['ask']}" if step.get("ask") else ""
+            lines.append(f"Call in {name(step['call'])}: say in one line that you are bringing them in.{ask} Their lines below are canned unless a step says it is live.")
+        if step.get("doc"):
+            path = _demo_doc(folder, sdir, fixtures, step["doc"])
+            lines.append(f"Open {path} in the canvas with ui_open_file" + (f" (tab title \"{step['title']}\")." if step.get("title") else "."))
+        if step.get("comment"):
+            c = step["comment"]
+            doc = _demo_doc(folder, sdir, fixtures, c["doc"]) if c.get("doc") else "the open document"
+            if c.get("resolve"):
+                lines.append(f"Resolve the comment on \"{c['resolve']}\": find its thread with {pa_cmd} review show {doc}, then {pa_cmd} review resolve {doc} <thread>.")
+            else:
+                lines.append(f"Comment as {name(c['by'])}: {pa_cmd} review comment {doc} --by {c['by']} --quote \"{c['on']}\" --text \"{c['text']}\"")
+        if step.get("canvas"):
+            out = f"artifacts/{step['canvas']}.html"
+            title = f" --title \"{step['title']}\"" if step.get("title") else ""
+            data = f" --data {dataset}" if dataset else ""
+            lines.append(f"Show the {step['canvas']} view in the canvas: {pa_cmd} render {spec(step['canvas'])}{data} --out {out}{title}, then ui_open_file {out}" + (f" (opened by {name(step['from'])})." if step.get("from") else "."))
+        if step.get("tab"):
+            lines.append(f"Bring the \"{step['tab']}\" tab to the front (ui_open_file on its file again).")
+        if step.get("widget"):
+            out = f"artifacts/{step['widget']}-chat.html"
+            rec = f" --record {step['record']}" if step.get("record") else ""
+            data = f" --data {dataset}" if dataset else ""
+            by = f" Show it as from {name(step['from'])}." if step.get("from") else ""
+            lines.append(f"Put the {step['widget']} view in the chat: {pa_cmd} render {spec(step['widget'])}{data} --host chat{rec} --out {out}, and put the block it prints in your reply.{by}")
+        changed = _demo_data(folder, state, step)
+        if changed:
+            lines.append(f"(Done for you: {changed}. The views redraw on their own.)")
+        if step.get("apply"):
+            lines.append("The user's edits in the canvas are already saved; say what changed if the script's next line refers to it.")
+        if step.get("end_call") is not None:
+            result = str(step["end_call"]).rstrip(".") if step["end_call"] is not True else ""
+            lines.append("End the call" + (f" with the result: {result}" if result else "") + ".")
+        if "task" in step:
+            lines.append(f"Progress line: {step['task']}" if step["task"] else "Progress line: clear it.")
+        if step.get("hint"):
+            lines.append(f"Suggest to the user, in one short line: {step['hint']}")
+        if step.get("await") == "submit":
+            lines.append("Then stop and wait for the user to answer the view in the chat.")
+        elif step.get("await"):
+            lines.append("Then stop and wait for the user.")
+    return lines
+
+
+def demo_next(folder: Path) -> str:
+    """Advance the demo by one turn and say what to do."""
+    state = demo_state(folder)
+    if state is None:
+        raise PaError(f"{folder} is not a demo folder (no {DEMO_STATE}/demo.json). Fly the scenario from the Hangar first.")
+    sdir = folder / DEMO_STATE / "scenario"
+    run = resolve_run(sdir, folder)
+    roster, _ = _eligible(run["manifest"], _participants(folder / PARTICIPANTS_DIR), "scenario.json")
+    script = _read_script(sdir / str(run["manifest"].get("script") or "script.md"), roster)
+    steps = script["steps"]
+    i = int(state.get("cursor") or 0)
+    if i >= len(steps):
+        state["finished"] = True
+        _save_demo_state(folder, state)
+        return "The script is over. Carry on as a normal session from here."
+    turn: list[dict[str, Any]] = []
+    expected = None
+    if i == 0:
+        while i < len(steps) and "pm" not in steps[i]:
+            turn.append(steps[i])
+            i += 1
+    if i < len(steps) and "pm" in steps[i]:
+        expected = steps[i]["pm"]
+        i += 1
+    while i < len(steps) and "pm" not in steps[i]:
+        turn.append(steps[i])
+        i += 1
+        if steps[i - 1].get("await"):
+            break
+    pa_cmd = f"python3 {Path(__file__).resolve()}"
+    state["cursor"] = i
+    state["turn"] = int(state.get("turn") or 0) + 1
+    out = [f"Demo {state.get('title')}: turn {state['turn']} of {state.get('turns')}."]
+    if expected:
+        out.append(f"The script expected the user to say: \"{expected}\". If they said something clearly different, answer them for real instead and leave the rest of this turn for when they come back to the story.")
+    lines = _demo_lines(folder, state, turn, run, roster, pa_cmd)
+    out += [f"{n}. {line}" for n, line in enumerate(lines, 1)] or ["Nothing to do this turn but answer naturally."]
+    if i >= len(steps):
+        state["finished"] = True
+        out.append("This was the last turn. After it, carry on as a normal session.")
+    _save_demo_state(folder, state)
+    return "\n".join(out)
+
+
+def cmd_demo(args: argparse.Namespace) -> None:
+    folder = Path(args.dir or ".")
+    if args.action == "next":
+        print(demo_next(folder))
+        return
+    if args.action == "fly":
+        if not args.scenario:
+            raise PaError("say which scenario folder to fly: pa demo fly --scenario scenarios/<id>")
+        ws = Path(args.workspace) if args.workspace else _workspace_of_scenario(Path(args.scenario))
+        info = fly_demo(Path(args.scenario), ws, reset=args.reset, dest=Path(args.dir) if args.dir else None)
+        print(json.dumps(info, indent=1, ensure_ascii=False))
+        return
+    state = demo_state(folder)
+    if state is None:
+        raise PaError(f"{folder} is not a demo folder")
+    info = _demo_summary(folder, state)
+    print(json.dumps(info, indent=1, ensure_ascii=False))
+
 # ---------------------------------------------------------------- commands
 
 
@@ -1058,6 +1446,9 @@ def _directive(text: str, roster: dict[str, dict[str, Any]], where: str, state: 
         return "modifier", {"await": "submit"}
     if low.startswith("hint:"):
         return "modifier", {"hint": tail("hint:")}
+    if low == "live" or low.startswith("live:"):
+        # A flown demo hands this turn to a real agent; the written line is only a guide.
+        return "modifier", {"live": tail("live:") if low.startswith("live:") else True}
     if low.startswith("task:"):
         value = tail("task:")
         return "modifier", {"task": None if value.lower() in ("none", "") else value}
@@ -1157,6 +1548,8 @@ def parse_script(text: str, roster: dict[str, dict[str, Any]], name: str = "scri
             elif kind == "modifier":
                 if not steps:
                     raise PaError(f"{where}: [{line[1:-1]}] must follow a step")
+                if "live" in fields and not ("agent" in steps[-1] or "says" in steps[-1]):
+                    raise PaError(f"{where}: [live] must follow an Aviator or participant line")
                 steps[-1].update(fields)
             else:
                 steps.append(fields)
@@ -2439,6 +2832,14 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--json", action="store_true")
     p.add_argument("--dir")
     p.set_defaults(run=cmd_uses)
+
+    p = sub.add_parser("demo", help="fly a scenario as a demo, or play its next turn")
+    p.add_argument("action", choices=("next", "status", "fly"))
+    p.add_argument("--dir", help="the demo folder (default: here)")
+    p.add_argument("--scenario", help="fly: the scenario folder")
+    p.add_argument("--workspace")
+    p.add_argument("--reset", action="store_true", help="fly: start again from the beginning")
+    p.set_defaults(run=cmd_demo)
 
     # Comments and suggested changes in markdown documents (docreview.py).
     from docreview import ReviewError, register as register_review

@@ -13,5 +13,6 @@
   "dataset": "fixtures/release-dates-intent.json",
   "document": "fixtures/intent-brief.md"
  },
- "script": "script.md"
+ "script": "script.md",
+ "opening": "I keep coming back to this: we should just show people the release date when a payment is held. Help me shape it."
 }
