@@ -9,10 +9,11 @@
 :root {
   --bg: #e9edf2; --surface: #ffffff; --sunk: #f3f5f8; --ink: #0a223d; --ink-2: #44566c; --ink-3: #77879a; --line: #d3dae3;
   --navy: #0a223d; --on-navy: #f3f5f8; --you: #c2501f; --you-soft: #fbe6dc; --warn: #8a6200;
+  --agent: #2f5d8a; --agent-soft: #dfe9f3; --person: #1d7a4f; --person-soft: #dcf0e6;
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
-  :root { --bg: #04101e; --surface: #0e2238; --sunk: #07172a; --ink: #e8eef5; --ink-2: #a9b8c9; --ink-3: #74879c; --line: #22384f; --navy: #0a1c30; --on-navy: #e8eef5; --you: #ff9166; --you-soft: #3a2118; --warn: #e6bd55; color-scheme: dark; }
+  :root { --bg: #04101e; --surface: #0e2238; --sunk: #07172a; --ink: #e8eef5; --ink-2: #a9b8c9; --ink-3: #74879c; --line: #22384f; --navy: #0a1c30; --on-navy: #e8eef5; --you: #ff9166; --you-soft: #3a2118; --warn: #e6bd55; --agent: #8fb8e0; --agent-soft: #17324e; --person: #7fd0a6; --person-soft: #153a2a; color-scheme: dark; }
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
@@ -34,11 +35,40 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .chathead { padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--surface); display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
 .chathead span { color: var(--ink-3); font-size: 12px; }
 .task { padding: 6px 14px; border-bottom: 1px solid var(--line); background: var(--surface); font-size: 12.5px; color: var(--ink-2); display: flex; gap: 8px; align-items: center; }
+.task[hidden] { display: none; }
 .task::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--warn); flex: none; }
 .log { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
 .bub { max-width: 88%; padding: 8px 11px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); white-space: pre-wrap; }
 .bub.pm { align-self: flex-end; background: var(--you-soft); border-color: var(--you); }
 .bub.chip { align-self: flex-end; font: 500 11.5px var(--mono); border-style: dashed; padding: 4px 8px; color: var(--ink-2); }
+.who { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-2); margin: 2px 0 -6px; }
+.who b { color: var(--ink); font-weight: 650; }
+.who .kind, .call .kind { font: 500 10px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; }
+.who .kind.standin, .call .kind.standin { color: var(--you); border: 1px dashed var(--you); }
+.who.pm { align-self: flex-end; }
+.mark { flex: none; width: 22px; height: 22px; display: inline-grid; place-items: center; font: 700 10px/1 var(--font); font-style: normal; border-radius: 6px; background: var(--agent-soft); color: var(--agent); border: 1px solid transparent; }
+.mark.person { border-radius: 50%; background: var(--person-soft); color: var(--person); }
+.mark.standin { border: 1px dashed currentColor; }
+.mark.host { background: var(--navy); color: var(--on-navy); }
+.mark.small { width: 16px; height: 16px; font-size: 8px; border-radius: 4px; } .mark.small.person { border-radius: 50%; }
+.roster { display: flex; align-items: center; gap: 4px; }
+.call { align-self: stretch; border: 1px solid var(--line); border-left: 3px solid var(--agent); border-radius: 8px; background: var(--surface); }
+.call.person { border-left-color: var(--person); }
+.call > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 7px; padding: 8px 10px; font-size: 12.5px; color: var(--ink-2); }
+.call > summary::-webkit-details-marker { display: none; }
+.call > summary::after { content: "Hide"; margin-left: auto; font-size: 11.5px; color: var(--ink-3); text-decoration: underline; }
+.call:not([open]) > summary::after { content: "Show"; }
+.call > summary b { color: var(--ink); }
+.call .res { flex-basis: 100%; color: var(--ink); font-size: 12.5px; padding-left: 29px; }
+.call .res:empty { display: none; }
+.call .live { font: 500 10.5px var(--mono); color: var(--warn); }
+.callbody { display: flex; flex-direction: column; gap: 10px; padding: 4px 10px 12px; border-top: 1px solid var(--line); background: var(--sunk); border-radius: 0 0 8px 0; }
+.callbody .bub { max-width: 94%; }
+.stage .doc mark { background: var(--you-soft); color: inherit; border-bottom: 2px solid var(--you); padding: 0 1px; }
+.stage .doc .cmt { margin: -4px 0 12px; max-width: 68ch; border: 1px solid var(--line); border-left: 3px solid var(--agent); border-radius: 6px; padding: 7px 10px; background: var(--sunk); font-size: 12.5px; }
+.stage .doc .cmt.person { border-left-color: var(--person); }
+.stage .doc .cmt .who { margin: 0 0 3px; }
+.stage .doc .cmt.done { opacity: .55; } .stage .doc .cmt.done .txt { text-decoration: line-through; }
 .wid { align-self: stretch; }
 .wid iframe { width: 100%; border: 0; display: block; height: 120px; background: transparent; color-scheme: normal; }
 .hint { align-self: center; font-size: 12px; color: var(--you); border: 1px dashed var(--you); border-radius: 6px; padding: 5px 10px; text-align: center; background: var(--surface); }
@@ -69,7 +99,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 <div class="ws">
   <div class="side" aria-hidden="true"><div class="logo">PA</div><i></i><i></i><i></i></div>
   <div class="chat">
-    <div class="chathead"><b id="c-title"></b><span>Product Aviator</span></div>
+    <div class="chathead"><b id="c-title"></b><span class="roster" id="c-roster" aria-label="In this conversation"></span></div>
     <div class="task" id="c-task" hidden></div>
     <div class="log" id="c-log" aria-live="polite"></div>
     <div class="composer"><textarea id="c-input" rows="1" placeholder="Message the agent" aria-label="Message the agent"></textarea><button class="btn primary" id="c-send">Send</button></div>
@@ -87,7 +117,19 @@ button { font: inherit; color: inherit; cursor: pointer; }
   var script = P.script, steps = script.steps || [], specs = P.specs, manifest = P.manifest;
   var SF = (manifest.dataset && manifest.dataset.status_field) || "status";
   var $ = function (id) { return document.getElementById(id); };
-  var full, cur, hidden, pos, waiting, tabs, activeTab, frames, lastEdits;
+  var full, cur, hidden, pos, waiting, tabs, activeTab, frames, lastEdits, call, joined, comments, lastWho;
+  /* Participants: other agents and people who can speak in the chat. Aviator is the host. */
+  var PEOPLE = P.participants || {}, MULTI = Object.keys(PEOPLE).length > 0;
+  var HOST = { name: "Aviator", kind: "agent", initials: "PA", host: true };
+  function person(id) { return id === "aviator" || !id ? HOST : PEOPLE[id] || { name: id, kind: "agent", initials: String(id).slice(0, 2).toUpperCase() }; }
+  function mark(id, small) { var w = person(id); return '<i class="mark ' + esc(w.kind) + (w.stand_in ? " standin" : "") + (w.host ? " host" : "") + (small ? " small" : "") + '" title="' + esc(w.name) + '">' + esc(w.initials || "") + "</i>"; }
+  function kindChip(id) { var w = person(id); return w.stand_in ? '<span class="kind standin" title="An agent is playing this person">stand-in</span>' : w.host ? "" : '<span class="kind">' + esc(w.kind) + "</span>"; }
+  function nameLine(id, extra) { var w = person(id); return mark(id) + "<b>" + esc(w.name) + "</b>" + kindChip(id) + (w.role ? "<span>" + esc(w.role) + "</span>" : "") + (extra ? "<span>" + esc(extra) + "</span>" : ""); }
+  function join(id) {
+    if (joined.indexOf(id) === -1) joined.push(id);
+    $("c-roster").innerHTML = MULTI ? joined.map(function (j) { return mark(j); }).join("") : "Product Aviator";
+  }
+  function target() { return call ? call.body : $("c-log"); }
 
   function clone(x) { return JSON.parse(JSON.stringify(x)); }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
@@ -128,24 +170,68 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
   /* chat */
   function scrollLog() { var log = $("c-log"); log.scrollTop = log.scrollHeight; }
-  function say(kind, text) { var d = document.createElement("div"); d.className = "bub " + kind; d.textContent = text; $("c-log").appendChild(d); scrollLog(); }
-  function hint(text) { var d = document.createElement("div"); d.className = "hint"; d.textContent = text; $("c-log").appendChild(d); scrollLog(); }
+  /* With other participants around, every turn says who is speaking, once per run of turns. */
+  function byline(who, extra) {
+    if (!MULTI || lastWho === who + "|" + (extra || "")) return;
+    lastWho = who + "|" + (extra || "");
+    var d = document.createElement("div");
+    if (who === "pm") { if (!extra) return; d.className = "who pm"; d.innerHTML = "<span>" + esc(extra) + "</span>"; }
+    else { d.className = "who"; d.innerHTML = nameLine(who, extra); }
+    target().appendChild(d);
+  }
+  function say(kind, text, who, extra) {
+    byline(who || (kind === "pm" ? "pm" : "aviator"), extra);
+    var d = document.createElement("div"); d.className = "bub " + kind; d.textContent = text; target().appendChild(d); scrollLog();
+  }
+  function hint(text) { var d = document.createElement("div"); d.className = "hint"; d.textContent = text; target().appendChild(d); scrollLog(); }
+  function openCall(step) {
+    var who = step.call, w = person(who); join(who);
+    var el = document.createElement("details"); el.className = "call " + w.kind; el.open = true;
+    el.innerHTML = "<summary>" + nameLine(who, "called by " + person(step.by).name) + '<span class="live">in the conversation</span><span class="res"></span></summary><div class="callbody"></div>';
+    $("c-log").appendChild(el);
+    call = { el: el, body: el.querySelector(".callbody"), who: who }; lastWho = who + "|";
+    if (step.ask) { var q = document.createElement("div"); q.className = "bub chip"; q.textContent = person(step.by).name + " asked: " + step.ask; call.body.appendChild(q); }
+    scrollLog();
+  }
+  function endCall(step) {
+    if (!call) return;
+    call.el.querySelector(".live").textContent = "left";
+    call.el.querySelector(".res").textContent = step.end_call === true ? "" : step.end_call;
+    if (step.fold) call.el.open = false;
+    call = null; lastWho = null; scrollLog();
+  }
+  /* A document with comments: each comment marks its passage and sits under that paragraph. */
+  function docEl(name) {
+    var d = document.createElement("div"); d.className = "doc"; d.innerHTML = md(P.docs[name] || "");
+    (comments[name] || []).forEach(function (c) {
+      var blocks = d.querySelectorAll("p, h1, h2"), host = null;
+      for (var i = 0; i < blocks.length && !host; i++) if (blocks[i].textContent.indexOf(c.on) !== -1) host = blocks[i];
+      if (!host) host = blocks[blocks.length - 1];
+      if (!c.done) host.innerHTML = host.innerHTML.replace(esc(c.on), "<mark>" + esc(c.on) + "</mark>");
+      var note = document.createElement("div"); note.className = "cmt " + person(c.by).kind + (c.done ? " done" : "");
+      note.innerHTML = '<div class="who">' + nameLine(c.by, c.done ? "resolved" : "") + '</div><div class="txt">' + esc(c.text) + "</div>";
+      host.parentNode.insertBefore(note, host.nextSibling);
+    });
+    return d;
+  }
+  function showDoc(name, title) { var t = title || docTitles[name] || name; docTitles[name] = t; openTab(t, docEl(name)); }
+  var docTitles = {};
   function widget(name, record) {
     var wrap = document.createElement("div"); wrap.className = "wid";
     var f = makeFrame(specs[name], "chat", record); f.dataset.view = specs[name].view;
-    wrap.appendChild(f); $("c-log").appendChild(wrap); scrollLog();
+    wrap.appendChild(f); target().appendChild(wrap); scrollLog();
   }
   /* canvas */
   function showTab(i) {
     activeTab = i;
-    $("v-tabs").innerHTML = tabs.map(function (t, j) { return '<button role="tab" aria-selected="' + (j === i) + '" data-i="' + j + '">' + esc(t.title) + "</button>"; }).join("");
+    $("v-tabs").innerHTML = tabs.map(function (t, j) { return '<button role="tab" aria-selected="' + (j === i) + '" data-i="' + j + '">' + (t.by ? mark(t.by, true) + " " : "") + esc(t.title) + "</button>"; }).join("");
     var stage = $("v-stage");
     Array.prototype.forEach.call(stage.children, function (c) { c.hidden = true; });
     tabs[i].el.hidden = false;
   }
-  function openTab(title, el) {
+  function openTab(title, el, by) {
     var found = -1; tabs.forEach(function (t, j) { if (t.title === title) found = j; });
-    if (found !== -1) { $("v-stage").removeChild(tabs[found].el); tabs[found].el = el; } else { tabs.push({ title: title, el: el }); found = tabs.length - 1; }
+    if (found !== -1) { $("v-stage").removeChild(tabs[found].el); tabs[found].el = el; } else { tabs.push({ title: title, el: el, by: by }); found = tabs.length - 1; }
     if (tabs.length === 1) $("v-stage").innerHTML = "";
     $("v-stage").appendChild(el); showTab(found);
   }
@@ -153,13 +239,22 @@ button { font: inherit; color: inherit; cursor: pointer; }
   /* steps */
   function run(step) {
     if (step.task !== undefined) { $("c-task").hidden = !step.task; $("c-task").textContent = step.task || ""; }
-    if (step.pm) say("pm", step.pm);
-    if (step.agent) say("", step.agent);
-    if (step.doc) { var d = document.createElement("div"); d.className = "doc"; d.innerHTML = md(P.docs[step.doc] || ""); openTab(step.title || step.doc, d); }
+    if (step.end_call !== undefined && !step.says && !step.pm) endCall(step);
+    if (step.call) openCall(step);
+    if (step.pm) say("pm", step.pm, "pm", step.to ? "to " + person(step.to).name : call ? "to " + person(call.who).name : "");
+    if (step.agent) say("", step.agent, "aviator");
+    if (step.says) { join(step.from); say("", step.says, step.from); }
+    if (step.doc) showDoc(step.doc, step.title);
+    if (step.comment) {
+      var c = step.comment, list = comments[c.doc] = comments[c.doc] || [];
+      if (c.resolve) list.forEach(function (x) { if (x.on === c.resolve) x.done = true; }); else list.push({ on: c.on, by: c.by || step.from || "aviator", text: c.text });
+      showDoc(c.doc);
+    }
     if (step.canvas) {
       if (step.data === "empty") cur.records.forEach(function (r) { hidden[r.id] = true; });
-      openTab(step.title || specs[step.canvas].title, makeFrame(specs[step.canvas], "canvas"));
+      openTab(step.title || specs[step.canvas].title, makeFrame(specs[step.canvas], "canvas"), step.from);
     }
+    if (step.tab) tabs.forEach(function (t, j) { if (t.title === step.tab) showTab(j); });
     if (step.reveal) step.reveal.forEach(function (id) { delete hidden[id]; });
     if (step.patch) step.patch.forEach(function (p) { var r = byId(p.id); if (!r) return; for (var k in p) { if (p[k] === null) delete r[k]; else r[k] = p[k]; } });
     if (step.status) step.status.ids.forEach(function (id) { var r = byId(id); if (r) r[SF] = step.status.to; });
@@ -173,7 +268,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
       lastEdits = null;
     }
     if (step.reveal || step.patch || step.status || step.restore || step.apply) pushData();
-    if (step.widget) widget(step.widget, step.record);
+    if (step.widget) { if (step.from && !step.says) byline(step.from); widget(step.widget, step.record); }
+    if (step.end_call !== undefined && (step.says || step.pm)) endCall(step);
     if (step.hint) hint(step.hint);
     waiting = step.await || null;
   }
@@ -186,10 +282,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
     $("h-next").textContent = pos >= steps.length ? "End" : waiting ? "Skip" : "Next";
     /* Steps that only change data flow straight on, so the board moves like a live run. */
     var s = steps[pos - 1];
-    if (!waiting && pos < steps.length && !s.pm && !s.agent && !s.widget && !s.doc && !(s.canvas && !s.data)) setTimeout(next, 900);
+    if (!waiting && pos < steps.length && !s.pm && !s.agent && !s.says && !s.call && !s.comment && s.end_call === undefined && !s.widget && !s.doc && !(s.canvas && !s.data)) setTimeout(next, 900);
   }
   function restart() {
-    full = clone(P.data); cur = clone(P.data); hidden = {}; pos = 0; waiting = null; tabs = []; frames = []; lastEdits = null;
+    full = clone(P.data); cur = clone(P.data); hidden = {}; pos = 0; waiting = null; tabs = []; frames = []; lastEdits = null; call = null; joined = []; comments = {}; lastWho = null; docTitles = {};
     var st = script.start || {};
     if (st.set) cur.records.forEach(function (r) { var ok = true; for (var k in st.set.where) if (r[k] !== st.set.where[k]) ok = false; if (ok) for (var f in st.set.fields) r[f] = st.set.fields[f]; });
     if (st.hide) cur.records.forEach(function (r) { if (st.hide.indexOf(r.type) !== -1) hidden[r.id] = true; });
@@ -197,12 +293,13 @@ button { font: inherit; color: inherit; cursor: pointer; }
     $("v-stage").innerHTML = '<div class="empty">The canvas is empty until there is something to show.</div>';
     $("h-title").textContent = script.title || manifest.title; $("c-title").textContent = (P.data.title || manifest.title);
     $("h-intro").textContent = script.intro || "";
+    join("aviator");
     next();
   }
   function sendComposer() {
     var input = $("c-input"), text = input.value.trim();
     if (!text) return;
-    say("pm", text); input.value = ""; input.className = "";
+    say("pm", text, "pm", call ? "to " + person(call.who).name : ""); input.value = ""; input.className = "";
     if (waiting) next();
   }
   window.addEventListener("message", function (ev) {

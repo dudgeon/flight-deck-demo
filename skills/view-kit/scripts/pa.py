@@ -170,7 +170,152 @@ def _escape(text: str) -> str:
 
 
 def _public(data: dict[str, Any]) -> dict[str, Any]:
-    return {k: v for k, v in data.items() if k != "views"}
+    public = {k: v for k, v in data.items() if k != "views"}
+    if "participants" not in public:
+        # Views name who made a record with `"as": "who"`; give them the roster.
+        roster = _participants(Path.cwd() / PARTICIPANTS_DIR)
+        if roster:
+            public["participants"] = {k: _card(v) for k, v in roster.items()}
+    return public
+
+
+# ------------------------------------------------------------- participants
+
+PARTICIPANTS_DIR = "participants"
+PARTICIPANT_KINDS = ("agent", "person")
+PARTICIPANT_BACKINGS = ("session", "script")
+_CARD_KEYS = ("name", "kind", "role", "initials", "stand_in")
+
+
+def _participant(path: Path) -> dict[str, Any]:
+    """Read one participant file: `key: value` lines between `---` lines, then the brief."""
+    text = path.read_text(encoding="utf-8")
+    meta: dict[str, Any] = {}
+    body = text
+    if text.startswith("---"):
+        head, _, body = text[3:].partition("\n---")
+        for line in head.splitlines():
+            key, sep, raw = line.partition(":")
+            if sep and key.strip():
+                meta[key.strip()] = _value(raw.strip().strip('"'))
+    meta["id"] = path.stem
+    meta.setdefault("name", path.stem.replace("-", " ").title())
+    meta.setdefault("kind", "agent")
+    meta.setdefault("backing", "session")
+    if not meta.get("initials"):
+        meta["initials"] = "".join(w[0] for w in str(meta["name"]).split()[:2]).upper()
+    meta["stand_in"] = bool(meta.get("stand_in", meta["kind"] == "person"))
+    meta["brief"] = body.strip()
+    return meta
+
+
+def _participants(folder: Path) -> dict[str, dict[str, Any]]:
+    if not folder.is_dir():
+        return {}
+    return {p.stem: _participant(p) for p in sorted(folder.glob("*.md")) if not p.name.startswith(("_", "README"))}
+
+
+def _card(person: dict[str, Any]) -> dict[str, Any]:
+    return {k: person[k] for k in _CARD_KEYS if k in person}
+
+
+def _check_participants(roster: dict[str, dict[str, Any]]) -> list[str]:
+    problems = []
+    for pid, person in roster.items():
+        where = f"{PARTICIPANTS_DIR}/{pid}.md"
+        if not re.fullmatch(r"[a-z][a-z0-9-]{1,40}", pid):
+            problems.append(f"{where}: the file name must be lower-case words joined by hyphens")
+        if person["kind"] not in PARTICIPANT_KINDS:
+            problems.append(f"{where}: kind must be one of {', '.join(PARTICIPANT_KINDS)}")
+        if person["backing"] not in PARTICIPANT_BACKINGS:
+            problems.append(f"{where}: backing must be one of {', '.join(PARTICIPANT_BACKINGS)}")
+        if person["kind"] == "person" and not person["stand_in"]:
+            problems.append(f"{where}: a person played by an agent must keep stand_in: true")
+        if not person.get("role"):
+            problems.append(f"{where}: missing role")
+        if not person["brief"]:
+            problems.append(f"{where}: the brief below the header is empty")
+    return problems
+
+
+def turn_header(person: dict[str, Any], session: str | None = None) -> str:
+    """The opening lines of a ```participant block for this participant."""
+    lines = [f"name: {person['name']}", f"kind: {person['kind']}", f"role: {person.get('role', '')}"]
+    if person["stand_in"]:
+        lines.append("stand_in: true")
+    if session:
+        lines.append(f"session: {session}")
+    return "\n".join(lines) + "\n---"
+
+
+OPENING = """You are joining a conversation as {name} ({role}). This is a background session: the
+product manager is talking with their agent, Aviator, in another session, and Aviator
+has called you in. Aviator passes your replies on word for word, shown under your name.
+{standin}
+## Who you are
+
+{brief}
+
+## How this works
+
+- Stay in character as {name} for the whole session. Speak in the first person.
+- Each reply is one turn in someone else's chat: a few short paragraphs at most, plain
+  text, no headings, no code fences.
+- Work in this folder. Read what you are pointed at. Never change files in `context/`.
+- When you have several structured items (findings, options, risks), do not list them
+  in your reply. Add them to the dataset Aviator names with the `pa` command it gives
+  you, and set `by` to `{id}` on every record so they show as yours. Then say how many
+  you added and what matters most.
+- Do not open anything in the viewer and do not start sessions of your own.
+- Ask the product manager at most one question per reply, as the last line.
+- When you have nothing more to add, end your reply with a last line that starts with
+  `DONE:` and sums up your contribution in one sentence.
+
+## What you are asked
+
+{ask}
+"""
+
+
+def opening_message(person: dict[str, Any], ask: str) -> str:
+    standin = ""
+    if person["stand_in"]:
+        standin = (
+            f"\nYou are standing in for a real person. Answer as {person['name']} would, from the notes below. "
+            "Never claim to have spoken to them or to commit them to anything; say \"I would\" rather than \"we will\".\n"
+        )
+    return OPENING.format(name=person["name"], role=person.get("role", ""), id=person["id"], brief=person["brief"],
+                          standin=standin, ask=ask or "Introduce yourself in one sentence and wait.")
+
+
+def cmd_who(args: argparse.Namespace) -> None:
+    roster = _participants(Path(args.dir))
+    if not roster:
+        raise PaError(f"no participant files in {args.dir}/")
+    if not args.id:
+        if args.json:
+            print(json.dumps([{k: v for k, v in p.items() if k != "brief"} for p in roster.values()], indent=1))
+            return
+        for pid, person in roster.items():
+            tag = " (stand-in)" if person["stand_in"] else ""
+            print(f"{pid}: {person['name']}{tag}, {person['kind']}, {person.get('role', '')}. Backed by a {person['backing']}.")
+            if person.get("call_for"):
+                print(f"    call for: {person['call_for']}")
+        return
+    person = roster.get(args.id)
+    if person is None:
+        wanted = args.id.lower()
+        found = [p for p in roster.values() if wanted in str(p["name"]).lower() or wanted in str(p.get("role", "")).lower()]
+        if len(found) != 1:
+            raise PaError(f"no single participant matches {args.id!r}; ids: {', '.join(roster)}")
+        person = found[0]
+    if args.header:
+        print(turn_header(person, args.session))
+        return
+    if args.opening:
+        print(opening_message(person, args.ask or ""))
+        return
+    print(json.dumps(person, indent=1, ensure_ascii=False))
 
 
 def page(spec: dict[str, Any], data: dict[str, Any], host: str = "canvas") -> str:
@@ -476,6 +621,7 @@ def cmd_check(args: argparse.Namespace) -> None:
     for action in sorted(actions):
         if action and action not in skill_text:
             problems.append(f"SKILL.md never mentions the action {action!r} that a view can send")
+    problems += _check_participants(_participants(folder / PARTICIPANTS_DIR))
     for path in folder.rglob("*"):
         if path.suffix in {".json", ".html"} and path.is_file() and re.search(r"https?://", path.read_text(encoding="utf-8")):
             problems.append(f"{path.relative_to(folder)}: contains a web address; scenarios must work offline")
@@ -497,6 +643,9 @@ def cmd_preview(args: argparse.Namespace) -> None:
     specs = {name: _read_json(folder / rel) for name, rel in (manifest.get("views") or {}).items()}
     fixture = (manifest.get("fixtures") or {}).get("dataset")
     data = _public(_load(folder / fixture)) if fixture else {"records": []}
+    roster = {k: _card(v) for k, v in _participants(folder / PARTICIPANTS_DIR).items()}
+    if roster:
+        data["participants"] = roster
     docs = {}
     for name, rel in (manifest.get("fixtures") or {}).items():
         if str(rel).endswith(".md"):
@@ -508,6 +657,7 @@ def cmd_preview(args: argparse.Namespace) -> None:
         "specs": specs,
         "data": data,
         "docs": docs,
+        "participants": roster,
         "css": (KIT_DIR / "pa-kit.css").read_text(encoding="utf-8"),
         "js": (KIT_DIR / "pa-kit.js").read_text(encoding="utf-8"),
     }
@@ -519,6 +669,16 @@ def cmd_preview(args: argparse.Namespace) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="pa", description="Product Aviator data and view command")
     sub = parser.add_subparsers(dest="command", required=True)
+
+    p = sub.add_parser("who", help="list the participants the agent can call, or show one")
+    p.add_argument("id", nargs="?", help="an id, or part of a name or role")
+    p.add_argument("--dir", default=PARTICIPANTS_DIR)
+    p.add_argument("--json", action="store_true")
+    p.add_argument("--header", action="store_true", help="print the opening lines of a participant block")
+    p.add_argument("--session", help="with --header: the id of the session speaking for them")
+    p.add_argument("--opening", action="store_true", help="print the first message for the background session that plays them")
+    p.add_argument("--ask", help="with --opening: what they are asked to do")
+    p.set_defaults(run=cmd_who)
 
     p = sub.add_parser("init", help="create a dataset file")
     p.add_argument("data")

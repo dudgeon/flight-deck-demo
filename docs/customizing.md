@@ -195,4 +195,14 @@ open preview.html
 The look of every view comes from `skills/view-kit/kit/pa-kit.css`. Change the
 tokens at the top of that file to restyle all of them.
 
-The Session panel (Outputs and Context) is `web/src/shell/SessionOverviewFiles.tsx`.
+The Session panel (Outputs, Context, People and agents) is
+`web/src/shell/SessionOverviewFiles.tsx`.
+
+### Other participants
+
+`workspace/participants/` is the roster of agents and people the session's
+agent can call into a conversation. Add a file to add someone; the format is
+at the end of `skills/participants/SKILL.md`. `backing: session` plays them in
+a background session from their brief, `backing: script` answers from text in
+the file. Their turns are drawn by `web/src/components/chat/ParticipantTurn.tsx`
+from a fenced block described in `web/src/lib/participantTurn.ts`.

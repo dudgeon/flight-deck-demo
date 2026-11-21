@@ -1,0 +1,19 @@
+{
+ "finding": {
+  "required": ["id", "type", "title", "detail", "by", "severity", "status"],
+  "fields": {
+   "title": { "type": "string", "note": "One line that names the problem" },
+   "detail": { "type": "string", "note": "What the passage says and why it matters" },
+   "by": { "type": "string", "note": "Participant id of whoever raised it, or aviator" },
+   "area": { "enum": ["Clarity", "Risk", "Design", "Platform", "Other"] },
+   "severity": { "enum": ["High", "Medium", "Low"] },
+   "section": { "type": "string", "note": "Where in the document" },
+   "quote": { "type": "string", "note": "The passage, word for word" },
+   "suggestion": { "type": "string", "note": "What would close it" },
+   "question": { "type": "string", "note": "Set with status needs-you when only the person can settle it" },
+   "answer": { "type": "string" },
+   "status": { "enum": ["ready", "needs-you", "reviewed", "returned"] },
+   "locked": { "type": "boolean" }
+  }
+ }
+}

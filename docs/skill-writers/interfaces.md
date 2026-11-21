@@ -30,9 +30,35 @@ HTML. The bundled `view-kit` skill draws tables, boards, cards, summaries and
 forms from a JSON dataset and a small spec, with the `pa` command
 (`skills/view-kit/scripts/pa.py`, standard library only), and redraws them when
 the data changes. `skills/prd-to-requirements` and
-`skills/requirements-to-dependencies` are complete examples, and the
+`skills/requirements-to-dependencies` and `skills/document-review` are complete examples, and the
 `scenario-builder` skill explains how to make another, including a standalone
 click-through built with `pa preview`.
+
+## Other participants in the conversation
+
+The session's agent can host other agents and people. Each is a file in the
+workspace's `participants/` folder (name, kind, role, how they are played and
+a brief); `pa who` lists them and the Session panel shows them under People
+and agents. The bundled `participants` skill is the procedure: it starts a
+background session per participant with `sys_session_create` (a real session
+the user can open and read), talks to it with `sys_session_send`, and passes
+each reply on in a fenced block the chat draws as that participant's turn:
+
+````
+```participant
+name: Risk Review
+kind: agent
+role: Risk and compliance
+session: <their session id>
+---
+Their reply, word for word.
+```
+````
+
+`kind: person` is drawn as a stand-in, because in this app a person is always
+played by an agent. Records a participant adds to a dataset carry
+`by: <their id>`, which a view shows with `"as": "who"`.
+`skills/document-review` is a complete example.
 
 ## The Session panel
 

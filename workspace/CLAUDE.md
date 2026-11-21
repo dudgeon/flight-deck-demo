@@ -29,6 +29,16 @@ changes. Skills such as `prd-to-requirements` and
 `requirements-to-dependencies` are built this way, and `scenario-builder`
 makes new ones.
 
+## Other people and agents
+
+`participants/` is the roster of other agents and people who can join a
+conversation: one file each, with who they are and how they are played. When
+the user asks to check in with, call or ask someone ("check in with Mara from
+design and the risk agent"), or asks who is available, use the `participants`
+skill. It tells you how to look them up, call them in a background session or
+from their script, and show what they say under their own name. Never answer
+on a participant's behalf.
+
 ## Artifacts
 
 An artifact is a single self-contained HTML file in `artifacts/`. The viewer

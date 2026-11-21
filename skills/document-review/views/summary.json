@@ -1,0 +1,17 @@
+{
+ "view": "review-summary",
+ "layout": "summary",
+ "eyebrow": "Review · where things stand",
+ "title": "{dataset.title}: review at a glance",
+ "records": { "type": "finding" },
+ "blocks": [
+  { "kind": "tiles", "tiles": [
+    { "label": "Findings", "where": { "type": "finding" } },
+    { "label": "High", "where": { "type": "finding", "severity": "High" } },
+    { "label": "Accepted", "where": { "type": "finding", "status": "reviewed" } },
+    { "label": "Need your answer", "where": { "type": "finding", "status": "needs-you" } }
+  ] },
+  { "kind": "bars", "label": "By area", "count_by": "area" },
+  { "kind": "list", "label": "Waiting on you", "records": { "type": "finding", "status": "needs-you" }, "field": "question", "empty": "Nothing is waiting on you." }
+ ]
+}

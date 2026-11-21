@@ -203,3 +203,10 @@ input.pa-check { width: 15px; height: 15px; accent-color: var(--pa-you); margin:
   #pa-app { padding: 12px 12px 72px; }
   .pa-panel { width: 100%; border-left: 0; }
 }
+
+/* Who: a participant mark. Square for agents, round for people, dashed when an agent stands in for a person. */
+.pa-who { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-size: 12.5px; color: var(--pa-ink-2); }
+.pa-mark { flex: none; width: 20px; height: 20px; display: inline-grid; place-items: center; font: 700 9.5px/1 var(--pa-font); font-style: normal; letter-spacing: .02em; border-radius: 5px; background: var(--pa-info-soft); color: var(--pa-info); border: 1px solid transparent; }
+.pa-mark.person { border-radius: 50%; background: var(--pa-ok-soft); color: var(--pa-ok); }
+.pa-mark.standin { border: 1px dashed currentColor; }
+.pa-mark.host { background: var(--pa-navy); color: var(--pa-on-navy); }

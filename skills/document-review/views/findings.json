@@ -1,0 +1,38 @@
+{
+ "view": "review-findings",
+ "layout": "tree-table",
+ "eyebrow": "Review · findings",
+ "title": "{dataset.title}: what the review found",
+ "subtitle": "Everyone who reviewed {dataset.source} adds to this one list. Accept what you agree with, push back on the rest.",
+ "records": { "type": "finding" },
+ "summary": { "count_by": "status", "records": { "type": "finding" } },
+ "statuses": { "ready": { "label": "Raised", "tone": "info" }, "reviewed": { "label": "Accepted", "tone": "ok" }, "returned": { "label": "Pushed back", "tone": "you" } },
+ "columns": [
+  { "field": "title", "label": "Finding" },
+  { "field": "by", "label": "Raised by", "as": "who" },
+  { "field": "severity", "as": "chip" },
+  { "field": "section", "label": "Where", "narrow": "hide" },
+  { "field": "status", "as": "status" }
+ ],
+ "details": {
+  "finding": {
+   "title": "{title}",
+   "sections": [
+    { "kind": "callout", "field": "question", "label": "Needs your answer", "tone": "attn" },
+    { "kind": "callout", "field": "return_note", "label": "You pushed back", "tone": "you" },
+    { "kind": "fields", "fields": [ { "field": "by", "label": "Raised by", "as": "who" }, { "field": "severity", "as": "chip" }, { "field": "area", "as": "chip" }, { "field": "section", "label": "Where" } ] },
+    { "kind": "text", "field": "quote", "label": "The document says" },
+    { "kind": "text", "field": "detail", "label": "Why it matters" },
+    { "kind": "text", "field": "suggestion", "label": "What would close it" },
+    { "kind": "text", "field": "answer", "label": "Your answer" }
+   ]
+  }
+ },
+ "actions": [
+  { "id": "accept", "label": "Accept", "tone": "primary", "direct": true, "when": { "status": ["ready", "returned"] }, "set": { "status": "reviewed" }, "next": true },
+  { "id": "push-back", "label": "Push back", "when": { "status": ["ready", "reviewed"] }, "ask": { "label": "What do you disagree with?", "field": "return_note" }, "set": { "status": "returned" }, "prompt": "I push back on finding {id} ({title}), raised by {by}. My note: {note}" },
+  { "id": "answer", "label": "Answer in chat", "tone": "primary", "when": { "status": "needs-you" }, "prompt": "About finding {id} ({title}): " },
+  { "id": "accept-all", "label": "Accept all raised", "scope": "view", "direct": true, "set": { "status": "reviewed" }, "records": { "type": "finding", "status": "ready" }, "prompt": "Accept every finding that is raised." },
+  { "id": "apply", "label": "Apply accepted to the document", "scope": "view", "tone": "primary", "prompt": "Apply the accepted findings in {dataset} to the document as suggested edits." }
+ ]
+}

@@ -6,20 +6,27 @@
 //   workspace's `context/` folder. Tick some and "Add to message" writes file
 //   mentions into the composer; nothing is sent until the user presses Send.
 //
-// Both read the workspace through the same listing the Files tab uses and poll
+// - People and agents: who the agent can call into the conversation, i.e. the
+//   files in the workspace's `participants/` folder. Click one and a request
+//   to check in with them lands in the composer.
+//
+// All read the workspace through the same listing the Files tab uses and poll
 // while shown, so a file the agent writes appears without a reload.
 
 import { useQuery } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 import { ARTIFACT_PROMPT_EVENT, type ArtifactPromptDetail } from "@/lib/artifactBridge";
+import { ParticipantMark } from "@/components/chat/ParticipantTurn";
+import { parseRosterEntry, type RosterEntry } from "@/lib/participantTurn";
 import type { ListedEntry } from "@/lib/workspaceApi";
-import { workspaceSidebarSource } from "@/lib/workspaceSidebarSource";
+import { fileContentText, workspaceSidebarSource } from "@/lib/workspaceSidebarSource";
 import { useSession } from "@/hooks/useSession";
 import { useFileViewer } from "./FileViewerContext";
 
 /** Workspace folders the panel reads. */
 export const OUTPUTS_FOLDER = "artifacts";
 export const CONTEXT_FOLDER = "context";
+export const PARTICIPANTS_FOLDER = "participants";
 
 const MAX_ENTRIES = 200;
 const POLL_MS = 5_000;
@@ -230,12 +237,86 @@ function Context({ sessionId }: { sessionId: string }) {
   );
 }
 
-/** The Outputs and Context sections of the session panel. */
+/** The roster: one entry per readable file in `participants/`, by name. */
+function useRoster(sessionId: string): RosterEntry[] {
+  const files = useFolderFiles(sessionId, PARTICIPANTS_FOLDER).filter(
+    (file) => file.name.endsWith(".md") && !/^(_|README)/.test(file.name),
+  );
+  const key = files.map((file) => `${file.path}:${file.modified_at ?? 0}`).join("|");
+  const { data } = useQuery({
+    queryKey: ["slim-session-roster", sessionId, key],
+    queryFn: async ({ signal }) => {
+      const entries = await Promise.all(
+        files.map(async (file) => {
+          try {
+            const content = await workspaceSidebarSource().readFile(sessionId, file.path, signal);
+            const text = fileContentText(content);
+            return text === null ? null : parseRosterEntry(file.name.replace(/\.md$/, ""), text);
+          } catch {
+            return null;
+          }
+        }),
+      );
+      return entries.filter((entry): entry is RosterEntry => entry !== null);
+    },
+    enabled: files.length > 0,
+    retry: false,
+  });
+  return [...(data ?? [])].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** The composer text that asks the agent to bring a participant in. */
+export function callMessage(entry: RosterEntry): string {
+  return `Check in with ${entry.name} (${entry.id}) about `;
+}
+
+/** Other agents and people the agent can call into this conversation. */
+function Roster({ sessionId }: { sessionId: string }) {
+  const roster = useRoster(sessionId);
+  if (roster.length === 0) return null;
+  const call = (entry: RosterEntry) => {
+    const detail: ArtifactPromptDetail = { text: callMessage(entry) };
+    window.dispatchEvent(new CustomEvent(ARTIFACT_PROMPT_EVENT, { detail }));
+  };
+  return (
+    <Section title="People and agents" count={roster.length}>
+      <ul className="flex flex-col gap-0.5" data-testid="session-roster">
+        {roster.map((entry) => (
+          <li key={entry.id}>
+            <button
+              type="button"
+              className="flex w-full min-w-0 cursor-pointer items-center gap-2 rounded px-1 py-0.5 text-left hover:bg-muted focus-visible:outline-2"
+              title={entry.callFor ? `Call for: ${entry.callFor}` : `Ask the agent to call ${entry.name}`}
+              onClick={() => call(entry)}
+            >
+              <ParticipantMark
+                name={entry.name}
+                kind={entry.kind}
+                standIn={entry.standIn}
+                className="size-5 text-[9px]"
+              />
+              <span className="min-w-0 flex-1 truncate">
+                {entry.name}
+                <span className="ml-1.5 text-xs text-muted-foreground">{entry.role}</span>
+              </span>
+              {entry.standIn && (
+                <span className="shrink-0 text-xs text-muted-foreground">stand-in</span>
+              )}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </Section>
+  );
+}
+
+/** The Outputs, Context and People sections of the session panel. */
 export function SessionOverviewFiles({ sessionId }: { sessionId: string }) {
   return (
     <>
       <Outputs sessionId={sessionId} />
       <Context sessionId={sessionId} />
+      <Roster sessionId={sessionId} />
     </>
   );
 }

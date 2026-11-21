@@ -34,6 +34,7 @@ path, and `{note}` for what the user typed into an action's question.
 | `meter` | Five bars for a 1 to 5 value |
 | `count` | Number of child records |
 | `ref` | The title of the record whose id is in this field |
+| `who` | The participant whose id is in this field (a file in `participants/`), as a mark and name. Use it on a field such as `by` to show who made a record. |
 
 `only` limits a column to one record type. `edit` makes it editable in place:
 `true` for a checkbox or text, `{ "options": [...] }` for a menu,

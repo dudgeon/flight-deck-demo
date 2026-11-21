@@ -79,6 +79,13 @@ Do not ask about field names, colors or layout. Propose them and show them.
    view), `reveal`, `status`, `restore` and `patch` (make data appear or
    change as if the agent did it), `await` with a `hint` (wait for the person
    to try something), `apply` (save their edits). Keep it under twenty steps.
+   When other participants take part (a `participants/` folder in the
+   scenario, see the `participants` skill and `skills/document-review`):
+   `call` with `by` and `ask` (someone joins, as a foldable block), `from`
+   with `says` (their turn; add `widget` for a view they put in the chat, or
+   `canvas` for one they open), `end_call` (they leave, with a one-line
+   result), `comment` (`{doc, on, by, text}` marks a passage of a document;
+   `{doc, resolve}` settles it) and `tab` (bring a canvas tab to the front).
 7. Check and preview:
 
 ```bash

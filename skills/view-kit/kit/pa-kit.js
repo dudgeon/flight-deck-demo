@@ -162,6 +162,12 @@
       case "count":
         var kids = childrenOf(rec.id, col.of, col.link);
         return kids.length ? String(kids.length) : '<span class="pa-muted">0</span>';
+      case "who":
+        /* Who made or last touched the record: a participant id from the roster. */
+        if (v == null || v === "") return "";
+        var who = v === "aviator" ? { name: "Aviator", kind: "agent host", initials: "PA", role: "Your agent" } : (data.participants || {})[v] || { name: v, kind: "agent" };
+        var ini = who.initials || String(who.name).split(/\s+/).slice(0, 2).map(function (w) { return w.charAt(0); }).join("").toUpperCase();
+        return '<span class="pa-who" title="' + esc((who.role || who.kind) + (who.stand_in ? ", stand-in played by an agent" : "")) + '"><i class="pa-mark ' + esc(who.kind) + (who.stand_in ? " standin" : "") + '">' + esc(ini) + "</i>" + esc(who.name) + "</span>";
       case "ref":
         var target = byId[v];
         return target ? '<span class="pa-chip">' + esc(target.title || target.id) + "</span>" : v ? esc(v) : "";
@@ -623,7 +629,7 @@
       if (a) runAction(a, target, act === "ask-ok" ? (noteEl ? noteEl.value : "") : undefined);
     } else if (act === "form-submit" || act === "form-skip") {
       var sub = spec.submit || {};
-      var text = act === "form-skip" ? (sub.skip_prompt || "Skip the questions and use sensible defaults.") : fmt(sub.prompt || "My answers:\n{answers}").replace("{answers}", answerLines());
+      var text = act === "form-skip" ? (sub.skip_prompt || "Skip the questions and use sensible defaults.") : fmt(String(sub.prompt || "My answers:\n{answers}").replace("{answers}", "\u0000")).replace("\u0000", answerLines());
       send(text, { id: act === "form-skip" ? "skip" : "submit", answers: JSON.parse(JSON.stringify(state.answers)) });
       state.answered = true;
     } else if (act === "form-edit") state.answered = false;
