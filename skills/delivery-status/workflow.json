@@ -2,6 +2,12 @@
  "workflow": "delivery-status",
  "title": "Delivery status update",
  "summary": "Check a delivery plan against what is actually happening: ask the owners, watch the dependencies, project a new date when something moves, explore ways to recover, and write the update for whoever needs it.",
+ "library": {
+  "show": true,
+  "order": 6,
+  "summary": "Check a plan with its owners, project the date when something moves, find ways to recover, and write the update.",
+  "prompt": "Update the delivery status for {{plan: a plan document, a dataset in data/, or a list of milestones}} using the delivery-status skill. The update is for {{audience: for example \"the steering group\"}}."
+ },
  "inputs": [
   {
    "name": "plan",

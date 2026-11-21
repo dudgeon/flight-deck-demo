@@ -2,6 +2,12 @@
  "workflow": "problem-discovery",
  "title": "Problem discovery",
  "summary": "Read a pile of raw material (interviews, call transcripts, tickets, usage data), pull out the problems people actually have, show the evidence for and against each, and help the person choose which are worth solving.",
+ "library": {
+  "show": true,
+  "order": 1,
+  "summary": "Read interviews, tickets and data, lay out the problems people have with the evidence for and against, and choose which are worth solving.",
+  "prompt": "Find the problems worth solving in {{sources: a folder in context/, or a list of files}} using the problem-discovery skill."
+ },
  "inputs": [
   {
    "name": "sources",

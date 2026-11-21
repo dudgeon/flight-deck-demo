@@ -70,10 +70,11 @@ The library folder (`workspace/templates/` by default) holds:
 - `artifacts/*.html`: templates. Each keeps its content in
   `<script type="application/json" id="artifact-data">` and renders itself from
   it, so a skill only has to copy the file and edit that JSON.
-- `sessions/*.md`: canned sessions (prompts) listed on the Library page.
+- `sessions/*.md`: extra starters (prompts) shown as another way into a
+  featured skill on the Library page.
 
-A template needs a `<title>` and `<meta name="description">`; the Library page
-lists it by those. See the repository README for the full format.
+A template needs a `<title>` and `<meta name="description">`; the Hangar lists
+it by those. Templates are not on the Library page (D-88). See the repository README for the full format.
 
 ## Reading and operating the canvas (omnigent-slim)
 

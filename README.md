@@ -13,8 +13,9 @@ repository, folders and commands keep the name `omnigent-slim`.
 - It **never bypasses Claude Code's permissions**.
 - Claude can put **artifacts** (interactive HTML pages) on a **canvas**, the
   viewer panel on the right of each session.
-- **Templates** and **canned sessions** (prompts with fill-in fields) are plain
-  files you can edit.
+- The **Library** starts real work with a featured product skill, or flies a
+  demo of a scenario. Its cards are generated from each workflow's and
+  scenario's own files, which you can edit.
 
 It stays close to upstream Omnigent on purpose, so prototypes carry over to
 apps built on Omnigent; see [Staying close to upstream](#staying-close-to-upstream-omnigent).
@@ -84,18 +85,18 @@ your default browser without Chrome). It's built locally, so there's nothing to
 download or un-quarantine. Leave off `--add-to-dock` to drag it there yourself,
 and run the script again if you move this folder.
 
-### Step 3. Run a canned session
+### Step 3. Start work, or fly a demo
 
-1. On the **Library** page, find **Interview me about requirements**.
-2. In its **topic** box, type something like `a CSV export button on the reports page`.
-3. Click **Open in composer**. A new-session screen opens with the prompt
-   filled in, in the **Workspace** project.
-4. Press **Enter** (or the arrow button) to send it.
-5. Sessions start in Auto mode, so Claude runs most steps itself. When it
+1. On the **Library** page, the top half is the featured product skills. In
+   **Intent shaping**, type an idea such as `show people the release date when a
+   payment is held` and click **Start**. A new-session screen opens with the
+   prompt filled in, in the **Workspace** project. Press **Enter** to send it.
+2. Or, in **Scenarios and demos** lower down, click **Fly** on **Steering
+   prep**. A project named **◆ Demo · Steering prep** opens with the story's
+   documents and people in place and its opening line in the composer. Press
+   **Enter** and the demo plays, one turn per message.
+3. Sessions start in Auto mode, so Claude runs most steps itself. When it
    does ask permission, an approval card appears in the chat; click **Allow**.
-6. In about half a minute a question form opens in the viewer on the right.
-7. Answer a few questions and click **Put my answers in the chat**. Your
-   answers appear in the chat box. Press **Enter** to send them.
 
 ### Step 4. Ask for anything on the canvas
 
@@ -129,20 +130,19 @@ Your sessions are kept in `~/.omnigent-slim` for next time.
 | Viewer ("canvas") | Right-hand panel that shows workspace files and runs HTML artifacts | upstream web UI |
 | Artifacts | Self-contained HTML files in `workspace/artifacts/`, opened with the `ui_open_file` tool | `workspace/artifacts/` |
 | Templates | Artifacts to copy and fill in | `workspace/templates/artifacts/` |
-| Canned sessions | Prompts with `{{fields}}`, listed on the Library page | `workspace/templates/sessions/` |
+| Library | Featured skills (from the `library` block in each `workflow.json`) and demos (from each `scenario.json`) | `skills/`, `workspace/scenarios/` |
+| Extra starters | Prompts with `{{fields}}`, shown as another way into a skill | `workspace/templates/sessions/` |
 | Canvas instructions | Text added to every session's system prompt so Claude knows about the viewer | `slim_canvas_instruction()` in `omnigent/runtime/prompt.py` |
 
-Included templates: PRD one-pager, decision matrix, now/next/later roadmap,
-metrics dashboard, interview synthesis, question form. Included canned
-sessions: draft a PRD, compare options, build a roadmap, weekly metrics review,
-synthesize interviews, interview me about requirements, and the structured
-workflows: catalog requirements from a PRD, map platform dependencies, review
-a document with others, walk through open decisions, find the problems worth
-solving, update delivery status, and shape an idea into an intent. Each
-workflow is a skill in `skills/` with a click-through preview; other agents
-and people they can call in are in `workspace/participants/`.
+Included templates (managed in the Hangar): PRD one-pager, decision matrix,
+now/next/later roadmap, metrics dashboard, interview synthesis, question form.
+Featured skills on the Library, in product-lifecycle order: problem discovery,
+intent shaping, document review, PRD to requirements, decision review and
+delivery status. Each has a demo scenario. Each workflow is a skill in
+`skills/` with a click-through preview; other agents and people they can call
+in are in `workspace/participants/`.
 
-To add your own templates, canned sessions, skills or styles, see
+To add your own templates, Library entries, skills or styles, see
 **[docs/customizing.md](docs/customizing.md)**.
 
 ## Settings
@@ -153,7 +153,7 @@ To add your own templates, canned sessions, skills or styles, see
 | Variable | Default | What it does |
 |---|---|---|
 | `OMNIGENT_SLIM_WORKSPACE` | `./workspace` | Folder the Workspace project's sessions run in |
-| `OMNIGENT_SLIM_LIBRARY_DIR` | `$OMNIGENT_SLIM_WORKSPACE/templates` | Where templates and canned sessions are read from |
+| `OMNIGENT_SLIM_LIBRARY_DIR` | `$OMNIGENT_SLIM_WORKSPACE/templates` | Where templates and extra starters are read from |
 | `OMNIGENT_SLIM_PROJECT` | `Workspace` | Project the Library starts sessions in (created on first start) |
 | `OMNIGENT_DATA_DIR` | `~/.omnigent-slim` | Sessions database, logs and settings |
 
@@ -217,7 +217,7 @@ here carries over to apps built on it:
 - Sessions, projects, agents, the Claude Code terminal harness, its MCP bridge
   and hooks, and the REST API are upstream's, unchanged.
 - Artifacts are ordinary workspace files opened with Omnigent's own
-  `ui_open_file` tool. Canned sessions open the composer through Omnigent's own
+  `ui_open_file` tool. Library Start buttons open the composer through Omnigent's own
   `/?project=…&prompt=…` link.
 - Edits to upstream files are small and marked with `omnigent-slim:` comments;
   `git grep -n "omnigent-slim:"` lists them. New behavior lives in new files:

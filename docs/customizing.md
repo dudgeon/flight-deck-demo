@@ -6,7 +6,9 @@ need a Mac with internet to rebuild.
 
 | You want to change | Edit | Takes effect | Rebuild? |
 |---|---|---|---|
-| Canned sessions | `workspace/templates/sessions/*.md` | Next Library page load | No |
+| Library: featured skills | the `library` block in `skills/<id>/workflow.json` | Next Library page load | No |
+| Library: demos | `workspace/scenarios/<id>/scenario.json` | Next Library page load | No |
+| Library: extra starters | `workspace/templates/sessions/*.md` | Next Library page load | No |
 | Artifact templates and their look | `workspace/templates/artifacts/*.html` | Next artifact Claude makes | No |
 | How Claude works in the workspace | `workspace/CLAUDE.md`, `workspace/.claude/skills/` | Next session | No |
 | Skills every session gets, in any folder | `skills/<name>/SKILL.md` (see [skills/README.md](../skills/README.md)) | Next session | No |
@@ -15,42 +17,56 @@ need a Mac with internet to rebuild.
 | The app's own layout, pages or styles | `web/src/` | After rebuilding the web UI | Yes, on a Mac with internet |
 | Python dependencies | `pyproject.toml`, `uv.lock` | After re-vendoring | Yes, on a Mac with internet |
 
-## Canned sessions (pre-written demo scripts)
+## The Library
 
-A canned session is one Markdown file in `workspace/templates/sessions/`. The
-file name (without `.md`) is its id.
+Nothing on the Library page is written into the Library. Its cards are made
+from the files of the workflows and scenarios they start, read again on every
+page load (D-82 to D-88).
 
-```markdown
----
-title: Compare options with a decision matrix
-description: Score options against weighted criteria and recommend one.
-template: decision-matrix
----
-Help me decide: {{decision: the question we're deciding}}
+### Featuring a skill
 
-The options are: {{options: comma-separated}}
+A workflow shows in "Start with a skill" when its `workflow.json` has a
+`library` block:
 
-Propose 4-6 criteria with weights, score each option, build a decision matrix
-artifact from the decision-matrix template and open it in the viewer.
+```json
+"library": {
+ "show": true,
+ "order": 2,
+ "spotlight": true,
+ "summary": "A shorter summary for the card (optional).",
+ "prompt": "Shape this into an intent using the intent-shaping skill: {{idea: your idea in a sentence or two}}"
+}
 ```
 
-- **Front matter** (between the `---` lines) is optional:
-  - `title`: the card's heading (default: the file name).
-  - `description`: one line under the title.
-  - `template`: the file name of an artifact template, without `.html`. It's
-    shown on the card; mention the template in the prompt too, because the prompt
-    is what Claude reads.
-- **Body**: the prompt. `{{name}}` or `{{name: hint}}` becomes a text box on the
-  card; the hint is its placeholder. The same name used twice fills both places.
-- **What happens**: **Open in composer** opens a new session in the Workspace
-  project with the prompt filled in. The user edits it if they like and presses
-  Send. Nothing is sent automatically.
-- Cards are sorted by file name. Prefix files with numbers (`01-…`) to set the
-  order.
+- `show`: featured. Leave it out for utility skills; they never show.
+- `order`: where it sits, in rough product-lifecycle order.
+- `spotlight`: the one big card. Without it, the first in order.
+- `summary`: optional; otherwise the workflow's `summary`.
+- `prompt`: what Start puts in the composer. `{{name}}` or `{{name: hint}}`
+  becomes a text box on the card. Without a prompt, one is made from the
+  workflow's `inputs`. The workflow's `participants` are added as a
+  "Participants for this session" line so the agent can call them in.
 
-For a scripted multi-step demo, write the first prompt as a canned session and
-end it with the next step for Claude to wait on, e.g. "Build the form, open it,
-and wait for my answers before drafting anything."
+The card's steps are the workflow's `steps`. Start opens a new session in the
+Workspace project with the prompt filled in; nothing is sent until Send.
+
+### Extra starters
+
+A Markdown file in `workspace/templates/sessions/` is another way into a
+featured skill: when its prompt names the workflow id, it shows on that skill's
+card under "Other ways in". Its front matter has `title` and `description`, and
+its body is the prompt, with `{{fields}}` as above. The Hangar lists them under
+Starters.
+
+### Demos
+
+Every published scenario is a demo card in "Scenarios and demos". The card
+reads `scenario.json`: `title` (name the situation), `summary` (the tension, in
+at most 25 words), `participants` (the cast), the workflow it runs, and
+optional `length_minutes`. Scripted or Mixed and the live-turns meter come from
+`script.md`. To hide one, add `"library": {"show": false}`. Fly uses the same
+route as the Hangar's "Fly this"; the "Live turns" switch, off, plays every
+turn canned.
 
 ## Artifact templates
 

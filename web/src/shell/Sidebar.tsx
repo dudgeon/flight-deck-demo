@@ -1480,7 +1480,7 @@ function SidebarImpl({
                   <NewSessionShortcutHint />
                 </Link>
               </Button>
-              {/* omnigent-slim: canned sessions and artifact templates. */}
+              {/* omnigent-slim: the Library, where work and demos start. */}
               <Button
                 asChild
                 className={cn(

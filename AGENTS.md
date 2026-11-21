@@ -35,5 +35,5 @@ runs offline. Read README.md first. These rules keep it usable on the work Mac:
 Run it with `./start.sh` (see README). For a dev loop on a machine with
 internet, `uv sync` and `uv run omnigent start` also work.
 
-More docs: `docs/customizing.md` (templates, canned sessions, styles, where code
+More docs: `docs/customizing.md` (templates, the Library, styles, where code
 lives) and `docs/skill-writers/` (how skills detect and use Omnigent).

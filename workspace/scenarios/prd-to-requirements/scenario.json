@@ -1,7 +1,8 @@
 {
  "scenario": "prd-to-requirements",
- "title": "Allowances PRD to requirements",
- "summary": "The PRD to requirements workflow played with the invented Allowances PRD.",
+ "title": "From PRD to a catalog",
+ "summary": "Twenty testable requirements pulled from the Allowances PRD, three of them waiting on your answer before you lock it.",
+ "length_minutes": 4,
  "workflow": "prd-to-requirements",
  "fixtures": {
   "dataset": "fixtures/allowances.json",

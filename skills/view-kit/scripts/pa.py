@@ -677,11 +677,14 @@ def _apply_start(data: dict[str, Any], start: dict[str, Any]) -> tuple[dict[str,
     return full, shown
 
 
-def fly_demo(scenario_dir: Path, workspace: Path, *, reset: bool = False, dest: Path | None = None) -> dict[str, Any]:
+def fly_demo(scenario_dir: Path, workspace: Path, *, reset: bool = False, dest: Path | None = None,
+             live_turns: bool | None = None) -> dict[str, Any]:
     """Make (or keep) the demo folder for a scenario. Returns what the caller needs to open a session.
 
     With `reset`, an existing demo folder is emptied and set up again from the
     scenario as it is now. Without it, an existing demo is kept as it is.
+    `live_turns` False plays every turn canned, even ones the script marks
+    live (the Library's "Live turns" switch, D-85); None keeps what was set.
     """
     import shutil
 
@@ -691,6 +694,9 @@ def fly_demo(scenario_dir: Path, workspace: Path, *, reset: bool = False, dest: 
     folder = dest or demo_dir(workspace, sid)
     existing = demo_state(folder)
     if existing and not reset:
+        if live_turns is not None and existing.get("live_turns", True) != live_turns:
+            existing["live_turns"] = live_turns
+            _save_demo_state(folder, existing)
         return {**_demo_summary(folder, existing), "created": False}
     if folder.exists():
         if any(folder.iterdir()) and not (folder / DEMO_STATE).is_dir():
@@ -746,6 +752,7 @@ def fly_demo(scenario_dir: Path, workspace: Path, *, reset: bool = False, dest: 
         "turns": _turn_count(script["steps"]),
         "opening": scenario_opening(scenario_dir, scenario),
         "primed": primed,
+        "live_turns": True if live_turns is None else bool(live_turns),
         "started": _now(),
     }
     _save_demo_state(folder, state)
@@ -762,6 +769,7 @@ def _demo_summary(folder: Path, state: dict[str, Any]) -> dict[str, Any]:
         "turns": state.get("turns", 0),
         "started": state.get("started"),
         "finished": bool(state.get("finished")),
+        "live_turns": bool(state.get("live_turns", True)),
     }
 
 
@@ -852,8 +860,9 @@ def _demo_lines(folder: Path, state: dict[str, Any], steps: list[dict[str, Any]]
         return str((wdir / rel).resolve()) if rel else view
 
     lines: list[str] = []
+    live_on = state.get("live_turns", True)
     for step in steps:
-        live = step.get("live")
+        live = step.get("live") if live_on else None
         guide = "" if live in (None, True) else f" ({live})"
         if "agent" in step:
             if live:
@@ -967,7 +976,8 @@ def cmd_demo(args: argparse.Namespace) -> None:
         if not args.scenario:
             raise PaError("say which scenario folder to fly: pa demo fly --scenario scenarios/<id>")
         ws = Path(args.workspace) if args.workspace else _workspace_of_scenario(Path(args.scenario))
-        info = fly_demo(Path(args.scenario), ws, reset=args.reset, dest=Path(args.dir) if args.dir else None)
+        info = fly_demo(Path(args.scenario), ws, reset=args.reset, dest=Path(args.dir) if args.dir else None,
+                        live_turns=False if args.canned else None)
         print(json.dumps(info, indent=1, ensure_ascii=False))
         return
     state = demo_state(folder)
@@ -2839,6 +2849,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--scenario", help="fly: the scenario folder")
     p.add_argument("--workspace")
     p.add_argument("--reset", action="store_true", help="fly: start again from the beginning")
+    p.add_argument("--canned", action="store_true", help="fly: play every turn canned, even live ones")
     p.set_defaults(run=cmd_demo)
 
     # Comments and suggested changes in markdown documents (docreview.py).

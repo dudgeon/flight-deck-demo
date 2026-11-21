@@ -1,49 +1,78 @@
 /**
- * omnigent-slim Library page (``/library``): canned sessions and artifact
- * templates, read from the files under the server's library folder
- * (``workspace/templates`` by default; see ``omnigent/server/routes/slim_library.py``).
+ * omnigent-slim Library page (``/library``): where work and demos start (D-82 to D-88).
  *
- * Starting a canned session never sends anything by itself: it opens the
- * new-session composer with the prompt filled in (``/?prompt=``), in the
- * library's project when one is configured, and the user presses Send.
+ * Nothing here is typed into the Library. The top half is the featured product
+ * skills, read from each workflow's ``library`` block in ``workflow.json``: one
+ * spotlight, then a grid in rough product-lifecycle order. The lower half is the
+ * published scenarios, each flown as a demo with the same route and button as
+ * the Hangar's "Fly this". See ``omnigent/server/routes/slim_library.py``.
+ *
+ * Starting a skill never sends anything by itself: it opens the new-session
+ * composer with the prompt filled in (``/?prompt=``), and the person presses Send.
  */
 
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { FlyButton } from "@/hangar/FlyButton";
 import { HANGAR_WRENCH_GROUP, HangarWrench } from "@/hangar/HangarWrench";
-import { hangarPath } from "@/hangar/hangarApi";
+import { type DemoInfo, hangarPath } from "@/hangar/hangarApi";
 import { authenticatedFetch } from "@/lib/identity";
 import { cn } from "@/lib/utils";
+import "./library.css";
 
-interface CannedSessionField {
+interface Field {
   name: string;
   hint: string;
 }
 
-interface CannedSession {
+interface Starter {
   id: string;
   title: string;
   description: string;
-  template: string | null;
   prompt: string;
-  fields: CannedSessionField[];
+  fields: Field[];
 }
 
-interface ArtifactTemplate {
+export interface LibrarySkill {
   id: string;
   title: string;
-  description: string;
-  path: string;
+  summary: string;
+  steps: string[];
+  prompt: string;
+  fields: Field[];
+  spotlight: boolean;
+  starters: Starter[];
+  demos: { id: string; title: string }[];
 }
 
-interface Library {
+interface CastMember {
+  id: string;
+  name: string;
+  initials: string;
+  avatar: string | null;
+}
+
+export interface LibraryDemo {
+  id: string;
+  title: string;
+  summary: string;
+  workflow: string;
+  workflow_title: string;
+  cast: CastMember[];
+  turns: number;
+  live_turns: number;
+  meter: boolean[];
+  kind: "Scripted" | "Mixed";
+  length_minutes: number | null;
+  demo: DemoInfo | null;
+}
+
+export interface Library {
   library_dir: string | null;
   project: string | null;
-  sessions: CannedSession[];
-  templates: ArtifactTemplate[];
+  skills: LibrarySkill[];
+  demos: LibraryDemo[];
 }
 
 const FIELD_PATTERN = /\{\{\s*([A-Za-z][\w-]*)\s*(?::\s*[^}]*?)?\s*\}\}/g;
@@ -69,91 +98,289 @@ function composerLink(prompt: string, project: string | null): string {
   return `/?${params.toString()}`;
 }
 
-function templatePrompt(template: ArtifactTemplate): string {
-  return [
-    `Make a new artifact from the "${template.title}" template (${template.path}).`,
-    "Copy it into artifacts/, fill it in for: {{topic: what this artifact is about}}",
-    "Then open it in the viewer.",
-  ].join("\n");
-}
+const label = (name: string) => {
+  const text = name.replace(/[-_]/g, " ");
+  return text.charAt(0).toUpperCase() + text.slice(1);
+};
 
-function SessionCard({
-  session,
+/** The short form a skill's inputs become, and Start. */
+function StartForm({
+  prompt,
+  fields,
   project,
-  templates,
+  cta = "Start",
+  note,
 }: {
-  session: CannedSession;
+  prompt: string;
+  fields: Field[];
   project: string | null;
-  templates: ArtifactTemplate[];
+  cta?: string;
+  /** Say that Start only opens the composer (once, on the spotlight). */
+  note?: boolean;
 }) {
   const navigate = useNavigate();
+  const id = useId();
   const [values, setValues] = useState<Record<string, string>>({});
-  const template = session.template ? templates.find((t) => t.id === session.template) : undefined;
-  const start = () => navigate(composerLink(fillPrompt(session.prompt, values), project));
   return (
-    <div
-      className={cn("flex flex-col gap-3 rounded-lg border border-border bg-background p-4", HANGAR_WRENCH_GROUP)}
+    <form
+      className="lib-form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        navigate(composerLink(fillPrompt(prompt, values), project));
+      }}
     >
-      <div>
-        <div className="flex items-start gap-2 font-medium text-foreground">
-          <span className="min-w-0 flex-1">{session.title}</span>
-          <HangarWrench to={hangarPath.starter(session.id)} label={`Open ${session.title} in the Hangar`} />
-        </div>
-        {session.description && (
-          <div className="mt-1 text-sm text-muted-foreground">{session.description}</div>
-        )}
-        {template && (
-          <div className="mt-1 text-xs text-muted-foreground">Artifact: {template.title}</div>
-        )}
-      </div>
-      {session.fields.map((field) => (
-        <label key={field.name} className="flex flex-col gap-1 text-sm">
-          <span className="text-muted-foreground">{field.name.replace(/[-_]/g, " ")}</span>
-          <Input
-            value={values[field.name] ?? ""}
+      {fields.map((field) => (
+        <label key={field.name} htmlFor={`${id}-${field.name}`}>
+          <span>{label(field.name)}</span>
+          <input
+            id={`${id}-${field.name}`}
+            className="lib-input"
             placeholder={field.hint}
-            onChange={(event) =>
-              setValues((current) => ({ ...current, [field.name]: event.target.value }))
-            }
-            onKeyDown={(event) => {
-              if (event.key === "Enter") start();
-            }}
+            value={values[field.name] ?? ""}
+            onChange={(e) => setValues((v) => ({ ...v, [field.name]: e.target.value }))}
           />
         </label>
       ))}
-      <div>
-        <Button type="button" onClick={start}>
-          Open in composer
-        </Button>
+      <div className="lib-acts">
+        <button type="submit" className="lib-btn pri">
+          {cta}
+        </button>
+        {note && (
+          <span className="lib-note">Opens the composer. Nothing is sent until you press Send.</span>
+        )}
       </div>
+    </form>
+  );
+}
+
+function SkillCard({
+  skill,
+  project,
+  spotlight,
+}: {
+  skill: LibrarySkill;
+  project: string | null;
+  spotlight?: boolean;
+}) {
+  const [starter, setStarter] = useState<Starter | null>(null);
+  return (
+    <article
+      className={cn("lib-card lib-skill", spotlight && "spot", HANGAR_WRENCH_GROUP)}
+      data-testid={spotlight ? "library-spotlight" : "library-skill"}
+    >
+      <div className="lib-head">
+        {spotlight && <span className="lib-eyebrow">Start here</span>}
+        <h3>{skill.title}</h3>
+        <HangarWrench
+          to={hangarPath.workflow(skill.id)}
+          label={`Open ${skill.title} in the Hangar`}
+        />
+      </div>
+      <p className="lib-sum">{skill.summary}</p>
+      <div className={cn("lib-body", spotlight && "split")}>
+        {skill.steps.length > 0 && (
+          <ul className="lib-steps" aria-label="What it covers">
+            {skill.steps.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ul>
+        )}
+        <div className="lib-start">
+          {starter ? (
+            <>
+              <div className="lib-starter-head">
+                <b>{starter.title}</b>
+                <button type="button" className="lib-link" onClick={() => setStarter(null)}>
+                  Back
+                </button>
+              </div>
+              <StartForm
+                key={starter.id}
+                prompt={starter.prompt}
+                fields={starter.fields}
+                project={project}
+                note={spotlight}
+              />
+            </>
+          ) : (
+            <StartForm
+              prompt={skill.prompt}
+              fields={skill.fields}
+              project={project}
+              note={spotlight}
+            />
+          )}
+          {skill.starters.length > 0 && !starter && (
+            <div className="lib-more">
+              Other ways in:{" "}
+              {skill.starters.map((s) => (
+                <button key={s.id} type="button" className="lib-link" onClick={() => setStarter(s)}>
+                  {s.title}
+                </button>
+              ))}
+            </div>
+          )}
+          {skill.demos.length > 0 && (
+            <div className="lib-more">
+              See it flown:{" "}
+              {skill.demos.map((d) => (
+                <a key={d.id} className="lib-link" href={`#demo-${d.id}`}>
+                  {d.title}
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function CastMarks({ cast }: { cast: CastMember[] }) {
+  if (cast.length === 0) return null;
+  return (
+    <span className="lib-marks" aria-label={`With ${cast.map((c) => c.name).join(", ")}`}>
+      {cast.map((c) => (
+        <span key={c.id} className="lib-mark" title={c.name}>
+          {c.avatar ? <img src={c.avatar} alt="" /> : c.initials}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function progress(demo: DemoInfo): string {
+  if (demo.finished) return "played to the end";
+  return demo.turn ? `turn ${demo.turn} of ${demo.turns}` : "not started yet";
+}
+
+function DemoCard({ demo }: { demo: LibraryDemo }) {
+  const switchId = useId();
+  const [live, setLive] = useState(demo.demo?.live_turns ?? true);
+  const hasLive = demo.live_turns > 0;
+  return (
+    <article
+      id={`demo-${demo.id}`}
+      className={cn("lib-card lib-demo", HANGAR_WRENCH_GROUP)}
+      data-testid="library-demo"
+    >
+      <div className="lib-head">
+        <span className="lib-kind">◆ Demo · {demo.kind}</span>
+        <HangarWrench
+          to={hangarPath.scenario(demo.id)}
+          label={`Open ${demo.title} in the Hangar`}
+        />
+      </div>
+      <h3>{demo.title}</h3>
+      <p className="lib-sum">{demo.summary}</p>
+      <div className="lib-meta">
+        <span className="lib-chip">{demo.workflow_title}</span>
+        <CastMarks cast={demo.cast} />
+      </div>
+      <div className="lib-meta">
+        <span className="lib-meter" aria-hidden="true">
+          {demo.meter.map((on, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: one tick per turn, in order
+            <i key={i} className={on && live ? "live" : undefined} />
+          ))}
+        </span>
+        <span>
+          {hasLive
+            ? live
+              ? `${demo.live_turns} of ${demo.turns} turns live`
+              : `${demo.turns} turns, all canned`
+            : `${demo.turns} turns, fully scripted`}
+          {demo.length_minutes ? ` · about ${demo.length_minutes} min` : ""}
+        </span>
+      </div>
+      <div className="lib-fly">
+        <FlyButton scenarioId={demo.id} demo={demo.demo} label="Fly" liveTurns={live} />
+        {hasLive && (
+          <label className="lib-switch" htmlFor={switchId}>
+            <input
+              id={switchId}
+              type="checkbox"
+              role="switch"
+              checked={live}
+              onChange={(e) => setLive(e.target.checked)}
+            />
+            Live turns
+          </label>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function InFlight({ demos }: { demos: LibraryDemo[] }) {
+  const flown = demos.filter((d) => d.demo && !d.demo.finished);
+  if (flown.length === 0) return null;
+  return (
+    <div className="lib-inflight" data-testid="library-in-flight">
+      <h3>In flight</h3>
+      {flown.map((d) => (
+        <div key={d.id} className="lib-flight">
+          <span className="lib-diamond" aria-hidden="true">
+            ◆
+          </span>
+          <div className="lib-flight-text">
+            <b>{d.title}</b>
+            <span>
+              {d.workflow_title} · {d.demo ? progress(d.demo) : ""}
+            </span>
+          </div>
+          <FlyButton scenarioId={d.id} demo={d.demo} label="Continue" />
+        </div>
+      ))}
     </div>
   );
 }
 
-function TemplateCard({ template, project }: { template: ArtifactTemplate; project: string | null }) {
-  const navigate = useNavigate();
+export function LibraryView({ data }: { data: Library }) {
+  const spotlight = data.skills.find((s) => s.spotlight);
+  const others = data.skills.filter((s) => s !== spotlight);
   return (
-    <div
-      className={cn("flex flex-col gap-2 rounded-lg border border-border bg-background p-4", HANGAR_WRENCH_GROUP)}
-    >
-      <div className="flex items-start gap-2 font-medium text-foreground">
-        <span className="min-w-0 flex-1">{template.title}</span>
-        <HangarWrench to={hangarPath.template(template.id)} label={`Open ${template.title} in the Hangar`} />
-      </div>
-      {template.description && (
-        <div className="text-sm text-muted-foreground">{template.description}</div>
-      )}
-      <div className="font-mono text-xs text-muted-foreground">{template.path}</div>
-      <div>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => navigate(composerLink(templatePrompt(template), project))}
-        >
-          Use template
-        </Button>
-      </div>
-    </div>
+    <>
+      <section className="lib-section" aria-labelledby="lib-work">
+        <h2 id="lib-work">
+          Start with a skill <small>on your own material</small>
+        </h2>
+        {data.skills.length === 0 ? (
+          <p className="lib-empty">
+            No featured skills yet. A workflow shows here when its workflow.json has{" "}
+            <code>"library": {"{"}"show": true{"}"}</code>.
+          </p>
+        ) : (
+          <>
+            {spotlight && <SkillCard skill={spotlight} project={data.project} spotlight />}
+            {others.length > 0 && (
+              <div className="lib-grid">
+                {others.map((skill) => (
+                  <SkillCard key={skill.id} skill={skill} project={data.project} />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </section>
+      <section className="lib-section lib-lower" aria-labelledby="lib-demos">
+        <h2 id="lib-demos">
+          Scenarios and demos <small>invented stories, safe to show</small>
+        </h2>
+        <InFlight demos={data.demos} />
+        {data.demos.length === 0 ? (
+          <p className="lib-empty">
+            No scenarios yet. Build one in the Hangar and publish it to fly it here.
+          </p>
+        ) : (
+          <div className="lib-grid">
+            {data.demos.map((demo) => (
+              <DemoCard key={demo.id} demo={demo} />
+            ))}
+          </div>
+        )}
+      </section>
+    </>
   );
 }
 
@@ -163,58 +390,17 @@ export function LibraryPage() {
     queryFn: fetchLibrary,
   });
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8 md:px-8">
+    <div className="pa-library">
+      <div className="lib-wrap">
         <header>
-          <h1 className="text-xl font-semibold text-foreground">Library</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Canned sessions open the composer with their prompt filled in; you review it and
-            press Send. Edit the files in{" "}
-            <span className="font-mono">{data?.library_dir ?? "workspace/templates"}</span> to
-            change what's here.
+          <h1>Library</h1>
+          <p className="lib-sum">
+            Start real work on your own material, or fly a demo of how the work goes.
           </p>
         </header>
-        {isPending && <div className="text-sm text-muted-foreground">Loading…</div>}
-        {error && <div className="text-sm text-destructive">{String(error)}</div>}
-        {data && (
-          <>
-            <section className="flex flex-col gap-3">
-              <h2 className="text-base font-medium text-foreground">Canned sessions</h2>
-              {data.sessions.length === 0 ? (
-                <div className="text-sm text-muted-foreground">
-                  No canned sessions yet. Add a <span className="font-mono">.md</span> file to{" "}
-                  <span className="font-mono">sessions/</span>.
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  {data.sessions.map((session) => (
-                    <SessionCard
-                      key={session.id}
-                      session={session}
-                      project={data.project}
-                      templates={data.templates}
-                    />
-                  ))}
-                </div>
-              )}
-            </section>
-            <section className="flex flex-col gap-3">
-              <h2 className="text-base font-medium text-foreground">Artifact templates</h2>
-              {data.templates.length === 0 ? (
-                <div className="text-sm text-muted-foreground">
-                  No templates yet. Add an <span className="font-mono">.html</span> file to{" "}
-                  <span className="font-mono">artifacts/</span>.
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-                  {data.templates.map((template) => (
-                    <TemplateCard key={template.id} template={template} project={data.project} />
-                  ))}
-                </div>
-              )}
-            </section>
-          </>
-        )}
+        {isPending && <p className="lib-empty">Loading…</p>}
+        {error && <p className="lib-error">{String(error)}</p>}
+        {data && <LibraryView data={data} />}
       </div>
     </div>
   );

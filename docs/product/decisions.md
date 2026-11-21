@@ -451,6 +451,43 @@ is now) or "Keep going" (a new session in the same folder, the story where it
 was). A fresh demo's first session opens with the opening line in the
 composer, ready to send.
 
+**D-82 · 2026-11-21 · Geoff.** Keep the Library. It is where real work and
+demos start, and nothing on it is typed into it: every card is generated from
+the metadata of the workflow or scenario it starts. The old contents (13 canned
+sessions, the template list) were temporary and are gone. Design round:
+https://claude.ai/artifact/5XhbdjSKp7i2t1ChoxqS6Z.
+
+**D-83 · 2026-11-21 · Geoff.** The top half is the featured product skills,
+expected to be four to six (intent shaping, problem discovery and the like).
+The many utility skills (person builder, scenario builder) are never shown. A
+workflow is featured by `"library": {"show": true, "order": N}` in its
+`workflow.json`; `order` puts them in rough product-lifecycle order. One
+spotlight card (`"spotlight": true`, else the first), then a grid.
+
+**D-84 · 2026-11-21 · Geoff.** A skill card shows its steps, without a
+picture. Steps are as much tasks and outcomes as a sequence, so they are an
+unnumbered list. Imagery may come later. The workflow's `inputs` (or the
+fields in `library.prompt`) become a short form; Start opens the composer with
+the prompt filled in. A Hangar starter that names the workflow is an extra way
+in on the same card.
+
+**D-85 · 2026-11-21 · Geoff.** A demo card has Fly and, when the script has
+live turns, a "Live turns" switch. Off plays every turn canned, for a demo
+that must not vary.
+
+**D-86 · 2026-11-21 · Geoff.** One project per demo. A demo already flown shows
+in an "In flight" strip; flying it again offers "Reset to the start" or "Keep
+going" (D-81).
+
+**D-87 · 2026-11-21.** A demo card reads `scenario.json`: the title names the
+situation and the summary states the tension in at most 25 words;
+`length_minutes` is optional. Scripted or Mixed and "N of M turns live" are
+worked out from `script.md`. Demos are listed in the order of the skills they
+show. The seven shipped scenarios were retitled to match.
+
+**D-88 · 2026-11-21 · Geoff.** Artifact templates leave the Library. They are
+managed in the Hangar, and the agent finds them when asked.
+
 Geoff confirmed the person-editing choices on 21 Nov (combined walkthrough
 https://claude.ai/artifact/7gbkDmURSuwhWGWVzyBtU6): the page as the editor with
 autosave (D-63), the pinnable Aviator pop-over with "Try them" (D-64), casting

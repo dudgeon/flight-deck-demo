@@ -97,7 +97,7 @@ going" (D-81).
 **Where.** `skills/view-kit/scripts/pa.py` (demos section, `pa demo
 next|status|fly`); `omnigent/server/routes/slim_hangar.py` (`fly_scenario`,
 the route); `web/src/hangar/FlyButton.tsx` and `useFlyScenario` /
-`demoSessionLink` in `web/src/hangar/hangarApi.ts`, for the Library to reuse;
+`demoSessionLink` in `web/src/hangar/hangarApi.ts`, which the Library reuses;
 the `[live]` direction in `skills/view-kit/references/script.md`.
 
 ## Participants
@@ -298,21 +298,37 @@ latest" on a clash), and a comment loses its anchor when its text is deleted.
 `MarkdownRichTextViewer.tsx`; `skills/view-kit/scripts/docreview.py`
 (`pa review`); `skills/document-collaboration/`.
 
-## The Library and canned sessions
+## The Library
 
-**Intent.** A demo, or a PM new to the tool, should start from a good prompt
-rather than a blank box, and those prompts should be plain files anyone can
-edit.
+**Intent.** The Library is where work starts, both real work on the person's
+own material and demos of how the work goes (D-82). Productive work starts from
+the few product skills a PM uses across the lifecycle, so they get the top
+half; utility skills stay out of sight (D-83). Demos sit below, so the same
+page that starts a PRD review can show someone what one looks like. Nothing is
+typed into the Library: a card is only as good as the workflow's or scenario's
+own metadata, which keeps one source of truth as skills and scenarios change.
 
-**Behaviour.** The Library page lists artifact templates and canned
-sessions (prompts with fill-in fields). "Open in composer" opens a new
-session in the Workspace project with the prompt filled in; nothing is sent
-until the person presses Send. Each kind of work has a canned session that
-starts it.
+**Behaviour.** "Start with a skill" shows one spotlight card and a grid of the
+featured workflows, in lifecycle order. Each card has the title, a summary,
+the steps as an unnumbered list (D-84), a short form made from its inputs, and
+Start, which opens a new session in the Workspace project with the prompt
+filled in; nothing is sent until the person presses Send. A Hangar starter
+that names the workflow shows as "Other ways in", and the scenarios that run
+it as "See it flown". "Scenarios and demos" shows an "In flight" strip of
+demos already flown (Continue offers Reset to the start or Keep going), then a
+card per published scenario: kind (Scripted or Mixed), title, summary, the
+workflow it shows, the cast, a meter of live turns, about how long it takes,
+Fly and, when the script has live turns, a "Live turns" switch (D-85). Fly
+uses the same route and button as the Hangar's "Fly this". Templates are not
+listed here (D-88).
 
-**Where.** `workspace/templates/`, `web/src/pages/LibraryPage.tsx`,
-`omnigent/server/routes/slim_library.py`. How to add one:
-`docs/customizing.md`.
+**Where.** `omnigent/server/routes/slim_library.py` (`GET /v1/slim/library`),
+`web/src/pages/LibraryPage.tsx` and `library.css`; the `library` block in
+`skills/<id>/workflow.json` (`show`, `order`, `spotlight`, `summary`,
+`prompt`); `title`, `summary`, `length_minutes` and optional
+`"library": {"show": false, "order": N}` in `scenario.json`; extra starters in
+`workspace/templates/sessions/`; `live_turns` in `pa.fly_demo`. How to add
+one: `docs/customizing.md`.
 
 ## Canvas tools
 

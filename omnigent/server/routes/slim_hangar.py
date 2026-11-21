@@ -393,9 +393,16 @@ def _ensure_demo_project(
 
 
 def fly_scenario(
-    sid: str, mode: str | None, project_store: Any = None, user_id: str | None = None
+    sid: str,
+    mode: str | None,
+    project_store: Any = None,
+    user_id: str | None = None,
+    live_turns: bool | None = None,
 ) -> dict[str, Any]:
-    """Fly a scenario as a demo. ``mode`` is None (ask if one exists), "reset" or "keep"."""
+    """Fly a scenario as a demo. ``mode`` is None (ask if one exists), "reset" or "keep".
+
+    ``live_turns`` False plays every turn canned (the Library's switch, D-85).
+    """
     pa = _pa()
     folder = pa.list_scenarios(workspace_dir()).get(sid)
     if folder is None:
@@ -405,7 +412,9 @@ def fly_scenario(
     existing = demo_of(pa, sid)
     if existing and mode is None:
         return {"state": "exists", "demo": existing}
-    info = _pa_call(pa.fly_demo, folder, workspace_dir(), reset=mode != "keep")
+    info = _pa_call(
+        pa.fly_demo, folder, workspace_dir(), reset=mode != "keep", live_turns=live_turns
+    )
     title = str(info.get("title") or sid)
     name = demo_project_name(title)
     project_id = _ensure_demo_project(project_store, user_id, name, Path(info["folder"]))
@@ -936,7 +945,8 @@ def create_slim_hangar_router(
     async def post_fly(request: Request, sid: str) -> dict[str, Any]:
         """Fly a scenario as a demo: make its folder and its "◆ Demo" project.
 
-        Body (optional): ``{"mode": "reset" | "keep"}``. Without a mode, an
+        Body (optional): ``{"mode": "reset" | "keep", "live_turns": bool}``.
+        ``live_turns`` false plays every turn canned. Without a mode, an
         existing demo is reported (``state: "exists"``) so the caller can offer
         "Reset to the start" or "Keep going". Otherwise returns ``state``
         ("created" or "kept"), ``project`` ({id, name}) and ``prompt``, the
@@ -946,8 +956,14 @@ def create_slim_hangar_router(
         body: dict[str, Any] = {}
         with contextlib.suppress(Exception):
             body = await request.json() or {}
-        mode = body.get("mode") if isinstance(body, dict) else None
-        result = await asyncio.to_thread(fly_scenario, sid, mode, project_store, user_id)
+        if not isinstance(body, dict):
+            body = {}
+        mode = body.get("mode")
+        live = body.get("live_turns")
+        live_turns = live if isinstance(live, bool) else None
+        result = await asyncio.to_thread(
+            fly_scenario, sid, mode, project_store, user_id, live_turns
+        )
         if result.get("project"):
             from omnigent.server.routes.sessions import announce_projects_changed
 
