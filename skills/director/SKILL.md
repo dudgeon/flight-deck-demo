@@ -120,9 +120,13 @@ The person can ask you to pause a run by name.
 Several threads can be working at once. When more than one needs the
 person, name the one you would answer first and why, and show its card.
 
-## What this skill does not do yet
+## The direct line
 
-The person answers a thread's questions in the thread, opened from the card.
-A direct line that carries those questions into this chat is designed and
-not built. Do not relay a thread's questions and the person's answers back
-and forth yourself; send the person to the thread.
+While a thread has the floor, this chat shows the thread's turns inside a
+rail, and what the person types goes straight to the thread. You are not in
+that path, and you will not see those messages. Do not relay a thread's
+questions and the person's answers back and forth yourself, and do not
+repeat what the rail already shows.
+
+A message reaches you when the person starts it with `@aviator` or switches
+the message box to you. Answer it briefly; the thread carries on.

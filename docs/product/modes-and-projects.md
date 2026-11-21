@@ -234,7 +234,9 @@ None. The intent graph's level of detail is held until something needs it
    director folded to a bar that leads back and shows what else is in
    flight. **Built.**
    **The direct line**: strip, rail and the thread's turns in the director's
-   chat (D-90, D-91, D-116). Not built.
+   chat, the person's messages straight to the thread (D-90 to D-92, D-116).
+   **Built**, not yet flown with a live agent; start, pause and resume
+   markers still to do.
 5. **Threads on items** (D-95). After step 3.
 6. **Projects with a goal** (D-97): a project names its goal and area; an
    area page; connections. Unblocked by D-119.

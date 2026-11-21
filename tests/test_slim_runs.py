@@ -318,3 +318,46 @@ def test_a_threads_page_knows_its_director_and_what_else_is_in_flight(
     # The director itself, and a session nobody knows, are not threads.
     assert client.get(f"/v1/slim/threads/{SESSION}").json() == {"thread": None}
     assert client.get("/v1/slim/threads/nope").json() == {"thread": None}
+
+
+def test_a_director_has_a_direct_line_to_the_thread_with_the_floor(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setitem(os.environ, "OMNIGENT_SLIM_PROJECT", "Workspace")
+    folder = tmp_path / "progress"
+    folder.mkdir()
+    working, asking, paused = "a" * 32, "b" * 32, "c" * 32
+
+    def write(name: str, session: str, state: str, director: str = SESSION) -> None:
+        (folder / f"{name}.json").write_text(json.dumps(
+            {"steps": ["One", "Two"], "current": 1, "session": session, "state": state, "director": director}
+        ))
+
+    write("working", working, "working")
+    write("paused", paused, "paused")
+    write("elsewhere", working, "needs-you", director="someone-else")
+
+    class _Family(_Conversations):
+        def get_conversation(self, conversation_id: str) -> Any:
+            if conversation_id in (working, asking, paused):
+                return SimpleNamespace(project_id=None, parent_conversation_id=SESSION, title="A thread")
+            return super().get_conversation(conversation_id)
+
+    projects = _Projects(tmp_path)
+    projects.get = lambda project_id, user_id=None: next((p for p in projects._projects if p.id == project_id), None)  # type: ignore[attr-defined]
+    app = FastAPI()
+    app.include_router(
+        create_slim_runs_router(project_store=projects, conversation_store=_Family()),  # type: ignore[arg-type]
+        prefix="/v1",
+    )
+    client = TestClient(app)
+    answer = client.get(f"/v1/slim/directors/{SESSION}").json()
+    # Only this director's threads; a paused one is in flight but does not hold the floor.
+    assert sorted(run["id"] for run in answer["runs"]) == ["paused", "working"]
+    assert answer["line"]["id"] == "working"
+    # The one that needs the person takes the floor.
+    write("asking", asking, "needs-you")
+    assert client.get(f"/v1/slim/directors/{SESSION}").json()["line"]["id"] == "asking"
+    # A thread directs nothing, and nor does a session nobody knows.
+    assert client.get(f"/v1/slim/directors/{working}").json() == {"line": None, "runs": []}
+    assert client.get("/v1/slim/directors/nope").json() == {"line": None, "runs": []}

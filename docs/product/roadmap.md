@@ -308,9 +308,11 @@ a project means something (a goal to ship) and knows its relatives.
   thread briefs (`pa brief`), thread reports (`pa report`, D-118) and the
   live run card in the director's chat. Opt-in until it has been run with a
   live agent on the Mac mini. Stepping into a thread (D-117): the thread
-  takes the chat's place and the director folds to a bar on top.
+  takes the chat's place and the director folds to a bar on top. The direct
+  line (D-116): the thread's turns in the director's chat inside a rail, a
+  strip on the message box, and messages sent straight to the thread.
 - **Next.** Fly the director with a live agent and fix what breaks. Then the
-  direct line (D-116, with the strip and rail); threads on items
+  rail's start, pause and resume markers (D-91); threads on items
   (D-95); projects with a goal and their connections (D-97, D-119). Build
   order is in modes-and-projects.md.
 - **Open.** Nothing. The intent graph's detail is deliberately held (D-98).
