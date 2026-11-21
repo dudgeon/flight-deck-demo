@@ -30,6 +30,7 @@ import json
 import logging
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 from types import ModuleType
@@ -37,7 +38,7 @@ from typing import Any
 
 import yaml
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 
 from omnigent.server.auth import AuthProvider
 from omnigent.server.routes._auth_helpers import require_user
@@ -127,6 +128,11 @@ def _roster(pa: ModuleType) -> dict[str, dict[str, Any]]:
         return {}
 
 
+def _avatar_url(pa: ModuleType, pid: str) -> str | None:
+    path = pa.live_avatar(workspace_dir(), pid)
+    return f"/v1/slim/hangar/avatars/{pid}?v={int(path.stat().st_mtime)}" if path else None
+
+
 def _person_entry(pa: ModuleType, person: dict[str, Any]) -> dict[str, Any]:
     pid = person["id"]
     skills = person.get("skills")
@@ -143,6 +149,7 @@ def _person_entry(pa: ModuleType, person: dict[str, Any]) -> dict[str, Any]:
         "call_for": str(person.get("call_for", "")),
         # D-47: an optional `skills` line narrows what their session gets.
         "skills": skills if isinstance(skills, list) else None,
+        "avatar": _avatar_url(pa, pid),
         "brief": person.get("brief", ""),
         "path": f"workspace/participants/{pid}.md",
         "problems": pa._check_participants({pid: person}),
@@ -488,7 +495,50 @@ def load_hangar() -> dict[str, Any]:
         "starters": starters,
         "frameworks": frameworks,
         "drafts": _drafts(pa),
+        "repo": repo_status(),
     }
+
+
+# Published config travels with the repo (D-75): people, avatars, scenarios,
+# workflows built in the workspace and starters are plain files in the
+# checkout. The Hangar says when some are not committed yet, so they are not
+# lost when the folder is replaced by a fresh download.
+_TRAVELS = ("participants", "scenarios", ".claude/skills", "templates")
+
+
+def repo_status() -> dict[str, Any]:
+    root = workspace_dir()
+    try:
+        inside = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            timeout=3,
+            check=False,
+        )
+        if inside.returncode != 0:
+            return {"git": False, "uncommitted": []}
+        status = subprocess.run(
+            ["git", "status", "--porcelain", "--untracked-files=all", "--", *_TRAVELS],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return {"git": False, "uncommitted": []}
+    top = Path(inside.stdout.strip())
+    files = []
+    for line in status.stdout.splitlines():
+        path = line[3:].strip().strip('"')
+        if " -> " in path:
+            path = path.split(" -> ", 1)[1]
+        with contextlib.suppress(ValueError):
+            path = (top / path).resolve().relative_to(root.resolve()).as_posix()
+        files.append(path)
+    return {"git": True, "uncommitted": files[:100], "count": len(files)}
 
 
 # ------------------------------------------------------------------ building
@@ -537,6 +587,40 @@ def start_person_draft(pid: str, remove: bool = False) -> dict[str, Any]:
 
 
 _EDITABLE = ("name", "kind", "role", "initials", "backing", "call_for", "skills")
+_AVATAR_TYPES = {
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".webp": "image/webp",
+    ".gif": "image/gif",
+}
+
+
+def set_person_avatar(pid: str, filename: str, data: bytes | None) -> dict[str, Any]:
+    """Copy a picked picture into the draft (D-74); it reaches the roster on publish."""
+    pa = _pa()
+    _pa_call(pa.set_draft_avatar, workspace_dir(), pid, filename, data)
+    return draft_detail(pid)
+
+
+def avatar_file(pid: str, draft: bool) -> Path:
+    pa = _pa()
+    if not _NAME.fullmatch(pid):
+        raise HTTPException(status_code=404, detail="no such avatar")
+    path = pa.avatar_of(workspace_dir(), pid, draft)
+    if path is None or path.suffix not in _AVATAR_TYPES:
+        raise HTTPException(status_code=404, detail="no such avatar")
+    return path
+
+
+def avatars() -> dict[str, str]:
+    """Every live avatar, by participant id, as a URL that changes when the picture does."""
+    pa = _pa()
+    out: dict[str, str] = {}
+    for pid in _roster(pa):
+        path = pa.live_avatar(workspace_dir(), pid)
+        if path is not None:
+            out[pid] = f"/v1/slim/hangar/avatars/{pid}?v={int(path.stat().st_mtime)}"
+    return out
 
 
 def edit_person_draft(pid: str, body: dict[str, Any]) -> dict[str, Any]:
@@ -808,6 +892,33 @@ def create_slim_hangar_router(*, auth_provider: AuthProvider | None = None) -> A
             raise HTTPException(status_code=422, detail="a new person needs a name")
         duplicate = body.get("duplicate_of")
         return new_person_draft(name[:80], str(duplicate) if duplicate else None)
+
+    @router.put("/slim/hangar/drafts/person/{pid}/avatar")
+    async def put_avatar(request: Request, pid: str) -> dict[str, Any]:
+        require_user(request, auth_provider)
+        data = await request.body()
+        name = request.headers.get("x-filename", "avatar")[:120]
+        return set_person_avatar(pid, name, data)
+
+    @router.delete("/slim/hangar/drafts/person/{pid}/avatar")
+    async def delete_avatar(request: Request, pid: str) -> dict[str, Any]:
+        require_user(request, auth_provider)
+        return set_person_avatar(pid, "", None)
+
+    @router.get("/slim/hangar/avatars")
+    async def get_avatars(request: Request) -> dict[str, str]:
+        require_user(request, auth_provider)
+        return avatars()
+
+    @router.get("/slim/hangar/avatars/{pid}")
+    async def get_avatar(request: Request, pid: str, draft: bool = False) -> FileResponse:
+        require_user(request, auth_provider)
+        path = avatar_file(pid, draft)
+        return FileResponse(
+            path,
+            media_type=_AVATAR_TYPES[path.suffix],
+            headers={"Cache-Control": "no-cache", "X-Content-Type-Options": "nosniff"},
+        )
 
     @router.delete("/slim/hangar/drafts/person/{pid}")
     async def delete_draft(request: Request, pid: str) -> dict[str, Any]:

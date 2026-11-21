@@ -21,6 +21,8 @@ export interface HangarPerson {
   backing: "session" | "script";
   call_for: string;
   skills: string[] | null;
+  /** The picture's URL, when they have one (D-74). */
+  avatar?: string | null;
   brief: string;
   path: string;
   problems: string[];
@@ -61,6 +63,8 @@ export interface HangarDraft {
   cast_changes: { kind: CastKind; id: string; change: "add" | "remove" }[];
   /** The Aviator session helping with this draft, if one was started. */
   aviator: string | null;
+  /** The draft picks a different picture (or none) from the live one. */
+  avatar_changed?: boolean;
   path: string;
   target: string;
 }
@@ -246,6 +250,8 @@ export interface Hangar {
   drafts: HangarDraft[];
   /** Drafts of scenarios and workflows. */
   folder_drafts: FolderDraft[];
+  /** Published files not yet committed to the repo (D-75). */
+  repo?: { git: boolean; uncommitted: string[]; count?: number };
 }
 
 async function fetchHangar(): Promise<Hangar> {
@@ -463,6 +469,49 @@ export function playPrompt(draftId: string, note: string): string {
     "reading its script.md and fixtures, with the views drawn as the script says. Nothing is published.",
     `${note ? `Start from or focus on: ${note}` : ""}`,
   ].join(" ");
+}
+
+/** A draft's picture, fresh after each change. */
+export const draftAvatarUrl = (draft: Pick<HangarDraft, "id" | "updated">) =>
+  `/v1/slim/hangar/avatars/${encodeURIComponent(draft.id)}?draft=1&v=${encodeURIComponent(draft.updated ?? "")}`;
+
+/** Pick or clear a draft's picture: the file is copied into the draft, then the repo on publish. */
+export function useAvatarActions() {
+  const client = useQueryClient();
+  const done = () => client.invalidateQueries({ queryKey: ["slim-hangar"] });
+  return {
+    set: useMutation({
+      mutationFn: async ({ id, file }: { id: string; file: File }) => {
+        const res = await authenticatedFetch(
+          `/v1/slim/hangar/drafts/person/${encodeURIComponent(id)}/avatar`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/octet-stream", "X-Filename": file.name },
+            body: file,
+          },
+        );
+        const data = (await res.json().catch(() => ({}))) as { detail?: string };
+        if (!res.ok) throw new Error(data.detail ?? `The picture was refused (${res.status})`);
+        return data as HangarDraft;
+      },
+      onSuccess: done,
+    }),
+    clear: useMutation({
+      mutationFn: (id: string) =>
+        send(`/v1/slim/hangar/drafts/person/${encodeURIComponent(id)}/avatar`, "DELETE"),
+      onSuccess: done,
+    }),
+  };
+}
+
+/** Every participant's picture by id, for the chat's participant turns. */
+export function useAvatars() {
+  return useQuery({
+    queryKey: ["slim-avatars"],
+    staleTime: 60_000,
+    retry: false,
+    queryFn: async () => (await send("/v1/slim/hangar/avatars", "GET")) as Record<string, string>,
+  });
 }
 
 export function useHangarVersion(id: string, version: string | null) {

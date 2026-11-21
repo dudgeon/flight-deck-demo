@@ -267,3 +267,60 @@ def test_build_scenarios_and_workflows_as_folder_drafts(
         slim_hangar.edit_folder_draft(
             "scenario", "fraud-rules-review", {"files": {"../../evil.md": "x"}}
         )
+
+
+PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 64
+
+
+def test_an_avatar_is_copied_in_and_published_with_the_person(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = _scratch_workspace(tmp_path, monkeypatch)
+    slim_hangar.start_person_draft("risk-review")
+    with pytest.raises(Exception, match="not a png picture"):
+        slim_hangar.set_person_avatar("risk-review", "face.png", b"<svg/>")
+    with pytest.raises(Exception, match="is a gif, jpg, png, webp picture"):
+        slim_hangar.set_person_avatar("risk-review", "face.svg", b"<svg/>")
+    draft = slim_hangar.set_person_avatar("risk-review", "My Face.PNG", PNG)
+    assert draft["problems"] == [] and draft["person"]["avatar"] == "avatars/risk-review.png"
+    assert slim_hangar.avatar_file("risk-review", draft=True).read_bytes() == PNG
+    # Nothing is live until publish.
+    assert not (workspace / "participants" / "avatars").exists()
+    slim_hangar.publish_person("risk-review", "a face")
+    live = workspace / "participants" / "avatars" / "risk-review.png"
+    assert live.read_bytes() == PNG
+    person = next(p for p in slim_hangar.load_hangar()["people"] if p["id"] == "risk-review")
+    assert person["avatar"].startswith("/v1/slim/hangar/avatars/risk-review?v=")
+    assert "risk-review" in slim_hangar.avatars()
+    # Taking it away again removes the file; the old picture stays in History.
+    slim_hangar.start_person_draft("risk-review")
+    slim_hangar.set_person_avatar("risk-review", "", None)
+    slim_hangar.publish_person("risk-review", "no face")
+    assert not live.exists()
+    kept = list((workspace / ".hangar" / "history" / "people" / "risk-review").glob("*.avatar.png"))
+    assert kept
+
+
+def test_published_config_travels_with_the_repo() -> None:
+    """People, avatars, scenarios, workspace workflows and starters are committed; drafts are not."""
+    import subprocess
+
+    def ignored(path: str) -> bool:
+        return (
+            subprocess.run(["git", "check-ignore", "-q", path], cwd=REPO, check=False).returncode
+            == 0
+        )
+
+    for path in (
+        "workspace/participants/someone.md",
+        "workspace/participants/avatars/someone.png",
+        "workspace/scenarios/demo/scenario.json",
+        "workspace/scenarios/demo/fixtures/data.json",
+        "workspace/scenarios/demo/context/brief.md",
+        "workspace/scenarios/demo/cast/someone.md",
+        "workspace/.claude/skills/my-workflow/workflow.json",
+        "workspace/templates/sessions/starter.md",
+        "skills/some-skill/SKILL.md",
+    ):
+        assert not ignored(path), f"{path} would not travel with the repo"
+    assert ignored("workspace/.hangar/drafts/people/someone.md")
