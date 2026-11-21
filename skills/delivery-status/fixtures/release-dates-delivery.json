@@ -1,0 +1,19 @@
+{
+ "dataset": "release-dates-delivery",
+ "title": "Release dates for held payments",
+ "subject": "Visigoth Bank, an invented retail bank",
+ "planned": "24 Mar", "projected": "24 Mar", "as_of": "Thursday 5 Mar",
+ "source": "the delivery plan agreed on 12 Feb, and what each owner said this week",
+ "records": [
+  { "id": "M-1", "type": "milestone", "title": "Risk rules expose a release date for every held payment", "owner": "risk-review", "planned": "20 Feb", "projected": "20 Feb", "confidence": 5, "status": "done", "basis": "Shipped 19 Feb. Confirmed in the staging data." },
+  { "id": "M-2", "type": "milestone", "title": "Release date shown in the app on the held payment", "owner": "mara-okafor", "planned": "6 Mar", "projected": "6 Mar", "confidence": 4, "status": "on-track", "basis": "Mara, Tuesday: design signed off, build is in review.", "critical": true },
+  { "id": "M-3", "type": "milestone", "title": "Support agents can see the same release date", "owner": "aviator", "planned": "10 Mar", "projected": "10 Mar", "confidence": 4, "status": "on-track", "basis": "Checked the support console build notes on Wednesday." },
+  { "id": "M-4", "type": "milestone", "title": "Platform passes the load test at twice peak", "owner": "cards-platform", "planned": "13 Mar", "projected": "13 Mar", "confidence": 4, "status": "on-track", "basis": "Cards Platform, last Thursday: environment booked for 9 to 13 Mar.", "critical": true },
+  { "id": "DP-1", "type": "dependency", "parent": "M-4", "title": "Performance test environment", "owner": "cards-platform", "due": "9 Mar", "status": "on-track", "note": "Booked." },
+  { "id": "DP-2", "type": "dependency", "parent": "M-4", "title": "Sign-off of the load profile", "owner": "risk-review", "due": "6 Mar", "status": "on-track" },
+  { "id": "A-1", "type": "alternative", "parent": "M-4", "title": "Borrow the Payments team's environment for three days", "effect": "Launch 26 Mar (recovers 7 of 9 days)", "cost": "Payments lose three days of their own testing. Their release moves by about a week.", "needs": "The Payments lead to agree", "fit": 4, "summary": "Payments have an identical environment that is free from 11 to 13 March if they move one of their own runs." },
+  { "id": "A-2", "type": "alternative", "parent": "M-4", "title": "Launch to 10% of accounts before the full load test", "effect": "First customers 24 Mar, everyone 2 Apr", "cost": "A partial launch on an untested path. Risk Review would need to accept a test at normal peak only.", "needs": "Risk Review to accept", "fit": 3, "summary": "At 10% the extra load is far inside what was tested last year, but the new counter path itself is untested under pressure." },
+  { "id": "A-3", "type": "alternative", "parent": "M-4", "title": "Accept the new date", "effect": "Launch 2 Apr (no recovery)", "cost": "Nine more days of customers with no release date. About 30 more held-payment tickets at the current rate.", "needs": "Nobody", "fit": 2, "summary": "Do nothing and tell the steering group." },
+  { "id": "M-5", "type": "milestone", "title": "Launch to all new business accounts", "owner": "you", "planned": "24 Mar", "projected": "24 Mar", "confidence": 4, "status": "on-track", "basis": "Follows from M-2, M-3 and M-4.", "critical": true }
+ ]
+}

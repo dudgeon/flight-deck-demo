@@ -1,0 +1,16 @@
+{
+ "view": "intent-summary",
+ "layout": "summary",
+ "eyebrow": "Intent shaping · {dataset.framework}",
+ "title": "{dataset.title}: depth {dataset.depth}, aiming for {dataset.target}",
+ "records": { "type": "area" },
+ "blocks": [
+  { "kind": "tiles", "tiles": [
+    { "label": "Areas at target", "where": { "type": "area", "status": "reviewed" } },
+    { "label": "Below target", "where": { "type": "area", "status": ["ready", "needs-you", "working"] } },
+    { "label": "Open gaps", "where": { "type": "gap", "status": "open" } }
+  ] },
+  { "kind": "bars", "label": "Areas by depth", "count_by": "depth_name", "records": { "type": "area" } },
+  { "kind": "list", "label": "What would take each area one level deeper", "records": { "type": "area", "status": ["ready", "needs-you"] }, "field": "question", "empty": "Every required area is at the target." }
+ ]
+}

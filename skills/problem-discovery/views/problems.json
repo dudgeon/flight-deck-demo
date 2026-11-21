@@ -1,0 +1,43 @@
+{
+ "view": "problem-board",
+ "layout": "board",
+ "eyebrow": "Problem discovery",
+ "title": "{dataset.title}: problems",
+ "subtitle": "Each card is a problem found in the sources, with the evidence for and against it. Open one, then say whether it is worth solving.",
+ "records": { "type": "problem" },
+ "summary": { "count_by": "status" },
+ "statuses": {
+  "working": { "label": "Being weighed", "tone": "idle" },
+  "ready": { "label": "Candidate", "tone": "attn" },
+  "returned": { "label": "Needs evidence", "tone": "you" },
+  "reviewed": { "label": "Worth solving", "tone": "ok" },
+  "parked": { "label": "Not now", "tone": "idle" }
+ },
+ "lanes": { "field": "status", "order": ["ready", "working", "returned", "reviewed", "parked"] },
+ "tile": { "fields": [ { "field": "who", "as": "chip" }, { "field": "spread", "label": "Spread", "as": "meter" }, { "field": "pain", "label": "Pain", "as": "meter" }, { "field": "by", "as": "who" } ] },
+ "details": {
+  "problem": {
+   "title": "{title}",
+   "sections": [
+    { "kind": "callout", "field": "return_note", "label": "You asked for more evidence", "tone": "you" },
+    { "kind": "callout", "field": "park_note", "label": "Why this is parked", "tone": "idle" },
+    { "kind": "fields", "fields": [ { "field": "who", "label": "Who has it" }, { "field": "situation", "label": "When" }, { "field": "spread", "label": "Spread across sources", "as": "meter" }, { "field": "pain", "label": "Pain", "as": "meter" } ] },
+    { "kind": "text", "field": "today", "label": "What they do today" },
+    { "kind": "callout", "field": "measure", "label": "Sized by", "tone": "info" },
+    { "kind": "evidence", "field": "evidence", "label": "Evidence for" },
+    { "kind": "evidence", "field": "against", "label": "Evidence against" },
+    { "kind": "callout", "field": "unknown", "label": "What the sources do not tell us", "tone": "warn" },
+    { "kind": "fields", "fields": [ { "field": "by", "label": "Found by", "as": "who" }, { "field": "segment", "as": "chip" } ] }
+   ]
+  }
+ },
+ "actions": [
+  { "id": "pursue", "label": "Worth solving", "tone": "primary", "inline": true, "direct": true, "next": true, "when": { "status": ["ready"] }, "set": { "status": "reviewed" }, "prompt": "Problem {id} ({title}) is worth solving." },
+  { "id": "park", "label": "Not now", "when": { "status": ["ready", "reviewed", "returned"] }, "ask": { "label": "Why not? (optional)", "field": "park_note" }, "set": { "status": "parked" }, "prompt": "Park problem {id} ({title}). Why: {note}", "next": true },
+  { "id": "more", "label": "Needs more evidence", "when": { "status": ["ready", "reviewed"] }, "ask": { "label": "What would convince you?", "field": "return_note" }, "set": { "status": "returned" }, "prompt": "I am not convinced by problem {id} ({title}). What would convince me: {note}" },
+  { "id": "challenge", "label": "Argue against it", "when": { "status": ["ready", "reviewed", "returned"] }, "prompt": "Argue against problem {id} ({title}) as hard as the sources allow." },
+  { "id": "reconsider", "label": "Reconsider", "direct": true, "when": { "status": ["parked", "reviewed"] }, "set": { "status": "ready" }, "prompt": "Reconsider problem {id} ({title})." },
+  { "id": "add-sources", "label": "Add sources", "scope": "view", "prompt": "Also read these and update the problems in {dataset}: " },
+  { "id": "brief", "label": "Write the problem brief", "scope": "view", "tone": "primary", "prompt": "Write the problem brief for the problems marked worth solving in {dataset}." }
+ ]
+}

@@ -1,0 +1,14 @@
+{
+ "view": "problem-focus",
+ "layout": "form",
+ "eyebrow": "Before I read",
+ "title": "What are we looking for?",
+ "fields": [
+  { "id": "about", "label": "What is this discovery about?", "kind": "line" },
+  { "id": "lens", "label": "Whose problems count most?", "kind": "choice", "default": "Whoever the sources are about", "options": [ { "value": "Whoever the sources are about", "hint": "No filter. Segments are reported as found." }, { "value": "New customers", "hint": "Problems in the first weeks weigh more." }, { "value": "Customers who left or went quiet", "hint": "Problems that precede leaving weigh more." } ] },
+  { "id": "bar", "label": "How much evidence makes a candidate?", "kind": "choice", "default": "Two independent sources", "options": [ { "value": "One clear instance", "hint": "Widest net. Expect weak candidates." }, { "value": "Two independent sources", "hint": "A sensible default." }, { "value": "Three or more, or a number", "hint": "Short list. Rare but severe problems may be missed." } ] },
+  { "id": "against", "label": "Look for evidence against each problem", "kind": "toggle", "default": true },
+  { "id": "believe", "label": "What do you already believe? I will test it rather than assume it.", "kind": "text" }
+ ],
+ "submit": { "label": "Start reading", "prompt": "Discovery setup:\n{answers}", "skip": "Use your judgment", "skip_prompt": "Use your judgment for the discovery setup and start reading." }
+}

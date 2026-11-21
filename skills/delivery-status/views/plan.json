@@ -1,0 +1,48 @@
+{
+ "view": "delivery-plan",
+ "layout": "tree-table",
+ "eyebrow": "Delivery status · {dataset.as_of}",
+ "title": "{dataset.title}",
+ "subtitle": "Planned launch {dataset.planned}. Now projected {dataset.projected}. Each row shows the plan date beside the date now expected, and how that is known.",
+ "records": { "type": ["milestone", "dependency"] },
+ "summary": { "count_by": "status", "records": { "type": "milestone" } },
+ "statuses": {
+  "working": { "label": "Being checked", "tone": "idle" },
+  "on-track": { "label": "On track", "tone": "info" },
+  "at-risk": { "label": "At risk", "tone": "warn" },
+  "late": { "label": "Late", "tone": "attn" },
+  "done": { "label": "Done", "tone": "ok" }
+ },
+ "columns": [
+  { "field": "title", "label": "Milestone" },
+  { "field": "owner", "label": "Owner", "as": "who" },
+  { "field": "planned", "label": "Plan", "only": "milestone" },
+  { "field": "projected", "label": "Now", "only": "milestone", "narrow": "keep" },
+  { "field": "slip", "label": "Slip", "as": "chip", "only": "milestone", "narrow": "keep" },
+  { "field": "due", "label": "Due", "only": "dependency" },
+  { "field": "confidence", "label": "Confidence", "as": "meter", "only": "milestone" },
+  { "field": "status", "as": "status" }
+ ],
+ "details": {
+  "milestone": {
+   "title": "{title}",
+   "sections": [
+    { "kind": "callout", "field": "change", "label": "What changed since the last update", "tone": "warn" },
+    { "kind": "fields", "fields": [ { "field": "planned", "label": "Plan" }, { "field": "projected", "label": "Now expected" }, { "field": "slip", "as": "chip" }, { "field": "confidence", "label": "Confidence in the date", "as": "meter" }, { "field": "owner", "as": "who" } ] },
+    { "kind": "text", "field": "basis", "label": "How we know" },
+    { "kind": "children", "label": "Waiting on", "records": { "type": "dependency" }, "columns": [ { "field": "title", "label": "Dependency" }, { "field": "owner", "as": "who" }, { "field": "due" }, { "field": "status", "as": "status" } ], "empty": "Nothing from anyone else." },
+    { "kind": "children", "as": "options", "label": "Ways to recover", "records": { "type": "alternative" }, "pick": { "field": "selected_option" }, "fields": [ { "field": "effect", "label": "Effect on the date" }, { "field": "cost", "label": "Cost" }, { "field": "needs", "label": "Needs" }, { "field": "fit", "label": "Fit", "as": "meter" } ] },
+    { "kind": "text", "field": "note", "label": "Your note", "edit": true }
+   ]
+  },
+  "dependency": { "title": "{title}", "sections": [ { "kind": "fields", "fields": [ { "field": "owner", "as": "who" }, { "field": "due" }, { "field": "status", "as": "status" } ] }, { "kind": "text", "field": "note", "label": "Latest" } ] },
+  "alternative": { "title": "{title}", "sections": [ { "kind": "text", "field": "summary", "label": "What it means" }, { "kind": "fields", "fields": [ { "field": "effect", "label": "Effect on the date" }, { "field": "cost" }, { "field": "needs" }, { "field": "fit", "as": "meter" } ] } ] }
+ },
+ "actions": [
+  { "id": "check", "label": "Check with the owner", "when": { "type": "milestone", "status": ["on-track", "at-risk", "late"] }, "prompt": "Check milestone {id} ({title}) with its owner and update the date." },
+  { "id": "recover", "label": "Find ways to recover", "tone": "primary", "when": { "type": "milestone", "status": ["at-risk", "late"] }, "prompt": "Explore ways to recover the date on milestone {id} ({title})." },
+  { "id": "accept", "label": "Accept the new date", "when": { "type": "milestone", "status": ["at-risk", "late"] }, "prompt": "I accept the projected date for milestone {id} ({title}). Make it the plan." },
+  { "id": "refresh", "label": "Check everything again", "scope": "view", "prompt": "Check every open milestone in {dataset} with its owner and update the projection." },
+  { "id": "write", "label": "Write the status update", "scope": "view", "tone": "primary", "ask": { "label": "Who is it for?", "field": "audience" }, "prompt": "Write the status update from {dataset} for: {note}" }
+ ]
+}

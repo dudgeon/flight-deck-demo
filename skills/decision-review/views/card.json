@@ -1,0 +1,22 @@
+{
+ "view": "decision-card",
+ "layout": "detail",
+ "eyebrow": "A decision for you",
+ "title": "{dataset.title}",
+ "records": { "type": "decision" },
+ "statuses": { "ready": { "label": "Open", "tone": "attn" }, "reviewed": { "label": "Decided", "tone": "ok" }, "returned": { "label": "Needs more", "tone": "you" }, "working": { "label": "Being prepared", "tone": "idle" } },
+ "details": {
+  "decision": {
+   "title": "{title}",
+   "sections": [
+    { "kind": "text", "field": "context", "label": "What you need to know" },
+    { "kind": "choices", "field": "options", "pick": "choice", "recommended": "recommended", "label": "Options" },
+    { "kind": "text", "field": "reason", "label": "Why that one is recommended" },
+    { "kind": "fields", "fields": [ { "field": "by", "label": "Raised by", "as": "who" }, { "field": "impact", "as": "chip" } ] }
+   ]
+  }
+ },
+ "actions": [
+  { "id": "more", "label": "I need more first", "when": { "status": ["ready", "reviewed"] }, "ask": { "label": "What is missing?", "field": "return_note" }, "prompt": "I cannot decide {id} ({title}) yet. What is missing: {note}" }
+ ]
+}

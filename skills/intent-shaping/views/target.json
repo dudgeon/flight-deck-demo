@@ -1,0 +1,16 @@
+{
+ "view": "intent-target",
+ "layout": "form",
+ "eyebrow": "Before we start",
+ "title": "How far should this idea go today?",
+ "fields": [
+  { "id": "target", "label": "Aim for", "kind": "choice", "default": "3. Shaped", "options": [
+    { "value": "2. Framed", "hint": "Who it is for, what problem, what would be different. Enough to decide whether to spend a week on it." },
+    { "value": "3. Shaped", "hint": "Boundaries drawn: what is in, what is out, what could sink it. Enough to ask other teams." },
+    { "value": "4. Tested", "hint": "The riskiest assumptions have met evidence or the people who would know. Enough to ask for people and time." },
+    { "value": "5. Committable", "hint": "A team could start on Monday." } ] },
+  { "id": "others", "label": "May I bring in others as it gets deeper?", "kind": "toggle", "default": true },
+  { "id": "have", "label": "Anything I should read first? (files, a discovery, earlier notes)", "kind": "line" }
+ ],
+ "submit": { "label": "Start shaping", "prompt": "Shaping setup:\n{answers}", "skip": "You choose", "skip_prompt": "Choose the target depth yourself and start shaping." }
+}

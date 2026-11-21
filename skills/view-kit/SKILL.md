@@ -36,7 +36,7 @@ PA="python3 <this skill's folder>/scripts/pa.py"     # standard library only
 |---|---|
 | `$PA init data/x.json --title "Name"` | Start a dataset. `--from file.json` copies records in. `--meta key=value` adds dataset facts. |
 | `$PA add data/x.json --json '[{...}]'` | Add records, or replace ones with the same id. Ids are assigned when left out and printed back. |
-| `$PA set data/x.json R-01,R-02 field=value` | Change fields. `--where type=requirement --where status=ready` selects by value. `field=null` removes a field. `field=` in `--where` means "not set". |
+| `$PA set data/x.json R-01,R-02 field=value` | Change fields. `--where type=requirement --where status=ready` selects by value. `field=null` removes a field. `field=` in `--where` means "not set". `--meta key=value` changes a fact of the dataset itself (what `{dataset.key}` shows), and needs no ids. |
 | `$PA get data/x.json [ids] [--where ...] [--fields a,b] [--count-by field]` | Read records, one JSON object per line. Read this instead of the whole file. |
 | `$PA render spec.json --data data/x.json --out artifacts/x.html` | Draw a view. It is then redrawn on every `add` and `set`. `--host chat` for the compact form, `--record R-01` for a detail view. |
 | `$PA refresh data/x.json` | Redraw every view of a dataset. |

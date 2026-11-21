@@ -267,7 +267,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
       Object.keys(lastEdits).forEach(function (id) { var r = byId(id); if (r) for (var k in lastEdits[id]) r[k] = lastEdits[id][k]; });
       lastEdits = null;
     }
-    if (step.reveal || step.patch || step.status || step.restore || step.apply) pushData();
+    if (step.fact) for (var fk in step.fact) cur[fk] = step.fact[fk];
+    if (step.reveal || step.patch || step.status || step.restore || step.apply || step.fact) pushData();
     if (step.widget) { if (step.from && !step.says) byline(step.from); widget(step.widget, step.record); }
     if (step.end_call !== undefined && (step.says || step.pm)) endCall(step);
     if (step.hint) hint(step.hint);
