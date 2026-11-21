@@ -9058,6 +9058,10 @@ def _ensure_orchestrator_skills_in_bundle(
                 exc_info=True,
                 extra={"session_id": runner_primary_session_id()},
             )
+    # omnigent-slim: also link the skills committed in the repo's skills/ folder.
+    from omnigent.slim_skills import link_slim_skills
+
+    link_slim_skills(bundle_dir)
 
 
 #: Omnigent MCP tools an auto-harness Claude session must be able to call
