@@ -364,6 +364,38 @@ tells Claude to read the page again.
 `web/src/lib/canvasFrameRuntime.ts`; for skill writers,
 `docs/skill-writers/artifacts.md`.
 
+## Setup from a ZIP
+
+**Intent.** Someone who is not technical gets the app running on a locked-down
+work Mac from a browser download, with one command, and when it can't finish
+they get a plain explanation and a file to send back (D-100, D-107).
+
+**Behaviour.** `sh setup.sh` in the unzipped folder checks the Mac (macOS 13+,
+Apple silicon, not under Rosetta, disk space), that the folder is complete,
+and that Claude Code is installed (it finds it in the usual places when
+Terminal's PATH misses it). It clears the browser's quarantine flag from its
+own folder after asking, restores execute bits an unzip dropped, checks the
+bundled tmux runs, then runs `start.sh` and confirms the app answers on port
+6767 (or says which port it took). It never downloads or installs anything.
+Every run writes `setup-report.txt` in the app folder and
+`flight-deck-setup-report.txt` on the Desktop; a failure names the problem,
+the fix, and that file. `tests/setup_sim/simulate_zip_setup.py` rehearses the
+whole flow in a Linux container.
+
+**Updates (D-111).** Setup installs into one fixed folder, `~/flight-deck`,
+and `sh ~/flight-deck/setup.sh` finds the newest ZIP or unzipped folder in
+~/Downloads and updates from it, so the person never navigates folders.
+`scripts/install_sync.py` compares each file with the manifest of the last
+install: the person's own files, their edits to shipped workspace files and
+their deletions all survive, the new versions they didn't take are saved in
+`updates/<date>/`, and app code is always the release's. The Workspace and
+Hangar projects follow the app out of a download folder
+(`omnigent/slim_bootstrap.py`). It also builds and pins the Dock icon.
+
+**Where.** `setup.sh`, `scripts/install_sync.py`, `start.sh`,
+`omnigent/slim_bootstrap.py`, `tests/setup_sim/`, `tests/test_slim_install_sync.py`,
+README "Quick start" and "Updating to a newer version".
+
 ## Dock launcher
 
 **Intent.** On the work Mac, starting the demo should be one click, not a

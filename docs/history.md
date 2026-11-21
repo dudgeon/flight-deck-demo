@@ -21,7 +21,8 @@ Code's permissions, no open internet and no package installs, so every
 dependency is vendored. It is an Apple silicon Mac that cannot clone
 repositories outside the company's GitHub namespace, so the repository
 arrives as a ZIP (D-100). Development happens on Geoff's Mac mini at home and
-in cloud agent sessions; the public repository is `dudgeon/omnigent-slim`.
+in cloud agent sessions; the public repository is `dudgeon/flight-deck-demo`
+(named `omnigent-slim` until 21 November, D-114).
 
 ## 20 November: a slim, offline fork
 
@@ -133,13 +134,19 @@ inside the app (D-30), the work-Mac ZIP install (D-100).
   The headline: the main Aviator session acts as a project director, and
   workflows run in their own threads. A second walkthrough holds four
   remaining questions.
+- **Work-Mac setup script**: `sh setup.sh` takes a browser-downloaded ZIP to
+  a running app, clearing the download flag after asking and writing a report
+  to send back on failure (D-107). Rehearsed end to end in a Linux container.
+- **Updates that keep your files**: setup installs into `~/flight-deck`;
+  `sh ~/flight-deck/setup.sh` updates from the newest download in Downloads
+  without overwriting what the person added, changed or deleted (D-111).
 - **This documentation pass**: the decision index, this history, the
   architecture overview, a refreshed roadmap and a root `CLAUDE.md` for
   contributors' agents.
 
 ## Still waiting
 
-- The one-step setup script for a browser-downloaded ZIP (D-100).
+- Geoff's first install on the work Mac with `setup.sh` (D-100, D-107).
 - Live runs of decision review and problem discovery.
 - Progressive complexity (D-54) and the remaining modes questions.
 - Whether to rename the repository (D-35), and D-24 for production.

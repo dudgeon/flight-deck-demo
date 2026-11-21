@@ -2,7 +2,8 @@
 
 Flight Deck is a cut-down fork of [Omnigent](https://github.com/omnigent-ai/omnigent)
 for prototyping an agent workspace for product managers on a locked-down work
-Mac. Its user interface is **Product Aviator**. The repository, folders,
+Mac. Its user interface is **Product Aviator**. The repository is
+`dudgeon/flight-deck-demo` (D-114, renamed from `omnigent-slim`); folders,
 commands and code identifiers keep the name `omnigent-slim` (D-35). It drives
 Claude Code as a terminal program, runs offline, and is fully vendored.
 
@@ -56,6 +57,10 @@ person in the conversation, from the roster in `workspace/participants/`.
   starts the server and opens `http://127.0.0.1:6767/library`. If 6767 is busy
   it takes the next free port and prints it. `./start.sh --no-open` skips the
   browser. `./stop.sh` stops it. Session data is in `~/.omnigent-slim`.
+- On the work Mac, `sh setup.sh` installs into `~/flight-deck` and updates it
+  from newer downloads without overwriting the person's files (D-107, D-111).
+  Changing the install or update rules: `scripts/install_sync.py`, then run
+  `tests/setup_sim/simulate_zip_setup.py` and `tests/test_slim_install_sync.py`.
 - `start.sh` is macOS-only. In a Linux container, use a plain venv:
   `pip install -e sdks/python-client -e sdks/ui -e .`, then `omnigent start`.
   On a machine with internet, `uv sync` and `uv run omnigent start` also work.
@@ -205,5 +210,6 @@ writing down intent is part of every change.
   built web UI.
 - Don't write live roster, scenario or workflow files from code other than
   `pa publish` and the Hangar's publish routes; drafts go in `.hangar/`.
-- Don't rename the repository, folders or identifiers to Flight Deck until
-  Geoff says so (D-35).
+- Don't rename folders or code identifiers to Flight Deck until Geoff says
+  so (D-35). The repository itself is renamed (D-114). Don't rename a local
+  checkout's folder either: its `.venv` and the Dock launcher hold its path.

@@ -284,20 +284,24 @@ The target is an Apple silicon Mac with Claude Code installed and signed in,
 no open internet, no package installs, and no cloning outside the company's
 GitHub namespace.
 
-1. Download the repository as a ZIP of `main` (D-100). A `curl` download in
-   Terminal avoids macOS quarantine (README, step 1). A browser download is
-   quarantined; `start.sh` detects that and says so, and people are told to
-   ask IT rather than bypass it.
-2. `./start.sh`: first run unpacks the vendored Python and installs vendored
-   wheels into `.runtime/` with no network (about a minute), then starts the
+1. Download the repository as a ZIP of `main` in the browser and unzip it
+   in Downloads (D-100), or use the one-line `curl` download in the README.
+   Setup copies it into `~/flight-deck` and runs it from there (D-111);
+   `sh ~/flight-deck/setup.sh` later updates from a newer download without
+   overwriting the person's files (`scripts/install_sync.py`, a manifest of
+   what was shipped).
+2. `sh setup.sh` (D-107): checks the Mac and Claude Code, clears the browser's
+   quarantine flag from this folder after asking, restores execute bits,
+   checks the bundled tmux, runs `start.sh` and confirms the app answers. It
+   writes a report (in the folder and on the Desktop) to send back on
+   failure. `start.sh` refuses a still-quarantined copy and points to
+   `setup.sh`. Rehearsed in the cloud by `tests/setup_sim/simulate_zip_setup.py`.
+3. `./start.sh` (setup runs it the first time): first run unpacks the
+   vendored Python and installs vendored wheels into `.runtime/` with no network (about a minute), then starts the
    server and opens `http://127.0.0.1:6767/library`.
-3. Optional Dock icon: `scripts/make_dock_app.sh --add-to-dock` builds
+4. Optional Dock icon: `scripts/make_dock_app.sh --add-to-dock` builds
    `~/Applications/Product Aviator.app` on the machine (D-103).
-4. `./stop.sh` stops it; sessions stay in `~/.omnigent-slim`.
-
-Still to come (D-100): a one-step setup script for a browser-downloaded ZIP,
-with plain-language steps and failures that say what broke and what to send
-back.
+5. `./stop.sh` stops it; sessions stay in `~/.omnigent-slim`.
 
 ## Where to read the code
 
