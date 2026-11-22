@@ -11,7 +11,7 @@ is code. Edit them, or add your own, and the skills follow.
 To use a different framework in one session, say so: "shape this using
 frameworks/my-framework.md".
 - `lifecycle.json`: the stages a feature moves through (Discover, Shape,
-  Specify, Map, Decide, Deliver). Each workflow names its stage in the
+  Specify, Engage, Deliver; D-148 to D-152). Moves that fit every stage, such as review and decide, use the stage `any`. Each workflow names its stage in the
   `routing` block of its `workflow.json`, so a new workflow lands under its
   stage by itself, and a new stage is one line here (D-120). `pa workflows`
   lists the workflows by stage.

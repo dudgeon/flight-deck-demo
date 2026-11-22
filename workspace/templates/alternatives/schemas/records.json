@@ -1,0 +1,27 @@
+{
+ "choice": {
+  "required": ["id", "type", "title", "status"],
+  "fields": {
+   "title": { "type": "string", "note": "What has to be chosen, as a question: 'How do we land the release date by March?'" },
+   "about": { "type": "string", "note": "The requirement, dependency or slip it answers, by id or artifact id" },
+   "status": { "enum": ["open", "chosen"] },
+   "selected_option": { "type": "string", "note": "The option id picked; set by the person" },
+   "decision": { "type": "string", "note": "The decision register id that records the choice, e.g. D-03" }
+  }
+ },
+ "option": {
+  "required": ["id", "type", "parent", "title", "kind", "status"],
+  "fields": {
+   "title": { "type": "string", "note": "The alternative in a line" },
+   "kind": { "enum": ["capability-swap", "scope-trade", "resequence", "presets"], "note": "Swap the capability or its provider; trade scope; change the order; use a preset or default instead of building" },
+   "scope": { "type": "string", "note": "What the person gives up or gains in scope" },
+   "effort": { "type": "number", "note": "Our own work, in person-weeks" },
+   "waiting": { "type": "number", "note": "Time spent waiting on others, in weeks. Kept apart from effort: it does not shrink with more people" },
+   "relies_on": { "type": "array", "note": "Teams or capabilities this option depends on" },
+   "risks": { "type": "array" },
+   "status": { "enum": ["proposed", "chosen", "rejected"] },
+   "reason": { "type": "string", "note": "Why it was chosen or turned down. Required once it is rejected" },
+   "by": { "type": "string" }
+  }
+ }
+}

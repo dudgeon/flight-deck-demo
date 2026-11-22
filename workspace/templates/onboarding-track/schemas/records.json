@@ -1,0 +1,26 @@
+{
+ "capability": {
+  "required": ["id", "type", "title", "owner"],
+  "fields": {
+   "title": { "type": "string", "note": "The capability, e.g. 'Card authorization: release-date field'" },
+   "owner": { "type": "string", "note": "The owning team" },
+   "about": { "type": "string", "note": "The requirement or dependency id it serves" },
+   "needed_by": { "type": "string", "note": "When we need it ready" },
+   "status": { "enum": ["not-started", "in-progress", "ready", "blocked"] }
+  }
+ },
+ "step": {
+  "required": ["id", "type", "parent", "title", "step", "counterparty", "status"],
+  "fields": {
+   "title": { "type": "string" },
+   "step": { "enum": ["intake", "access", "due-diligence", "terms", "provisioning", "integration-ready"] },
+   "counterparty": { "enum": ["self-serve", "agent", "person"], "note": "Who answers at this step: a form or portal, the team's agent, or a person" },
+   "owner": { "type": "string", "note": "Who on our side or theirs moves it" },
+   "status": { "enum": ["not-started", "drafted", "sent", "waiting", "answered", "done", "blocked"] },
+   "lead_time": { "type": "number", "note": "Expected weeks from sent to answered" },
+   "evidence": { "type": "string", "note": "The ticket, form, message or artifact id that shows where it stands" },
+   "due": { "type": "string" },
+   "note": { "type": "string" }
+  }
+ }
+}

@@ -1,0 +1,12 @@
+{
+ "template": "onboarding-track",
+ "version": 1,
+ "kind": "records",
+ "title": "Onboarding track",
+ "summary": "For each capability the work depends on, the owning team's onboarding steps (intake, access, due diligence, terms, provisioning, integration ready), who the counterparty is at each step, its state, lead time and evidence.",
+ "stage": ["engage"],
+ "out": "data/{slug}-onboarding.json",
+ "schemas": "schemas/records.json",
+ "views": { "track": "views/track.json" },
+ "default_view": "track"
+}

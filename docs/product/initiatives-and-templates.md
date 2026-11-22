@@ -105,7 +105,7 @@ A **template** is a folder with a `template.json`. One manifest, three kinds:
 | Kind | Made of | Instance | Example |
 |---|---|---|---|
 | `markdown` | `template.md` (headings and one-line guides) and `sections` in the manifest: each section's `id`, `heading`, `required`, `owner` (a lifecycle stage, or `any`) and `guide`; optional `fields` for frontmatter | A `.md` file with a stamp in its frontmatter | `initiative-intent` |
-| `records` | `schemas` (record types and fields, as workflows already have) and `views` (view-kit specs) | A dataset with a stamp | `initiative-registers` |
+| `records` | `schemas` (record types and fields, as workflows already have) and `views` (view-kit specs) | A dataset with a stamp | `initiative-registers`, `alternatives`, `onboarding-track` |
 | `page` | `file`: one self-contained HTML page styled with tokens | A copy of the page with a stamp | The six older artifact pages, read as `page` templates without a manifest |
 
 Every manifest has `template` (its id), `version`, `kind`, `title`,
@@ -148,6 +148,35 @@ where it stays attached.
 
 `pa register <initiative> evidence|question|decision|check "<one line>"`
 adds one, making the file on first use.
+
+## Templates for the arcs (after D-148 to D-152)
+
+Geoff's hero skill decisions (PR 41) added a Choose half to PRD to
+dependencies and an Engage owners arc. Two shared `records` templates serve
+them, in `workspace/templates/`:
+
+- **`alternatives`** (stages Specify and Deliver): a `choice` (the question,
+  open or chosen, the option picked and the decision register id that records
+  it) with `option` children. Each option has a kind from Pathfinder's four
+  (`capability-swap`, `scope-trade`, `resequence`, `presets`), its scope
+  effect, **effort** (our person-weeks) and **waiting** (weeks on others) kept
+  as separate numbers, what it relies on, risks, and a status of proposed,
+  chosen or turned down, with the reason kept for every one turned down. The
+  choice itself goes in the decisions register; complex choices go through
+  the decision brief skill, which writes that register entry. Deliver uses
+  the same template for its ways to recover a slip.
+- **`onboarding-track`** (stage Engage): a `capability` per owning team
+  (owner, what it serves, needed by) with `step` children, one per step of
+  that team's procedure (`intake`, `access`, `due-diligence`, `terms`,
+  `provisioning`, `integration-ready`). Each step names its counterparty
+  kind (`self-serve`, `agent`, `person`), owner, state (not started,
+  drafted, sent, waiting on them, answered, done, blocked), lead time in
+  weeks and evidence. Drafted is amber because it waits on the person to
+  send; waiting on them is grey.
+
+The lifecycle file now has the five stages Geoff chose: Discover, Shape,
+Specify, Engage, Deliver. Moves that fit every stage (review, decide) use the
+stage `any` in their routing.
 
 ## How a hero skill uses it (D-142)
 
@@ -219,9 +248,8 @@ choice, D-140.)
   skills refresh).
 - The lifecycle skill itself (D-129).
 - `omnigent_project` and `external` are described, not written by any command.
-- The research thread may change the stage list (it expects to drop Decide and
-  add Learn). Nothing here names a stage except the intent template's owners,
-  which `pa template check` re-checks against `lifecycle.json`.
+- No arc uses `alternatives` or `onboarding-track` yet; they wait for the
+  arcs to be rebuilt (D-148 to D-152).
 
 ## Where
 

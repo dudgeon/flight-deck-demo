@@ -425,6 +425,10 @@ artifacts back to a shared representation of the intent.
   each owned by a stage, and **registers** for evidence (source required),
   open questions and assumptions, decisions (superseded, never edited) and
   ready checks, drawn as a board.
+- **Alternatives and onboarding tracks**: shared templates for choosing a way
+  forward (effort and waiting kept apart, a reason for every option turned
+  down) and for running each owning team's onboarding steps, with who
+  answers at each step and how long it takes.
 
 **How the agent keeps it.** The hero skill contract (D-142) in the
 `view-kit` skill, "Initiatives, stamps, templates and registers", and one
