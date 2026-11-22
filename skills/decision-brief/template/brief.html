@@ -357,7 +357,8 @@ table.grid td.no { color: var(--pa-ink-3); }
   <span class="meter" id="meter"><span class="track"><span class="fill" id="fill"></span></span><span id="count"></span></span>
   <span class="pill" id="host" title="Where your answers go"></span>
   <button type="button" class="btn" id="allrec">Accept all recommendations</button>
-  <button type="button" class="btn primary" id="send" hidden>Send answers to Claude</button>
+  <span class="st sendst"></span>
+  <button type="button" class="btn primary" id="send">Send answers to Claude</button>
 </div></div>
 <div class="wrap" id="app"></div>
 <script type="application/json" id="brief-data">__BRIEF_JSON__</script>
@@ -406,7 +407,7 @@ top.append(el("h1", "", esc(B.title || "Decision brief")));
 const meta = [B.for ? "For " + B.for : "", B.from ? "from " + B.from : "", B.date || "", DECS.length + (DECS.length === 1 ? " decision" : " decisions")].filter(Boolean).join(" · ");
 top.append(el("div", "meta", esc(meta)));
 if (B.why) paras(B.why).forEach(p => top.append(el("p", "lede", md(p))));
-top.append(el("p", "howto", md(B.how_to_answer || "Pick an option on each decision, or Something else, and add a note if you like. Your picks save as you go. Nothing is final until you say so; the agent then writes the decisions down and links this page.")));
+top.append(el("p", "howto", md(B.how_to_answer || "Pick an option on each decision, or Something else, and add a note if you like. Your picks save as you go. When you are done, press Send answers to Claude; the agent then writes the decisions down and links this page.")));
 app.append(top);
 
 if (B.recommendation) {
@@ -551,7 +552,7 @@ async function save(d) {
 
 // ── Answers as text: what Send puts in Flight Deck's chat box, and what Copy gives.
 function answersText() {
-  const lines = ["Decision brief answers: " + (B.title || "") + " (" + (B.id || "brief") + ")"];
+  const lines = ["Decision brief answers: " + (B.title || "") + " (" + (B.id || "brief") + ")" + (B.source ? " for " + B.source : "")];
   DECS.forEach(d => { const a = ANS[d.id]; if (!a || !(a.pick || a.note)) return;
     lines.push("- " + d.id + " | " + (a.pick || "") + " | " + optLabel(d, a.pick).replace(/\|/g, "/") + (a.note ? " | note: " + a.note.replace(/\s+/g, " ").trim() : "")); });
   return lines.join("\n");
@@ -569,11 +570,16 @@ function summary() {
   const rows = DECS.map(d => { const a = ANS[d.id] || {}, r = recOf(d);
     return "<tr><td class=\"id\">" + esc(d.label || d.id) + "</td><td><a href=\"#" + esc(d.id) + "\">" + esc(d.question) + "</a></td><td>" + (a.pick ? '<span class="mine">' + esc(optLabel(d, a.pick)) + "</span>" + (a.pick !== ELSE && r && a.pick !== r.id ? ' <span class="faint">(not the recommendation)</span>' : "") : '<span class="faint">Not answered</span>') + (a.note ? '<div class="faint">' + md(a.note) + "</div>" : "") + "</td><td>" + (a.locked ? "Decided" : a.saved ? "Saved" : a.pick || a.note ? "Not saved" : "") + "</td></tr>"; }).join("");
   const h = host();
-  const where = h === "claude" ? "Your answers are saved with this page, and Claude reads them from there. Say so in the chat when you are done, or just leave them."
-    : h === "flightdeck" ? "Press Send answers to Claude: your answers go into the chat box, and you press Send."
+  const where = h === "claude" ? "Your answers save to this page as you go. When you are done, press Send answers to Claude and Claude picks them up from here."
+    : h === "flightdeck" ? "When you are done, press Send answers to Claude. They go straight to Claude, and you can stay on this page."
     : "This copy can't reach Claude. Copy your answers and paste them into the chat.";
   sum.innerHTML = "<h2>Your answers</h2><p class=\"muted\" style=\"margin:0\">" + esc(where) + "</p><div class=\"tw\"><table class=\"summ\"><tr><th>Label</th><th>Decision</th><th>Your answer</th><th>State</th></tr>" + rows + "</table></div>";
-  if (h !== "claude") {
+  if (!lockedAll && h !== "local") {
+    const row = el("div", "row"); const sb = el("button", "btn primary", "Send answers to Claude"); sb.type = "button";
+    sb.addEventListener("click", sendAll);
+    row.append(sb, el("span", "st sendst")); sum.append(row);
+  }
+  if (h === "local") {
     const row = el("div", "row"); const cp = el("button", "btn", "Copy answers"); cp.type = "button";
     const box = el("textarea", "copybox"); box.readOnly = true; box.value = answersText(); box.hidden = true; box.id = "copybox";
     const cst = el("span", "st");
@@ -585,14 +591,66 @@ function summary() {
   const p = $("#host");
   p.className = "pill" + (lockedAll ? " ok" : left ? " attn" : " ok");
   p.textContent = lockedAll ? "Decided" : left ? (left === 1 ? "1 needs you" : left + " need you") : "All answered";
-  $("#send").hidden = !fd || lockedAll;
+  $("#send").hidden = lockedAll || h === "local";
+  paintSent();
+}
+
+// ── Send: the answers reach Claude from the page, so the person stays here.
+// claude.ai: a comment sent to Claude (the comments capability); Flight Deck:
+// a direct send through the app (omnigent.answer), or the chat box on older
+// builds; anywhere else, Copy.
+let SENT = null;
+try { SENT = JSON.parse(localStorage.getItem(KEY + ":sent") || "null"); } catch (e) { SENT = null; }
+if (fd && fd.state && fd.state.sent) SENT = fd.state.sent;
+function paintSent(msg, bad) {
+  const txt = msg || (SENT ? (SENT.how === "composer" ? "In the chat box; press Send there " : "Sent to Claude ") + when(SENT.at) : "");
+  document.querySelectorAll(".sendst").forEach(s => { s.className = "st sendst" + (bad ? " bad" : SENT && !msg ? " ok" : ""); s.textContent = txt; });
+}
+function keepSent(how) {
+  SENT = { at: new Date().toISOString(), how };
+  try { localStorage.setItem(KEY + ":sent", JSON.stringify(SENT)); } catch (e) {}
+  if (fd && typeof fd.saveState === "function") { try { fd.saveState("sent", SENT); } catch (e) {} }
+  paintSent();
+}
+async function sendAll() {
+  const any = DECS.some(d => { const a = ANS[d.id] || {}; return !a.locked && (a.pick || a.note); });
+  if (!any) { paintSent("Pick an option first", true); return; }
+  const lack = DECS.filter(d => (ANS[d.id] || {}).pick === ELSE && !(ANS[d.id] || {}).note);
+  if (lack.length) { paintSent("Say what you would do instead on " + lack.map(d => d.label || d.id).join(", "), true); return; }
+  const h = host();
+  if (h === "claude") {
+    await Promise.all(DECS.filter(d => { const a = ANS[d.id] || {}; return !a.locked && (a.pick || a.note) && !a.saved; }).map(d => save(d)));
+    let can = "off";
+    try { can = comments && comments.canSendToClaude ? await comments.canSendToClaude() : "off"; } catch (e) { can = "off"; }
+    if (can !== "available") {
+      paintSent(can === "writers_only" ? "Only editors of this page can send. Your answers are saved here." : can === "no_session" ? "Claude's session isn't open right now. Your answers are saved here and Claude reads them when it's back." : "Sending isn't available here. Your answers are saved; tell Claude in the chat.", true);
+      return;
+    }
+    paintSent("Sending…");
+    try {
+      const anchor = await comments.anchorFor(sum.querySelector("h2"));
+      let text = answersText(); if (new TextEncoder().encode(text).length > 4000) text = text.slice(0, 1800) + "\n(more answers are saved on the page)";
+      await comments.sendToClaude({ anchor, text });
+      keepSent("comment");
+    } catch (e) { paintSent("Couldn't send (" + ((e && e.code) || "error") + "). Your answers are saved here.", true); }
+    return;
+  }
+  if (h === "flightdeck") {
+    const answers = DECS.map(d => ({ d, a: ANS[d.id] || {} })).filter(x => !x.a.locked && (x.a.pick || x.a.note))
+      .map(x => ({ decision: x.d.id, pick: x.a.pick || "", note: (x.a.note || "").trim() }));
+    if (typeof fd.answer === "function") {
+      try { const file = /^[A-Za-z0-9_][A-Za-z0-9_.\/-]{0,199}$/.test(B.source || "") && !(B.source || "").includes("..") ? B.source : "";
+      fd.answer({ brief: B.id || "brief", file, answers }); keepSent("direct"); return; } catch (e) {}
+    }
+    try { fd.prompt(answersText()); keepSent("composer"); } catch (e) { paintSent("Couldn't send. Copy your answers instead.", true); }
+  }
 }
 
 $("#allrec").addEventListener("click", () => {
   DECS.forEach(d => { const a = ANS[d.id] || {}; const r = recOf(d); if (a.locked || a.pick || !r) return; ANS[d.id] = { ...a, pick: r.id, via: "all-recommended", saved: false }; queueSave(d); });
   cards.forEach(x => x.paint());
 });
-$("#send").addEventListener("click", () => { if (fd) { try { fd.prompt(answersText()); } catch (e) {} } });
+$("#send").addEventListener("click", sendAll);
 
 cards.forEach(x => x.paint());
 

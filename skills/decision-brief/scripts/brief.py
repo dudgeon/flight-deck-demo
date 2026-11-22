@@ -8,11 +8,15 @@ its content in tokens.
 
   brief.py new <brief.json> --title "..." [--decisions 3] [--initiative <key>]
   brief.py check <brief.json>                 rules a brief must meet (never blind)
-  brief.py render <brief.json> --out <page.html> [--fragment]
+  brief.py render <brief.json> [--out <page.html>] [--fragment]
   brief.py answer <brief.json> <decision> <option|else> [--note "..."] [--at ISO]
   brief.py import <brief.json> (--text <file|-> | --db <folder>)
   brief.py record <brief.json> [--by <who>] [--no-register]
-  brief.py note <brief.json> --out <note.md> [--url ...] [--archive ...]
+  brief.py note <brief.json> [--out <note.md>] [--url ...] [--archive ...]
+
+A project's briefs live in its decisions folder, projects/<key>/decisions/:
+<slug>.json (the brief and its answers), <slug>.html (the page) and
+<slug>.md (the decision note), all side by side.
 
 Standard library only. Nothing here reaches the network.
 """
@@ -200,8 +204,10 @@ def esc_attr(t: str) -> str:
     return (t or "").replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def render(data: dict, base: Path, fragment: bool = False) -> str:
+def render(data: dict, base: Path, fragment: bool = False, source: str = "") -> str:
     data = json.loads(json.dumps(data))  # a copy we can rewrite
+    if source:
+        data["source"] = source  # the page names its brief file when it sends answers
     for d in data.get("decisions") or []:
         for v in [d.get("stage")] + [o.get("visual") for o in d.get("options") or []]:
             if isinstance(v, dict) and v.get("image"):
@@ -233,9 +239,9 @@ def cmd_render(args) -> int:
             print(f"error: {e}", file=sys.stderr)
         print("not rendered; fix the errors above (or --force for a draft)", file=sys.stderr)
         return 1
-    out = Path(args.out)
+    out = Path(args.out) if args.out else Path(args.brief).with_suffix(".html")
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(render(data, base, args.fragment), encoding="utf-8")
+    out.write_text(render(data, base, args.fragment, str(args.brief)), encoding="utf-8")
     print(f"rendered {out} ({out.stat().st_size // 1024} KB)")
     return 0
 
@@ -264,16 +270,25 @@ def cmd_answer(args) -> int:
     return 0
 
 
-ANSWER_LINE = re.compile(r"^\s*-\s*([a-z0-9][a-z0-9-]*)\s*\|\s*([^|]*?)\s*\|[^|]*?(?:\|\s*note:\s*(.*))?$")
+ANSWER_LINE = re.compile(r"^\s*-\s*([a-z0-9][a-z0-9-]*)\s*\|\s*([^|]*?)\s*(?:\|(.*))?$")
 
 
 def parse_answers_text(text: str) -> list[tuple[str, str, str]]:
-    """Lines the page's Send or Copy produced: `- <id> | <pick> | <label> | note: ...`."""
+    """Lines the page's Send or Copy produced: `- <id> | <pick> [| <label>] [| note: ...]`.
+
+    The note is everything after the first `| note:`, so it may hold `|` itself.
+    """
     out = []
     for line in text.splitlines():
         m = ANSWER_LINE.match(line)
-        if m:
-            out.append((m.group(1), m.group(2), (m.group(3) or "").strip()))
+        if not m:
+            continue
+        rest = m.group(3) or ""
+        n = re.search(r"(?:^|\|)\s*note:\s*(.*)$", rest)
+        note = n.group(1).strip() if n else ""
+        if len(note) >= 2 and note[0] == note[-1] == '"':
+            note = note[1:-1].replace('\\"', '"')
+        out.append((m.group(1), m.group(2), note))
     return out
 
 
@@ -399,7 +414,7 @@ def note_md(data: dict, url: str = "", archive: str = "", brief_path: str = "") 
 
 def cmd_note(args) -> int:
     data = load(args.brief)
-    out = Path(args.out)
+    out = Path(args.out) if args.out else Path(args.brief).with_suffix(".md")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(note_md(data, args.url or data.get("url", ""), args.archive or "", args.brief), encoding="utf-8")
     print(f"wrote {out}")
@@ -453,7 +468,7 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("check", help="check a brief against the rules")
     p.add_argument("brief"); p.set_defaults(run=cmd_check)
     p = sub.add_parser("render", help="draw the page")
-    p.add_argument("brief"); p.add_argument("--out", required=True)
+    p.add_argument("brief"); p.add_argument("--out", help="default: the brief's path with .html")
     p.add_argument("--fragment", action="store_true", help="for publishing as a claude.ai Artifact")
     p.add_argument("--force", action="store_true", help="render a draft that fails check")
     p.set_defaults(run=cmd_render)
@@ -469,7 +484,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--no-register", action="store_true")
     p.set_defaults(run=cmd_record)
     p = sub.add_parser("note", help="write the decision note (markdown)")
-    p.add_argument("brief"); p.add_argument("--out", required=True)
+    p.add_argument("brief"); p.add_argument("--out", help="default: the brief's path with .md")
     p.add_argument("--url"); p.add_argument("--archive")
     p.set_defaults(run=cmd_note)
     args = ap.parse_args(argv)

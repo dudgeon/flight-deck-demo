@@ -131,6 +131,29 @@ def test_answers_round_trip_from_the_pages_text(sample: Path, tmp_path: Path) ->
     assert "answer" not in d["answers"]
 
 
+def test_answers_import_from_what_flight_decks_send_button_sends(sample: Path, tmp_path: Path) -> None:
+    # The app writes this message itself (web/src/lib/artifactBridge.ts, briefAnswersText).
+    text = (
+        "Decision brief answers for briefs/sample.json, sent from the brief by the person "
+        "(notes are their own words, quoted):\n"
+        "- layout | page\n"
+        '- trigger | else | note: "Use judgment, \\"mostly\\" visual | ones"\n'
+    )
+    t = tmp_path / "sent.txt"
+    t.write_text(text)
+    assert brief.main(["import", str(sample), "--text", str(t)]) == 0
+    d = {x["id"]: x for x in json.loads(sample.read_text())["decisions"]}
+    assert d["layout"]["answer"]["pick"] == "page" and d["layout"]["answer"]["note"] == ""
+    assert d["trigger"]["answer"]["note"] == 'Use judgment, "mostly" visual | ones'
+
+
+def test_render_names_the_brief_file_for_the_send_button(sample: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(sample.parent.parent)
+    assert brief.main(["render", "briefs/sample.json"]) == 0
+    html = (sample.parent / "sample.html").read_text()
+    assert '"source": "briefs/sample.json"' in html
+
+
 def test_answers_import_from_a_saved_answers_collection(sample: Path, tmp_path: Path) -> None:
     folder = tmp_path / "answers"
     folder.mkdir()

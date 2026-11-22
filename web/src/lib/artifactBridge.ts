@@ -122,6 +122,15 @@ function runtime(state: ArtifactState): string {
      */
     act: function (request) {
       try { post("act", JSON.stringify(request)); } catch (e) {}
+    },
+    /**
+     * Send a decision brief's answers to the agent without the composer:
+     * answer({ brief: "id", file: "projects/x/decisions/y.json",
+     *          answers: [{ decision: "layout", pick: "page", note: "..." }] }).
+     * Ids and picks are checked; notes are quoted as the person's words.
+     */
+    answer: function (request) {
+      try { post("answer", JSON.stringify(request)); } catch (e) {}
     }
   };
 ${CANVAS_FRAME_RUNTIME}
@@ -212,6 +221,48 @@ export function artifactActionText(request: unknown): string | null {
   return `Canvas action on ${dataset}:\n${lines.join("\n")}`;
 }
 
+// ── Decision brief answers ───────────────────────────────────────────────────
+// omnigent-slim: a decision brief's Send button (D-155) sends the person's
+// answers straight to the agent, so they can stay on the brief. Like `act`, the
+// host writes the message: brief, decision and option ids are checked against
+// strict patterns, and each note (the only free text, typed by the person) is
+// flattened to one line, capped and quoted, so it reads as their words.
+
+const MAX_BRIEF_ANSWERS = 20;
+const MAX_BRIEF_NOTE = 1000;
+const BRIEF_ID = /^[a-z0-9][a-z0-9-]{0,63}$/;
+
+/**
+ * Build the message for a brief's answers, or null when any part is malformed.
+ *
+ * @param request What the frame passed to `omnigent.answer`, already JSON-parsed.
+ */
+export function briefAnswersText(request: unknown): string | null {
+  if (typeof request !== "object" || request === null) return null;
+  const { brief, file, answers } = request as { brief?: unknown; file?: unknown; answers?: unknown };
+  if (typeof brief !== "string" || !BRIEF_ID.test(brief)) return null;
+  if (file !== undefined && file !== "") {
+    if (typeof file !== "string" || !ACTION_DATASET.test(file) || file.includes("..")) return null;
+  }
+  if (!Array.isArray(answers) || answers.length === 0 || answers.length > MAX_BRIEF_ANSWERS) return null;
+  const lines: string[] = [];
+  for (const answer of answers as unknown[]) {
+    if (typeof answer !== "object" || answer === null) return null;
+    const { decision, pick, note } = answer as { decision?: unknown; pick?: unknown; note?: unknown };
+    if (typeof decision !== "string" || !BRIEF_ID.test(decision)) return null;
+    if (typeof pick !== "string" || (pick !== "" && !BRIEF_ID.test(pick))) return null;
+    if (note !== undefined && typeof note !== "string") return null;
+    const flat = (note ?? "").replace(/\s+/g, " ").trim().slice(0, MAX_BRIEF_NOTE);
+    if (!pick && !flat) return null;
+    lines.push(`- ${decision} | ${pick || "none"}` + (flat ? ` | note: ${JSON.stringify(flat)}` : ""));
+  }
+  const where = typeof file === "string" && file ? file : brief;
+  return (
+    `Decision brief answers for ${where}, sent from the brief by the person ` +
+    `(notes are their own words, quoted):\n${lines.join("\n")}`
+  );
+}
+
 /**
  * Turn a message from the artifact frame into a composer event.
  *
@@ -239,6 +290,22 @@ export function handleArtifactMessage(data: unknown, stateScope: string | null =
       return false;
     }
     const text = artifactActionText(request);
+    const now = Date.now();
+    if (!text || now - lastActionAt < MIN_ACTION_INTERVAL_MS) return false;
+    lastActionAt = now;
+    const action: ArtifactActionDetail = { text };
+    window.dispatchEvent(new CustomEvent(ARTIFACT_ACTION_EVENT, { detail: action }));
+    return true;
+  }
+  if (message.type === "answer") {
+    if (typeof message.text !== "string") return false;
+    let request: unknown;
+    try {
+      request = JSON.parse(message.text);
+    } catch {
+      return false;
+    }
+    const text = briefAnswersText(request);
     const now = Date.now();
     if (!text || now - lastActionAt < MIN_ACTION_INTERVAL_MS) return false;
     lastActionAt = now;
