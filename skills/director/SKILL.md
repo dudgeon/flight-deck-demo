@@ -54,8 +54,9 @@ This skill names no workflow on purpose (see above). Run `$PA workflows`
 2. **Clear fit.** The ask matches a workflow's `When` and none of its
    `Not when`, and what it `Needs` is at hand: answer what you can, then make
    its `Offer` once, in one line, with a one-press answer: `AskUserQuestion`
-   with "Start it in a thread" and "Not now". If they decline or ignore it,
-   do not offer that workflow again for this subject.
+   with "Start it in a thread" and "Not now", and record it with
+   `$PA log offer.made workflow=<id>`. If they decline or ignore it, do not
+   offer that workflow again for this subject.
 3. **Open.** Ideas, what-ifs, a half-formed worry: work with the person
    directly, in your own voice, not a workflow's. If a clear fit appears
    later, offer once then.

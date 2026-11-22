@@ -200,6 +200,9 @@ decided but nothing is built yet.
 | D-135 | The charter reaches a director through `workspace/CLAUDE.md` (re-read after compaction) and `pa recap`, not per-session startup instructions; refines D-134 | Claude | Built |
 | D-136 | `pa check` requires routing on a Library or shipped workflow; a Hangar one without it is listed "start only when named"; offers are a one-press question | Claude | Built |
 | D-137 | Director's notes live in `workspace/director/` (gitignored); a save is refused if the director wrote meanwhile; folded until opened | Claude | Built |
+| D-143 | The routing suite drives the real app one trial at a time: a fresh workspace copy, a new session on the model under test, threads stopped as they appear; tasks from each workflow's examples plus near misses | Claude | Built |
+| D-144 | The routing ladder lives in `workspace/CLAUDE.md` for every Aviator session; offers are logged with `pa log offer.made` so they are graded by code | Claude | Built |
+| D-145 | Blind pairs: ten prompts where two runs differ most, sides shuffled, the key kept apart; answers come back as JSON | Claude | Built |
 
 
 ## Initiatives, artifacts and templates

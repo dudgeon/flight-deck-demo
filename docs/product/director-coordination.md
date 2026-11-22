@@ -430,4 +430,8 @@ workflow's `routing.persona` with its default and invariants; strictness on
 the strip and in the run is not built). The charter is re-added through
 `workspace/CLAUDE.md` and `pa recap` rather than a `SessionStart` hook
 (D-135); `pa check` rules and the offer card are D-136; where the notes live
-and how edits are saved is D-137. Next: step 2, the routing suite.
+and how edits are saved is D-137.
+
+**Built (step 2):** the routing suite, `evals/routing_suite.py`
+(`evals/README.md`; D-143 to D-145). The ladder also went into
+`workspace/CLAUDE.md` (D-144). Next: a full baseline on the Mac mini.

@@ -30,7 +30,7 @@ in the same pull request.
 | [Dock launcher](#dock-launcher) | Done |
 | [Branding](#branding) | Done; repository renamed (D-114) |
 | [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | D-89 to D-99 and D-116 to D-119 decided; runs and In flight built (PR 24) |
-| [Aviator coordination and skill routing](#aviator-coordination-and-skill-routing) | Routing, director rules and director memory built (D-120, D-128 to D-137); evals, strictness on the strip and lifecycle skill next |
+| [Aviator coordination and skill routing](#aviator-coordination-and-skill-routing) | Routing, director rules, director memory and the routing suite built (D-120, D-128 to D-137, D-143 to D-145); baseline run, strictness on the strip and lifecycle skill next |
 
 ---
 
@@ -365,9 +365,16 @@ strictly as the moment needs, measured by evals rather than argued.
   `director/state.md` and `memory.md`, `pa recap`, `pa remember`, a pointer in
   `workspace/CLAUDE.md` (D-135), and Director's notes on the project page,
   editable (D-137). Not yet run in a live director session on the Mac mini.
-- **Next.** The routing eval suite and its runner on the Mac mini, before
-  any tuning; then strictness on the strip and in the run; then the
-  lifecycle skill.
+- **Built (routing suite).** `evals/routing_suite.py`: 44 tasks (each
+  workflow's examples plus 17 near misses and cross-workflow cases), trials
+  through the real app with code graders and a Haiku judge, reports by
+  split, and blind pairs for Geoff (D-143 to D-145). The ladder moved into
+  `workspace/CLAUDE.md` so every session follows it (D-144). Four live trials
+  on Sonnet in the cloud container passed; the first full baseline runs on
+  the Mac mini.
+- **Next.** A full baseline on the Mac mini, then tuning; strictness on the
+  strip and in the run; the lifecycle skill (its two routing tasks wait for
+  it).
 - **Decided.** Geoff answered all seven on 2026-11-21, as recommended:
   D-128 routing ladder, D-129 lifecycle skill with project retrieval (not a
   hero skill), D-130 guide by default, D-131 strictness changed in words,
