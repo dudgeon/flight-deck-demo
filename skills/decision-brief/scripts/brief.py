@@ -403,12 +403,16 @@ def note_md(data: dict, url: str = "", archive: str = "", brief_path: str = "") 
             lines += ["", f"Recorded as {d['record']}."]
         lines.append("")
         if a.get("pick"):
-            why = a.get("note") or d.get("reason", "")
-            entries.append(f"**{d.get('d') or 'D-NN'} · {when[:10]} · {data.get('for') or 'Who'}.** {d['question']} {a['label']}. *{why}*")
+            who = f"**{d.get('d') or 'D-NN'} · {when[:10]} · {data.get('for') or 'Who'}.**"
+            if a["pick"] == ELSE:
+                entries.append(f"{who} {d['question']} {a.get('note', '')} *In their own words.*")
+            else:
+                why = a.get("note") or d.get("reason", "")
+                entries.append(f"{who} {d['question']} {a['label']}. *{why}*")
     if entries:
         lines += ["## Log entries", "",
                   "Ready for a decisions log in the `**D-NN · date · Who.** The decision. *Why.*` form."
-                  " Claim numbers the careful way before using them.", ""] + entries + [""]
+                  " Claim numbers the careful way before using them.", ""] + "\n\n".join(entries).split("\n") + [""]
     return "\n".join(lines)
 
 

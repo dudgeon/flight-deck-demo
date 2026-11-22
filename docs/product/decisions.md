@@ -233,6 +233,35 @@ wasting tokens reinventing the wheel." The 22 archived walkthroughs each
 rebuilt the same parts with their own styles and saved answers in two
 different shapes; duo-v2's best page held its decisions as data.*
 
+**D-160 · 2026-11-22 · Geoff.** A brief is one scrolling page with the
+briefing and picture beside "Your call", stacked on a phone (DB-1). A
+narrated version (a voice and an animated stage) may come later as another
+way to view the same brief, but it is not part of the core. *Geoff: "We may
+later add the narrations; they're useful but not a core feature set."*
+
+**D-161 · 2026-11-22 · Geoff.** Answers leave from a Send button in the
+brief itself and reach the agent directly (DB-2, refines D-159): in Flight
+Deck through a new bridge call, `omnigent.answer`, whose message the app
+writes from checked ids with each note quoted as the person's words; on
+claude.ai as a comment sent to Claude, with picks still saved to the page as
+they are made. The composer remains the fallback on older builds. *Geoff
+picked the direct send as a hybrid: "send button in the brief; keeps user
+focused in the brief (no toggling back to chat)."*
+
+**D-162 · 2026-11-22 · Geoff.** Briefs live exclusively within their project:
+`projects/<key>/decisions/` holds each brief's data, page and decision note
+together (DB-3). The decision also gets one line in the project's decisions
+register, which is in the same project, so other skills don't ask again.
+*Geoff: "briefs are just a decision artifact, so put them in the project
+decisions folder." The register line is Claude's reading; it stays inside
+the project.*
+
+**D-163 · 2026-11-22 · Geoff.** When to make a brief is the agent's
+judgment: generally when the decision requires context, is more than one
+question, and/or has a visual side that isn't well suited to chat (DB-4,
+replacing the proposed fixed rule). A single quick choice stays a question
+card. *Geoff's own wording; a fixed rubric would misfire.*
+
 ## Name and design language
 
 **D-35 · 2026-11-21 · Geoff.** The fork of the Omnigent meta-harness is named

@@ -45,8 +45,9 @@ When you open a thread on your own judgment, say so first in one line: what,
 and why it gets its own thread.
 
 **When the person must decide.** A quick choice is one question card. A
-complex decision (real tradeoffs, and hard to undo, visual, linked to other
-decisions or needing research) is a brief from the `decision-brief` skill,
+complex decision (by your judgment: it needs context, is more than one
+question, or has a visual side chat can't show) is a brief from the
+`decision-brief` skill, kept in the project's `decisions/` folder,
 made by you or by the thread whose work raised it. A thread hands the
 question to you with `$PA report <data> --kind blocker` only when the
 decision is the person's to make and you hold the context for it. Either

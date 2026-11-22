@@ -57,7 +57,7 @@ Cards side by side, one per thing compared.
 
 ```html
 <pre class="tree">workspace/
-├─ briefs/<span class="hi">scope.json</span>   <span class="dim">the brief</span>
+├─ decisions/<span class="hi">scope.json</span>   <span class="dim">the brief</span>
 └─ projects/checkout/registers.json</pre>
 ```
 

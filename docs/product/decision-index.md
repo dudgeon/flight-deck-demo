@@ -88,7 +88,11 @@ feature notes of the time and marked *(reconstructed)*.
 | D-32 | More than one question: decision cards, one at a time | Geoff | Active; extended by D-105 | *(reconstructed)* A list in prose is hard to answer from a phone. |
 | D-33 | Never ask Geoff to decide blind | Geoff | Active; built into decision review | *(reconstructed)* A decision without context, options and visuals is not a decision he can make. |
 | D-115 | Decision artifacts are archived in the repo as offline HTML, kept by the `docs-refresh` skill | Geoff asked, Claude chose | Built (`docs/decision-artifacts/`) | A record anyone can open without his claude.ai account, and examples of how to ask. |
-| D-159 | Every complex decision is a decision brief from one skill: the agent writes JSON, a fixed template draws it; answers go to the register and a note | Geoff asked, Claude chose | Pending (`skills/decision-brief`); DB-1 to DB-4 open with Geoff | One consistent page to iterate on, and no tokens spent rebuilding it per decision. |
+| D-159 | Every complex decision is a decision brief from one skill: the agent writes JSON, a fixed template draws it; answers go to the register and a note | Geoff asked, Claude chose | Pending (`skills/decision-brief`) | One consistent page to iterate on, and no tokens spent rebuilding it per decision. |
+| D-160 | Briefs are one page, briefing beside your call; narration maybe later, not core | Geoff | Pending (the template) | It shows the whole set at once and works offline with nothing extra to make. |
+| D-161 | A Send button in the brief sends answers straight to the agent (`omnigent.answer`; a comment to Claude on claude.ai) | Geoff | Pending (`artifactBridge.ts`, the template) | Keeps the person focused in the brief, with no switching back to the chat. |
+| D-162 | Briefs live in the project's `decisions/` folder with their page and decision note | Geoff | Pending (`decision-brief` skill) | A brief is one of the project's decision artifacts. |
+| D-163 | When to make a brief is the agent's judgment: generally when it needs context, is more than one question, or is visual | Geoff | Active (workspace `CLAUDE.md`, the skill) | A fixed rubric would misfire; these are the signs that chat won't do. |
 | D-34 | Intent framework is notional and swappable (`workspace/frameworks/`) | Geoff | Built | *(reconstructed)* The real company framework can replace it without touching the skill. |
 
 ## Name and design language
@@ -264,9 +268,6 @@ Spec: [usage-logging.md](usage-logging.md).
 
 ## Open questions not yet numbered
 
-- Decision briefs (DB-1 to DB-4 in [features.md](features.md#decision-briefs)):
-  put to Geoff 2026-11-22 in the first brief; built to the recommendations
-  meanwhile.
 
 - Usage logging (UL-1 to UL-3 in [usage-logging.md](usage-logging.md)):
   put to Geoff 2026-11-21; built to the recommendations meanwhile.

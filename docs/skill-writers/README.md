@@ -21,9 +21,9 @@ is a full working example built from these references.
 ## When your skill needs the person to decide
 
 Don't draw your own decision page. A quick choice is one question card
-(recommendation first, with "Something else"). A complex one (real
-tradeoffs, and hard to undo, visual, linked to other decisions or needing
-research) goes to the bundled
+(recommendation first, with "Something else"). A complex one (it needs
+context, is more than one question, or has a visual side chat can't show)
+goes to the bundled
 [`decision-brief`](../../skills/decision-brief/SKILL.md) skill: in your
 `SKILL.md`, say "put it to the person with the `decision-brief` skill" at the
 step that needs it, and hand over the question, the real options and the

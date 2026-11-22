@@ -1,6 +1,6 @@
 ---
 name: decision-brief
-description: Put a complex decision to the person as a decision brief, a page with context, drawn options, tradeoffs and a recommendation where they pick and comment, from one JSON file and a fixed template. Use when a choice has real tradeoffs and is hard to undo, visual, one of several linked decisions or needed research, when any skill's Decide step needs the person, or when asked to "brief me", for a decision walkthrough or to lay out options. Not for one quick choice; ask that with a question card.
+description: Put a complex decision to the person as a decision brief, a page with context, drawn options, tradeoffs and a recommendation where they pick, comment and send their answers, from one JSON file and a fixed template. Use when a decision needs context, is more than one question, or has a visual side that chat can't show, when any skill's Decide step needs the person, or when asked to "brief me", for a decision walkthrough or to lay out options. Not for one quick choice; ask that with a question card.
 ---
 
 # Decision brief
@@ -22,18 +22,18 @@ BRIEF="python3 <this skill's folder>/scripts/brief.py"   # standard library only
 
 ## When to make one
 
-Make a brief when there are **two or more real options with tradeoffs** and
-at least one of these holds:
+Use your judgment (D-163). Generally make a brief when the decision:
 
-- it is hard to undo (scope, dates, commitments, anything another team builds on);
-- it is visual (layouts, designs, what something looks like);
-- it is one of several linked decisions;
-- framing it took research the person has not seen.
+- **needs context** the person doesn't have in front of them (research,
+  tradeoffs, what other teams depend on);
+- **is more than one question**, especially linked ones;
+- **has a visual side** that chat can't show well (layouts, designs, flows,
+  what something will look like).
 
-Otherwise ask with one question card (`AskUserQuestion`, recommendation
-first, with "Something else"), or just do the work if it is easy to undo. The
-person can always say "brief me on this" or "just ask me". When you make a
-brief on your own judgment, say why in one line.
+A single quick choice is one question card (`AskUserQuestion`,
+recommendation first, with "Something else"); work that is easy to undo you
+just do. The person can always say "brief me on this" or "just ask me". When
+you make a brief on your own judgment, say why in one line.
 
 Other skills don't copy any of this. A skill whose step needs the person to
 choose says "put it to the person with the `decision-brief` skill" and hands
@@ -54,15 +54,22 @@ own checklist questions stay in its own views.
 
 ## 2. Write the brief
 
+A brief is one of the project's decision artifacts, so it lives in the
+project (D-162): **`projects/<key>/decisions/`** holds `<slug>.json` (the
+brief and the answers), `<slug>.html` (the page) and `<slug>.md` (the
+decision note), side by side. `pa project` lists the projects; for work not
+yet in one, use `decisions/` at the workspace root and move the files when
+the work joins a project.
+
 Start from a skeleton, or copy `examples/decision-briefs.json`, which shows
 every field in use:
 
 ```bash
-$BRIEF new briefs/<slug>.json --title "<the choice, as a name>" --decisions 3 [--initiative <key>] --for "<person>"
+D=projects/<key>/decisions
+$BRIEF new $D/<slug>.json --title "<the choice, as a name>" --decisions 3 --initiative <key> --for "<person>"
 ```
 
-In a workspace, briefs live in `briefs/` and pages in `artifacts/`. The
-fields, in full in `reference/format.md`:
+The fields, in full in `reference/format.md`:
 
 | Field | What it holds |
 |---|---|
@@ -89,20 +96,23 @@ or two.
 ## 3. Check, draw and show it
 
 ```bash
-$BRIEF check briefs/<slug>.json      # errors stop the render: blind, no recommendation, remote loads, own colors
-$BRIEF render briefs/<slug>.json --out artifacts/<slug>.html
+$BRIEF check $D/<slug>.json      # errors stop the render: blind, no recommendation, remote loads, own colors
+$BRIEF render $D/<slug>.json     # writes $D/<slug>.html beside it
 ```
 
-Then show it where the person is:
+Run both from the workspace, so the page names its brief by a workspace
+path. Then show it where the person is. Every page has a **Send answers to
+Claude** button, so the person answers and sends without leaving the brief
+(D-161):
 
-- **In Flight Deck:** open it with `ui_open_file`. The person picks, then
-  presses **Send answers to Claude**, which puts their answers in the chat
-  box; they press Send.
+- **In Flight Deck:** open it with `ui_open_file`. Send reaches you at once
+  as a message the app writes: `Decision brief answers for <file>, sent from
+  the brief by the person`, one line per decision, notes quoted.
 - **On claude.ai** (contributors putting decisions to Geoff): render with
   `--fragment` and publish it as an Artifact with
-  `capabilities: {"db": {}, "comments": {"composer_only": true}}`. Picks save
-  to the page's `answers` collection as they are made. Give the person the
-  direct link.
+  `capabilities: {"db": {}, "comments": {}}`. Picks save to the page's
+  `answers` collection as they are made; Send posts them as a comment sent
+  to you, which wakes this session. Give the person the direct link.
 - **Anywhere else** the page keeps picks in the browser and offers **Copy
   answers** for pasting into the chat.
 
@@ -115,9 +125,9 @@ Answers come back one of three ways. Write them into the brief, never only
 in your head:
 
 ```bash
-$BRIEF import briefs/<slug>.json --text -     # the text Send or Copy produced, on stdin
-$BRIEF import briefs/<slug>.json --db <dir>   # an `answers` collection saved with ArtifactData list (out_dir)
-$BRIEF answer briefs/<slug>.json <decision> <option|else> --note "..."   # an answer given in words
+$BRIEF import $D/<slug>.json --text -     # the message Send produced, or Copy's text, on stdin
+$BRIEF import $D/<slug>.json --db <dir>   # an `answers` collection saved with ArtifactData list (out_dir)
+$BRIEF answer $D/<slug>.json <decision> <option|else> --note "..."   # an answer given in words
 ```
 
 Record only what the person said or picked; a pick from another agent is
@@ -129,9 +139,9 @@ answer changes what another decision means, say so before going on.
 When the person says they are done, or all decisions are answered:
 
 ```bash
-$BRIEF record briefs/<slug>.json      # locks the answers; with `initiative`, one `pa register … decision` each
-$BRIEF note briefs/<slug>.json --out briefs/<slug>.md [--url <artifact link>] [--archive <archived copy>]
-$BRIEF render briefs/<slug>.json --out artifacts/<slug>.html   # the page now shows them as decided
+$BRIEF record $D/<slug>.json      # locks the answers; with `initiative`, one line each in the project's decisions register
+$BRIEF note $D/<slug>.json [--url <artifact link>] [--archive <archived copy>]   # writes $D/<slug>.md
+$BRIEF render $D/<slug>.json      # the page now shows them as decided
 ```
 
 The note holds each decision, the pick, the person's note, whether it was
@@ -144,4 +154,4 @@ Reply with the outcome in a line or two and the note's link.
 `docs/product/decisions.md` and the index with numbers claimed the careful
 way `CLAUDE.md` describes (the note's "Log entries" are written in that
 form), the page is archived with the `docs-refresh` skill, and the note goes
-in that archive folder as `note.md`.
+in that archive folder as `decision-note.md`.

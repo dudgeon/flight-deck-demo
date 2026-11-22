@@ -134,7 +134,7 @@ A page made with the `decision-brief` skill (D-159) needs no fetching: its
 brief's JSON is in the repo or the project files. Import the answers into it
 (`brief.py import <brief> --db <answers folder>`), render it as a full page
 into a folder, and `add` that folder with `--answers`. Its decision note
-(`brief.py note`) goes in the same archive folder as `note.md`.
+(`brief.py note`) goes in the same archive folder as `decision-note.md`.
 
 A Claude Doc (an artifact of type "Docs") has no page to copy. Export it as
 HTML (the doc's menu, or the Claude Docs export tool) into a folder as

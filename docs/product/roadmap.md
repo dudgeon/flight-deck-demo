@@ -30,7 +30,7 @@ in the same pull request.
 | [Dock launcher](#dock-launcher) | Done |
 | [Branding](#branding) | Done; repository renamed (D-114) |
 | [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | D-89 to D-99 and D-116 to D-119 decided; runs and In flight built (PR 24) |
-| [Decision briefs](#decision-briefs) | Built (D-159); DB-1 to DB-4 with Geoff |
+| [Decision briefs](#decision-briefs) | Built (D-159 to D-163); Send button reaches the agent from the brief |
 | [Aviator coordination and skill routing](#aviator-coordination-and-skill-routing) | Routing, director rules, director memory and the routing suite built (D-120, D-128 to D-137, D-143 to D-145); baseline run, strictness on the strip and lifecycle skill next |
 
 ---
@@ -331,14 +331,17 @@ brief looks and works the same and costs only its content.
 - **Done.** `skills/decision-brief`: the template, `brief.py`
   (new, check, render, answer, import, record, note), the visual components,
   a worked example, and the routing rule in the workspace's `CLAUDE.md`, the
-  director skill and decision review (D-159). The first brief:
-  https://claude.ai/artifact/CNNpJFboRrwDAsYsBvundE.
-- **Next.** Record Geoff's answers to DB-1 to DB-4 and archive the brief.
+  director skill and decision review (D-159). Geoff answered the first brief
+  (https://claude.ai/artifact/CNNpJFboRrwDAsYsBvundE): one page (D-160), a
+  Send button in the brief that reaches the agent directly, through
+  `omnigent.answer` in the app and a comment to Claude on claude.ai (D-161),
+  briefs kept in the project's `decisions/` folder (D-162), and a
+  judgment-based rule for when to make one (D-163).
+- **Next.** Fly a brief in the app on the Mac mini (the Send path through
+  `omnigent.answer` is unit-tested and checked with a stub, not yet flown).
   Routing-suite tasks for "brief or card". The lifecycle work's Decide move
-  and Choose step call it (PR 41). Rebuild the next walkthrough with it
-  rather than by hand.
-- **Open.** DB-1 layout, DB-2 how answers come back at work (one-press send
-  needs an app change), DB-3 where the record goes, DB-4 when to make one.
+  and Choose step call it. Make the next walkthrough with it.
+- **Later.** Narration as another view of the same brief (D-160).
 - **Read.** [features.md](features.md#decision-briefs),
   `skills/decision-brief/SKILL.md`.
 
