@@ -110,7 +110,7 @@
    "data/allowances-decisions.json": "scenarios/decision-review/fixtures/allowances-decisions.json"
   },
   "requirements-to-dependencies-offer-1": {
-   "data/allowances.json": "scenarios/requirements-to-dependencies/fixtures/allowances.json",
+   "data/allowances.json": "scenarios/prd-to-requirements/fixtures/allowances.json",
    "context/platform-map.md": "scenarios/requirements-to-dependencies/context/platform-map.md"
   },
   "delivery-status-offer-1": {
