@@ -338,6 +338,16 @@ every hero skill can read and extend it.
 - **Open.** IN-1 (is an initiative the same as a goal project) and IN-3 (the
   shared representation of intent), with Geoff. The stage list may change
   with the lifecycle research.
+- **Parked (2026-11-22).** A bolder look for the hero skills' widgets and
+  views. Geoff asked for it, saw six views with two directions each, and
+  liked only two: the decision card's trade-off grid (3B) and the discovery
+  summary's heads-up readout (4A). Round two applied their shared style
+  (a readout of big tabular numbers first, a small ring or meter on every
+  row, choices as side-by-side columns with the recommendation tinted) to
+  the dependency board, intent map, delivery plan and review findings.
+  Geoff then set the redesign aside to come back to later; nothing is
+  built in `pa` yet. Start from the archived page,
+  [Bolder template explorations](../decision-artifacts/2026-11-22-bolder-template-explorations/index.html).
 - **Read.** [initiatives-and-templates.md](initiatives-and-templates.md).
 
 ---
