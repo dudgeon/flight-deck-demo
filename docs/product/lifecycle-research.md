@@ -141,6 +141,14 @@ Why this shape:
   catalog is the board's input). Geoff's own two-module model treats
   "validated requirements to delivery map" as one module. Intent shaping
   stays separate because its stance is the opposite.
+- **The catalog step needs one home, and phases must toggle.** Geoff
+  (comment on the Skills and Templates Atlas, 2026-11-22): the PRD to
+  requirements step "needs a primary home, either intent shaping or prd to
+  dependencies; either can plausibly work, user must be able to toggle
+  between phases anyway". This note recommends PRD to dependencies (it shares
+  that half's produce stance and hands its catalog straight to the board);
+  the home is still his call. Moving between phases (shape, catalog, map)
+  inside one initiative is a requirement whichever home he picks.
 - **Learn without a new skill.** Post-launch feedback triage is the job with
   the best evidence that agents help, and it is the same synthesis job as
   discovery. Problem discovery takes post-launch feedback and metrics notes
