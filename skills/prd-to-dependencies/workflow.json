@@ -1,0 +1,82 @@
+{
+ "workflow": "prd-to-dependencies",
+ "title": "PRD to dependencies",
+ "tier": "arc",
+ "summary": "From a requirements document to what the work depends on and how to get it: catalog the requirements, map the platform capabilities each one needs, then weigh the alternatives and choose. Move between the three parts in any order.",
+ "inputs": [
+  { "name": "document", "kind": "markdown", "hint": "A PRD or similar. Looks in context/ first." },
+  { "name": "dataset", "kind": "dataset", "hint": "A requirements dataset, if the catalog already exists" },
+  { "name": "platform map", "kind": "markdown", "hint": "What the platform offers. Looks in context/ first." }
+ ],
+ "parts": [
+  { "id": "specify", "title": "Specify", "workflow": "prd-to-requirements", "done_when": "Every requirement is reviewed" },
+  { "id": "map", "title": "Map", "workflow": "requirements-to-dependencies", "done_when": "Every requirement's exploration is reviewed" },
+  { "id": "choose", "title": "Choose", "template": "alternatives", "done_when": "Every choice is chosen, with a reason kept for every option turned down" }
+ ],
+ "checkpoints": [
+  "Every requirement points at the line of the document it came from",
+  "Every dependency has evidence or is listed as could not find",
+  "Every option shows its evidence and what it costs in scope, effort and waiting",
+  "The person chooses; a turned-down option keeps its reason",
+  "Asks to other teams are drafted; a person sends them"
+ ],
+ "steps": [
+  "Find where you are",
+  "Specify: the catalog",
+  "Map: the board",
+  "Choose: the alternatives",
+  "Hand over"
+ ],
+ "views": {
+  "catalog": "../prd-to-requirements/views/catalog.json",
+  "board": "../requirements-to-dependencies/views/board.json"
+ },
+ "work_products": [
+  { "name": "Requirements catalog", "view": "catalog", "out": "artifacts/{slug}-requirements.html" },
+  { "name": "Dependency board", "view": "board", "out": "artifacts/{slug}-dependencies.html" },
+  { "name": "Alternatives", "template": "alternatives", "out": "artifacts/{slug}-alternatives.html" }
+ ],
+ "launchers": [
+  { "label": "PRD to dependencies", "on": "markdown", "prompt": "Take {path} from requirements through to dependencies and options, using the prd-to-dependencies skill." }
+ ],
+ "next": ["delivery-status"],
+ "library": {
+  "show": true,
+  "order": 4,
+  "summary": "From a PRD to what the work depends on and your options: catalog the requirements, map what the platform gives, then weigh the alternatives and choose.",
+  "prompt": "Take {{document: a file in context/, or \"the demo PRD\"}} from requirements through to dependencies and options, using the prd-to-dependencies skill."
+ },
+ "routing": {
+  "when": [
+   "The person wants to go from a PRD to what the work depends on and what their options are",
+   "The person has mapped dependencies and needs to weigh alternatives, trade scope or plan phases"
+  ],
+  "not_when": [
+   "Only listing a document's requirements (that is the catalog part on its own)",
+   "Onboarding with a team already chosen (that is Engage owners)",
+   "Reporting dates and status on work already under way (that is Deliver)"
+  ],
+  "needs": "A PRD or a requirements dataset; a platform map in context/ for the map part",
+  "stage": "specify",
+  "offer": "This can go from the PRD all the way to what the work depends on and your options for each dependency, and you can move between the catalog, the map and the choices in any order.",
+  "examples": {
+   "start": [
+    "Take the held payments PRD through to dependencies and options.",
+    "Run PRD to dependencies on context/prd.md."
+   ],
+   "offer": [
+    "We've mapped what the platform gives for each requirement. Some of these won't be ready in time; what are our options?"
+   ],
+   "open": [
+    "Which of the dependencies on this board looks riskiest to you?"
+   ]
+  },
+  "persona": {
+   "strictness": "guide",
+   "invariants": [
+    "Never choose for the person; a turned-down option keeps its reason",
+    "Effort and waiting stay separate numbers, each with its source"
+   ]
+  }
+ }
+}

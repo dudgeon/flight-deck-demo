@@ -509,6 +509,33 @@ options can use it.
 participants, the workflow card) and it proves the kit is not shaped around
 requirements documents.
 
+## PRD to dependencies (an arc in three parts)
+
+**What it is for.** A product manager with a PRD needs to know what the work
+depends on and what their options are when a dependency won't be ready, not
+just a list of requirements. This arc (D-148) takes them from the document to
+a choice, in three parts they can move between in any order, leaving and
+coming back (D-149): **Specify** (the requirements catalog, run by
+`prd-to-requirements`), **Map** (the platform capabilities each requirement
+needs, run by `requirements-to-dependencies`) and **Choose** (for each
+dependency that needs a decision, two to four alternatives of Pathfinder's
+four kinds, with effort and waiting kept as separate numbers, and the
+person's choice written to the initiative's decisions register).
+
+**How it works.** `skills/prd-to-dependencies/` has the arc's SKILL.md and a
+`workflow.json` that lists its `parts` and `checkpoints` (the few rules that
+always hold, whatever the order). The two older workflows stay as they were,
+with `part_of` set, so their scenarios still fly and they still start when
+named; only the arc has a Library card, and the parts' demos show on it.
+Choose uses the `alternatives` records template (PR 52). Complex choices go to
+the decision brief skill when it is installed. `pa workflows` prints each
+workflow's tier, parts and checkpoints; `pa check` notes an unknown tier or a
+malformed part, never fails on one (D-153).
+
+**Not yet.** The interactive alternatives worksheet (lever toggles and a
+phase lane, D-152) is the next build; Choose uses the template's comparison
+table until then.
+
 ## Problem discovery (a kind of work)
 
 **What it is for.** Before there is anything to specify, a PM has a pile of

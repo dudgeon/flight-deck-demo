@@ -1,6 +1,7 @@
 {
  "workflow": "document-review",
  "title": "Review a document with others",
+ "tier": "move",
  "summary": "Review a document, then call in other agents and people for second opinions. Everyone's comments and findings land in one list, each with who raised it.",
  "library": {
   "show": true,

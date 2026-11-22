@@ -419,11 +419,16 @@ and worksheet templates each needs.
   (companion, arc, move, kit), a card per skill, how work moves through the
   initiative registers, coverage of the ten PM jobs, and a four-question rule
   for adding a hero skill.
-- **Next, if accepted.** Merge the two requirement workflows (old ids kept),
-  `checkpoints` in `workflow.json` and `pa check`, a stage list on routing,
-  Learn in `lifecycle.json`, Review and Decide as launchers on every
-  artifact, the shared widgets in the view kit. The registers' shape comes
-  from the template and initiative data model work.
+- **Built.** The PRD to dependencies arc with Specify, Map and Choose
+  (`skills/prd-to-dependencies/`; the two older workflows are its parts,
+  old ids kept); `tier`, `parts`, `part_of` and `checkpoints` in
+  `workflow.json`, shown by `pa workflows` and noted by `pa check`; Review
+  and Decide marked as moves; delivery status titled Deliver. Stages and the
+  alternatives and onboarding templates came in PR 52.
+- **Next.** The interactive alternatives worksheet for Choose; the five
+  shared widgets in the view kit; Review and Decide as launchers on every
+  artifact (they still have Library cards); the Engage owners arc on the
+  onboarding-track template; Deliver's wider parts.
 - **Read.** [lifecycle-research.md](lifecycle-research.md); walkthrough at
   https://claude.ai/artifact/P3hZWy2Ht6es1KCxMDLTEv (offline copy in
   `docs/decision-artifacts/2026-11-21-hero-skills-and-lifecycle/`).
