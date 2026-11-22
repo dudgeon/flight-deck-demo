@@ -133,8 +133,8 @@ thread or brief was made. The usage log is that evidence.
   a failed turn.
 - For the offer the ladder asks for (AV-1), the director skill can write
   `pa log offer.made workflow=<id>` when it offers, which turns that grade
-  from a judge's call into code. Not added to the skill yet: it changes what
-  the agent does, so it goes in with the routing suite.
+  from a judge's call into code. Added with the routing suite (D-144), in
+  `workspace/CLAUDE.md` and the director skill.
 
 ## Reading it (built: the CLI; UL-3 asks about more)
 

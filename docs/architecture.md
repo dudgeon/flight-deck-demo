@@ -361,3 +361,17 @@ GitHub namespace.
 | Design tokens | `design/build_tokens.py` | `designTokens.generated.css` | `product-aviator-design` |
 | Initiatives, stamps, templates | | | `view-kit` (`pa stamp`, `pa artifacts`, `pa template`, `pa register`); `workspace/templates/initiative-*` |
 | Usage log | `slim_usage.py`, `server/routes/slim_usage.py`, the tees in `telemetry/client.py` and `runner/app.py` | `lib/slimUsage.ts` | `view-kit` (`usagelog.py`, `pa log`, `pa usage`) |
+
+## Evals
+
+`evals/routing_suite.py` (standard library only) runs the routing suite
+(D-133, D-143) through the running app: for each trial it copies the
+Workspace project's folder, opens a session in that project over the same
+HTTP API the web app uses (`POST /v1/sessions` with the model as a Claude
+Code `--model` launch argument, then a `message` event), polls the session
+until the turn ends, stops any child session the turn creates, and archives
+both. It tags the trial in the usage log (`usagelog.set_eval_tag`) and grades
+from that trial's lines, the copy's files and any waiting question card, with
+`claude -p` on Haiku as the judge when those are silent. See
+`evals/README.md`.
+

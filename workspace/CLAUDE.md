@@ -39,6 +39,25 @@ files with `pa stamp`, and record evidence, open questions, decisions and
 ready checks with `pa register`. Details: "Initiatives, stamps, templates and
 registers" in the `view-kit` skill.
 
+## Which workflow, if any
+
+Workflows describe when they fit: `pa workflows` lists them by stage, each
+with when it fits, when it does not, what it needs and a one-line offer.
+Read it before deciding; never route from memory. Then, top first:
+
+1. **Named.** The user names a workflow or asks to run one: start it.
+2. **Clear fit.** The ask matches a workflow's "When", none of its "Not
+   when", and what it needs is at hand: answer what you can, then make its
+   offer once, as one `AskUserQuestion` with "Start it" and "Not now", and
+   record it with `pa log offer.made workflow=<id>`. Not again for this
+   subject if they decline.
+3. **Open.** Ideas, what-ifs, a half-formed worry: think it through with
+   them in your own voice. Offer a workflow later only if a clear fit appears.
+4. **Quick.** A question you can answer in a few lines: answer it.
+
+Never start a workflow the user did not ask for. When what a workflow needs
+is missing, say what it needs instead of offering it.
+
 ## Work in flight
 
 A workflow working on one subject is a run, and the project page lists every

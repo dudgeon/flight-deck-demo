@@ -841,6 +841,37 @@ director has written something, folded. *The notes are for checking and
 correcting, not for every visit, and nobody's words should be lost to a
 silent overwrite.*
 
+**D-143 · 2026-11-22 · Claude.** The routing suite (D-133) is
+`evals/routing_suite.py`. Its tasks are every workflow's `routing.examples`
+plus `evals/routing/tasks.json` (near misses, quick answers, open work,
+cross-workflow offers, lifecycle prompts that wait for their skill), split
+60/40 by a hash of each id. A trial copies the Workspace project's folder
+without its data, runs and drafts, opens a new session in that project with
+the model under test passed as Claude Code's `--model`, sends the prompt and
+waits for one turn; a question card ends it, and a thread it starts is
+stopped at once. Trials run one at a time. Grading reads the usage log, the
+copy's files and the card first, and asks a Haiku judge only when they are
+silent. *Through the app so the result is what Geoff would see; a fresh copy
+so trials cannot help each other; one at a time because the eval tag is one
+file per machine; threads stopped because only their existence is graded and
+their work would cost usage Geoff wants kept.*
+
+**D-144 · 2026-11-22 · Claude.** The routing ladder is in
+`workspace/CLAUDE.md` ("Which workflow, if any"), so every Aviator session
+follows it, not only one that has loaded the director skill. A clear-fit
+offer is recorded with `pa log offer.made workflow=<id>`, in the workspace
+instructions and the director skill. *D-128 says Aviator routes this way;
+most sessions never load the director skill; a logged offer is graded by
+code instead of a judge's reading.*
+
+**D-145 · 2026-11-22 · Claude.** Each tuning round's blind comparison is a
+page made by `routing_suite.py pairs`: ten prompts, the ones where two runs
+differ most first, each run's reply and what it did side by side in shuffled
+order, with "Left", "Right" or "Same". Answers are copied back as JSON; the
+key stays in the run folder. *D-133 asks Geoff to rank ten blind pairs per
+round; the page names neither run, works offline, and his answers can be
+checked against the judge.*
+
 ## Usage logging
 
 Spec: [usage-logging.md](usage-logging.md). Open questions UL-1 to UL-3 are

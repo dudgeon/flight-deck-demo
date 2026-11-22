@@ -325,7 +325,15 @@ lose is written down where the person can see and correct it (D-134).
   director has written; the person edits either in place, and a save that
   would overwrite the director's newer text is refused (D-137).
 
-**Where.** `skills/*/workflow.json`, `skills/director/` (`SKILL.md`,
+- The **routing suite** measures all of this (D-133, D-143): each task is a
+  prompt with what should happen (start, offer, open, answer), run through
+  the real app on the model under test; the report says how many passed, on
+  the tuning and the held-out sets, and shows every failing reply. Geoff
+  compares two runs on a blind page of ten pairs (D-145). The ladder is in
+  `workspace/CLAUDE.md`, so every Aviator session routes this way (D-144).
+
+**Where.** `evals/routing_suite.py` and `evals/routing/tasks.json`
+(`evals/README.md`), `skills/*/workflow.json`, `skills/director/` (`SKILL.md`,
 `charter.md`), `skills/view-kit/scripts/pa.py` (`workflows`, `recap`,
 `remember`), `omnigent/server/routes/slim_director.py`,
 `web/src/projectHome/DirectorNotes.tsx`. Spec:
