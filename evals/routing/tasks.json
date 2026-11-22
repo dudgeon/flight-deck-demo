@@ -1,6 +1,6 @@
 {
  "suite": "routing",
- "about": "Hand-written routing tasks: near misses across workflows, quick answers, open work and the lifecycle trigger. Each workflow's own example prompts (its routing.examples in workflow.json) are added to these at run time, so a new workflow brings its own tests. expect is start, offer, open, answer or lifecycle; workflow names the one a start or offer is for. fixtures gives a task, by id, files copied into its trial workspace before the prompt (destination: source, both relative to the workspace), so an offer task has what its workflow needs.",
+ "about": "Hand-written routing tasks: near misses across workflows, quick answers, open work and the lifecycle trigger. Each workflow's own example prompts (its routing.examples in workflow.json) are added to these at run time, so a new workflow brings its own tests. expect is start, offer, open, answer or lifecycle; workflow names the one a start or offer is for. fixtures gives a task, by id, files copied into its trial workspace before the prompt (destination: source; a source is in the workspace or, for material no scenario has, in evals/routing/fixtures/; a folder is copied whole), so an offer task has what its workflow needs.",
  "tasks": [
   {
    "id": "nm-tighten-paragraph",
@@ -115,6 +115,9 @@
   },
   "delivery-status-offer-1": {
    "data/release-dates-delivery.json": "scenarios/delivery-status/fixtures/release-dates-delivery.json"
+  },
+  "problem-discovery-offer-1": {
+   "context/interviews": "evals/routing/fixtures/interviews"
   }
  }
 }

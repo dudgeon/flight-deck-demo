@@ -196,9 +196,13 @@ def test_a_trial_gets_configuration_but_no_state(tmp_path: Path) -> None:
 
 def test_offer_tasks_get_fixtures_from_real_scenarios() -> None:
     tasks = {t["id"]: t for t in rs.load_tasks(ROOT / "workspace")}
-    for tid in ("decision-review-offer-1", "requirements-to-dependencies-offer-1"):
+    for tid in ("decision-review-offer-1", "requirements-to-dependencies-offer-1", "delivery-status-offer-1",
+                "problem-discovery-offer-1"):
         fixtures = tasks[tid]["fixtures"]
-        assert fixtures and all((ROOT / "workspace" / src).is_file() for src in fixtures.values()), tid
+        assert fixtures and all(rs.fixture_source(ROOT / "workspace", src).exists() for src in fixtures.values()), tid
+    # "I've got twelve interview transcripts": twelve of them, in context/.
+    ws_src = tasks["problem-discovery-offer-1"]["fixtures"]["context/interviews"]
+    assert len(list(rs.fixture_source(ROOT / "workspace", ws_src).glob("*.md"))) == 12
     # Mapping dependencies starts from requirements that have none yet, or there is nothing to offer.
     deps = tasks["requirements-to-dependencies-offer-1"]["fixtures"]["data/allowances.json"]
     records = json.loads((ROOT / "workspace" / deps).read_text())["records"]
@@ -222,6 +226,10 @@ def test_fixtures_are_copied_and_stay_inside_the_trial(tmp_path: Path) -> None:
         rs.add_fixtures(ws, {"../out.json": "scenarios/s/fixtures/d.json"})
     with pytest.raises(ValueError, match="not in the workspace"):
         rs.add_fixtures(ws, {"data/e.json": "scenarios/s/missing.json"})
+    with pytest.raises(ValueError, match="stays inside"):
+        rs.add_fixtures(ws, {"context/x": "evals/routing/fixtures/../../routing_suite.py"})
+    assert rs.add_fixtures(ws, {"context/interviews": "evals/routing/fixtures/interviews"})
+    assert len(list((ws / "context/interviews").glob("*.md"))) == 12
 
 
 # ------------------------------------------------------------------ the run loop
