@@ -1,0 +1,352 @@
+<!-- decision-archive:start -->
+<div style="font:13px/1.45 system-ui,sans-serif;background:Canvas;color:CanvasText;border-bottom:1px solid GrayText;padding:8px 16px">Archived copy of <b>Hero Skills and the Lifecycle</b>, a decision artifact from 2026-11-21. It shows the answers recorded on 2026-11-22; changes made here are not saved. The index of all of them is in <a href="../index.html">docs/decision-artifacts</a>.</div>
+<script>
+(function(){
+  var A={"hs-1": {"at": "2026-11-22T02:56:34.156Z", "note": "Delivery status should just be called deliver, and include things like statusing, but other things as well;\n\nPrd to dependencies will be complex and multi stage, including the analysis of alternatives, etc", "pick": "Five arcs, two moves, one companion", "recommended": "Five arcs, two moves, one companion", "title": "What shape should the hero-skill set take?"}, "hs-2": {"at": "2026-11-22T02:57:51.444Z", "note": "Completion of all components matters more to me than enforcing a sequence; and the skill should allow and support flipping between components, leaving and returning, working on other product lifecycle phases, etc. it should also allow for repeated loops of the same initiative through all phases", "pick": "Suggested path plus checkpoints", "recommended": "Suggested path plus checkpoints", "title": "How fixed should each skill's steps be?"}, "hs-3": {"at": "2026-11-22T02:59:16.095Z", "note": "Discover and learn should be the same thing (push back if I’m missing something); also the answer here needs to align to the answer to decision 1", "pick": "Something else", "recommended": "Six tags, Decide becomes a move", "title": "Which stages, and are they gates?"}, "hs-4": {"at": "2026-11-22T02:59:46.340Z", "note": "", "pick": "On the initiative, shared", "recommended": "On the initiative, shared", "title": "Where do evidence, open questions, decisions and readiness live?"}, "hs-5": {"at": "2026-11-22T03:01:13.946Z", "note": "Note that there is another worker working on a reusable decision brief skill — coordinate with that agent and include their work in your analysis", "pick": "Shared widgets and the alternatives worksheet first", "recommended": "Shared widgets and the alternatives worksheet first", "title": "Which widgets and templates come first?"}};
+  function snap(){var docs=Object.keys(A).map(function(k){return {id:k,data:function(){return A[k]},exists:true}});return {docs:docs,empty:!docs.length,size:docs.length,forEach:function(f){docs.forEach(f)}}}
+  function doc(id){return {id:id,get:async function(){return {id:id,exists:id in A,data:function(){return A[id]}}},set:async function(){},update:async function(){},delete:async function(){}}}
+  var db={collection:function(){return {get:async function(){return snap()},doc:doc,onSnapshot:function(f){setTimeout(function(){f(snap())},0);return function(){}},add:async function(){}}},doc:function(p){return doc(String(p).split("/").pop())}};
+  window.claude={use:async function(name){return name==="db"?db:null}};
+})();
+</script>
+<!-- decision-archive:end -->
+<title>Hero Skills and the Lifecycle</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: a short research brief, then five decisions, each with a drawing of the idea above its options. Colors are the Flight Deck tokens. */
+:root{--bg:#f4f6f9;--sf:#fff;--sunk:#eaeef3;--ink:#0f1e30;--ink2:#475a70;--ink3:#71829a;--line:#d6dde6;--line2:#b4c0ce;--navy:#0a223d;--onnavy:#f2f6fa;--you:#b0237a;--yousoft:#f8e1ef;--ok:#17794a;--oksoft:#ddf1e6;--info:#1e6aa6;--infosoft:#ddebf7;--attn:#8d5a00;--attnsoft:#f9ebcf;--agent:#4f46b8;--agentsoft:#e8e6f8;--font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#071526;--sf:#0c1e33;--sunk:#091a2d;--ink:#e6edf5;--ink2:#a6b6c8;--ink3:#71849a;--line:#1e3550;--line2:#3a5676;--navy:#2f64a0;--onnavy:#f2f6fa;--you:#f26dc3;--yousoft:#3a1530;--ok:#5bcb93;--oksoft:#0f3123;--info:#7db7ea;--infosoft:#12304d;--attn:#e9b44c;--attnsoft:#362808;--agent:#a59cff;--agentsoft:#211d47;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#071526;--sf:#0c1e33;--sunk:#091a2d;--ink:#e6edf5;--ink2:#a6b6c8;--ink3:#71849a;--line:#1e3550;--line2:#3a5676;--navy:#2f64a0;--onnavy:#f2f6fa;--you:#f26dc3;--yousoft:#3a1530;--ok:#5bcb93;--oksoft:#0f3123;--info:#7db7ea;--infosoft:#12304d;--attn:#e9b44c;--attnsoft:#362808;--agent:#a59cff;--agentsoft:#211d47;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--font);padding-block:28px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.eb{font-size:12.5px;font-weight:600;color:var(--ink3)}
+h1{font-size:30px;line-height:1.15;margin:4px 0 6px;letter-spacing:-.015em;text-wrap:balance}
+h2{font-size:22px;margin:0;letter-spacing:-.015em;text-wrap:balance}
+h3{font-size:15px;margin:0 0 4px}
+p{margin:0;color:var(--ink2);max-width:72ch}
+.card{background:var(--sf);border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.know{background:var(--sunk);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.stage{border:1px solid var(--line);border-radius:10px;background:var(--sunk);margin:0;overflow:hidden}
+.stage .in{padding:16px;overflow-x:auto}
+.stage figcaption{padding:8px 12px;font-size:13px;color:var(--ink2);background:var(--sf);border-top:1px solid var(--line)}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{border:1px solid var(--line);background:var(--sf);border-radius:9px;padding:10px 12px}
+.opt b{display:block}.opt span{color:var(--ink2);font-size:14px}
+.opt.rec-o{border-color:var(--ok)}
+.tag{font-size:12px;font-weight:600;color:var(--ok);margin-left:6px}
+.rec{border-left:3px solid var(--ok);background:var(--oksoft);padding:10px 12px;border-radius:6px;color:var(--ink)}
+.ask{font-size:13px;color:var(--ink3)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+td,th{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--sunk);font-size:12.5px;color:var(--ink3);font-weight:600}
+.tw{overflow-x:auto}
+ol.f{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;color:var(--ink2);max-width:80ch}
+ol.f b{color:var(--ink)}
+/* drawings */
+.sets{display:grid;grid-template-columns:repeat(3,minmax(220px,1fr));gap:12px;min-width:700px}
+.set{background:var(--sf);border:1px solid var(--line);border-radius:9px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.set.pick{border:2px solid var(--ok)}
+.set h4{margin:0;font-size:13.5px}
+.lane{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12.5px;border-radius:99px;padding:3px 10px;border:1px solid var(--line2);background:var(--sunk);color:var(--ink)}
+.chip.arc{background:var(--infosoft);border-color:var(--info)}
+.chip.mv{background:var(--agentsoft);border-color:var(--agent)}
+.chip.co{background:var(--navy);border-color:var(--navy);color:var(--onnavy)}
+.chip.st{background:var(--sf)}
+.small{font-size:12.5px;color:var(--ink3)}
+.flow{display:flex;align-items:stretch;gap:0;min-width:720px}
+.step{flex:1;padding:10px;border:1px dashed var(--line2);background:var(--sf);font-size:13px;display:flex;flex-direction:column;gap:4px}
+.step+.step{border-left:none}
+.step.cp{border:2px solid var(--navy);background:var(--infosoft)}
+.step b{font-size:13px}
+.stg{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;min-width:720px}
+.stg div{background:var(--sf);border:1px solid var(--line2);border-radius:8px;padding:8px;font-size:13px;text-align:center}
+.stg div.new{border:2px solid var(--ok)}
+.band{grid-column:1/-1;background:var(--agentsoft)!important;border-color:var(--agent)!important;text-align:left!important}
+.reg{display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:12px;align-items:center;min-width:720px}
+.col{display:flex;flex-direction:column;gap:6px}
+.init{background:var(--sf);border:2px solid var(--navy);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.init .r{background:var(--sunk);border-radius:6px;padding:6px 8px;font-size:13px}
+.wg{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.w{background:var(--sf);border:1px solid var(--line);border-radius:9px;padding:12px;display:flex;flex-direction:column;gap:6px;font-size:13.5px;min-width:0}
+.w .lbl{font-size:12px;color:var(--ink3);font-weight:600}
+.q{font-family:var(--mono);font-size:12.5px;background:var(--sunk);padding:6px 8px;border-radius:6px;color:var(--ink)}
+.src{color:var(--info);font-size:12.5px}
+.pill{display:inline-block;font-size:12px;border-radius:99px;padding:1px 8px;font-weight:600}
+.p-attn{background:var(--attnsoft);color:var(--attn)}.p-ok{background:var(--oksoft);color:var(--ok)}.p-info{background:var(--infosoft);color:var(--info)}
+.ck{display:flex;gap:6px;align-items:baseline}.ck i{font-style:normal;font-weight:700}
+.ck .y{color:var(--ok)}.ck .n{color:var(--attn)}
+@media (max-width:640px){h1{font-size:25px}}
+/* answering */
+.opt{cursor:pointer;display:grid;grid-template-columns:20px 1fr;gap:10px;text-align:left;width:100%;font:inherit;color:inherit}
+.opt:hover{border-color:var(--navy)}
+.opt:focus-visible,.ans textarea:focus-visible,.ans button:focus-visible{outline:2px solid var(--info);outline-offset:2px}
+.opt .r{width:16px;height:16px;border-radius:50%;border:2px solid var(--ink3);margin-top:3px}
+.opt[aria-pressed="true"]{border-color:var(--you);background:var(--yousoft)}
+.opt[aria-pressed="true"] .r{border-color:var(--you);background:radial-gradient(var(--you) 45%,transparent 50%)}
+.ans{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
+.ans label{font-size:13px;font-weight:600;color:var(--ink2)}
+.ans textarea{width:100%;min-height:64px;font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--sf);color:var(--ink);resize:vertical}
+.ans .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{font:inherit;cursor:pointer;border:1px solid var(--navy);background:var(--navy);color:var(--onnavy);border-radius:8px;padding:7px 14px;font-weight:600}
+.btn.ghost{background:var(--sf);color:var(--ink);border-color:var(--line2);font-weight:500}
+.st{font-size:13px;color:var(--ink3)}
+.st.ok{color:var(--ok)}
+.paused{font-size:13px;font-weight:600;color:var(--attn)}
+.summ td:first-child{white-space:nowrap}
+</style>
+<main>
+<header>
+  <div class="eb">Flight Deck · research for the hero skills · 21 November 2026</div>
+  <h1>Hero skills and the product lifecycle</h1>
+  <p>You asked for research on the product development lifecycle and where AI helps, to refine the hero skills without splitting the work into too many subskills or making it rigid. I read your product agent and harness library on the Mac mini first, then checked the stage list against the public frameworks. Five decisions follow.</p>
+  <p class="small">Pick an option on any decision and add a note if you like, then press Save. Your answers are saved with the page and I read them from there; the card in the thread works too. To comment on any part of the page, use the comment button by each decision or the page's comment mode.</p>
+</header>
+
+<section class="card">
+  <h2>What I read</h2>
+  <div class="know">
+    <p><b>Your library</b> (project-agent-and-harness, about 1,500 source notes): the skill rigidity research and its design guide, the PM jobs-to-be-done brief and jobs map, the lifecycle map across nine companies (Stripe, Ramp, Shopify, Anthropic, Atlassian, Intercom, Airbnb, Spotify, Block), the shaping and dependency agents overview, the Pathfinder component design, and your two proposals on the intent factory and on shaping in a regulated setting.</p>
+    <p><b>Public frameworks:</b> the Double Diamond, dual-track agile, Torres's continuous discovery and opportunity solution tree, Shape Up, Amazon's Working Backwards, and spec-driven development (Spec Kit, Kiro).</p>
+    <p class="small">Nearly all evidence about PM agents is first-party or anecdote. The strongest independent evidence is about how a skill treats the person's thinking, and it comes from education and decision-support studies, not product work.</p>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Seven findings</h2>
+  <ol class="f">
+    <li><b>The jobs are stable, and the frameworks agree on four kinds of thinking.</b> Understand the problem, shape a bet, commit and build, learn. Nobody doing well runs more than four or five named phases.</li>
+    <li><b>Stages overlap and loop.</b> Dual-track runs discovery and delivery at the same time. Your dependency research shows requirements reworded once their delivery path is known. Stage is a lens on the work, not a place it sits.</li>
+    <li><b>Deciding, reviewing and reporting happen at every stage.</b> They are rituals done to an artifact, fixed in form and open in content, so they are poor fits as stages.</li>
+    <li><b>A skill is a score, not a dial.</b> Real skills set their freedom step by step. Make a step rigid only where a rule must always hold, and leave the rest to the model. Fix the ritual, free the content.</li>
+    <li><b>One skill, one stance.</b> Producing an answer and helping the person think need opposite designs. Merge skills that share a stance, not ones that don't.</li>
+    <li><b>AI is best at bounded, reviewable work and worst at choosing.</b> Synthesis with quotes checked against source (Torres found about 30% of a model's quotes wrong or missing), status, first drafts plus gap review. People keep the choice; the agent makes checking cheap.</li>
+    <li><b>The unsolved seam is research to intent with the evidence still attached.</b> None of the nine companies documents it. If every skill writes evidence, open questions and decisions to the same initiative, the reasons travel with the work.</li>
+  </ol>
+</section>
+
+<!-- HS-1 -->
+<section class="card" id="hs-1">
+  <div class="eb">Decision 1 of 5 · HS-1</div>
+  <h2>What shape should the hero-skill set take?</h2>
+  <p>Today there are seven workflows, one per stage, plus the lifecycle skill you decided on (D-129). Decide and Review are stages even though they apply to anything.</p>
+  <figure class="stage"><div class="in"><div class="sets">
+    <div class="set"><h4>A. Keep seven, re-tag</h4>
+      <div class="lane"><span class="chip co">Lifecycle</span></div>
+      <div class="lane"><span class="chip arc">Problem discovery</span><span class="chip arc">Intent shaping</span><span class="chip arc">PRD to requirements</span><span class="chip arc">Requirements to dependencies</span><span class="chip arc">Decision review</span><span class="chip arc">Document review</span><span class="chip arc">Delivery status</span></div>
+      <div class="small">Eight things, all shown as stages.</div></div>
+    <div class="set pick"><h4>B. Five arcs, two moves, one companion</h4>
+      <div class="lane"><span class="chip co">Feature lifecycle</span></div>
+      <div class="lane"><span class="chip arc">Problem discovery</span><span class="chip arc">Intent shaping</span><span class="chip arc">PRD to dependencies</span><span class="chip arc">Engage owners</span><span class="chip arc">Delivery status</span></div>
+      <div class="small">PRD to dependencies has three parts you can move between: Specify, Map, Choose. Engage owners runs each team's onboarding.</div>
+      <div class="lane"><span class="chip mv">Review</span><span class="chip mv">Decide</span><span class="small">on any artifact</span></div>
+      <div class="small">Eight things.</div></div>
+    <div class="set"><h4>C. Three arcs</h4>
+      <div class="lane"><span class="chip co">Feature lifecycle</span></div>
+      <div class="lane"><span class="chip arc">Understand</span><span class="chip arc">Define</span><span class="chip arc">Deliver</span></div>
+      <div class="lane"><span class="chip mv">Review</span><span class="chip mv">Decide</span></div>
+      <div class="small">Fewest, but Define mixes shaping and cataloging.</div></div>
+  </div></div>
+  <figcaption>Blue: arcs, something a person sets out to do. Purple: moves, done to any artifact at any point. Navy: the companion that holds the initiative.</figcaption></figure>
+  <div class="opts">
+    <div class="opt"><b>Keep seven, re-tag stages</b><span>Least work and nothing moves for the scenarios, but Decide and Review stay stuck to one stage and the Library still shows eight things.</span></div>
+    <div class="opt rec-o"><b>Five arcs, two moves, one companion<span class="tag">Recommended</span></b><span>PRD to dependencies runs Specify (the catalog), Map (the board) and Choose (alternatives with scope and delivery levers, then a phased roadmap), and you can move between them. Engage owners runs each chosen team's onboarding (intake, access, due diligence and gates, terms, provisioning), with the agent's reach set step by step by who answers: self-serve, another agent, or a person. Review and Decide are offered on any artifact. Problem discovery also takes post-launch feedback, so Learn needs no new skill.</span></div>
+    <div class="opt"><b>Engage as a move, four arcs</b><span>Onboarding is offered on any chosen option instead of being its own skill. Fewer names, but long onboarding procedures have no home of their own.</span></div>
+    <div class="opt"><b>Catalog in intent shaping</b><span>Same as five arcs, but the catalog sits at the end of intent shaping and PRD to dependencies starts at Map.</span></div>
+    <div class="opt"><b>Three arcs</b><span>Fewest names, but one Define skill has to interrogate you and also produce a catalog, which the research says each do worse when mixed.</span></div>
+    <div class="opt"><b>Something else</b><span>Tell me the shape you have in mind.</span></div>
+  </div>
+  <div class="rec"><b>Why B:</b> it splits by your goal and by stance, the two lines the evidence supports. It merges only steps that share a stance and a hand-off. Your Pathfinder design keeps a fit record for every option considered and generates the delivery plan from them, so choosing belongs with mapping, and Choose uses Pathfinder's four kinds of alternative. Onboarding with other teams runs for weeks, through several owners and gates, which is a different goal and stance from choosing. Pathfinder puts it downstream "with their own skills", and your dependency research names three of its seven values there (intake, asking, gate evidence). So it gets its own arc rather than being a move.</div>
+  <p class="small">Revised 22 November after your atlas comments on where requirement mapping happens, choosing among alternatives, and onboarding with other teams.</p>
+</section>
+
+<!-- HS-2 -->
+<section class="card" id="hs-2">
+  <div class="eb">Decision 2 of 5 · HS-2</div>
+  <h2>How fixed should each skill's steps be?</h2>
+  <p>Each workflow lists its steps today, and they read as a fixed sequence. The research says to fix only what must always hold.</p>
+  <figure class="stage"><div class="in"><div class="flow">
+    <div class="step"><b>Read the sources</b><span class="small">suggested</span></div>
+    <div class="step cp"><b>Every quote checked</b><span class="small">checkpoint, always holds</span></div>
+    <div class="step"><b>Cluster into problems</b><span class="small">suggested</span></div>
+    <div class="step"><b>Weigh the evidence</b><span class="small">suggested, may be skipped</span></div>
+    <div class="step cp"><b>You choose what's worth solving</b><span class="small">checkpoint, always holds</span></div>
+    <div class="step"><b>Write the brief</b><span class="small">suggested</span></div>
+  </div></div>
+  <figcaption>Problem discovery as an example. Dashed steps are a suggested path the agent may skip or reorder. Navy boxes are checkpoints that hold at every strictness level.</figcaption></figure>
+  <div class="tw"><table>
+    <tr><th>Skill</th><th>Checkpoints that always hold</th></tr>
+    <tr><td>Problem discovery</td><td>Every problem cites a source; every quote is checked against it; you choose what is worth solving</td></tr>
+    <tr><td>Intent shaping</td><td>The agent never writes your answer; every gap has an owner or is marked open; you say when the target depth is reached</td></tr>
+    <tr><td>PRD to dependencies</td><td>Every requirement traces to a line; every dependency has evidence or is listed "could not find"; asks are drafted, a person sends</td></tr>
+    <tr><td>Delivery status</td><td>Every date change names its cause and source; the update says what it asks of the reader</td></tr>
+    <tr><td>Review, Decide</td><td>Every finding points to a line and says who raised it; you decide; a decision supersedes, never edits, an earlier one</td></tr>
+  </table></div>
+  <div class="opts">
+    <div class="opt"><b>Keep the fixed step list</b><span>Predictable demos, but every run walks every step even when you bring half the work already done.</span></div>
+    <div class="opt rec-o"><b>Suggested path plus checkpoints<span class="tag">Recommended</span></b><span>Steps become a suggested path; three or so checkpoints per skill always hold and the scenario checks test their structural half.</span></div>
+    <div class="opt"><b>No steps at all</b><span>Most flexible, but the progress strip has nothing to show and the honesty rules have no fixed place to fire.</span></div>
+    <div class="opt"><b>Something else</b><span>Tell me how much should be fixed.</span></div>
+  </div>
+  <div class="rec"><b>Why:</b> this is how the good skills you collected work (fix the ritual, free the content), and it fits your strictness levels: light touch skips more suggested steps, by the book walks them all, and the checkpoints never move.</div>
+</section>
+
+<!-- HS-3 -->
+<section class="card" id="hs-3">
+  <div class="eb">Decision 3 of 5 · HS-3</div>
+  <h2>Which stages, and are they gates?</h2>
+  <p>The lifecycle file lists Discover, Shape, Specify, Map, Decide, Deliver. Nothing after delivery, and Decide sits as one stage though it happens at all of them.</p>
+  <figure class="stage"><div class="in"><div class="stg">
+    <div>Discover</div><div>Shape</div><div>Specify</div><div>Map</div><div>Deliver</div><div class="new">Learn<br><span class="small">new, loops to Discover</span></div>
+    <div class="band">Review and Decide run across every stage, offered on whatever artifact is open</div>
+  </div></div>
+  <figcaption>Green: the one new stage. A skill, an artifact or an initiative can carry several stage tags; nothing waits on a stage.</figcaption></figure>
+  <div class="opts">
+    <div class="opt rec-o"><b>Six tags, Decide becomes a move<span class="tag">Recommended</span></b><span>Discover, Shape, Specify, Map, Deliver, Learn, as loose tags; a skill may serve several (problem discovery serves Discover and Learn).</span></div>
+    <div class="opt"><b>Keep today's six</b><span>No change, but nothing covers post-launch learning, the job with the best evidence that agents help.</span></div>
+    <div class="opt"><b>Four broad stages</b><span>Understand, Shape, Build, Learn: simpler, but Specify and Map, the core of your PRD example, lose their own place on the strip.</span></div>
+    <div class="opt"><b>Something else</b><span>Tell me the stage list you want.</span></div>
+  </div>
+  <div class="rec"><b>Why:</b> dual-track and continuous discovery both run stages at once, so tags fit how work happens. The data model thread already keeps stage as a loose tag, so this list can change later without changing the model.</div>
+</section>
+
+<!-- HS-4 -->
+<section class="card" id="hs-4">
+  <div class="eb">Decision 4 of 5 · HS-4</div>
+  <h2>Where do evidence, open questions, decisions and readiness live?</h2>
+  <p>Each skill keeps its own dataset today, so a decision made while shaping is invisible to the dependency board. This is the seam none of the nine companies has solved.</p>
+  <figure class="stage"><div class="in"><div class="reg">
+    <div class="col"><span class="chip arc">Problem discovery</span><span class="chip arc">Intent shaping</span><span class="chip mv">Review</span></div>
+    <div class="init"><b>Initiative: card offer for under-18s</b>
+      <div class="r"><b>Evidence</b> · sources with links and checked quotes</div>
+      <div class="r"><b>Open</b> · questions and assumptions, owner, blocking flag</div>
+      <div class="r"><b>Decisions</b> · numbered, reason attached, superseded not edited</div>
+      <div class="r"><b>Ready</b> · pass or fail checks with the reason</div></div>
+    <div class="col"><span class="chip arc">PRD to dependencies</span><span class="chip arc">Delivery status</span><span class="chip mv">Decide</span></div>
+  </div></div>
+  <figcaption>Every skill reads and appends to the same four registers. Skill datasets (problems, requirements, milestones) keep their own records and link to these by id. Example initiative is notional.</figcaption></figure>
+  <div class="opts">
+    <div class="opt rec-o"><b>On the initiative, shared<span class="tag">Recommended</span></b><span>One place for the why; any skill, person or agent sees what is open and decided. The data model thread designs the shape.</span></div>
+    <div class="opt"><b>In each skill's dataset</b><span>No change, but the reasons stay behind in the skill that made them.</span></div>
+    <div class="opt"><b>Only decisions shared</b><span>A smaller step: one shared decision log, while evidence and open questions stay per skill.</span></div>
+    <div class="opt"><b>Something else</b><span>Tell me where they should live.</span></div>
+  </div>
+  <div class="rec"><b>Why:</b> these four are the checkable layer the rigidity research says to make deterministic, and they are what your Pathfinder design keys by stable id. Sharing them is what lets a small skill set feel like one piece of work.</div>
+</section>
+
+<!-- HS-5 -->
+<section class="card" id="hs-5">
+  <div class="eb">Decision 5 of 5 · HS-5 · <span class="paused">paused while the template redesign is idled; answer whenever you like</span></div>
+  <h2>Which widgets and templates come first?</h2>
+  <p>Five widgets would be shared by every skill because they show the shared registers. Drawn here with notional content.</p>
+  <div class="wg">
+    <div class="w"><span class="lbl">Evidence chip</span><span class="q">"I gave up at the ID upload step"</span><span class="src">interview-07.md, line 42 · quote checked</span></div>
+    <div class="w"><span class="lbl">Open-question card</span><b>Who gives consent for a card user under 18?</b><span><span class="pill p-attn">Blocking</span> Owner: Risk review</span></div>
+    <div class="w"><span class="lbl">Decision record</span><b>D3 · Phase one ships without pre-approval</b><span class="small">Reason: a softer offer needs no eligibility call. Supersedes D1.</span></div>
+    <div class="w"><span class="lbl">Ready checklist</span><span class="ck"><i class="y">✓</i> Every requirement traces to a line</span><span class="ck"><i class="y">✓</i> Owners named on open questions</span><span class="ck"><i class="n">✗</i> Two dependencies without evidence</span></div>
+    <div class="w"><span class="lbl">Initiative header</span><b>Card offer for under-18s</b><span><span class="pill p-info">Shape</span> <span class="pill p-info">Map</span> · 6 linked artifacts</span></div>
+  </div>
+  <h3>The analysis-of-alternatives worksheet</h3>
+  <p>One dependency or the whole board. Flip a lever and the dates and phases redraw at once, so you feel the trade-off. Example data is notional.</p>
+  <figure class="stage"><div class="in"><div class="sets">
+    <div class="set"><h4>Option A · Cards platform</h4><span class="small">Lead time 6 weeks · low effort · needs an eligibility call</span><span class="src">cards-platform card, onboarding page</span><span class="small">Would change my mind: if intake takes over 8 weeks</span></div>
+    <div class="set pick"><h4>Option B · Reword to "invited"</h4><span class="small">Scope lever · no eligibility call · ships in phase one</span><span class="src">Decision D3 draft · the agent's recommendation</span><span class="small">Would change my mind: if marketing needs "pre-approved"</span></div>
+    <div class="set"><h4>Option C · Build in-house</h4><span class="small">Lead time 14 weeks · high effort · full control</span><span class="src">no evidence yet</span><span class="small">Would change my mind: a reusable decisioning service</span></div>
+  </div>
+  <div class="lane" style="margin-top:12px"><span class="chip arc">Scope: reword</span><span class="chip st">Scope: move to phase two</span><span class="chip st">Scope: drop</span><span class="chip st">Delivery: platform A</span><span class="chip st">Delivery: build</span><span class="chip st">Delivery: resequence</span></div>
+  <div class="stg" style="margin-top:12px;grid-template-columns:repeat(3,1fr)"><div>Now · 4 requirements · 12 Jan</div><div>Next · 3 requirements · 2 Mar</div><div>Later · 1 requirement</div></div></div>
+  <figcaption>Option cards with evidence, lever toggles (the scope lever is on) and the phase lane with projected dates. Commit writes your choice to the Decisions register, and a rejected option keeps its reason. A live sketch is on the Skills and Templates Atlas.</figcaption></figure>
+  <div class="tw"><table>
+    <tr><th>Skill</th><th>Add to what it has</th><th>Worksheet templates</th></tr>
+    <tr><td>Problem discovery</td><td>Evidence chip on every quote; a post-launch feedback focus</td><td>Problem brief (markdown); problem list (data)</td></tr>
+    <tr><td>Intent shaping</td><td>One-question card with the agent's guess; pre-mortem card; assumption list</td><td>Intent brief or one-pager (markdown); shaping map (data)</td></tr>
+    <tr><td>PRD to dependencies</td><td>Trace-to-line on each requirement; drafted-ask card; ready checklist at the hand-off</td><td>PRD or spec (markdown); catalog, board (data); asks (markdown)</td></tr>
+    <tr><td>Delivery status</td><td>Cause-of-change chip; audience switch on the update</td><td>Status update (markdown); milestone plan (data)</td></tr>
+    <tr><td>Review, Decide</td><td>Open on any artifact kind and any open question</td><td>Review findings, decision log (data)</td></tr>
+    <tr><td>Choose</td><td>The alternatives worksheet above</td><td>Alternatives (data, shared with delivery status's ways to recover); phased roadmap (data)</td></tr>
+    <tr><td>Engage owners</td><td>An onboarding track per team (intake, access, due diligence and gates, terms, provisioning, integration ready), each step with who answers, its owner, state, lead time and evidence; a gate evidence pack</td><td>Asks and intake drafts (markdown); onboarding track (data)</td></tr>
+  </table></div>
+  <div class="opts">
+    <div class="opt rec-o"><b>Shared widgets and the alternatives worksheet first<span class="tag">Recommended</span></b><span>Build the five shared widgets and the alternatives worksheet in the view kit, then each skill's additions. Every skill gets better at once, and the worksheet is the showpiece.</span></div>
+    <div class="opt"><b>One skill end to end first</b><span>Take intent shaping all the way (its widgets and templates) as the reference, then copy the pattern.</span></div>
+    <div class="opt"><b>Templates before widgets</b><span>Settle the markdown and data templates with the data model thread, then draw widgets over them.</span></div>
+    <div class="opt"><b>Something else</b><span>Tell me what should come first.</span></div>
+  </div>
+  <div class="rec"><b>Why:</b> the evidence chip and the open-question card carry the two failure fixes the research points to most (checked quotes, an owner on every open question), and they appear in every skill.</div>
+</section>
+
+<section class="card">
+  <h2>If you accept these</h2>
+  <div id="summary"></div>
+  <p>Nothing is built yet. The follow-up work would be: merge the two requirement workflows with both old names kept so scenarios still run; add checkpoints to the workflow file and to the scenario check; let a workflow carry several stages; move Decide out of the stage list and add Learn; offer Review and Decide on every artifact; build the five shared widgets; and give the evals a check that intent shaping changed your answers rather than writing them. The full write-up is in the repo at docs/product/lifecycle-research.md.</p>
+</section>
+</main>
+<script>
+(()=>{
+const KEY="hs-walkthrough-answers";
+let ANS={};try{ANS=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){ANS={}}
+const saveLocal=()=>{try{localStorage.setItem(KEY,JSON.stringify(ANS))}catch(e){}};
+let db=null,comments=null;
+const secs=[...document.querySelectorAll('section[id^="hs-"]')];
+const title=s=>s.querySelector("h2").textContent.trim();
+const recOf=s=>{const o=s.querySelector(".opt.rec-o b");return o?o.childNodes[0].textContent.trim():""};
+function labelOf(o){return o.querySelector("b").childNodes[0].textContent.trim()}
+secs.forEach(s=>{
+  const id=s.id;
+  const opts=[...s.querySelectorAll(".opts .opt")];
+  opts.forEach((d,i)=>{
+    const b=document.createElement("button");b.type="button";b.className=d.className;b.dataset.i=i;
+    b.setAttribute("aria-pressed","false");
+    b.innerHTML='<span class="r"></span><span>'+d.innerHTML+'</span>';
+    d.replaceWith(b);
+    b.addEventListener("click",()=>{ANS[id]={...(ANS[id]||{}),pick:labelOf(b),idx:i,saved:false};paint(s);});
+  });
+  const box=document.createElement("div");box.className="ans";
+  box.innerHTML='<label for="note-'+id+'">Your note (optional)</label><textarea id="note-'+id+'" placeholder="Anything to add, change or ask"></textarea><div class="row"><button type="button" class="btn sv">Save answer</button><button type="button" class="btn ghost cm" hidden>Comment on this decision</button><span class="st" aria-live="polite"></span></div>';
+  s.querySelector(".opts").after(box);
+  const ta=box.querySelector("textarea");
+  ta.addEventListener("input",()=>{ANS[id]={...(ANS[id]||{}),note:ta.value,saved:false};const st=box.querySelector(".st");st.className="st";st.textContent="Not saved yet";});
+  box.querySelector(".sv").addEventListener("click",()=>save(s));
+  box.querySelector(".cm").addEventListener("click",async()=>{if(!comments)return;try{await comments.openComposer({element:s.querySelector("h2")})}catch(e){}});
+  paint(s);
+});
+function paint(s){
+  const a=ANS[s.id]||{};
+  s.querySelectorAll(".opts .opt").forEach(b=>b.setAttribute("aria-pressed",String(a.idx!==undefined&&+b.dataset.i===a.idx)));
+  const ta=s.querySelector(".ans textarea");if(ta&&document.activeElement!==ta)ta.value=a.note||"";
+  const st=s.querySelector(".ans .st");
+  if(a.saved){st.className="st ok";st.textContent="Saved"+(a.at?" "+new Date(a.at).toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"");}
+  else if(a.pick||a.note){st.className="st";st.textContent="Not saved yet";}
+  else{st.className="st";st.textContent="";}
+  summary();
+}
+async function save(s){
+  const id=s.id,a=ANS[id]||{};const st=s.querySelector(".ans .st");
+  if(!a.pick&&!a.note){st.className="st";st.textContent="Pick an option or write a note first";return}
+  const rec={pick:a.pick||"",note:a.note||"",title:title(s),recommended:recOf(s),at:new Date().toISOString()};
+  if(!db){ANS[id]={...a,at:rec.at};saveLocal();st.className="st";st.textContent="Kept in this browser only; saving to the page isn't available here, so tell me in the thread too";return}
+  st.className="st";st.textContent="Saving…";
+  try{await db.collection("answers").doc(id).set(rec);ANS[id]={...a,saved:true,at:rec.at};saveLocal();paint(s)}
+  catch(e){st.className="st";st.textContent="Couldn't save ("+((e&&e.code)||"error")+"). Your pick is kept here; try again or tell me in the thread"}
+}
+function summary(){
+  const el=document.getElementById("summary");if(!el)return;
+  const rows=secs.map(s=>{const a=ANS[s.id]||{};return '<tr><td>'+s.id.toUpperCase()+'</td><td>'+esc(title(s))+'</td><td>'+(a.pick?esc(a.pick):'<span class="small">not answered</span>')+(a.note?'<div class="small">'+esc(a.note)+'</div>':'')+'</td><td>'+(a.saved?'Saved':(a.pick||a.note?'Not saved':''))+'</td></tr>'}).join("");
+  el.innerHTML='<h3>Your answers</h3><div class="tw"><table class="summ"><tr><th>Label</th><th>Decision</th><th>Your answer</th><th>State</th></tr>'+rows+'</table></div>';
+}
+function esc(t){const d=document.createElement("div");d.textContent=t;return d.innerHTML}
+(async()=>{
+  try{comments=await window.claude?.use?.("comments")}catch(e){comments=null}
+  if(comments)document.querySelectorAll(".ans .cm").forEach(b=>b.hidden=false);
+})();
+(async()=>{
+  try{db=await window.claude?.use?.("db")}catch(e){db=null}
+  if(!db)return;
+  try{const snap=await db.collection("answers").get();
+    snap.docs.forEach(x=>{const v=x.data();if(v&&!(ANS[x.id]&&ANS[x.id].saved===false)){const s=secs.find(q=>q.id===x.id);const opts=s?[...s.querySelectorAll(".opts .opt")]:[];const idx=opts.findIndex(o=>labelOf(o)===v.pick);ANS[x.id]={pick:v.pick,note:v.note,idx:idx>=0?idx:undefined,saved:true,at:v.at}}});
+    saveLocal();secs.forEach(paint);
+  }catch(e){}
+})();
+})();
+</script>

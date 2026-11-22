@@ -1028,6 +1028,76 @@ different authors, including ones built in the Hangar, extend one shared
 model; without a contract the first two to touch the same initiative would
 overwrite each other.*
 
+## Hero skills and the lifecycle
+
+Spec: [lifecycle-research.md](lifecycle-research.md) and
+[skill-taxonomy.md](skill-taxonomy.md). Geoff answered HS-1 to HS-5 on the
+walkthrough on 22 November (archived in
+[decision-artifacts](../decision-artifacts/2026-11-21-hero-skills-and-lifecycle/)).
+
+**D-148 · 2026-11-22 · Geoff.** The hero-skill set is five arcs, two moves
+and one companion. Arcs: problem discovery, intent shaping, PRD to
+dependencies, Engage owners and Deliver. Moves, offered on any artifact:
+Review and Decide. Companion: the feature lifecycle skill (D-129). PRD to
+dependencies is the multi-stage arc: Specify (the catalog), Map (the board)
+and Choose (analysis of alternatives with scope and delivery levers, then a
+phased roadmap), and the person moves between them freely. The delivery arc
+is called **Deliver**, not delivery status: status updates are one part of
+it, with the rest of delivery work beside them. Engage owners runs each
+chosen team's onboarding, with the agent's reach set per step by who answers
+(self-serve, another agent, a person). *It splits skills by the person's goal
+and by the agent's stance, the two lines the research supports, and merges
+only steps that share both; Geoff: "PRD to dependencies will be complex and
+multi stage, including the analysis of alternatives", and delivery is more
+than statusing.*
+
+**D-149 · 2026-11-22 · Geoff.** Each skill has a suggested path plus a few
+checkpoints that always hold, never a fixed sequence. Completing every
+component matters more than the order: the person can flip between a
+skill's components, leave and come back, work on another lifecycle phase in
+between, and run the same initiative through every phase again in repeated
+loops. *Fix the ritual, free the content; Geoff: "completion of all
+components matters more to me than enforcing a sequence".*
+
+**D-150 · 2026-11-22 · Geoff asked, Claude chose.** Discover and Learn are
+one stage, Discover: post-launch feedback is a source for problem discovery,
+not a stage of its own. The stage list aligns with the arcs of D-148, one tag
+per arc: Discover, Shape, Specify, Engage, Deliver. Specify covers PRD to
+dependencies' three parts (Specify, Map, Choose); Decide leaves the list and
+becomes a move. Stages stay tags, never gates (D-141), and Deliver loops back
+to Discover. Refines the stage list in `lifecycle.json`. *Geoff: "Discover and
+learn should be the same thing ... the answer here needs to align to the
+answer to decision 1". The one job Learn named, checking shipped outcomes
+against the intent's success measures, is kept as a post-launch focus of
+problem discovery so it is not lost.*
+
+**D-151 · 2026-11-22 · Geoff.** Evidence, open questions, decisions and
+ready checks live on the initiative, shared by every skill: the four
+registers built as `pa register` (D-141, D-142). Skill datasets keep their
+own records and link to these by id. *One place for the why: a decision made
+while shaping must be visible to the dependency board.*
+
+**D-152 · 2026-11-22 · Geoff.** The first widgets and templates to build are
+the five shared ones (evidence chip, open-question card, decision record,
+ready checklist, initiative header) and the analysis-of-alternatives
+worksheet, then the per-skill additions. The Decide move and the worksheet's
+commit step use the reusable decision brief skill being built in its own
+thread, so every complex decision has one layout. The template redesign
+stays parked; this sets the order, not the look. *They show the shared
+registers every skill uses, and Geoff finds the alternatives worksheet the
+most interesting piece; one brief layout avoids each skill reinventing it.*
+
+**D-153 · 2026-11-22 · Geoff.** A workflow may say what kind of skill it is
+with one optional `tier` field in `workflow.json`: companion, arc, move or
+kit, as defined in [skill-taxonomy.md](skill-taxonomy.md). The app reads it
+to place the skill (arcs in the Library, moves as launchers on artifacts,
+companion and kit out of sight). It is kept loose: a workflow without it
+counts as an arc, an unknown value is a warning in `pa check`, never a
+failure, and nothing else is typed by it. Answers HS-6. *Geoff: "as long as
+the terms are defined somewhere; but don't make things brittle with over
+typing". Without the field the app guesses, and a move built in the Hangar
+would show as a Library card.*
+
 ## Backfilled
 
 Decisions Geoff made on 20 and 21 November that were acted on but never

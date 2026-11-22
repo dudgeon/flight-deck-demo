@@ -33,6 +33,10 @@ builder mode (`/hangar`). A **workflow** is a kind of work (a skill folder
 with a `workflow.json`); a **scenario** is one demo story that runs a
 workflow (`workspace/scenarios/<id>/`). A **participant** is another agent or
 person in the conversation, from the roster in `workspace/participants/`.
+Each skill is one of four **tiers**: an **arc** (something a person sets out
+to do, shown in the Library), a **move** (done to any artifact: Review,
+Decide), the **companion** (the feature lifecycle skill) or **kit** (tools
+other skills use). See `docs/product/skill-taxonomy.md` (D-148, D-153).
 
 ## Repository layout
 

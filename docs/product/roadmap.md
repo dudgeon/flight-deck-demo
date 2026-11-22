@@ -390,6 +390,42 @@ strictly as the moment needs, measured by evals rather than argued.
 - **Read.** [director-coordination.md](director-coordination.md); walkthrough
   at https://claude.ai/artifact/La4Qa5THk5JhwQBQGcVY7d.
 
+## Hero-skill set and the lifecycle
+
+Refine the hero skills into a small, flexible set (Geoff: don't subdivide
+the process into too many subskills, don't make it rigid), with the widgets
+and worksheet templates each needs.
+
+- **Done.** Research (2026-11-21) from Geoff's product agent and harness
+  library and the public lifecycle frameworks, with a recommendation, revised
+  2026-11-22 after Geoff's atlas comments: five arcs (problem discovery,
+  intent shaping, PRD to dependencies running Specify, Map and Choose,
+  engage owners for onboarding with other teams, delivery status, now Deliver), two
+  moves on any artifact (review, decide) and the lifecycle companion; a suggested path with fixed checkpoints per skill; stages as
+  tags with Learn added and Decide made a move; evidence, open questions,
+  decisions and readiness shared on the initiative; five shared widgets.
+- **Decided 2026-11-22.** D-148 to D-152: five arcs (problem discovery,
+  intent shaping, PRD to dependencies, Engage owners, Deliver), the Review
+  and Decide moves and the lifecycle companion; suggested paths with
+  checkpoints and free movement between components and phases; stages
+  Discover, Shape, Specify, Engage, Deliver; the shared registers; the
+  shared widgets and the alternatives worksheet first, using the decision
+  brief skill. Nothing built yet; the template redesign stays parked.
+- **Decided.** D-153: an optional `tier` field in `workflow.json`.
+- **Open.** HS-7 and HS-8 (taxonomy), put to Geoff one at a time.
+- **Taxonomy.** [skill-taxonomy.md](skill-taxonomy.md): four tiers
+  (companion, arc, move, kit), a card per skill, how work moves through the
+  initiative registers, coverage of the ten PM jobs, and a four-question rule
+  for adding a hero skill.
+- **Next, if accepted.** Merge the two requirement workflows (old ids kept),
+  `checkpoints` in `workflow.json` and `pa check`, a stage list on routing,
+  Learn in `lifecycle.json`, Review and Decide as launchers on every
+  artifact, the shared widgets in the view kit. The registers' shape comes
+  from the template and initiative data model work.
+- **Read.** [lifecycle-research.md](lifecycle-research.md); walkthrough at
+  https://claude.ai/artifact/P3hZWy2Ht6es1KCxMDLTEv (offline copy in
+  `docs/decision-artifacts/2026-11-21-hero-skills-and-lifecycle/`).
+
 ## Usage logging
 
 Geoff wants to understand how the whole platform is used, mostly while
