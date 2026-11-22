@@ -414,7 +414,7 @@ and worksheet templates each needs.
   shared widgets and the alternatives worksheet first, using the decision
   brief skill. Nothing built yet; the template redesign stays parked.
 - **Decided.** D-153: an optional `tier` field in `workflow.json`.
-- **Open.** HS-7 and HS-8 (taxonomy), put to Geoff one at a time.
+- **Settled without asking.** HS-7 (the add-a-skill rule is advice, never a gate) and HS-8 (launch goes in Deliver when a demo needs it): Claude's calls, easy to change.
 - **Taxonomy.** [skill-taxonomy.md](skill-taxonomy.md): four tiers
   (companion, arc, move, kit), a card per skill, how work moves through the
   initiative registers, coverage of the ten PM jobs, and a four-question rule
