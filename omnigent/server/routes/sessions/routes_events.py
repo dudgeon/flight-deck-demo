@@ -3463,6 +3463,19 @@ def register_events_routes(
                 _tunnel_registry,
                 conversation_store,
             )
+            if healed_client is None:
+                # omnigent-slim: after an app restart no ancestor runner is up
+                # until the top-level session gets a message, so a thread the
+                # person steps into failed with runner_failed_to_start. Wake
+                # the root's runner on its host (as a side chat wakes its
+                # source's), then heal the child onto it.
+                healed_client = await _wake_root_runner_for_subagent(
+                    conv,
+                    app_state=request.app.state,
+                    conversation_store=conversation_store,
+                    runner_router=runner_router,
+                    tunnel_registry=_tunnel_registry,
+                )
             if healed_client is not None:
                 runner_client = healed_client
                 conv = await asyncio.to_thread(conversation_store.get_conversation, session_id)
@@ -4636,3 +4649,47 @@ def register_events_routes(
         except Exception:
             pass
         return ConversationDeleted(id=session_id)
+
+
+async def _wake_root_runner_for_subagent(
+    child: Any,
+    *,
+    app_state: Any,
+    conversation_store: Any,
+    runner_router: Any,
+    tunnel_registry: Any,
+) -> Any:
+    """
+    omnigent-slim: bring a sub-agent's root runner back, then heal onto it.
+
+    A sub-agent has no host of its own; it runs on its root session's runner.
+    When that runner is gone (the app restarted) and nothing has woken it yet,
+    launch it on the root's host with :func:`ensure_runner_connected` and
+    re-run the ancestor heal. Returns the live client, or ``None`` when the
+    root cannot be woken (no host, host offline), leaving the caller's
+    existing failure path unchanged.
+    """
+    root_id = child.root_conversation_id or child.parent_conversation_id
+    if not root_id or root_id == child.id:
+        return None
+    root = await asyncio.to_thread(conversation_store.get_conversation, root_id)
+    if root is None or root.host_id is None:
+        return None
+    try:
+        root_client, _root = await ensure_runner_connected(
+            session_id=root.id,
+            conv=root,
+            app_state=app_state,
+            conversation_store=conversation_store,
+            runner_router=runner_router,
+        )
+    except OmnigentError:
+        return None
+    if root_client is None:
+        return None
+    return await _heal_subagent_runner_binding_via_parent(
+        child,
+        runner_router,
+        tunnel_registry,
+        conversation_store,
+    )
