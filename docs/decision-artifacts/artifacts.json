@@ -308,7 +308,7 @@
    "date": "2026-11-22",
    "title": "Bolder Template Explorations",
    "kind": "Design exploration",
-   "about": "Six hero-skill widgets and views, each with two bolder directions (instruments, maps) on real scenario data, and which design rules they would bend",
+   "about": "Six hero-skill widgets and views, each with two bolder directions (instruments, maps) on real scenario data, and which design rules they would bend. Round two: Geoff liked 3B (trade-off grid) and 4A (heads-up readout) only, so their readout-and-meter style is applied to the dependency board, intent map, delivery plan and review findings.",
    "decisions": "None yet",
    "status": "Open for feedback"
   }
