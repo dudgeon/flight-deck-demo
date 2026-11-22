@@ -1,8 +1,7 @@
 # Initiatives, artifacts and templates: the data model
 
-Status: **the uncontroversial parts are built (D-138 to D-142); two questions
-are with Geoff (IN-1, IN-3), and what is built follows the recommended answer
-to each.** Raised by Geoff on 2026-11-21:
+Status: **built (D-138 to D-142, D-155, D-156); nothing open.** IN-1 and IN-3
+were settled as loose, changeable build choices rather than put to Geoff. Raised by Geoff on 2026-11-21:
 
 > We also need a data model for the templates; some templates will simply be
 > markdown sections/frontmatter, others will be json plus rendering/styling,
@@ -46,7 +45,7 @@ There is still no store of our own: the registry is read from the files on
 request, as the Connections card is (D-121), so it works from a ZIP and can be
 replaced by a service later.
 
-## Initiatives (D-138; IN-1 recommended answer)
+## Initiatives (D-138, D-155)
 
 An **initiative** is a project with a goal (D-97). It is the same thing, not a
 new layer: the card in `projects/<key>.json` gains two fields the first time
@@ -121,7 +120,7 @@ ones, as workflows do, D-72). A workflow's `work_products` may name a
 section whose heading is not in the file, an owner or stage that is not a
 lifecycle stage, a broken view spec, and anything loaded from the web.
 
-## The shared representation of intent (IN-3 recommended answer)
+## The shared representation of intent (D-156)
 
 Following the research thread: documents are the **judgment layer**, and a
 few shared lists are the **checkable layer** every skill reads and adds to.
@@ -229,15 +228,14 @@ replace `artifact_registry()` without changing a stamp.
 | D-141 | An artifact may be loose (no initiative); stages are a list of tags, never a gate; stage state is derived from runs and artifacts | The research thread: discovery and delivery run at once and work loops back. Stand-alone use of a hero skill must still work |
 | D-142 | The hero skill contract above: find, read, stamp, register, own sections, extend in your own space; decisions are superseded, never edited, and `pa set` enforces it | Skills from different authors extend one shared model without stepping on each other |
 
-## Open questions for Geoff
+## Settled without asking
 
-| # | Question | Recommended | Built as |
-|---|---|---|---|
-| IN-1 | Is an initiative the same thing as a project with a goal, or a separate layer above projects? | The same thing: one record, the card gains an id | Recommended |
-| IN-3 | What is the shared representation of intent? | A short intent document with stage-owned sections plus four shared registers (evidence, questions, decisions, ready checks) | Recommended |
+| # | Question | Settled as |
+|---|---|---|
+| IN-1 | Is an initiative the same thing as a project with a goal? | Yes, one record (D-155). If one initiative must span projects, add a `parent` key |
+| IN-3 | What is the shared representation of intent? | The intent document plus four registers (D-156). Both are templates, so either can change shape freely |
 
-(IN-2, where the tie from artifact to initiative lives, was settled as a build
-choice, D-140.)
+(IN-2, where the tie from artifact to initiative lives, was D-140.)
 
 ## Not built yet
 

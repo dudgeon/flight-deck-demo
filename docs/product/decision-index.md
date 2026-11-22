@@ -209,9 +209,8 @@ decided but nothing is built yet.
 
 ## Initiatives, artifacts and templates
 
-Spec: [initiatives-and-templates.md](initiatives-and-templates.md). Open:
-IN-1 (is an initiative the same as a goal project) and IN-3 (the shared
-representation of intent), both built as recommended until answered.
+Spec: [initiatives-and-templates.md](initiatives-and-templates.md). Nothing
+open: IN-1 and IN-3 were settled as build choices (D-155, D-156).
 
 | D | Decision | Who | Status |
 |---|---|---|---|
@@ -220,6 +219,8 @@ representation of intent), both built as recommended until answered.
 | D-140 | An artifact's tie to its initiative is a stamp in the file; the registry is read from files; the person's files are listed, not written into | Claude | Built |
 | D-141 | Loose artifacts allowed; stages are tags, never gates; stage state is derived | Claude | Built |
 | D-142 | Hero skill contract: find, read, stamp, register, own sections, extend in your own space; decisions superseded, never edited | Claude | Built in `pa`; no hero skill follows it yet |
+| D-155 | An initiative is a project with a goal: one record (IN-1); changeable | Claude | Built |
+| D-156 | Shared intent = intent document plus four registers (IN-3); changeable | Claude | Built |
 
 ## Hero skills and the lifecycle
 

@@ -285,8 +285,8 @@
    "title": "Initiatives and templates",
    "kind": "Decision walkthrough",
    "about": "The data model for initiatives, artifact stamps, templates and shared registers; IN-1 and IN-3",
-   "decisions": "D-138 to D-142",
-   "status": "Open (IN-1, IN-3)"
+   "decisions": "D-138 to D-142, D-155, D-156",
+   "status": "Settled without asking"
   },
   {
    "id": "P3hZWy2Ht6es1KCxMDLTEv",

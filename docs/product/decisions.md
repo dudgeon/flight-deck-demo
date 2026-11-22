@@ -974,9 +974,9 @@ can come later without changing the log.*
 Spec: [initiatives-and-templates.md](initiatives-and-templates.md). Geoff
 asked on 2026-11-21 for a template data model and an initiative registry with
 ids that tie artifacts back to a shared representation of the intent, run by
-the project setup skill and extended by the hero skills. Two questions (IN-1,
-IN-3) are with him; these are the choices made while building, following the
-recommended answer to each.
+the project setup skill and extended by the hero skills. The two questions this raised (IN-1, IN-3)
+were settled as build choices, D-155 and D-156; these are the choices made
+while building.
 
 **D-138 · 2026-11-21 · Claude.** An initiative is identified by `id`, `ini_`
 followed by a bare 32-character UUID, and `key`, the slug its card file is
@@ -1027,6 +1027,22 @@ superseded, never edited, and `pa set` refuses to edit one. *Skills from
 different authors, including ones built in the Hangar, extend one shared
 model; without a contract the first two to touch the same initiative would
 overwrite each other.*
+
+
+**D-155 · 2026-11-22 · Claude.** An initiative is a project with a goal: one
+record, the card that `pa project` writes, with no separate layer above it.
+Settles IN-1 without asking. Easy to change: if one initiative ever has to
+span several projects, add a `parent` key to the card. *Geoff asked not to be
+asked low-stakes questions (2026-11-22); this reuses D-97 and adds nothing
+for a PM to learn.*
+
+**D-156 · 2026-11-22 · Claude.** The shared representation of an
+initiative's intent is its intent document (judgment, sections owned by
+stages) plus four registers (evidence, open questions, decisions, ready
+checks). Settles IN-3 without asking. Easy to change: both are templates,
+so their sections or record types can change without touching a command.
+*It is what the lifecycle research found missing (evidence still attached
+from research to intent), and Geoff asked for loose calls over questions.*
 
 ## Hero skills and the lifecycle
 

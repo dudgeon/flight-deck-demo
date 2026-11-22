@@ -337,9 +337,8 @@ every hero skill can read and extend it.
   template per work product, use the registers); write the lifecycle skill
   (D-129) on top of it; show the registry and registers on the project page;
   a Templates shelf in the Hangar.
-- **Open.** IN-1 (is an initiative the same as a goal project) and IN-3 (the
-  shared representation of intent), with Geoff. The stage list may change
-  with the lifecycle research.
+- **Open.** Nothing. IN-1 and IN-3 were settled as changeable build choices
+  (D-155, D-156).
 - **Read.** [initiatives-and-templates.md](initiatives-and-templates.md).
 
 ---
