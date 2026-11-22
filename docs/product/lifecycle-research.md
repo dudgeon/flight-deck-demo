@@ -200,7 +200,12 @@ travels between skills and people (finding 7):
 Skill datasets keep their own records (problems, areas, requirements,
 dependencies, milestones) and link to register entries by id. The registers
 are the checkable layer; the documents are the judgment layer. The data
-model thread owns the shape; this note owns the reason.
+model work owns the shape; this note owns the reason. That work (PR 42,
+[initiatives-and-templates.md](initiatives-and-templates.md)) builds the four
+registers this way through `pa register`, and makes stages a list on every
+artifact, never a gate (D-141). With it, dropping Decide and adding Learn is a
+one-line change to `lifecycle.json`, plus a "What we learned" section in the
+intent template owned by Learn.
 
 ## Widgets and worksheet templates per skill (HS-5)
 
