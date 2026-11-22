@@ -1,16 +1,16 @@
 {
   "id": "future-of-product",
-  "title": "Fitting Flight Deck to the future-of-product loop",
+  "title": "What Flight Deck should do now, as a step toward the future loop",
   "for": "Geoff",
   "from": "Flight Deck and the future-of-product research, together",
   "date": "22 November 2026",
-  "description": "Three choices from mapping the future-of-product truths and moves against Flight Deck's skills: line or loop, what to build next, and whether a scenario becomes a demo and its evals.",
+  "description": "Four choices about what Flight Deck does for a product person today, each chosen so it also moves toward the future-of-product loop.",
   "why": [
-    "You asked for Flight Deck to line up with the future-of-product work. The research owns the truths, the eleven moves and the scenarios; Flight Deck owns the skills, harness, templates and evals. **We mapped one against the other** ([mapping](https://github.com/dudgeon/flight-deck-demo/blob/claude/vision-mapping/docs/vision/mapping.md)), and both sides agreed this brief.",
-    "Most of it settles itself: what a person's workspace can do is ours, and building, checking, releasing and steward agents belong to the enterprise's platforms. Three choices change the goal on one side or the other, so they're yours."
+    "You asked for Flight Deck and the future-of-product work to line up. They work on different horizons: the research is a vision of where product work is going, and Flight Deck has to be useful to a product person today. So this is **not a scorecard** of truths covered. Each choice asks what helps someone now and also takes a step toward the loop. Things that only make sense once the future arrives, such as always-on sensing or steward agents, are marked later, and that's fine. The [mapping](https://github.com/dudgeon/flight-deck-demo/blob/claude/vision-mapping/docs/vision/mapping.md) has the detail. Both sides agreed this brief.",
+    "Both sides now use three artifact names and avoid \"spec\" and \"PRD\": the **statement of intent** (the person's short account of the change, outcome, risk and what would prove it wrong), the **solution design** (drafted by agents and settled by people: how it fits the platforms, its dependencies and the alternatives) and the **decision record**."
   ],
   "how_to_answer": "Pick an option on each decision, or Something else, and add a note if you like. Picks save to this page as you go. Send answers to Claude when you're done.",
-  "recommendation": "Keep Flight Deck's arcs and tag each with the moves it serves, and rename our tier called \"move\" so the word means one thing. Build the small, high-leverage gaps first: hypothesis fields (risk accepted, what would prove it wrong) and a Challenge option that argues the other side. Turn the rewards story into an invented-company Flight Deck scenario, so its moves become the first quality evals, and keep the original local.",
+  "recommendation": "Keep Flight Deck's arcs, tag each with the moves it serves, and rename our tier called \"move\", since you use that word for the loop. Build first the things that help today and also lead toward the loop: statement-of-intent fields (risk accepted, what would prove it wrong) and a Challenge option that argues the other side. Rename the \"PRD to dependencies\" arc after what it produces, the solution design, and split the template so the statement of intent stays short. Turn the rewards story into an invented-company scenario whose moves become the first quality evals, and keep the original local.",
   "read": [
     {
       "label": "The Future of Product Work (review doc)",
@@ -35,16 +35,16 @@
       "body": "Decision briefs and the Decisions register, initiative registers with stamped artifacts, and the delivery status update already do what the decide and learn moves and truth 12 need, up to where code starts."
     },
     {
-      "title": "Investigate is strong; sense isn't continuous.",
-      "body": "Problem discovery synthesises sources with checked quotes, but only when a person brings them. Nothing watches signals and raises a problem unasked."
+      "title": "Investigate works today; constant sensing is later.",
+      "body": "Problem discovery synthesises the sources a person brings, with checked quotes. Watching signals unasked belongs to the future, not to what's missing today."
     },
     {
       "title": "Prototype is designed, challenge is missing.",
       "body": "The Prototype move and a default enterprise prototyper that takes channel teams' design-system packs are designed (PR 54) but not built. Nothing argues the other side on purpose. Review gets second opinions on a document, which is close but not the same."
     },
     {
-      "title": "The intent template can't hold a bet.",
-      "body": "It has goal, problem, customer, outcome, scope, approach, dependencies and delivery, but no risk accepted and no \"what would prove it wrong\", which hypothesize and learn depend on."
+      "title": "One template holds two artifacts.",
+      "body": "The initiative-intent template mixes the statement of intent (goal, problem, customer, outcome, scope) with the solution design (approach, dependencies, delivery). It has no field for the risk accepted or what would prove it wrong."
     },
     {
       "title": "Five moves are platform work.",
@@ -59,8 +59,8 @@
       "body": "Flight Deck's framing and copy are written for product managers. Truth 3 says product judgment spreads to whoever is closest to the problem, and your own edit to the rewards story made its lead \"a builder on the Rewards team\". Not a decision here: the rename work in FP-1 can cover the copy too if you want."
     },
     {
-      "title": "Specify grows the spec; truth 7 shrinks it.",
-      "body": "Flight Deck's Specify step expands intent into requirements. Truth 7 says the person's spec shrinks to intent, risk and trade-offs because agents supply the standing rules. Both hold if agents do the expanding from rules held in machine form. Flagged, not decided."
+      "title": "Specify works on the solution design.",
+      "body": "The \"PRD to dependencies\" arc (Specify, Map, Choose) produces most of a solution design: requirements traced to lines, dependencies, alternatives. So it doesn't lengthen the statement of intent, and the earlier clash with truth 7 was only a naming problem."
     }
   ],
   "decisions": [
@@ -107,14 +107,13 @@
     {
       "id": "next",
       "label": "FP-2",
-      "question": "Which gap should Flight Deck build first?",
+      "question": "Which should Flight Deck build first, useful today and a step toward the loop?",
       "context": [
         "These are the gaps a person's workspace could close. Platform work is left out."
       ],
       "know": [
         "Hypothesis fields are a template and checklist change. Challenge can start as an option on the Review move.",
-        "The Prototype move is already designed (PR 54): one contract, routed by channel, a default prototyper that takes design-system packs, and platform teams can ship their own. It's the largest to build.",
-        "A tension, not decided here: Specify expands intent into requirements while truth 7 says the human spec shrinks. Both can hold if agents do the expanding from machine-held rules."
+        "The Prototype move is already designed (PR 54): one contract, routed by channel, a default prototyper that takes design-system packs, and platform teams can ship their own. It's the largest to build."
       ],
       "stage_title": "The gaps, by size",
       "stage": {
@@ -139,10 +138,10 @@
           "id": "sense",
           "label": "Standing discovery first",
           "cost": "One or two PRs",
-          "consequence": "Problems surface unasked, which truth 1 leans on. Needs a folder of signals to watch, which a demo has to invent."
+          "consequence": "Problems surface unasked, which truth 1 leans on. It's mostly a future capability, and a demo would have to invent the signals to watch."
         }
       ],
-      "reason": "Smallest work that serves the moves the research says matter most, and it makes the evals in FP-3 possible."
+      "reason": "Both help a product person today, since a sharper bet and a deliberate counter-argument are useful in any team. Both also build the human-judgment moves the loop puts first, and they make the evals in FP-3 possible."
     },
     {
       "id": "scenario",
@@ -182,7 +181,46 @@
         }
       ],
       "reason": "It joins the two pieces of work at one point and gives Flight Deck its first measure of skill quality."
+    },
+    {
+      "id": "names",
+      "label": "FP-4",
+      "question": "Should the \"PRD to dependencies\" arc and its Specify step be renamed after the solution design?",
+      "context": [
+        "You asked that neither side use \"spec\" or \"PRD\". The arc and its first step carry both words, though what they produce is a solution design."
+      ],
+      "know": [
+        "The arc was named in D-148 and is being built in PR 54, so a rename now costs little.",
+        "Splitting the intent template into a statement of intent and a solution design goes with this either way."
+      ],
+      "stage_title": "The arc's name and steps",
+      "stage": {
+        "html": "<table class=\"grid\"><tr><th></th><th>Arc</th><th>Steps</th></tr><tr><td>Today</td><td>PRD to dependencies</td><td>Specify, Map, Choose</td></tr><tr><td class=\"yes\">Proposed</td><td>Solution design</td><td>Requirements, Map, Choose</td></tr></table>",
+        "caption": "Same steps, named for what they produce"
+      },
+      "options": [
+        {
+          "id": "rename",
+          "label": "Rename it \"Solution design\", Specify becomes Requirements",
+          "recommended": true,
+          "cost": "A rename in PR 54 and the docs",
+          "consequence": "The arc says what it produces, and both sides use the same three artifact names. Existing routing examples and copy that say \"PRD\" get reworded. A person can still start from a document they call a PRD."
+        },
+        {
+          "id": "step",
+          "label": "Rename only the Specify step",
+          "cost": "Small",
+          "consequence": "The arc keeps a name people at work recognise, so it's easier to find from a PRD in hand. The word you asked to avoid stays on the Library."
+        },
+        {
+          "id": "keep",
+          "label": "Keep both names",
+          "cost": "None",
+          "consequence": "No change, but the arc's name contradicts the shared vocabulary."
+        }
+      ],
+      "reason": "It costs least while PR 54 is open, and it ends the naming clash that made the last tension."
     }
   ],
-  "after": "Flight Deck records your answers as decisions in its repo and builds what you pick; the research updates its moves and asset list to match. If you change the truths or moves later, the research tells Flight Deck what changed and the mapping follows."
+  "after": "Flight Deck records your answers as decisions in its repo and builds what you pick. The research updates its moves, artifacts and asset list to match. If you change the truths or moves later, the research tells Flight Deck what changed and the mapping follows."
 }
