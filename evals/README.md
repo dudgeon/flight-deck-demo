@@ -36,6 +36,10 @@ python3 evals/routing_suite.py pairs evals/runs/<a> evals/runs/<b>
   question card. Only when these are silent does the judge (Claude Code on
   Haiku, `--judge-model`; `--no-judge` for code only) read the reply, to tell
   an offer in words from open work or an answer.
+- **Question cards.** A card is an offer only when an answer on it starts
+  something ("Start it", "Run", "Yes") or names a workflow. A clarifying card
+  ("Which paragraph?") goes to the judge with its words added to the reply.
+  `report <run> --regrade` grades a saved run again with the current grader.
 - **Passing.** start: the named workflow started. offer: offered, nothing
   started. open and answer: nothing started, nothing offered. A task passes
   on 2 of 3 trials (`--trials`).

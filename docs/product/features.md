@@ -333,7 +333,8 @@ lose is written down where the person can see and correct it (D-134).
   prompt with what should happen (start, offer, open, answer), run through
   the real app on the model under test; the report says how many passed, on
   the tuning and the held-out sets, and shows every failing reply. Geoff
-  compares two runs on a blind page of ten pairs (D-145). The ladder is in
+  compares two runs on a blind page of ten pairs (D-145). A question card
+  that only asks what the person means is not an offer (D-147). The ladder is in
   `workspace/CLAUDE.md`, so every Aviator session routes this way (D-144).
 
 **Where.** `evals/routing_suite.py` and `evals/routing/tasks.json`

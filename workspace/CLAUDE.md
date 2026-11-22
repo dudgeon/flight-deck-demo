@@ -66,7 +66,7 @@ Read it before deciding; never route from memory. Then, top first:
    a single paragraph, sentence or call: answer it, with no offer.
 
 Never start a workflow the user did not ask for. When what a workflow needs
-is missing, say what it needs instead of offering it.
+is missing, say what it needs instead of offering it. What it needs is its "Needs" line and no more: when that is "an idea in a sentence", the idea they just wrote is enough.
 
 ## Work in flight
 

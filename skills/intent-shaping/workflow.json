@@ -76,7 +76,7 @@
  "routing": {
   "when": [
    "The person has an idea, hunch or opportunity and wants to shape it or define the intent",
-   "The person asks whether an idea is ready to take to the team"
+   "The person floats an idea and asks whether it is real, worth doing or ready to take to the team"
   ],
   "not_when": [
    "Shaping a slide, a roadmap or a document's layout",
