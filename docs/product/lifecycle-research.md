@@ -116,9 +116,11 @@ them).
 
 ## The recommendation
 
-**Four arcs, three moves, one companion.** Eight skills, and only four of
-them are stages. (Revised 2026-11-22 after Geoff's atlas comments: PRD to
-dependencies gains a Choose half, and Engage joins Review and Decide.)
+**Five arcs, two moves, one companion.** Eight skills. (Revised twice on
+2026-11-22 after Geoff's atlas comments: PRD to dependencies gained a Choose
+half; Engage, first proposed as a move, became an arc of its own once the
+onboarding procedures it has to run were weighed. See "Engaging owners is an
+arc" below.)
 
 | Kind | Skill | Stages it serves | Stance | Built from |
 |---|---|---|---|---|
@@ -126,10 +128,10 @@ dependencies gains a Choose half, and Engage joins Review and Decide.)
 | Arc | **Problem discovery** | Discover, Learn | Produce (synthesis with checked quotes) | `problem-discovery`, plus post-launch feedback as a source |
 | Arc | **Intent shaping** | Shape | Up-level (interrogate, never fill the answer) | `intent-shaping` |
 | Arc | **PRD to dependencies** | Specify, Map, Choose | Produce, with an enforce check; the person chooses | `prd-to-requirements` and `requirements-to-dependencies` as its first two halves, plus a new Choose half (analysis of alternatives and a phased roadmap); enter at any half |
+| Arc | **Engage owners** | Map, Deliver | Act within limits set by the counterparty; the person signs anything binding | new; starts from the chosen options |
 | Arc | **Delivery status** | Deliver | Produce | `delivery-status` |
 | Move | **Review** | any | Enforce | `document-review`, offered on any artifact |
 | Move | **Decide** | any | Present the smallest question; person decides | `decision-review`, offered on any open question |
-| Move | **Engage** | Map, Deliver | Act where self-serve; draft and track where an agent or a person answers | new; offered on any chosen option or dependency |
 
 Why this shape:
 
@@ -166,7 +168,39 @@ Why this shape:
   compares; the person chooses (finding 6), and each choice is a record in
   the Decisions register. Delivery status reuses the same alternatives
   records for its "ways to recover".
-- **Engaging owners is a move, sloped to the counterparty.** Geoff: some
+- **How Choose works, from Geoff's Pathfinder design.** Pathfinder already
+  specifies the method, so the Choose half adopts it rather than inventing
+  one: four kinds of alternative (a capability swap, including build; a
+  scope trade, which touches only "should" and "could" requirements unless
+  the person opens a "must"; a resequence, starting long-lead asks first or
+  splitting into phases; and presets: fastest, lowest effort, fewest teams);
+  at most four alternatives beside the baseline, each saying what the person
+  gives up; effort and waiting shown as separate numbers, because a cheap
+  integration can still hold a launch for weeks in a queue; and every
+  number labelled with where it came from (an owner's answer, observed
+  actuals, or the capability card). The atlas sketch adds weights the person
+  sets (speed, fit, risk) and "borrow capacity" as a delivery lever.
+- **Engaging owners is an arc, not a move.** Geoff (atlas, 2026-11-22): some
+  engagements are fully agentic, "like 'just' signing up for a supabase
+  account"; others need "engagement and due diligence with agent or human
+  counterparties, especially in a large, complex enterprise", and he asked
+  that navigating complex onboarding with other teams be weighed. Weighed
+  against the rule for adding a skill (in [skill-taxonomy.md](skill-taxonomy.md)),
+  it fails the first three questions and passes the fourth: it is not done to
+  any artifact at any stage (only to chosen options); it does not share
+  Choose's stance (it acts and negotiates with others, over weeks); and it is
+  a different goal for the person (get the capability in place). Geoff's
+  own designs say the same: Pathfinder puts "engaging capability owners and
+  carrying out onboarding and integration" downstream "with their own
+  skills", and the dependency-agent research names three of its seven
+  values here (V2 intake translation and submission, V4 routing and asking,
+  V5 governance evidence assembly), each with its own crawl, walk and run
+  stage. Small questions during mapping (a fit the card can't settle) stay
+  inside PRD to dependencies as asks; Engage owns the onboarding itself.
+  What it runs for each chosen capability is that owner's procedure:
+  intake, access, due diligence and gates, terms, provisioning, integration
+  ready, with each step's state, owner, lead time and evidence.
+- **The counterparty sets how far the agent may go.** Geoff: some
   engagements "can be fully agentic, like 'just' signing up for a supabase
   account, others will require engagement and due diligence with agent or
   human counterparties". The rigidity research says to key the human gate to
@@ -176,8 +210,9 @@ Why this shape:
   agent exchanges with the other agent; a person approves anything that
   commits), *person* (the agent drafts the smallest question riding a real
   ask, a person sends, the agent tracks the wait and writes the answer back
-  as context). It is a move because it runs at Map and through Deliver, on
-  any chosen option.
+  as context). The kind is set per step of an owner's procedure, since one
+  onboarding can mix a self-serve sign-up, an agent-run intake and a
+  person's due-diligence review.
 - **Learn without a new skill.** Post-launch feedback triage is the job with
   the best evidence that agents help, and it is the same synthesis job as
   discovery. Problem discovery takes post-launch feedback and metrics notes
@@ -210,7 +245,7 @@ make deterministic.
 | Review | Every finding points to a line and names who raised it; the author decides each finding |
 | Decide | The person decides; each decision records its reason and supersedes, never edits, an earlier one |
 | Choose (half of PRD to dependencies) | Every option shows its evidence and what it costs in time, scope and risk; the person chooses; a rejected option keeps its reason |
-| Engage | Nothing that commits is sent or signed without a person's yes; every ask names its owner and what it asks; answers are written back with their source |
+| Engage owners | Nothing binding is sent, submitted or signed without a person's yes; every step names its owner, its procedure step and its evidence; answers are written back with their source and never asked twice |
 
 `pa check` can test the structural half of each (fields present, links
 resolve) on the dataset, the way it checks routing today (D-136).
@@ -267,7 +302,7 @@ reason), and an *initiative header* (name, id, stage tags, linked artifacts).
 | Review | findings, who form, consent question, summary | works on any artifact kind, not only markdown | review findings (json) |
 | Decide | queue, card, summary | opens on any open-question entry, from any skill | decision log (json, from the Decisions register) |
 | Choose | (new) | the analysis-of-alternatives worksheet, below | alternatives (json, shared with delivery status); phased roadmap (json, with a markdown export) |
-| Engage | (new) | counterparty card (self-serve, agent, person) with its state: drafted, sent, waiting, answered, onboarded | asks (markdown); engagement log (json) |
+| Engage owners | (new) | an onboarding track per capability (intake, access, due diligence and gates, terms, provisioning, integration ready), each step with its counterparty kind, owner, state, lead time and evidence; a gate evidence pack | asks and intake drafts (markdown); onboarding track and engagement log (json) |
 
 **The analysis-of-alternatives worksheet** (Geoff: "could be extremely
 interesting, with some fun interactive elements"). One requirement or
@@ -306,7 +341,7 @@ answers change"), which the rigidity research says an up-level skill needs.
 
 | Label | Question | Recommendation |
 |---|---|---|
-| HS-1 | What shape should the hero-skill set take? | Four arcs (PRD to dependencies with a Choose half), three moves (Review, Decide, Engage), one companion |
+| HS-1 | What shape should the hero-skill set take? | Five arcs (PRD to dependencies with a Choose half; Engage owners), two moves (Review, Decide), one companion |
 | HS-2 | How fixed should each skill's steps be? | Suggested path, plus a few checkpoints that always hold |
 | HS-3 | Which stages, and are they gates? | Discover, Shape, Specify, Map, Deliver, Learn; tags, never gates |
 | HS-4 | Where do evidence, open questions, decisions and readiness live? | On the initiative, shared by every skill |

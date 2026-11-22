@@ -18,12 +18,12 @@ The tier decides how the skill is shown and how Aviator offers it.
 | Tier | What it is | Shown | How it starts | Today |
 |---|---|---|---|---|
 | **Companion** | Holds the initiative: finds or creates it, links it, says where it stands and offers the next arc | Not in the Library (D-129) | "I'm working on a new feature", or opening an initiative | the lifecycle skill (D-129, not built) |
-| **Arc** | Something a person sets out to do, from material to a result | In the Library as a hero skill | Named, offered once on a clear fit (D-128, D-146), or from the companion | problem discovery, intent shaping, PRD to dependencies, delivery status |
-| **Move** | Something done to an artifact at any point, in any arc | As a launcher on an artifact and an offer in the chat, not as a stage | From an artifact, or offered when an arc reaches one of its moments | review, decide, engage |
+| **Arc** | Something a person sets out to do, from material to a result | In the Library as a hero skill | Named, offered once on a clear fit (D-128, D-146), or from the companion | problem discovery, intent shaping, PRD to dependencies, engage owners, delivery status |
+| **Move** | Something done to an artifact at any point, in any arc | As a launcher on an artifact and an offer in the chat, not as a stage | From an artifact, or offered when an arc reaches one of its moments | review, decide |
 | **Kit** | Tools that the other tiers and the Hangar use | Never | Called by other skills | view-kit, participants, document-collaboration, scenario-builder, build-person, product-aviator-design, frontend-design, director, omnigent-operator |
 
-A person meets at most five names: the four arcs and, when they open an
-artifact, the moves on it. The companion and the kit skills work out of
+A person meets at most seven names: the five arcs and, when they open an
+artifact, the two moves on it. The companion and the kit skills work out of
 sight.
 
 ## 2. The eight skills
@@ -44,8 +44,8 @@ checkpoints (HS-2).
 - **Writes:** the initiative record and its links. The registers are only
   written by the skills that own the work.
 - **Next-arc rule:** offer the arc whose Ready checks fail first, in lifecycle
-  order. If a blocking question is open, offer Decide or Engage before any
-  arc. Offer once (D-128). When the person declines, it stays quiet until
+  order. If a blocking question is open, offer Decide (or Engage owners, when
+  the question is an owner's) before any other arc. Offer once (D-128). When the person declines, it stays quiet until
   something changes.
 
 ### Problem discovery (arc)
@@ -92,11 +92,49 @@ checkpoints (HS-2).
   evidence), Open ("could not find" dependencies), Decisions (each chosen
   option; a rejected option keeps its reason), Ready (the hand-off checks);
   it owns the intent document's approach and dependencies sections.
-- **Hands to:** delivery status, through the roadmap; to engage, through each
-  chosen option that needs an owner.
+- **Hands to:** engage owners, through each chosen option that needs an
+  owner; delivery status, through the roadmap.
+- **Choose follows Pathfinder:** four kinds of alternative (capability swap
+  including build, scope trade, resequence, presets), at most four beside
+  the baseline, each saying what you give up; effort and waiting as separate
+  numbers; every number labelled with its source.
 - **Checkpoints:** every requirement traces to a line; every dependency has
   evidence or is listed "could not find"; every option shows its cost in
   time, scope and risk; the person chooses.
+
+### Engage owners (arc)
+
+- **Job:** get each chosen platform, process or capability in place, by
+  running its owner's onboarding procedure: intake, access, due diligence
+  and gates, terms, provisioning, integration ready. Onboarding at a large
+  enterprise runs for weeks across several teams, so this is an arc, not a
+  move (it passes question 4 of the rule in section 5; Pathfinder also puts
+  it downstream "with their own skills").
+- **Stages:** Map, Deliver.
+- **Enter with:** the chosen options from PRD to dependencies, or one
+  capability the person names ("get us onto the notifications platform").
+- **Stance:** set by the counterparty. *Self-serve:* the agent acts after one
+  yes from the person (off on the offline work Mac). *Agent:* the agent
+  exchanges with the owner's agent, and a person approves anything that
+  commits. *Person:* the agent drafts the smallest question riding a real
+  ask, a person sends it, and the agent tracks the wait.
+  Each step of a procedure can have a different counterparty, so the kind is
+  set per step, not per capability.
+- **Grows by maturity (from Geoff's dependency research):** crawl, the agent
+  drafts asks and pre-fills intake forms from the spec and a person sends;
+  walk, it submits where an owner's intake accepts agent requests, on behalf
+  of a named person; run, routine requests are approved by policy and
+  exceptions go to people. Gate evidence packs are pre-filled from the
+  first stage and never submitted without a person.
+- **Writes:** Evidence (answers and gate evidence, with their source, written
+  back as context so no owner is asked twice), Open (steps waiting, with
+  their owner and lead time), Decisions (terms accepted, due-diligence
+  findings accepted).
+- **Hands to:** delivery status, through each capability's ready date; back
+  to Choose when an owner's answer changes an option's cost or date.
+- **Checkpoints:** nothing binding is sent, submitted or signed without a
+  person's yes; every step names its owner and its evidence; an answer once
+  given is never asked again.
 
 ### Delivery status (arc)
 
@@ -136,22 +174,6 @@ checkpoints (HS-2).
 - **Writes:** Decisions, which supersede and never edit (D-142).
 - **Checkpoints:** the person decides; every decision has a reason.
 
-### Engage (move)
-
-- **Job:** work with the owner of a chosen platform, process or capability,
-  from first ask to onboarded.
-- **Stance:** set by the counterparty. *Self-serve:* the agent acts after one
-  yes from the person (off on the offline work Mac). *Agent:* the agent
-  exchanges with the owner's agent, and a person approves anything that
-  commits. *Person:* the agent drafts the smallest question riding a real
-  ask, a person sends it, and the agent tracks the wait.
-- **Offered:** on any chosen option or dependency, in Map and through
-  Deliver.
-- **Writes:** Evidence (answers, with their source, written back as context),
-  Open (asks still waiting, with their owner), Decisions (terms accepted).
-- **Checkpoints:** nothing that commits is sent or signed without a person's
-  yes; every ask names its owner and what it asks.
-
 ## 3. How work moves
 
 The registers on the initiative carry the work, not the skills. An arc never
@@ -162,11 +184,11 @@ that the companion reads.
                  ┌──────────── companion: feature lifecycle ────────────┐
                  │  reads stage state, Ready, Open; offers the next arc │
                  └──────────────────────────────────────────────────────┘
- sources ─▶ Problem discovery ─▶ Intent shaping ─▶ PRD to dependencies ─▶ Delivery status
-   ▲          (Discover, Learn)       (Shape)       (Specify ⇄ Map ⇄ Choose)     (Deliver)
-   └──────────────────── after launch: feedback and metrics ───────────────────────┘
+ sources ─▶ Problem discovery ─▶ Intent shaping ─▶ PRD to dependencies ─▶ Engage owners ─▶ Delivery status
+   ▲          (Discover, Learn)       (Shape)       (Specify ⇄ Map ⇄ Choose)   (onboarding)      (Deliver)
+   └──────────────────────────── after launch: feedback and metrics ─────────────────────────────┘
 
- Moves on any artifact:  Review · Decide · Engage
+ Moves on any artifact:  Review · Decide
  Shared on the initiative: Evidence · Open · Decisions · Ready
 ```
 
@@ -187,7 +209,7 @@ choosing jobs with the person, with the agent preparing.
 | J3 Shape the solution | Intent shaping | Up-level stance |
 | J4 Write, review, ratify the spec | PRD to dependencies (Specify), Review | Ratifying stays with the person; the shaper never ratifies |
 | J5 Prioritise and roadmap | PRD to dependencies (Choose) | Agent prepares options and levers, person decides |
-| J6 Manage delivery | Delivery status, Engage | |
+| J6 Manage delivery | Delivery status, Engage owners | Onboarding with other teams is where enterprise delivery time goes (Pathfinder's cause codes: access, waiting, gates) |
 | J7 Launch and go-to-market | Gap | A candidate next arc; held until a demo needs it |
 | J8 Stakeholder and exec comms | Delivery status (the update), Review | An audience choice on the update, not a skill of its own |
 | J9 Metrics and experiments | Problem discovery (Learn) | Metrics readouts come in as sources |

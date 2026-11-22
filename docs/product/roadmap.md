@@ -397,10 +397,11 @@ the process into too many subskills, don't make it rigid), with the widgets
 and worksheet templates each needs.
 
 - **Done.** Research (2026-11-21) from Geoff's product agent and harness
-  library and the public lifecycle frameworks, with a recommendation: four
-  arcs (problem discovery, intent shaping, PRD to dependencies, delivery
-  status), two moves on any artifact (review, decide) and the lifecycle
-  companion; a suggested path with fixed checkpoints per skill; stages as
+  library and the public lifecycle frameworks, with a recommendation, revised
+  2026-11-22 after Geoff's atlas comments: five arcs (problem discovery,
+  intent shaping, PRD to dependencies running Specify, Map and Choose,
+  engage owners for onboarding with other teams, delivery status), two
+  moves on any artifact (review, decide) and the lifecycle companion; a suggested path with fixed checkpoints per skill; stages as
   tags with Learn added and Decide made a move; evidence, open questions,
   decisions and readiness shared on the initiative; five shared widgets.
 - **Open.** HS-1 to HS-4 and HS-6 to HS-8, put to Geoff one at a time.
