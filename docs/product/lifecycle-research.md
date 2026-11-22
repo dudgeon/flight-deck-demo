@@ -1,9 +1,11 @@
 # The product lifecycle, AI help, and the hero-skill set
 
 Date: 2026-11-21. Filed by Claude (thread "Research the product lifecycle and
-AI help"). Status: **research and a recommendation, not decided.** The open
-questions are labelled HS-1 to HS-5 and are being put to Geoff one at a time.
-Nothing here has a D-number yet. The walkthrough page that puts them to Geoff
+AI help"). Status: **decided 2026-11-22.** Geoff answered HS-1 to HS-5 on the
+walkthrough: D-148 to D-152 (see "Geoff's answers" at the end, and the
+decision note in the archive folder). Where his answers changed the
+recommendation (Deliver as the arc's name, one Discover stage, stages that
+match the arcs), the sections below say so. The walkthrough page that puts them to Geoff
 is archived in [../decision-artifacts/](../decision-artifacts/).
 
 Geoff's brief: refine the hero skills (problem discovery, intent shaping, PRD
@@ -125,11 +127,11 @@ arc" below.)
 | Kind | Skill | Stages it serves | Stance | Built from |
 |---|---|---|---|---|
 | Companion | **Feature lifecycle** (D-129) | all | Orient and offer | new; owns the initiative record |
-| Arc | **Problem discovery** | Discover, Learn | Produce (synthesis with checked quotes) | `problem-discovery`, plus post-launch feedback as a source |
+| Arc | **Problem discovery** | Discover (including post-launch learning, D-150) | Produce (synthesis with checked quotes) | `problem-discovery`, plus post-launch feedback as a source |
 | Arc | **Intent shaping** | Shape | Up-level (interrogate, never fill the answer) | `intent-shaping` |
-| Arc | **PRD to dependencies** | Specify, Map, Choose | Produce, with an enforce check; the person chooses | `prd-to-requirements` and `requirements-to-dependencies` as its first two halves, plus a new Choose half (analysis of alternatives and a phased roadmap); enter at any half |
-| Arc | **Engage owners** | Map, Deliver | Act within limits set by the counterparty; the person signs anything binding | new; starts from the chosen options |
-| Arc | **Delivery status** | Deliver | Produce | `delivery-status` |
+| Arc | **PRD to dependencies** | Specify (its parts: Specify, Map, Choose) | Produce, with an enforce check; the person chooses | `prd-to-requirements` and `requirements-to-dependencies` as its first two halves, plus a new Choose half (analysis of alternatives and a phased roadmap); enter at any half |
+| Arc | **Engage owners** | Engage | Act within limits set by the counterparty; the person signs anything binding | new; starts from the chosen options |
+| Arc | **Deliver** (was delivery status, D-148) | Deliver | Produce | `delivery-status`, widened: status updates are one part of delivery work |
 | Move | **Review** | any | Enforce | `document-review`, offered on any artifact |
 | Move | **Decide** | any | Present the smallest question; person decides | `decision-review`, offered on any open question |
 
@@ -230,6 +232,11 @@ Deliver), which is fewer but forces an up-level and a produce stance into one
 
 ## Fixed checkpoints, free path (HS-2)
 
+**Decided (D-149):** as recommended, and completing every component matters
+more than the order. The person can flip between components, leave and
+return, work on another phase, and loop the same initiative through every
+phase again.
+
 Today each workflow's `steps` list reads as a fixed sequence. Recommended:
 keep `steps` as the suggested path the agent may skip or reorder, and add a
 short list of **checkpoints** per arc that always hold, whatever the
@@ -251,6 +258,11 @@ make deterministic.
 resolve) on the dataset, the way it checks routing today (D-136).
 
 ## Stages (HS-3)
+
+**Decided (D-150):** Discover and Learn are one stage, and the stages match
+the arcs: **Discover, Shape, Specify, Engage, Deliver**, tags never gates,
+with Deliver looping back to Discover. The recommendation below was the
+starting point.
 
 Recommended stage list, as loose tags: **Discover, Shape, Specify, Map,
 Deliver, Learn.** Decide leaves the list and becomes a move. A workflow, an
@@ -350,3 +362,16 @@ answers change"), which the rigidity research says an up-level skill needs.
 The skill taxonomy that follows from HS-1 (tiers, one card per skill, how
 work moves, coverage of the ten PM jobs, and the rule for adding a skill) is
 in [skill-taxonomy.md](skill-taxonomy.md), with HS-6 to HS-8.
+
+## Geoff's answers (2026-11-22)
+
+| Label | Geoff's pick | His note | D |
+|---|---|---|---|
+| HS-1 | Five arcs, two moves, one companion | Delivery status should be called Deliver and include statusing and other delivery work; PRD to dependencies will be complex and multi-stage, including the analysis of alternatives | D-148 |
+| HS-2 | Suggested path plus checkpoints | Completion of all components over enforcing a sequence; flip between components, leave and return, work on other phases, repeated loops of one initiative | D-149 |
+| HS-3 | Something else | Discover and Learn should be the same thing; align with HS-1 | D-150 (Claude chose the aligned list) |
+| HS-4 | On the initiative, shared | | D-151 |
+| HS-5 | Shared widgets and the alternatives worksheet first | Coordinate with the decision brief skill | D-152 |
+
+The decision note with the rationale is
+[decision-note.md](../decision-artifacts/2026-11-21-hero-skills-and-lifecycle/decision-note.md).

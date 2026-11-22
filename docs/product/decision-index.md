@@ -221,6 +221,19 @@ representation of intent), both built as recommended until answered.
 | D-141 | Loose artifacts allowed; stages are tags, never gates; stage state is derived | Claude | Built |
 | D-142 | Hero skill contract: find, read, stamp, register, own sections, extend in your own space; decisions superseded, never edited | Claude | Built in `pa`; no hero skill follows it yet |
 
+## Hero skills and the lifecycle
+
+Spec: [lifecycle-research.md](lifecycle-research.md),
+[skill-taxonomy.md](skill-taxonomy.md). Open: HS-6 to HS-8.
+
+| D | Decision | Who | Status |
+|---|---|---|---|
+| D-148 | Five arcs (problem discovery, intent shaping, PRD to dependencies with Specify, Map and Choose, Engage owners, Deliver), two moves (Review, Decide), one companion | Geoff | Decided, not built |
+| D-149 | Suggested path plus checkpoints; completion over sequence; flip, leave and return; repeated loops | Geoff | Decided, not built |
+| D-150 | Discover and Learn are one stage; stages match the arcs: Discover, Shape, Specify, Engage, Deliver; tags, never gates | Geoff asked, Claude chose | Decided, not built |
+| D-151 | Evidence, open questions, decisions and ready checks live on the initiative, shared | Geoff | Registers built (`pa register`); no hero skill uses them yet |
+| D-152 | First: the five shared widgets and the alternatives worksheet, using the decision brief skill | Geoff | Decided, not built |
+
 ## Usage logging
 
 Spec: [usage-logging.md](usage-logging.md).
@@ -250,9 +263,7 @@ Spec: [usage-logging.md](usage-logging.md).
 
 - Usage logging (UL-1 to UL-3 in [usage-logging.md](usage-logging.md)):
   put to Geoff 2026-11-21; built to the recommendations meanwhile.
-- Hero-skill set and the lifecycle (HS-1 to HS-5 in
-  [lifecycle-research.md](lifecycle-research.md), HS-6 to HS-8 in
-  [skill-taxonomy.md](skill-taxonomy.md)): put to Geoff from 2026-11-21;
-  HS-5 paused 2026-11-22.
+- Skill taxonomy (HS-6 to HS-8 in [skill-taxonomy.md](skill-taxonomy.md));
+  HS-1 to HS-5 were decided 2026-11-22 as D-148 to D-152.
 - Progressive complexity (D-54).
 - D-24 for production.

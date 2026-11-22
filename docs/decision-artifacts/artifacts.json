@@ -297,8 +297,9 @@
    "title": "Hero Skills and the Lifecycle",
    "kind": "Decision walkthrough",
    "about": "Research on the product lifecycle and AI help; five questions on the shape of the hero-skill set (HS-1 to HS-5)",
-   "decisions": "HS-1 to HS-5 (open)",
-   "status": "Asked"
+   "decisions": "D-148 to D-152 (HS-1 to HS-5)",
+   "status": "Answered (5)",
+   "answers_as_of": "2026-11-22"
   }
  ]
 }

@@ -2,7 +2,7 @@
 
 Date: 2026-11-22. Filed by Claude (thread "Research the product lifecycle and
 AI help"). Status: **proposal, not decided.** It builds on the recommendation
-in [lifecycle-research.md](lifecycle-research.md) (HS-1, open) and on the
+in [lifecycle-research.md](lifecycle-research.md) (HS-1, decided as D-148) and on the
 initiative model that is already built ([initiatives-and-templates.md](initiatives-and-templates.md),
 D-138 to D-142). Geoff (2026-11-22): the skill template redesign is paused
 and the overall skill taxonomy goes on. So this note leaves out widgets and
@@ -53,7 +53,7 @@ checkpoints (HS-2).
 - **Job:** turn raw material (interviews, tickets, feedback, notes,
   post-launch metrics) into problems worth solving, each with its evidence.
 - **Stance:** produce, with checked quotes. The person chooses.
-- **Stages:** Discover, Learn. (Learn when the sources come after a launch.)
+- **Stages:** Discover, including post-launch learning (D-150).
 - **Enter with:** any pile of sources, or a question ("what's going on with
   onboarding?").
 - **Writes:** Evidence (sources, checked quotes), Open (problems not yet
@@ -83,7 +83,7 @@ checkpoints (HS-2).
 - **Job:** turn intent or an existing PRD into requirements, find what each
   one depends on, and choose how to satisfy them, with a phased roadmap.
 - **Stance:** produce, then enforce the trace; the person chooses.
-- **Stages:** Specify, Map, Choose (Choose is a step of this arc, not a
+- **Stages:** Specify (its parts are Specify, Map, Choose; Choose is a step of this arc, not a
   stage). The person can move between the three at any time (Geoff,
   2026-11-22).
 - **Enter with:** an intent document (starts at Specify), a PRD (Specify), a
@@ -110,7 +110,7 @@ checkpoints (HS-2).
   enterprise runs for weeks across several teams, so this is an arc, not a
   move (it passes question 4 of the rule in section 5; Pathfinder also puts
   it downstream "with their own skills").
-- **Stages:** Map, Deliver.
+- **Stages:** Engage (D-150).
 - **Enter with:** the chosen options from PRD to dependencies, or one
   capability the person names ("get us onto the notifications platform").
 - **Stance:** set by the counterparty. *Self-serve:* the agent acts after one
@@ -136,7 +136,7 @@ checkpoints (HS-2).
   person's yes; every step names its owner and its evidence; an answer once
   given is never asked again.
 
-### Delivery status (arc)
+### Deliver (arc)
 
 - **Job:** check a plan against what is happening, project the date when
   something moves, find ways to recover, and write the update for whoever
@@ -147,7 +147,7 @@ checkpoints (HS-2).
   milestones.
 - **Writes:** Evidence (what each owner said), Decisions (a recovery chosen),
   Open (dates at risk); it owns the intent document's delivery section.
-- **Hands to:** problem discovery (Learn) after launch; to choose, when a
+- **Hands to:** problem discovery (post-launch) after launch; to choose, when a
   recovery needs a new option.
 - **Checkpoints:** every date change names its cause and source; the update
   says what it asks of the reader.
@@ -184,8 +184,8 @@ that the companion reads.
                  ┌──────────── companion: feature lifecycle ────────────┐
                  │  reads stage state, Ready, Open; offers the next arc │
                  └──────────────────────────────────────────────────────┘
- sources ─▶ Problem discovery ─▶ Intent shaping ─▶ PRD to dependencies ─▶ Engage owners ─▶ Delivery status
-   ▲          (Discover, Learn)       (Shape)       (Specify ⇄ Map ⇄ Choose)   (onboarding)      (Deliver)
+ sources ─▶ Problem discovery ─▶ Intent shaping ─▶ PRD to dependencies ─▶ Engage owners ─▶ Deliver
+   ▲          (Discover)          (Shape)       (Specify ⇄ Map ⇄ Choose)   (onboarding)      (Deliver)
    └──────────────────────────── after launch: feedback and metrics ─────────────────────────────┘
 
  Moves on any artifact:  Review · Decide
@@ -209,11 +209,11 @@ choosing jobs with the person, with the agent preparing.
 | J3 Shape the solution | Intent shaping | Up-level stance |
 | J4 Write, review, ratify the spec | PRD to dependencies (Specify), Review | Ratifying stays with the person; the shaper never ratifies |
 | J5 Prioritise and roadmap | PRD to dependencies (Choose) | Agent prepares options and levers, person decides |
-| J6 Manage delivery | Delivery status, Engage owners | Onboarding with other teams is where enterprise delivery time goes (Pathfinder's cause codes: access, waiting, gates) |
+| J6 Manage delivery | Deliver, Engage owners | Onboarding with other teams is where enterprise delivery time goes (Pathfinder's cause codes: access, waiting, gates) |
 | J7 Launch and go-to-market | Gap | A candidate next arc; held until a demo needs it |
-| J8 Stakeholder and exec comms | Delivery status (the update), Review | An audience choice on the update, not a skill of its own |
-| J9 Metrics and experiments | Problem discovery (Learn) | Metrics readouts come in as sources |
-| J10 Post-launch feedback triage | Problem discovery (Learn) | The job with the best evidence that agents help |
+| J8 Stakeholder and exec comms | Deliver (the update), Review | An audience choice on the update, not a skill of its own |
+| J9 Metrics and experiments | Problem discovery (post-launch) | Metrics readouts come in as sources |
+| J10 Post-launch feedback triage | Problem discovery (post-launch) | The job with the best evidence that agents help |
 
 ## 5. The rule for adding a skill
 
@@ -227,7 +227,7 @@ decides where the work goes.
    it?** Then it is a step or half of that arc (as the catalog and Choose
    are for PRD to dependencies).
 3. **Is it the same job on different sources or for a different audience?**
-   Then it is a focus or input option on the existing arc (as Learn is for
+   Then it is a focus or input option on the existing arc (as post-launch learning is for
    problem discovery, and the audience switch is for the status update).
 4. **Is it a different goal for the person, with a different stance?** Only
    then is it a new arc, and it says which stages it tags and which register
@@ -243,7 +243,7 @@ listed as "start only when named" (D-136) and is not offered as a hero skill.
   workflows` and the routing ladder read the tier, so a move is never
   offered as a starting point for open work.
 - `routing.stage` becomes a list (the model already allows stage lists,
-  D-141). `lifecycle.json` loses Decide and gains Learn.
+  D-141). `lifecycle.json` loses Decide and Map, and gains Engage (D-150).
 - The routing eval suite (D-133, D-143) gets one case per tier boundary:
   "review this PRD" starts Review, not PRD to dependencies; "what should we
   build next?" gets no arc offer; "I'm working on a new feature" goes to the
@@ -253,7 +253,7 @@ listed as "start only when named" (D-136) and is not offered as a hero skill.
 
 ## 7. Open questions
 
-These follow HS-1 and wait for it. They will be asked one at a time after it.
+HS-1 is decided (D-148). These are next, asked one at a time.
 
 | Label | Question | Recommendation |
 |---|---|---|

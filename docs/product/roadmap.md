@@ -400,13 +400,18 @@ and worksheet templates each needs.
   library and the public lifecycle frameworks, with a recommendation, revised
   2026-11-22 after Geoff's atlas comments: five arcs (problem discovery,
   intent shaping, PRD to dependencies running Specify, Map and Choose,
-  engage owners for onboarding with other teams, delivery status), two
+  engage owners for onboarding with other teams, delivery status, now Deliver), two
   moves on any artifact (review, decide) and the lifecycle companion; a suggested path with fixed checkpoints per skill; stages as
   tags with Learn added and Decide made a move; evidence, open questions,
   decisions and readiness shared on the initiative; five shared widgets.
-- **Open.** HS-1 to HS-4 and HS-6 to HS-8, put to Geoff one at a time.
-  HS-5 (widgets and templates) is paused: Geoff idled the template redesign
-  on 2026-11-22 and asked for the skill taxonomy to go on. Nothing built.
+- **Decided 2026-11-22.** D-148 to D-152: five arcs (problem discovery,
+  intent shaping, PRD to dependencies, Engage owners, Deliver), the Review
+  and Decide moves and the lifecycle companion; suggested paths with
+  checkpoints and free movement between components and phases; stages
+  Discover, Shape, Specify, Engage, Deliver; the shared registers; the
+  shared widgets and the alternatives worksheet first, using the decision
+  brief skill. Nothing built yet; the template redesign stays parked.
+- **Open.** HS-6 to HS-8 (taxonomy), put to Geoff one at a time.
 - **Taxonomy.** [skill-taxonomy.md](skill-taxonomy.md): four tiers
   (companion, arc, move, kit), a card per skill, how work moves through the
   initiative registers, coverage of the ten PM jobs, and a four-question rule
