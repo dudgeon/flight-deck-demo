@@ -177,6 +177,27 @@ def test_summary_counts_what_matters(logdir: Path, capsys: pytest.CaptureFixture
     assert "Skills loaded" in out and "intent-shaping" in out
 
 
+def test_cost_survives_a_restart_and_workflow_paths_count_once(
+    logdir: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # First live flight: an app restart reset a session's running cost, and
+    # the summary kept only the last (smaller) reading; `pa flow --scenario
+    # ../skills/x` and `x` were listed as two workflows; tokens showed as 0.
+    for cost in (0.4, 1.2, 0.3):  # restart after 1.2
+        usagelog.log("upstream.native_session_usage", source="server",
+                     params={"cost_usd": cost}, session_id="s1")
+    usagelog.log("upstream.native_session_usage", source="server",
+                 params={"cost_usd": 0.5}, session_id="s2")
+    usagelog.log("pa.flow", source="pa", params={"workflow": "../skills/intent-shaping"})
+    usagelog.log("pa.brief", source="pa", params={"workflow": "intent-shaping"})
+    summary = usagelog.summarize(usagelog.read(usagelog.log_files(logdir)))
+    assert summary["tokens"]["cost_usd"] == 2.0
+    assert summary["workflows"] == [["intent-shaping", 2]]
+    assert pa.main(["usage", "summary"]) == 0
+    out = capsys.readouterr().out
+    assert "about $2.0" in out and "tokens in 0" not in out
+
+
 def test_pack_rechecks_and_can_take_upstreams_shape(logdir: Path, tmp_path: Path) -> None:
     usagelog.log("skill.step", source="skill", params={"step": "frame"})
     # A line written by something that skipped the rules is left out of a pack.
