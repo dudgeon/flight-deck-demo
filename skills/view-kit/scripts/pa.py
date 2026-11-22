@@ -428,7 +428,9 @@ everything. Each time:
 1. `$PA report {data} --kind <milestone|progress|blocker|done> "<one line, pointing at the file>"`
    (this is what the run card and the project page show).
 2. For a blocker, when you need the person, and when you finish, also wake
-   Aviator: `sys_session_send` with `session_id` `{director}` and the same line.
+   Aviator: `sys_session_message` with `session_id` `{director}` and the same
+   line, starting "Thread report:". (Not `sys_session_send`: that only reaches
+   sessions you started, and Aviator started you.)
 
 ## Starting, pausing, finishing
 
