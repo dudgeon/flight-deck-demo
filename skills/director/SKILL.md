@@ -71,7 +71,7 @@ This skill names no workflow on purpose (see above). Run `$PA workflows`
 
 Never start a workflow silently. When two workflows fit, offer both side by
 side and say which you would start and why. When what a workflow `Needs` is
-missing, say what it needs instead of offering it.
+missing, say what it needs instead of offering it. What it needs is its `Needs` line and no more: when that is "an idea in a sentence", the idea they just wrote is enough.
 
 ### Strictness
 

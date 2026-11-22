@@ -87,6 +87,7 @@ def test_a_bad_task_file_is_refused(tmp_path: Path) -> None:
         ("start", "intent-shaping", _ev(skills=["view-kit", "director"]), "answer", False, "answer"),
         ("offer", "intent-shaping", _ev(offers=["intent-shaping"]), None, True, "offer"),
         ("offer", "intent-shaping", _ev(question=True, asked=["intent-shaping"]), None, True, "offer"),
+        ("open", None, _ev(question=True), "open", True, "open"),
         ("offer", "intent-shaping", _ev(skills=["intent-shaping"]), None, False, "start"),
         ("offer", "intent-shaping", _ev(), "offer", True, "offer"),
         ("offer", "intent-shaping", _ev(), "open", False, "open"),
@@ -109,8 +110,8 @@ def test_grading_follows_the_ladder(expect: str, workflow: str | None, ev: dict[
     graded = rs.grade(task, ev, "reply", CATALOG, judge)
     assert (graded["pass"], graded["observed"]) == (ok, observed)
     # The judge is asked only when the code evidence is silent.
-    has_code = any(ev[k] for k in ("skills", "offers", "asked", "question", "threads", "briefed", "runs")) and not (
-        set(ev["skills"]) <= {"view-kit", "director"} and not any(ev[k] for k in ("offers", "asked", "question", "threads", "briefed", "runs")))
+    has_code = any(ev[k] for k in ("skills", "offers", "asked", "threads", "briefed", "runs")) and not (
+        set(ev["skills"]) <= {"view-kit", "director"} and not any(ev[k] for k in ("offers", "asked", "threads", "briefed", "runs")))
     assert bool(calls) == (not has_code)
 
 
@@ -120,10 +121,56 @@ def test_evidence_reads_skills_threads_offers_and_question_cards() -> None:
         {"event_name": "tool.used", "params": {"tool": "mcp__omnigent__sys_session_create"}},
         {"event_name": "offer.made", "params": {"workflow": "decision-review"}},
     ]
-    result = {"question": [{"questions": [{"question": "Start Problem discovery in a thread?"}]}], "threads": []}
+    result = {"question": [{"questions": [{"question": "Start Problem discovery in a thread?",
+                                           "options": [{"label": "Start it"}, {"label": "Not now"}]}]}],
+              "threads": []}
     ev = rs.evidence(result, lines, {"briefed": [], "runs": []}, CATALOG)
     assert ev["skills"] == ["intent-shaping"] and ev["threads"] is True
     assert ev["offers"] == ["decision-review"] and ev["asked"] == ["problem-discovery"]
+
+
+def test_a_clarifying_card_is_not_an_offer() -> None:
+    # Seen on the Mac mini: "Which calls do you mean?" was graded an offer.
+    ask = {"questions": [{"question": "Which calls do you mean?", "header": "Calls",
+                          "options": [{"label": "Calls to participants", "description": "Agents on the roster"},
+                                      {"label": "Customer or user calls", "description": "Fits problem discovery later"}]}]}
+    ev = rs.evidence({"question": [ask], "threads": []}, [], {"briefed": [], "runs": []}, CATALOG)
+    assert ev["question"] is True and ev["asked"] == [] and not ev["card_offers"]
+    assert "Which calls do you mean?" in ev["card_text"]
+    seen: dict[str, str] = {}
+
+    def judge(prompt: str, reply: str, catalog: dict[str, str]) -> dict[str, Any]:
+        seen["reply"] = reply
+        return {"label": "open", "workflow": None, "why": ""}
+
+    task = {"id": "t", "prompt": "What else could we do about those calls?", "expect": "open", "workflow": None}
+    graded = rs.grade(task, ev, "Which calls?", CATALOG, judge)
+    assert graded["pass"] and graded["observed"] == "open"
+    assert "[Question card] Which calls do you mean?" in seen["reply"]
+    # A card whose answer starts something is an offer, even naming no workflow.
+    start = {"questions": [{"question": "Shall I?", "options": [{"label": "Yes, start"}, {"label": "Not now"}]}]}
+    ev2 = rs.evidence({"question": [start], "threads": []}, [], {"briefed": [], "runs": []}, CATALOG)
+    assert ev2["asked"] == ["?"]
+    assert rs.observe(ev2, CATALOG) == ("offer", [], "offer logged or asked on a card")
+    # Naming a workflow in an answer counts; "intent-shaping-ish" text elsewhere does not.
+    named = {"questions": [{"question": "Next?", "options": [{"label": "Decision review"}, {"label": "Not now"}]}]}
+    ev3 = rs.evidence({"question": [named], "threads": []}, [], {"briefed": [], "runs": []}, CATALOG)
+    assert ev3["asked"] == ["decision-review"]
+
+
+def test_regrade_reads_old_trials_with_the_new_grader(tmp_path: Path) -> None:
+    run = tmp_path / "run"
+    run.mkdir()
+    ask = {"questions": [{"question": "Which paragraph should I read?",
+                          "options": [{"label": "I'll paste it"}, {"label": "A file in context/"}]}]}
+    old = {"task": {"id": "document-review-open-1", "prompt": "Does this opening paragraph read well?",
+                    "expect": "open", "workflow": None, "split": "tune"},
+           "trial": 1, "result": {"question": [ask], "reply": "", "threads": []},
+           "evidence": {**_ev(question=True, asked=["document-review"])}, "pass": False, "observed": "offer"}
+    (run / "trials.jsonl").write_text(json.dumps(old) + "\n")
+    rs.main(["report", str(run), "--regrade", "--no-judge"])
+    again = rs.load_records(run)[0]
+    assert again["pass"] and again["observed"] == "none" and again["evidence"]["asked"] == []
 
 
 def test_workspace_evidence_reads_briefs_and_runs(tmp_path: Path) -> None:

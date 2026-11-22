@@ -375,8 +375,10 @@ strictly as the moment needs, measured by evals rather than argued.
   on Sonnet. Tuning (D-146): a plain request for a workflow's work now starts
   it, open asks and one-paragraph questions get no offer, two offer tasks
   get the scenario material their workflow needs, and the risk-and-design
-  task is relabelled a start. Waiting on a re-run of the failing tasks and
-  the held-out split.
+  task is relabelled a start. The re-run fixed 5 of the 7; the second round
+  (D-147) stops counting clarifying question cards as offers, adds
+  `report --regrade`, and fixes the two offer regressions. Waiting on a
+  regrade of tune1 and a held-out re-run on the Mac mini.
 - **Next.** The re-run, then strictness on the
   strip and in the run; the lifecycle skill (its two routing tasks wait for
   it).

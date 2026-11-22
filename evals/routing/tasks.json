@@ -112,6 +112,9 @@
   "requirements-to-dependencies-offer-1": {
    "data/allowances.json": "scenarios/requirements-to-dependencies/fixtures/allowances.json",
    "context/platform-map.md": "scenarios/requirements-to-dependencies/context/platform-map.md"
+  },
+  "delivery-status-offer-1": {
+   "data/release-dates-delivery.json": "scenarios/delivery-status/fixtures/release-dates-delivery.json"
   }
  }
 }

@@ -886,6 +886,20 @@ open asks 3 of 3 times; two offer tasks failed only because the empty trial
 workspace lacked the workflow's material, which is Aviator behaving
 correctly.*
 
+**D-147 · 2026-11-22 · Claude.** Second tuning round, from tune1 (5 of 7
+fixed; two open tasks and two offers still failing). A question card counts
+as an offer only when one of its answers starts something ("Start it",
+"Run", "Yes") or names a workflow; any other card is a clarifying question,
+and the judge reads its words with the reply. `report --regrade` grades saved
+trials again with the current grader. What a workflow needs is its `Needs`
+line and no more, so an idea in a sentence is enough for intent shaping,
+whose `When` now covers "is this a real thing?". The delivery-status offer
+task gets its scenario's milestone plan. *On the Mac mini every failing open
+trial was Aviator asking "which calls?" or "which paragraph?" on a card,
+which is the right behaviour graded wrong; the offer regressions were
+Aviator demanding evidence for an idea, and saying what a date check needs
+when the trial had no plan.*
+
 ## Usage logging
 
 Spec: [usage-logging.md](usage-logging.md). Open questions UL-1 to UL-3 are
