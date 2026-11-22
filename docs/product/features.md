@@ -189,7 +189,9 @@ This is the third slice of [modes and projects](modes-and-projects.md).
   decides when and what; the brief tells it never to send everything.
   `pa report` records the line in the run's file (the last twenty are kept).
   For a blocker, a need, or a finish the thread also wakes the director with
-  a message. A blocker shows the run as waiting until work moves again.
+  a message (`sys_session_message`, the upstream tool for messaging a session
+  you did not start; `sys_session_send` only reaches a session's own
+  children, which the first live flight showed). A blocker shows the run as waiting until work moves again.
 - **The run card.** The director shows a run as a live card in its chat: the
   workflow and subject, the step, the state, what it needs from the person,
   its last three reports, and a button into the thread ("Answer in the
@@ -312,9 +314,11 @@ lose is written down where the person can see and correct it (D-134).
 - `pa workflows` lists every workflow by stage with that block (`--json` adds
   the examples); `pa check` fails a Library or shipped workflow without one
   (D-136).
-- The director skill routes by the ladder: named means start; a clear fit
-  gets one offer as a "Start it in a thread" / "Not now" question; open work
-  is done directly; quick questions are answered. It holds other threads'
+- The director skill routes by the ladder: named means start, and so does
+  a plain request for exactly one workflow's work, said in one line (D-146);
+  a clear fit to a situation or question gets one offer as a "Start it in a thread" / "Not now" question; open work
+  is done directly, with no offer in that reply; quick questions, including
+  one about a single paragraph, are answered. It holds other threads'
   news while the person is mid-exchange, except failures and blockers
   (D-132), and changes strictness only when the person says so (D-131).
 - Director memory: a short charter beside the skill, `director/state.md`
@@ -325,7 +329,16 @@ lose is written down where the person can see and correct it (D-134).
   director has written; the person edits either in place, and a save that
   would overwrite the director's newer text is refused (D-137).
 
-**Where.** `skills/*/workflow.json`, `skills/director/` (`SKILL.md`,
+- The **routing suite** measures all of this (D-133, D-143): each task is a
+  prompt with what should happen (start, offer, open, answer), run through
+  the real app on the model under test; the report says how many passed, on
+  the tuning and the held-out sets, and shows every failing reply. Geoff
+  compares two runs on a blind page of ten pairs (D-145). A question card
+  that only asks what the person means is not an offer (D-147). The ladder is in
+  `workspace/CLAUDE.md`, so every Aviator session routes this way (D-144).
+
+**Where.** `evals/routing_suite.py` and `evals/routing/tasks.json`
+(`evals/README.md`), `skills/*/workflow.json`, `skills/director/` (`SKILL.md`,
 `charter.md`), `skills/view-kit/scripts/pa.py` (`workflows`, `recap`,
 `remember`), `omnigent/server/routes/slim_director.py`,
 `web/src/projectHome/DirectorNotes.tsx`. Spec:
@@ -383,6 +396,47 @@ in `skills/view-kit/scripts/pa.py`; the chip in `skills/view-kit/kit/`
 `web/src/projectHome/projectConnections.ts` and `ProjectConnections.tsx`,
 mounted in `pages/ProjectHomePage.tsx`. Files: `workspace/projects/*.json`
 (not committed, like `data/`).
+
+## Initiatives, artifacts and templates
+
+**What it is for.** Many workflows, run at different times and by different
+skills, work on one initiative. Each needs to find what the others made, read
+the shared intent and the questions still open, and add its own work without
+overwriting anyone's. And when the person or the lifecycle skill asks "what
+do we have for this feature", the answer has to come from the files
+themselves. Geoff's words: an initiative registry with ids that associates
+artifacts back to a shared representation of the intent.
+
+**What it does.**
+
+- **A fixed id for every initiative** (D-138). A project's card gets `id`
+  and `key` the first time it is written, so renaming it breaks nothing.
+- **A stamp in every artifact** (D-140): which initiative, which template
+  and version, which stages, its status, who made it and what from. A drawn
+  view counts as a rendition of its dataset. The person's own files are
+  listed on the card, never changed.
+- **`pa artifacts`** lists everything by initiative, stage or template, read
+  from the stamps, and flags a copied file that kept its stamp.
+- **Templates in three kinds** (D-139): markdown with sections owned by
+  stages, records with schemas and views, and self-contained pages.
+  `pa template new` writes one into place, stamped; `pa template check`
+  keeps them offline and consistent with the lifecycle stages.
+- **The shared intent**: an intent document with a section per concern,
+  each owned by a stage, and **registers** for evidence (source required),
+  open questions and assumptions, decisions (superseded, never edited) and
+  ready checks, drawn as a board.
+
+**How the agent keeps it.** The hero skill contract (D-142) in the
+`view-kit` skill, "Initiatives, stamps, templates and registers", and one
+rule in `workspace/CLAUDE.md`.
+
+**Not built yet.** The project page and the Hangar do not show it; no hero
+workflow stamps its work yet; the lifecycle skill (D-129) is not written.
+
+**Where.** `skills/view-kit/scripts/pa.py` (section "initiatives, artifacts
+and templates"); `workspace/templates/initiative-intent/` and
+`workspace/templates/initiative-registers/`; `tests/test_slim_initiatives.py`.
+Spec: [initiatives-and-templates.md](initiatives-and-templates.md).
 
 ## Participants
 

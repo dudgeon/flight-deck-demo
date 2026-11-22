@@ -16,6 +16,11 @@ Standard library only; nothing here touches the network.
   pa publish person ID                            check it, keep the old version, make it live
   pa history person ID [--restore VERSION]        earlier versions; restore one
   pa uses    person ID                            what depends on them
+  pa project NAME --goal G                        an initiative: goal, area, state, a stable id
+  pa stamp   FILE --initiative I --template T     say what a file is and which initiative it serves
+  pa artifacts [--initiative I]                   what each initiative has produced, from the stamps
+  pa template list|show|check|new                 templates: markdown, records or page
+  pa register I evidence|question|decision|check  the initiative's shared registers
   pa log     EVENT k=v ...                        write one event to the usage log
   pa usage   summary|tail|check|pack|eval|where   read the usage log
 
@@ -423,7 +428,9 @@ everything. Each time:
 1. `$PA report {data} --kind <milestone|progress|blocker|done> "<one line, pointing at the file>"`
    (this is what the run card and the project page show).
 2. For a blocker, when you need the person, and when you finish, also wake
-   Aviator: `sys_session_send` with `session_id` `{director}` and the same line.
+   Aviator: `sys_session_message` with `session_id` `{director}` and the same
+   line, starting "Thread report:". (Not `sys_session_send`: that only reaches
+   sessions you started, and Aviator started you.)
 
 ## Starting, pausing, finishing
 
@@ -529,8 +536,11 @@ def cmd_project(args: argparse.Namespace) -> None:
             current = {}
         if not changes and not args.data and not current:
             raise PaError(f"no project file for {args.name!r} yet; give it a --goal")
-        if changes or not current:
-            card = {**current, "name": args.name.strip(), **changes, "updated": _now()}
+        if changes or not current or not current.get("id"):
+            card = {**current, "name": current.get("name") or args.name.strip(), **changes, "updated": _now()}
+            # A stable id and key from the first write (D-138): the name can change, these do not.
+            card.setdefault("id", new_id("initiative"))
+            card.setdefault("key", path.stem)
             if "state" in changes and "state_note" not in changes:
                 card.pop("state_note", None)  # the note described the old state
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -540,7 +550,9 @@ def cmd_project(args: argparse.Namespace) -> None:
         dpath = Path(dataset)
         with _locked(dpath):
             data = _load(dpath)
-            data["project"] = args.name.strip()
+            data["project"] = current["name"]
+            stamp = {"id": new_id("artifact"), "made": _now(), **(data.get("artifact") or {}), "initiative": current["id"]}
+            data["artifact"] = _normal(stamp)
             _save(dpath, data)
             _render_views(dpath, data)
     if args.json:
@@ -579,6 +591,616 @@ def cmd_link(args: argparse.Namespace) -> None:
     print(("removed" if args.remove else "linked") + f" {args.id} {args.type} {target!r}"
           + ("" if known or args.remove else f"; no project file for it yet (pa project {target!r} --goal ...)")
           + (f"; redrew {', '.join(views)}" if views else ""))
+
+
+# ------------------------------------------- initiatives, artifacts and templates
+#
+# An initiative is a project with a goal (D-97): its card is
+# `projects/<key>.json`. It gets a stable id the first time it is written
+# (D-138), and owns a folder `projects/<key>/` for its shared intent document
+# and its registers. Every artifact says which initiative it belongs to in a
+# small stamp inside the file itself (frontmatter, a JSON block, or a script
+# tag), so the registry is assembled by reading the files and nothing has to be
+# kept in sync (D-140). Files that cannot carry a stamp are listed on the card
+# under `refs`. A template is a folder with a `template.json` of one of three
+# kinds: markdown, records or page (D-139). Spec:
+# docs/product/initiatives-and-templates.md.
+
+ID_PREFIXES = {"initiative": "ini", "artifact": "art"}
+_ID_RE = re.compile(r"^(ini|art)_[0-9a-f]{32}$")
+STAMP_KEYS = ("id", "initiative", "template", "stage", "status", "title", "from", "by", "made")
+ARTIFACT_STATUSES = ("draft", "in-review", "final", "superseded")
+ARTIFACT_ROOTS = ("data", "artifacts", "context", "projects", "briefs")
+_STAMPABLE = (".md", ".json", ".html", ".htm")
+TEMPLATE_FILE = "template.json"
+TEMPLATE_KINDS = ("markdown", "records", "page")
+REGISTER_TYPES = ("evidence", "question", "decision", "check")
+REGISTERS_TEMPLATE = "initiative-registers"
+INTENT_TEMPLATE = "initiative-intent"
+
+
+def new_id(kind: str) -> str:
+    """A stable id: a type prefix and a bare 32-character UUID, like upstream's project ids."""
+    import uuid
+
+    return f"{ID_PREFIXES[kind]}_{uuid.uuid4().hex}"
+
+
+def _cards_with_paths(folder: Path | None = None) -> list[tuple[Path, dict[str, Any]]]:
+    folder = folder or Path(PROJECTS_DIR)
+    out = []
+    for file in sorted(folder.glob("*.json")) if folder.is_dir() else []:
+        try:
+            raw = json.loads(file.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if isinstance(raw, dict) and isinstance(raw.get("name"), str) and raw["name"].strip():
+            out.append((file, raw))
+    return out
+
+
+def find_initiative(ref: str, folder: Path | None = None) -> tuple[Path, dict[str, Any]] | None:
+    """An initiative by its id, its key or its name (any case)."""
+    want = (ref or "").strip()
+    if not want:
+        return None
+    for path, card in _cards_with_paths(folder):
+        if want in (card.get("id"), card.get("key"), path.stem) or card["name"].strip().casefold() == want.casefold():
+            return path, card
+    return None
+
+
+def _initiative_or_fail(ref: str) -> tuple[Path, dict[str, Any]]:
+    found = find_initiative(ref)
+    if not found:
+        raise PaError(f"no initiative {ref!r}; list them with `pa project`, or make one with `pa project {ref!r} --goal ...`")
+    path, card = found
+    if not card.get("id"):  # a card written before ids: give it one now
+        with _locked(path):
+            card = {**card, "id": new_id("initiative"), "key": card.get("key") or path.stem}
+            _write_atomic(path, json.dumps(card, indent=1, ensure_ascii=False) + "\n")
+    return path, card
+
+
+def initiative_folder(card_path: Path, card: dict[str, Any]) -> Path:
+    return card_path.parent / str(card.get("key") or card_path.stem)
+
+
+# --- stamps
+
+
+def _split_frontmatter(text: str) -> tuple[list[str] | None, str]:
+    if not text.startswith("---\n"):
+        return None, text
+    end = text.find("\n---", 3)
+    if end < 0:
+        return None, text
+    head = text[4:end]
+    rest = text[end + 4:]
+    if rest.startswith("\n"):
+        rest = rest[1:]
+    return head.splitlines(), rest
+
+
+def _stamp_value(raw: str) -> Any:
+    raw = raw.strip()
+    if raw.startswith("["):
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError:
+            pass
+    return raw.strip('"')
+
+
+_HTML_STAMP = re.compile(r'<script type="application/json" id="pa-artifact">(.*?)</script>\n?', re.S)
+_HTML_DATA = re.compile(r'<script type="application/json" id="pa-data">(.*?)</script>', re.S)
+
+
+def _normal(stamp: dict[str, Any]) -> dict[str, Any]:
+    out = {k: stamp[k] for k in STAMP_KEYS if stamp.get(k) not in (None, "", [])}
+    for key in ("stage", "from"):
+        if isinstance(out.get(key), str):
+            out[key] = [s.strip() for s in out[key].split(",") if s.strip()]
+    return out
+
+
+def read_stamp(path: Path) -> dict[str, Any] | None:
+    """What a file says about itself, or None. A drawn view reports the dataset it was drawn from."""
+    suffix = path.suffix.lower()
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
+    if suffix == ".md":
+        head, _ = _split_frontmatter(text)
+        if head is None:
+            return None
+        meta = {}
+        for line in head:
+            key, sep, raw = line.partition(":")
+            if sep and key.strip():
+                meta[key.strip()] = _stamp_value(raw)
+        if not meta.get("artifact"):
+            return None
+        meta["id"] = meta.pop("artifact")
+        return _normal(meta)
+    if suffix == ".json":
+        try:
+            raw = json.loads(text)
+        except json.JSONDecodeError:
+            return None
+        stamp = raw.get("artifact") if isinstance(raw, dict) else None
+        return _normal(stamp) if isinstance(stamp, dict) and stamp.get("id") else None
+    if suffix in (".html", ".htm"):
+        match = _HTML_STAMP.search(text)
+        if match:
+            try:
+                stamp = json.loads(match.group(1))
+            except json.JSONDecodeError:
+                return None
+            return _normal(stamp) if isinstance(stamp, dict) and stamp.get("id") else None
+        match = _HTML_DATA.search(text)
+        if match:  # a view drawn by pa render: a rendition of its dataset
+            try:
+                data = json.loads(match.group(1))
+            except json.JSONDecodeError:
+                return None
+            stamp = data.get("artifact") if isinstance(data, dict) else None
+            if isinstance(stamp, dict) and stamp.get("id"):
+                return {"rendition_of": stamp["id"], "initiative": stamp.get("initiative", "")}
+    return None
+
+
+def write_stamp(path: Path, stamp: dict[str, Any]) -> None:
+    """Write a stamp into the file, keeping everything else in it."""
+    stamp = _normal(stamp)
+    suffix = path.suffix.lower()
+    if suffix == ".md":
+        text = path.read_text(encoding="utf-8") if path.exists() else ""
+        head, body = _split_frontmatter(text)
+        lines = head or []
+        values = {("artifact" if k == "id" else k): v for k, v in stamp.items()}
+        kept: list[str] = []
+        for line in lines:
+            key = line.partition(":")[0].strip()
+            if key in values or key in ("artifact",) + STAMP_KEYS[1:]:
+                continue
+            kept.append(line)
+        order = ["artifact"] + [k for k in STAMP_KEYS[1:]]
+        ours = [f"{k}: {json.dumps(values[k], ensure_ascii=False) if isinstance(values[k], list) else values[k]}"
+                for k in order if k in values]
+        _write_atomic(path, "---\n" + "\n".join(ours + kept) + "\n---\n" + body)
+        return
+    if suffix == ".json":
+        with _locked(path):
+            raw = _read_json(path) if path.exists() else {}
+            if not isinstance(raw, dict):
+                raise PaError(f"{path}: only a JSON object can carry a stamp")
+            raw["artifact"] = stamp
+            if isinstance(raw.get("records"), list):
+                _save(path, raw)
+                _render_views(path, raw)
+            else:
+                _write_atomic(path, json.dumps(raw, indent=1, ensure_ascii=False) + "\n")
+        return
+    if suffix in (".html", ".htm"):
+        text = path.read_text(encoding="utf-8")
+        tag = f'<script type="application/json" id="pa-artifact">{_embed(stamp)}</script>\n'
+        if _HTML_STAMP.search(text):
+            text = _HTML_STAMP.sub(lambda _m: tag, text, count=1)
+        elif "</head>" in text:
+            text = text.replace("</head>", tag + "</head>", 1)
+        else:
+            text = tag + text
+        _write_atomic(path, text)
+        return
+    raise PaError(f"{path}: a {suffix or 'plain'} file cannot carry a stamp; list it on the initiative with --initiative")
+
+
+def _check_stages(stages: list[str]) -> None:
+    known = [s["id"] for s in lifecycle_stages()]
+    bad = [s for s in stages if known and s not in known and s != "any"]
+    if bad:
+        raise PaError(f"not a lifecycle stage: {', '.join(bad)} (stages: {', '.join(known)})")
+
+
+def stamp_file(path: Path, *, initiative: str | None = None, template: str | None = None,
+               stages: list[str] | None = None, status: str | None = None, title: str | None = None,
+               sources: list[str] | None = None, by: str | None = None) -> dict[str, Any]:
+    """Give a file its stamp, or change it. Keeps the id it already has."""
+    current = read_stamp(path) or {}
+    current.pop("rendition_of", None)
+    stamp = {**current}
+    stamp.setdefault("id", new_id("artifact"))
+    stamp.setdefault("made", _now())
+    if initiative is not None:
+        stamp["initiative"] = _initiative_or_fail(initiative)[1]["id"] if initiative else ""
+    if template:
+        found = find_template(template)
+        if not found:
+            raise PaError(f"no template {template!r} (see `pa template list`)")
+        stamp["template"] = f"{found['template']}@{found.get('version', 1)}"
+        if stages is None and isinstance(found.get("stage"), list) and found["stage"] != ["any"]:
+            stages = found["stage"]
+    if stages is not None:
+        _check_stages(stages)
+        stamp["stage"] = stages
+    if status:
+        if status not in ARTIFACT_STATUSES:
+            raise PaError(f"status must be one of {', '.join(ARTIFACT_STATUSES)}")
+        stamp["status"] = status
+    if title:
+        stamp["title"] = title
+    if sources:
+        bad = [s for s in sources if not _ID_RE.match(s)]
+        if bad:
+            raise PaError(f"--from takes artifact ids (art_...), not {', '.join(bad)}")
+        stamp["from"] = sorted(set((stamp.get("from") or []) + sources))
+    if by:
+        stamp["by"] = by
+    write_stamp(path, stamp)
+    return _normal(stamp)
+
+
+def _add_ref(card_path: Path, entry: dict[str, Any]) -> dict[str, Any]:
+    """List a file that cannot carry a stamp on the initiative's card."""
+    with _locked(card_path):
+        card = json.loads(card_path.read_text(encoding="utf-8"))
+        refs = [r for r in card.get("refs") or [] if isinstance(r, dict) and r.get("path") != entry["path"]]
+        old = next((r for r in card.get("refs") or [] if isinstance(r, dict) and r.get("path") == entry["path"]), {})
+        merged = {**old, **{k: v for k, v in entry.items() if v not in (None, "", [])}}
+        merged.setdefault("id", new_id("artifact"))
+        merged.setdefault("made", _now())
+        card["refs"] = refs + [merged]
+        card["updated"] = _now()
+        _write_atomic(card_path, json.dumps(card, indent=1, ensure_ascii=False) + "\n")
+    return merged
+
+
+def cmd_stamp(args: argparse.Namespace) -> None:
+    path = Path(args.file)
+    if not path.exists() and not args.ref:
+        raise PaError(f"{path} does not exist")
+    stages = args.stage if args.stage else None
+    # The person's own documents in context/ are listed, never written into (D-140).
+    theirs = bool(path.parts) and path.parts[0] == CONTEXT_DIR
+    if args.ref or theirs or path.suffix.lower() not in _STAMPABLE:
+        if not args.initiative:
+            raise PaError(f"{path} cannot carry a stamp; give --initiative to list it on the initiative's card")
+        card_path, card = _initiative_or_fail(args.initiative)
+        if stages:
+            _check_stages(stages)
+        entry = _add_ref(card_path, {"path": path.as_posix(), "title": args.title, "stage": stages,
+                                     "status": args.status, "by": args.by})
+        print(f"{entry['id']} listed on {card['name']} ({card_path.as_posix()})")
+        return
+    stamp = stamp_file(path, initiative=args.initiative, template=args.template, stages=stages,
+                       status=args.status, title=args.title, sources=args.source, by=args.by)
+    where = stamp.get("initiative") or "no initiative yet"
+    print(f"{stamp['id']} {path.as_posix()} ({where}" + (f", {stamp['template']}" if stamp.get("template") else "")
+          + (f", {', '.join(stamp['stage'])}" if stamp.get("stage") else "") + ")")
+
+
+def artifact_registry(root: Path | None = None) -> dict[str, Any]:
+    """Every stamped file and listed ref under the workspace, assembled on demand."""
+    root = root or Path.cwd()
+    artifacts: dict[str, dict[str, Any]] = {}
+    renditions: dict[str, list[str]] = {}
+    duplicates: list[str] = []
+    for top in ARTIFACT_ROOTS:
+        base = root / top
+        if not base.is_dir():
+            continue
+        for path in sorted(base.rglob("*")):
+            if not path.is_file() or path.suffix.lower() not in _STAMPABLE or ".hangar" in path.parts:
+                continue
+            if top == PROJECTS_DIR and path.parent == base and path.suffix == ".json":
+                continue  # an initiative card, not an artifact
+            stamp = read_stamp(path)
+            if not stamp:
+                continue
+            rel = path.relative_to(root).as_posix()
+            if "rendition_of" in stamp:
+                renditions.setdefault(stamp["rendition_of"], []).append(rel)
+                continue
+            if stamp["id"] in artifacts:
+                duplicates.append(f"{stamp['id']} is in both {artifacts[stamp['id']]['path']} and {rel} (a copy kept its stamp; restamp one with a new id)")
+                continue
+            artifacts[stamp["id"]] = {**stamp, "path": rel}
+    initiatives = {}
+    for card_path, card in _cards_with_paths(root / PROJECTS_DIR):
+        if card.get("id"):
+            initiatives[card["id"]] = {k: card[k] for k in ("id", "key", "name", "goal", "area", "state") if card.get(k)}
+        for ref in card.get("refs") or []:
+            if isinstance(ref, dict) and ref.get("id"):
+                artifacts.setdefault(ref["id"], {**_normal(ref), "path": ref.get("path", ""), "initiative": card.get("id", ""), "listed": True})
+    for aid, paths in renditions.items():
+        if aid in artifacts:
+            artifacts[aid]["renditions"] = paths
+    return {"initiatives": initiatives, "artifacts": list(artifacts.values()), "problems": duplicates}
+
+
+def cmd_artifacts(args: argparse.Namespace) -> None:
+    reg = artifact_registry()
+    items = reg["artifacts"]
+    if args.initiative:
+        _, card = _initiative_or_fail(args.initiative)
+        items = [a for a in items if a.get("initiative") == card["id"]]
+    elif args.loose:
+        items = [a for a in items if not a.get("initiative")]
+    if args.stage:
+        items = [a for a in items if args.stage in (a.get("stage") or [])]
+    if args.template:
+        items = [a for a in items if str(a.get("template", "")).split("@")[0] == args.template]
+    if args.json:
+        print(json.dumps({**reg, "artifacts": items}, indent=1, ensure_ascii=False))
+        return
+    names = {i: v.get("name", i) for i, v in reg["initiatives"].items()}
+    if not items:
+        print("no artifacts match")
+    group = None
+    for a in sorted(items, key=lambda a: (names.get(a.get("initiative", ""), "~"), a["path"])):
+        g = names.get(a.get("initiative", ""), "Not in an initiative yet" if not a.get("initiative") else a["initiative"])
+        if g != group:
+            group = g
+            print(f"\n## {g}")
+        bits = [a.get("template", ""), ", ".join(a.get("stage") or []), a.get("status", "")]
+        print(f"{a['path']}  {a['id']}" + (f"  ({'; '.join(b for b in bits if b)})" if any(bits) else ""))
+        for r in a.get("renditions") or []:
+            print(f"  drawn as {r}")
+    for problem in reg["problems"]:
+        print(f"problem: {problem}", file=sys.stderr)
+
+
+# --- templates
+
+
+def template_roots(workspace: Path | None = None) -> list[Path]:
+    """Where templates live: the workspace's own, then each workflow's `templates/`."""
+    workspace = workspace or default_workspace()
+    roots = []
+    here = Path.cwd() / "templates"
+    shipped = KIT_DIR.parent.parent.parent / "workspace" / "templates"  # a demo folder has none of its own
+    for root in [here, workspace / "templates"]:
+        if root.is_dir() and root.resolve() not in [r.resolve() for r in roots]:
+            roots.append(root)
+    for folder in list_workflows(workspace).values():
+        if (folder / "templates").is_dir():
+            roots.append(folder / "templates")
+    if shipped.is_dir() and shipped.resolve() not in [r.resolve() for r in roots]:
+        roots.append(shipped)
+    return roots
+
+
+def list_templates(workspace: Path | None = None) -> dict[str, dict[str, Any]]:
+    """Every template by id, first found wins. Older artifact pages count as page templates."""
+    found: dict[str, dict[str, Any]] = {}
+    for root in template_roots(workspace):
+        for folder in sorted(p for p in root.iterdir() if p.is_dir()):
+            mpath = folder / TEMPLATE_FILE
+            if not mpath.is_file():
+                continue
+            try:
+                manifest = _read_json(mpath)
+            except PaError:
+                manifest = {}
+            tid = manifest.get("template") if isinstance(manifest, dict) else None
+            tid = tid or folder.name
+            found.setdefault(tid, {**(manifest if isinstance(manifest, dict) else {}), "template": tid, "folder": str(folder)})
+        legacy = root / "artifacts"
+        for page_file in sorted(legacy.glob("*.html")) if legacy.is_dir() else []:
+            text = page_file.read_text(encoding="utf-8")
+            title = re.search(r"<title>(.*?)</title>", text, re.S)
+            desc = re.search(r'<meta name="description" content="([^"]*)"', text)
+            found.setdefault(page_file.stem, {
+                "template": page_file.stem, "version": 1, "kind": "page", "legacy": True,
+                "title": title.group(1).strip() if title else page_file.stem,
+                "summary": desc.group(1) if desc else "", "stage": ["any"],
+                "file": page_file.name, "out": f"artifacts/{{slug}}-{page_file.stem}.html", "folder": str(legacy),
+            })
+    for t in found.values():
+        stage = t.get("stage")
+        t["stage"] = [stage] if isinstance(stage, str) else (stage if isinstance(stage, list) else ["any"])
+    return found
+
+
+def find_template(ref: str, workspace: Path | None = None) -> dict[str, Any] | None:
+    tid = ref.split("@", 1)[0].strip()
+    return list_templates(workspace).get(tid)
+
+
+def template_problems(t: dict[str, Any]) -> list[str]:
+    """What is wrong with one template: the same rules `pa check` would apply."""
+    name, folder, problems = t["template"], Path(t["folder"]), []
+    kind = t.get("kind")
+    if kind not in TEMPLATE_KINDS:
+        return [f"{name}: kind must be one of {', '.join(TEMPLATE_KINDS)}"]
+    for key in ("title", "summary", "out"):
+        if not t.get(key):
+            problems.append(f"{name}: missing {key}")
+    if not isinstance(t.get("version", 1), int) or t.get("version", 1) < 1:
+        problems.append(f"{name}: version must be a whole number from 1")
+    stages = [s["id"] for s in lifecycle_stages()]
+    bad = [s for s in t["stage"] if stages and s not in stages and s != "any"]
+    if bad:
+        problems.append(f"{name}: stage {', '.join(bad)} is not a lifecycle stage")
+    if kind in ("markdown", "page"):
+        file = folder / str(t.get("file") or "")
+        if not t.get("file") or not file.is_file():
+            problems.append(f"{name}: file {t.get('file')!r} is missing")
+        else:
+            text = file.read_text(encoding="utf-8")
+            if re.search(r"""(src|href)\s*=\s*["']?https?://|url\(\s*["']?https?://|@import\s+["']?https?://""", text):
+                problems.append(f"{name}: {file.name} loads something from the web; templates must work offline")
+            if kind == "markdown":
+                seen = set()
+                for section in t.get("sections") or []:
+                    if not isinstance(section, dict) or not section.get("id") or not section.get("heading"):
+                        problems.append(f"{name}: every section needs an id and a heading")
+                        continue
+                    if section["id"] in seen:
+                        problems.append(f"{name}: section id {section['id']!r} is used twice")
+                    seen.add(section["id"])
+                    if not re.search(rf"^#+ {re.escape(section['heading'])}\s*$", text, re.M):
+                        problems.append(f"{name}: {file.name} has no heading '{section['heading']}'")
+                    owner = section.get("owner", "any")
+                    if stages and owner not in stages and owner != "any":
+                        problems.append(f"{name}: section {section['id']} owner {owner!r} is not a lifecycle stage")
+                if not t.get("sections"):
+                    problems.append(f"{name}: a markdown template lists its sections")
+    if kind == "records":
+        spath = folder / str(t.get("schemas") or "")
+        if not t.get("schemas") or not spath.is_file():
+            problems.append(f"{name}: schemas {t.get('schemas')!r} is missing")
+        else:
+            try:
+                schemas = _read_json(spath)
+                if not isinstance(schemas, dict) or not schemas:
+                    problems.append(f"{name}: schemas must name at least one record type")
+            except PaError as err:
+                problems.append(f"{name}: {err}")
+        for vname, vrel in (t.get("views") or {}).items():
+            vpath = folder / str(vrel)
+            if not vpath.is_file():
+                problems.append(f"{name}: view {vname} file {vrel} is missing")
+                continue
+            try:
+                problems += _check_spec(_read_json(vpath), f"{name}/{vrel}")
+            except PaError as err:
+                problems.append(f"{name}: {err}")
+    return problems
+
+
+def _fill_out(pattern: str, card: dict[str, Any] | None, title: str) -> Path:
+    if "{key}" in pattern and not card:
+        raise PaError(f"this template lives in an initiative's folder ({pattern}); give --initiative")
+    return Path(pattern.replace("{key}", str((card or {}).get("key", ""))).replace("{slug}", _slug(title)))
+
+
+def new_from_template(tid: str, *, initiative: str | None = None, out: str | None = None,
+                      title: str | None = None, by: str | None = None, force: bool = False) -> tuple[Path, dict[str, Any]]:
+    t = find_template(tid)
+    if not t:
+        raise PaError(f"no template {tid!r} (see `pa template list`)")
+    problems = template_problems(t)
+    if problems:
+        raise PaError("the template has problems:\n  " + "\n  ".join(problems))
+    card_path, card = _initiative_or_fail(initiative) if initiative else (None, None)
+    title = (title or (card or {}).get("name") or t["title"]).strip()
+    path = Path(out) if out else _fill_out(t["out"], card, title)
+    if path.exists() and not force:
+        raise PaError(f"{path} already exists (use --force to replace it, or pa stamp to adopt it)")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    folder = Path(t["folder"])
+    if t["kind"] == "markdown":
+        text = (folder / t["file"]).read_text(encoding="utf-8").replace("{title}", title)
+        _, body = _split_frontmatter(text)
+        _write_atomic(path, body)
+    elif t["kind"] == "page":
+        _write_atomic(path, (folder / t["file"]).read_text(encoding="utf-8"))
+    else:
+        data = {"dataset": path.stem, "title": title, "records": []}
+        if card:
+            data["project"] = card["name"]
+        with _locked(path):
+            _save(path, data)
+    stamp = stamp_file(path, initiative=initiative or None, template=t["template"], title=title, by=by, status="draft")
+    return path, stamp
+
+
+def cmd_template(args: argparse.Namespace) -> None:
+    templates = list_templates()
+    if args.template_command == "list":
+        items = [t for t in templates.values() if not args.stage or args.stage in t["stage"] or "any" in t["stage"]]
+        if args.json:
+            print(json.dumps(items, indent=1, ensure_ascii=False))
+            return
+        for t in items:
+            print(f"{t['template']}@{t.get('version', 1)} ({t.get('kind')}; {', '.join(t['stage'])}): {t.get('title', '')}"
+                  + (" [older page template]" if t.get("legacy") else ""))
+        return
+    if args.template_command == "show":
+        t = find_template(args.id)
+        if not t:
+            raise PaError(f"no template {args.id!r}")
+        print(json.dumps(t, indent=1, ensure_ascii=False))
+        return
+    if args.template_command == "check":
+        chosen = [find_template(args.id)] if args.id else list(templates.values())
+        if args.id and not chosen[0]:
+            raise PaError(f"no template {args.id!r}")
+        problems = [p for t in chosen for p in template_problems(t)]  # type: ignore[arg-type]
+        for p in problems:
+            print(p)
+        if problems:
+            raise PaError(f"{len(problems)} problem{'s' if len(problems) != 1 else ''}")
+        print(f"{len(chosen)} template{'s' if len(chosen) != 1 else ''} ok")
+        return
+    path, stamp = new_from_template(args.id, initiative=args.initiative, out=args.out, title=args.title,
+                                    by=args.by, force=args.force)
+    print(f"made {path.as_posix()} from {stamp.get('template')} ({stamp['id']})")
+
+
+# --- registers: the checkable layer every skill reads and adds to
+
+
+def registers_path(card_path: Path, card: dict[str, Any]) -> Path:
+    return initiative_folder(card_path, card) / "registers.json"
+
+
+def _guard_decisions(data: dict[str, Any], records: list[dict[str, Any]], changes: dict[str, Any]) -> None:
+    """Decisions in an initiative's registers are never edited, only superseded."""
+    template = str((data.get("artifact") or {}).get("template", ""))
+    if not template.startswith(REGISTERS_TEMPLATE + "@"):
+        return
+    allowed = {"status", "superseded_by", "updated"}
+    for record in records:
+        if record.get("type") == "decision" and set(changes) - allowed:
+            raise PaError(f"{record.get('id')} is a decision: add a new one with `pa register ... decision --supersedes {record.get('id')}` instead of editing it")
+
+
+def cmd_register(args: argparse.Namespace) -> None:
+    card_path, card = _initiative_or_fail(args.initiative)
+    path = registers_path(card_path, card)
+    if not path.exists():
+        new_from_template(REGISTERS_TEMPLATE, initiative=card["id"], out=str(path), title=f"{card['name']}: registers")
+    text = " ".join(args.text.split())
+    if not text:
+        raise PaError("say what it is in a line")
+    record: dict[str, Any] = {"type": args.type, "title": text, "updated": _now()}
+    for key in ("source", "owner", "by", "note"):
+        if getattr(args, key):
+            record[key] = getattr(args, key)
+    if args.type == "evidence" and not args.source:
+        raise PaError("evidence needs --source: where it came from, so it stays attached")
+    if args.type == "question":
+        record["status"] = args.status or "open"
+        record["blocking"] = bool(args.blocking)
+    elif args.type == "decision":
+        record["status"] = "decided"
+    elif args.type == "evidence":
+        record["status"] = "recorded"
+    elif args.type == "check":
+        record["status"] = args.status or "unknown"
+    elif args.status:
+        record["status"] = args.status
+    if args.stage:
+        _check_stages(args.stage)
+        record["stage"] = args.stage
+    with _locked(path):
+        data = _load(path)
+        record["id"] = _next_id(data, args.type)
+        if args.supersedes:
+            old = next((r for r in data["records"] if r.get("id") == args.supersedes), None)
+            if not old or old.get("type") != args.type:
+                raise PaError(f"no {args.type} {args.supersedes} to supersede")
+            old["status"] = "superseded"
+            old["superseded_by"] = record["id"]
+            record["supersedes"] = args.supersedes
+        data["records"].append(record)
+        _save(path, data)
+        views = _render_views(path, data)
+    print(f"{record['id']} {args.type} on {card['name']}: {text}" + (f"; redrew {', '.join(views)}" if views else ""))
 
 
 def cmd_report(args: argparse.Namespace) -> None:
@@ -1521,6 +2143,7 @@ def cmd_set(args: argparse.Namespace) -> None:
         data = _load(path)
         data.update(facts)  # dataset facts such as projected="2 Apr"
         records = _select(data, ids, args.where) if changes else []
+        _guard_decisions(data, records, changes)
         content_changed: set[str] = set()
         for record in records:
             for key, value in changes.items():
@@ -1965,6 +2588,10 @@ def _workflow_problems(run: dict[str, Any]) -> list[str]:
         problems.append(f"{name}: missing workflow (its id)")
     if not (wdir / "SKILL.md").is_file():
         problems.append("SKILL.md is missing")
+    for product in workflow.get("work_products") or []:
+        tid = product.get("template") if isinstance(product, dict) else None
+        if tid and not find_template(str(tid), _workspace_for_checks(run)):
+            problems.append(f"{name}: work product {product.get('name', '?')!r} names template {tid!r}, which does not exist")
     steps = workflow.get("steps") or []
     if steps and not 2 <= len(steps) <= 8:
         problems.append(f"{name}: a workflow has 2 to 8 steps, not {len(steps)}")
@@ -3592,6 +4219,58 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--dir", help="the projects folder; default projects/ in the workspace")
     p.add_argument("--json", action="store_true")
     p.set_defaults(run=cmd_project)
+
+    p = sub.add_parser("stamp", help="say which initiative, template and stage a file belongs to (writes a stamp into it)")
+    p.add_argument("file")
+    p.add_argument("--initiative", help="the initiative's id, key or name; empty to take it out of one")
+    p.add_argument("--template", help="the template it follows, e.g. initiative-intent")
+    p.add_argument("--stage", action="append", help="a lifecycle stage it serves (repeat for several)")
+    p.add_argument("--status", choices=ARTIFACT_STATUSES)
+    p.add_argument("--title")
+    p.add_argument("--from", dest="source", action="append", help="the id of an artifact it was made from (repeat)")
+    p.add_argument("--by", help="who made it: a workflow id, a participant id, aviator or you")
+    p.add_argument("--ref", action="store_true", help="list it on the initiative's card instead of writing into it")
+    p.set_defaults(run=cmd_stamp)
+
+    p = sub.add_parser("artifacts", help="list what each initiative has produced, read from the files' stamps")
+    p.add_argument("--initiative", help="only this initiative (id, key or name)")
+    p.add_argument("--loose", action="store_true", help="only artifacts not in an initiative yet")
+    p.add_argument("--stage")
+    p.add_argument("--template")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(run=cmd_artifacts)
+
+    p = sub.add_parser("template", help="list, show, check or start from a template (markdown, records or page)")
+    tsub = p.add_subparsers(dest="template_command", required=True)
+    tp = tsub.add_parser("list")
+    tp.add_argument("--stage")
+    tp.add_argument("--json", action="store_true")
+    tp = tsub.add_parser("show")
+    tp.add_argument("id")
+    tp = tsub.add_parser("check")
+    tp.add_argument("id", nargs="?")
+    tp = tsub.add_parser("new")
+    tp.add_argument("id")
+    tp.add_argument("--initiative", help="the initiative it belongs to (id, key or name)")
+    tp.add_argument("--out", help="where to write it; default is the template's own pattern")
+    tp.add_argument("--title")
+    tp.add_argument("--by")
+    tp.add_argument("--force", action="store_true")
+    p.set_defaults(run=cmd_template)
+
+    p = sub.add_parser("register", help="add evidence, a question, a decision or a ready check to an initiative's registers")
+    p.add_argument("initiative", help="the initiative's id, key or name")
+    p.add_argument("type", choices=REGISTER_TYPES)
+    p.add_argument("text", help="one line")
+    p.add_argument("--source", help="evidence: where it came from (a path, a person, a link)")
+    p.add_argument("--owner", help="questions and checks: who can settle it")
+    p.add_argument("--blocking", action="store_true", help="questions: nothing moves until it is answered")
+    p.add_argument("--status", choices=("open", "answered", "pass", "fail", "unknown"))
+    p.add_argument("--supersedes", help="decisions: the earlier decision this one replaces")
+    p.add_argument("--stage", action="append")
+    p.add_argument("--note")
+    p.add_argument("--by", help="who added it")
+    p.set_defaults(run=cmd_register)
 
     p = sub.add_parser("link", help="hang a link to another project from one record")
     p.add_argument("data")

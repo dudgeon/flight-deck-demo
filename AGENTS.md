@@ -48,6 +48,7 @@ person in the conversation, from the roster in `workspace/participants/`.
 | `tests/` | `test_slim_*.py` pytest suites |
 | `vendor/` | Python runtime, wheels, tmux, and `scripts/build_vendor.sh` |
 | `scripts/` | `sync_upstream.sh`, `make_dock_app.sh`, build helpers |
+| `evals/` | Eval suites that drive the real app (D-133). `routing_suite.py` is the routing suite; runs go to `evals/runs/` (gitignored). See `evals/README.md` |
 | `logs/usage/` | The usage log (D-122): one JSON line per event, per day; gitignored, never shipped. `skills/view-kit/scripts/usagelog.py` writes it; `pa usage` reads it |
 | `start.sh`, `stop.sh` | Start and stop everything (macOS, Apple silicon) |
 | `UPSTREAM` | The upstream commit this fork is synced to |

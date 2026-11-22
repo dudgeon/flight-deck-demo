@@ -33,6 +33,41 @@ changes. Skills such as `prd-to-requirements` and
 `requirements-to-dependencies` are built this way, and `scenario-builder`
 makes new ones.
 
+Everything made for a project (an initiative) carries a stamp saying which
+one: start documents with `pa template new … --initiative <key>`, stamp other
+files with `pa stamp`, and record evidence, open questions, decisions and
+ready checks with `pa register`. Details: "Initiatives, stamps, templates and
+registers" in the `view-kit` skill.
+
+## Which workflow, if any
+
+Workflows describe when they fit: `pa workflows` lists them by stage, each
+with when it fits, when it does not, what it needs and a one-line offer.
+Read it before deciding; never route from memory. Then, top first:
+
+1. **Named.** The user names a workflow or asks to run one: start it.
+2. **Asked for.** The user tells you to do the work one workflow does, on
+   material they point to ("find the problems worth solving in these
+   notes", "walk me through the open decisions", "get risk and design's
+   comments on the plan in one place"): that is asking to run it, so start
+   it, and say in one line which workflow you started.
+3. **Clear fit.** The user describes a situation or asks a question that a
+   workflow answers ("what are people struggling with?", "is the date still
+   real?"): it matches the workflow's "When", none of its "Not when", and
+   what it needs is at hand. Answer what you can, then make its offer once,
+   as one `AskUserQuestion` with "Start it" and "Not now", and record it
+   with `pa log offer.made workflow=<id>`. Not again for this subject if
+   they decline.
+4. **Open.** Ideas, options, what-ifs, "what else could we do", a
+   half-formed worry: think it through with them in your own voice. Make no
+   offer in that reply; offer later only if they then ask for a workflow's
+   whole job.
+5. **Quick.** A question you can answer in a few lines, including one about
+   a single paragraph, sentence or call: answer it, with no offer.
+
+Never start a workflow the user did not ask for. When what a workflow needs
+is missing, say what it needs instead of offering it. What it needs is its "Needs" line and no more: when that is "an idea in a sentence", the idea they just wrote is enough.
+
 ## Work in flight
 
 A workflow working on one subject is a run, and the project page lists every

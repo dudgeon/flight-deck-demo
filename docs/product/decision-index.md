@@ -200,7 +200,26 @@ decided but nothing is built yet.
 | D-135 | The charter reaches a director through `workspace/CLAUDE.md` (re-read after compaction) and `pa recap`, not per-session startup instructions; refines D-134 | Claude | Built |
 | D-136 | `pa check` requires routing on a Library or shipped workflow; a Hangar one without it is listed "start only when named"; offers are a one-press question | Claude | Built |
 | D-137 | Director's notes live in `workspace/director/` (gitignored); a save is refused if the director wrote meanwhile; folded until opened | Claude | Built |
+| D-143 | The routing suite drives the real app one trial at a time: a fresh workspace copy, a new session on the model under test, threads stopped as they appear; tasks from each workflow's examples plus near misses | Claude | Built |
+| D-144 | The routing ladder lives in `workspace/CLAUDE.md` for every Aviator session; offers are logged with `pa log offer.made` so they are graded by code | Claude | Built |
+| D-145 | Blind pairs: ten prompts where two runs differ most, sides shuffled, the key kept apart; answers come back as JSON | Claude | Built |
+| D-146 | Ladder tuning: a plain request for a workflow's exact work starts it; open asks and one-paragraph questions get no offer; suite tasks can carry fixtures; refines D-128 | Claude | Built |
+| D-147 | Grader and ladder, round two: a clarifying card is not an offer; `report --regrade`; a workflow needs only its `Needs` line; refines D-146 | Claude | Built, re-run pending |
 
+
+## Initiatives, artifacts and templates
+
+Spec: [initiatives-and-templates.md](initiatives-and-templates.md). Open:
+IN-1 (is an initiative the same as a goal project) and IN-3 (the shared
+representation of intent), both built as recommended until answered.
+
+| D | Decision | Who | Status |
+|---|---|---|---|
+| D-138 | Initiatives and artifacts get fixed ids (`ini_`/`art_` + UUID) and a fixed key; names can change | Claude | Built |
+| D-139 | One template contract, three kinds: markdown, records, page; versioned; in `templates/` or a workflow's `templates/` | Claude | Built |
+| D-140 | An artifact's tie to its initiative is a stamp in the file; the registry is read from files; the person's files are listed, not written into | Claude | Built |
+| D-141 | Loose artifacts allowed; stages are tags, never gates; stage state is derived | Claude | Built |
+| D-142 | Hero skill contract: find, read, stamp, register, own sections, extend in your own space; decisions superseded, never edited | Claude | Built in `pa`; no hero skill follows it yet |
 
 ## Usage logging
 

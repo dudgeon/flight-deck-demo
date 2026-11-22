@@ -30,7 +30,7 @@ in the same pull request.
 | [Dock launcher](#dock-launcher) | Done |
 | [Branding](#branding) | Done; repository renamed (D-114) |
 | [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | D-89 to D-99 and D-116 to D-119 decided; runs and In flight built (PR 24) |
-| [Aviator coordination and skill routing](#aviator-coordination-and-skill-routing) | Routing, director rules and director memory built (D-120, D-128 to D-137); evals, strictness on the strip and lifecycle skill next |
+| [Aviator coordination and skill routing](#aviator-coordination-and-skill-routing) | Routing, director rules, director memory and the routing suite built (D-120, D-128 to D-137, D-143 to D-145); baseline run, strictness on the strip and lifecycle skill next |
 
 ---
 
@@ -322,6 +322,26 @@ a project means something (a goal to ship) and knows its relatives.
 
 ---
 
+## Initiatives, artifacts and templates
+
+One data model for what an initiative is, what it has produced and what
+templates its artifacts follow, so the lifecycle skill can set it up and
+every hero skill can read and extend it.
+
+- **Done.** The model and the commands: fixed ids, stamps, `pa artifacts`,
+  `pa template`, `pa register`, two shipped templates (intent document,
+  registers) (D-138 to D-142).
+- **Next.** Make each hero skill follow the contract (stamp its work, name a
+  template per work product, use the registers); write the lifecycle skill
+  (D-129) on top of it; show the registry and registers on the project page;
+  a Templates shelf in the Hangar.
+- **Open.** IN-1 (is an initiative the same as a goal project) and IN-3 (the
+  shared representation of intent), with Geoff. The stage list may change
+  with the lifecycle research.
+- **Read.** [initiatives-and-templates.md](initiatives-and-templates.md).
+
+---
+
 ## Aviator coordination and skill routing
 
 Aviator, as the project's director, should coordinate the way a Claude Code
@@ -345,9 +365,23 @@ strictly as the moment needs, measured by evals rather than argued.
   `director/state.md` and `memory.md`, `pa recap`, `pa remember`, a pointer in
   `workspace/CLAUDE.md` (D-135), and Director's notes on the project page,
   editable (D-137). Not yet run in a live director session on the Mac mini.
-- **Next.** The routing eval suite and its runner on the Mac mini, before
-  any tuning; then strictness on the strip and in the run; then the
-  lifecycle skill.
+- **Built (routing suite).** `evals/routing_suite.py`: 44 tasks (each
+  workflow's examples plus 17 near misses and cross-workflow cases), trials
+  through the real app with code graders and a Haiku judge, reports by
+  split, and blind pairs for Geoff (D-143 to D-145). The ladder moved into
+  `workspace/CLAUDE.md` so every session follows it (D-144). Four live trials
+  on Sonnet in the cloud container passed.
+- **Baseline and first tuning.** The Mac mini baseline passed 35 of 42 tasks
+  on Sonnet. Tuning (D-146): a plain request for a workflow's work now starts
+  it, open asks and one-paragraph questions get no offer, two offer tasks
+  get the scenario material their workflow needs, and the risk-and-design
+  task is relabelled a start. The re-run fixed 5 of the 7; the second round
+  (D-147) stops counting clarifying question cards as offers, adds
+  `report --regrade`, and fixes the two offer regressions. Waiting on a
+  regrade of tune1 and a held-out re-run on the Mac mini.
+- **Next.** The re-run, then strictness on the
+  strip and in the run; the lifecycle skill (its two routing tasks wait for
+  it).
 - **Decided.** Geoff answered all seven on 2026-11-21, as recommended:
   D-128 routing ladder, D-129 lifecycle skill with project retrieval (not a
   hero skill), D-130 guide by default, D-131 strictness changed in words,

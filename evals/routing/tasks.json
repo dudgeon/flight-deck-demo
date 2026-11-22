@@ -1,0 +1,120 @@
+{
+ "suite": "routing",
+ "about": "Hand-written routing tasks: near misses across workflows, quick answers, open work and the lifecycle trigger. Each workflow's own example prompts (its routing.examples in workflow.json) are added to these at run time, so a new workflow brings its own tests. expect is start, offer, open, answer or lifecycle; workflow names the one a start or offer is for. fixtures gives a task, by id, files copied into its trial workspace before the prompt (destination: source, both relative to the workspace), so an offer task has what its workflow needs.",
+ "tasks": [
+  {
+   "id": "nm-tighten-paragraph",
+   "expect": "answer",
+   "prompt": "Can you tighten the wording of the opening paragraph of my launch plan? It says: 'We are going to be launching the new held payments experience in March which will help customers.'",
+   "near": "document-review"
+  },
+  {
+   "id": "nm-requirement-vs-dependency",
+   "expect": "answer",
+   "prompt": "Quick one: what's the difference between a requirement and a dependency?",
+   "near": "requirements-to-dependencies"
+  },
+  {
+   "id": "nm-one-call",
+   "expect": "answer",
+   "prompt": "Summarise this call for me in three bullets: the customer said they never know when held money will arrive, they called twice, and they'd switch banks if it happened again.",
+   "near": "problem-discovery"
+  },
+  {
+   "id": "nm-slack-status",
+   "expect": "answer",
+   "prompt": "Write me a two-line Slack status: we're on track for the March 3 launch, design review is done.",
+   "near": "delivery-status"
+  },
+  {
+   "id": "nm-shape-slide",
+   "expect": "answer",
+   "prompt": "Shape this slide title so it reads better: 'Held payments: what we are going to do about it going forward'.",
+   "near": "intent-shaping"
+  },
+  {
+   "id": "nm-pick-vendor",
+   "expect": "open",
+   "prompt": "I'm leaning towards the cheaper alerts vendor even though their SDK is newer. Talk me through it?",
+   "near": "decision-review"
+  },
+  {
+   "id": "nm-worry-parents",
+   "expect": "open",
+   "prompt": "I keep hearing parents complain about held payments and I'm not sure what to make of it yet.",
+   "near": "intent-shaping"
+  },
+  {
+   "id": "nm-brainstorm-calls",
+   "expect": "open",
+   "prompt": "Let's brainstorm ways we could cut support calls about card limits.",
+   "near": "problem-discovery"
+  },
+  {
+   "id": "nm-recorded-decision",
+   "expect": "answer",
+   "prompt": "Note for the record that we decided yesterday to ship release dates to card customers first. Just say it back to me in one sentence.",
+   "near": "decision-review"
+  },
+  {
+   "id": "x-steering-questions",
+   "expect": "offer",
+   "workflow": "decision-review",
+   "prompt": "We've got six open questions on the release-dates work and steering is Thursday. I haven't decided any of them."
+  },
+  {
+   "id": "x-tickets-pile",
+   "expect": "offer",
+   "workflow": "problem-discovery",
+   "prompt": "I exported forty support tickets about held payments and a dozen call notes. What's actually going on for these customers?"
+  },
+  {
+   "id": "x-vp-date",
+   "expect": "offer",
+   "workflow": "delivery-status",
+   "prompt": "My VP wants to know by tomorrow whether the payments launch still lands on March 3. Two teams have gone quiet."
+  },
+  {
+   "id": "x-risk-and-design",
+   "expect": "start",
+   "workflow": "document-review",
+   "prompt": "Can risk and design both look at the launch plan before Friday? I want their comments in one place."
+  },
+  {
+   "id": "x-run-decision-review",
+   "expect": "start",
+   "workflow": "decision-review",
+   "prompt": "Run a decision review on the release-dates work, please."
+  },
+  {
+   "id": "x-catalog-in-thread",
+   "expect": "start",
+   "workflow": "prd-to-requirements",
+   "prompt": "Catalogue the requirements in the held payments PRD for me."
+  },
+  {
+   "id": "lc-new-feature",
+   "expect": "lifecycle",
+   "requires_skill": "feature-lifecycle",
+   "prompt": "I'm working on a new feature: release dates for card customers."
+  },
+  {
+   "id": "lc-kickoff",
+   "expect": "lifecycle",
+   "requires_skill": "feature-lifecycle",
+   "prompt": "We're kicking off a new feature around held-payment alerts. Where do I start?"
+  }
+ ],
+ "fixtures": {
+  "decision-review-offer-1": {
+   "data/allowances-decisions.json": "scenarios/decision-review/fixtures/allowances-decisions.json"
+  },
+  "requirements-to-dependencies-offer-1": {
+   "data/allowances.json": "scenarios/requirements-to-dependencies/fixtures/allowances.json",
+   "context/platform-map.md": "scenarios/requirements-to-dependencies/context/platform-map.md"
+  },
+  "delivery-status-offer-1": {
+   "data/release-dates-delivery.json": "scenarios/delivery-status/fixtures/release-dates-delivery.json"
+  }
+ }
+}

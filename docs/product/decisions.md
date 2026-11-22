@@ -841,6 +841,65 @@ director has written something, folded. *The notes are for checking and
 correcting, not for every visit, and nobody's words should be lost to a
 silent overwrite.*
 
+**D-143 · 2026-11-22 · Claude.** The routing suite (D-133) is
+`evals/routing_suite.py`. Its tasks are every workflow's `routing.examples`
+plus `evals/routing/tasks.json` (near misses, quick answers, open work,
+cross-workflow offers, lifecycle prompts that wait for their skill), split
+60/40 by a hash of each id. A trial copies the Workspace project's folder
+without its data, runs and drafts, opens a new session in that project with
+the model under test passed as Claude Code's `--model`, sends the prompt and
+waits for one turn; a question card ends it, and a thread it starts is
+stopped at once. Trials run one at a time. Grading reads the usage log, the
+copy's files and the card first, and asks a Haiku judge only when they are
+silent. *Through the app so the result is what Geoff would see; a fresh copy
+so trials cannot help each other; one at a time because the eval tag is one
+file per machine; threads stopped because only their existence is graded and
+their work would cost usage Geoff wants kept.*
+
+**D-144 · 2026-11-22 · Claude.** The routing ladder is in
+`workspace/CLAUDE.md` ("Which workflow, if any"), so every Aviator session
+follows it, not only one that has loaded the director skill. A clear-fit
+offer is recorded with `pa log offer.made workflow=<id>`, in the workspace
+instructions and the director skill. *D-128 says Aviator routes this way;
+most sessions never load the director skill; a logged offer is graded by
+code instead of a judge's reading.*
+
+**D-145 · 2026-11-22 · Claude.** Each tuning round's blind comparison is a
+page made by `routing_suite.py pairs`: ten prompts, the ones where two runs
+differ most first, each run's reply and what it did side by side in shuffled
+order, with "Left", "Right" or "Same". Answers are copied back as JSON; the
+key stays in the run folder. *D-133 asks Geoff to rank ten blind pairs per
+round; the page names neither run, works offline, and his answers can be
+checked against the judge.*
+
+**D-146 · 2026-11-22 · Claude.** The ladder (D-128) gains a rung and two
+limits, from the first baseline (35 of 42 on Sonnet). "Asked for": when the
+person tells Aviator to do the work one workflow does, on material they point
+to ("find the problems worth solving in these notes"), that is asking to run
+it, so it starts, and Aviator says which workflow it started. A clear-fit
+offer is for a situation described or a question asked. Open work ("what else
+could we do") and questions about one paragraph get no offer in that reply.
+The routing suite can give a task fixture files, so an offer task has what its
+workflow needs. *The baseline started too rarely on plain requests (an
+imperative is consent, and an offer then is a wasted turn) and offered on
+open asks 3 of 3 times; two offer tasks failed only because the empty trial
+workspace lacked the workflow's material, which is Aviator behaving
+correctly.*
+
+**D-147 · 2026-11-22 · Claude.** Second tuning round, from tune1 (5 of 7
+fixed; two open tasks and two offers still failing). A question card counts
+as an offer only when one of its answers starts something ("Start it",
+"Run", "Yes") or names a workflow; any other card is a clarifying question,
+and the judge reads its words with the reply. `report --regrade` grades saved
+trials again with the current grader. What a workflow needs is its `Needs`
+line and no more, so an idea in a sentence is enough for intent shaping,
+whose `When` now covers "is this a real thing?". The delivery-status offer
+task gets its scenario's milestone plan. *On the Mac mini every failing open
+trial was Aviator asking "which calls?" or "which paragraph?" on a card,
+which is the right behaviour graded wrong; the offer regressions were
+Aviator demanding evidence for an idea, and saying what a date check needs
+when the trial had no plan.*
+
 ## Usage logging
 
 Spec: [usage-logging.md](usage-logging.md). Open questions UL-1 to UL-3 are
@@ -909,6 +968,65 @@ by a person; the offline guard is unchanged until then. *Nothing reaches the
 internet at runtime (CLAUDE.md); a file a person moves is the only way out
 that keeps that true, and an exporter interface fixed now means the server
 can come later without changing the log.*
+
+## Initiatives, artifacts and templates
+
+Spec: [initiatives-and-templates.md](initiatives-and-templates.md). Geoff
+asked on 2026-11-21 for a template data model and an initiative registry with
+ids that tie artifacts back to a shared representation of the intent, run by
+the project setup skill and extended by the hero skills. Two questions (IN-1,
+IN-3) are with him; these are the choices made while building, following the
+recommended answer to each.
+
+**D-138 · 2026-11-21 · Claude.** An initiative is identified by `id`, `ini_`
+followed by a bare 32-character UUID, and `key`, the slug its card file is
+named by; both are set on the first write and never change, while the name
+can. Artifacts are identified the same way with `art_`. Commands find an
+initiative by id, key or name. *Names were the only key, so renaming a
+project broke every link and dataset that named it; upstream's project id is
+a bare UUID, so production can keep ours as they are, and the prefix lets an
+agent tell the two kinds apart in a sentence.*
+
+**D-139 · 2026-11-21 · Claude.** A template is a folder with a
+`template.json` of one of three kinds: `markdown` (a `template.md` and a list
+of sections, each with an id, heading, owner stage and guide, plus optional
+frontmatter fields), `records` (schemas and view-kit views) or `page` (one
+self-contained HTML file). Each has an id, a whole-number version, stages and
+an `out` pattern. Templates live in the workspace's `templates/` and in a
+workflow's own `templates/`; the older artifact pages are read as `page`
+templates. A workflow's work product may name its template, and `pa check`
+fails if it does not exist. *Geoff named two kinds; the existing artifact
+pages are the third, and leaving them out would split the Library from the
+model. One manifest means one check and one Hangar shelf later.*
+
+**D-140 · 2026-11-21 · Claude.** An artifact says which initiative it belongs
+to in a stamp inside the file (markdown frontmatter, a JSON `artifact` block,
+an HTML `pa-artifact` script), with its template, stages, status, maker and
+the artifacts it was made from. The registry is assembled by reading the
+files (`pa artifacts`). Views drawn from a dataset are renditions of it. The
+person's `context/` files, and files that cannot hold a stamp, are listed on
+the initiative's card instead and never written into. *A stamp travels with
+the file and cannot fall out of step with a central list (the D-121
+reasoning); the person's documents are linked, never changed (D-129). This
+was IN-2 in the design and is a build choice, not a product one.*
+
+**D-141 · 2026-11-21 · Claude.** An artifact may be loose, with no
+initiative, and be adopted later. An artifact's stage is a list of tags,
+never a gate, and an initiative's stage state is read from its runs and
+artifacts, never stored. *The lifecycle research thread found discovery and
+delivery running at once and work looping back; a hero skill used on its own
+must still be able to record what it made.*
+
+**D-142 · 2026-11-21 · Claude.** The hero skill contract: find the initiative
+first (never create one; the lifecycle skill does), read what exists, start
+documents from templates and stamp everything, put evidence, questions,
+decisions and ready checks in the registers, write only the intent
+document's sections its stage owns and suggest changes to the rest, and
+extend only in its own records and templates. Decisions in the registers are
+superseded, never edited, and `pa set` refuses to edit one. *Skills from
+different authors, including ones built in the Hangar, extend one shared
+model; without a contract the first two to touch the same initiative would
+overwrite each other.*
 
 ## Backfilled
 

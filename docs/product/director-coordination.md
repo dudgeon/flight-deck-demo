@@ -430,4 +430,12 @@ workflow's `routing.persona` with its default and invariants; strictness on
 the strip and in the run is not built). The charter is re-added through
 `workspace/CLAUDE.md` and `pa recap` rather than a `SessionStart` hook
 (D-135); `pa check` rules and the offer card are D-136; where the notes live
-and how edits are saved is D-137. Next: step 2, the routing suite.
+and how edits are saved is D-137.
+
+**Built (step 2):** the routing suite, `evals/routing_suite.py`
+(`evals/README.md`; D-143 to D-145). The ladder also went into
+`workspace/CLAUDE.md` (D-144). The Mac mini baseline passed 35 of 42; the
+first tuning round (D-146) adds the "asked for" rung, keeps offers off open
+asks, and gives two offer tasks fixtures; the second (D-147) fixes the
+grader, which counted a clarifying question card as an offer. Next: regrade
+tune1 and re-run the held-out split.

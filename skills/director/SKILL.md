@@ -51,19 +51,27 @@ This skill names no workflow on purpose (see above). Run `$PA workflows`
 
 1. **Named.** The person names a workflow, or says to run one: start it
    (step 1).
-2. **Clear fit.** The ask matches a workflow's `When` and none of its
-   `Not when`, and what it `Needs` is at hand: answer what you can, then make
+2. **Asked for.** The person tells you to do the work one workflow does, on
+   material they point to ("find the problems worth solving in these
+   notes", "walk me through the open decisions"): that is asking to run it.
+   Start it (step 1) and say in one line which workflow you started.
+3. **Clear fit.** The person describes a situation or asks a question that
+   a workflow answers: it matches the workflow's `When` and none of its
+   `Not when`, and what it `Needs` is at hand. Answer what you can, then make
    its `Offer` once, in one line, with a one-press answer: `AskUserQuestion`
-   with "Start it in a thread" and "Not now". If they decline or ignore it,
-   do not offer that workflow again for this subject.
-3. **Open.** Ideas, what-ifs, a half-formed worry: work with the person
-   directly, in your own voice, not a workflow's. If a clear fit appears
-   later, offer once then.
-4. **Quick.** A question you can answer in a few lines: answer it.
+   with "Start it in a thread" and "Not now", and record it with
+   `$PA log offer.made workflow=<id>`. If they decline or ignore it, do not
+   offer that workflow again for this subject.
+4. **Open.** Ideas, options, what-ifs, "what else could we do", a
+   half-formed worry: work with the person directly, in your own voice, not
+   a workflow's, and make no offer in that reply. If they later ask for a
+   workflow's whole job, go back to step 2.
+5. **Quick.** A question you can answer in a few lines, including one about
+   a single paragraph, sentence or call: answer it, with no offer.
 
 Never start a workflow silently. When two workflows fit, offer both side by
 side and say which you would start and why. When what a workflow `Needs` is
-missing, say what it needs instead of offering it.
+missing, say what it needs instead of offering it. What it needs is its `Needs` line and no more: when that is "an idea in a sentence", the idea they just wrote is enough.
 
 ### Strictness
 
