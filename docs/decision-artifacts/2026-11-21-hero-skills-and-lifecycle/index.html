@@ -78,12 +78,30 @@ ol.f b{color:var(--ink)}
 .ck{display:flex;gap:6px;align-items:baseline}.ck i{font-style:normal;font-weight:700}
 .ck .y{color:var(--ok)}.ck .n{color:var(--attn)}
 @media (max-width:640px){h1{font-size:25px}}
+/* answering */
+.opt{cursor:pointer;display:grid;grid-template-columns:20px 1fr;gap:10px;text-align:left;width:100%;font:inherit;color:inherit}
+.opt:hover{border-color:var(--navy)}
+.opt:focus-visible,.ans textarea:focus-visible,.ans button:focus-visible{outline:2px solid var(--info);outline-offset:2px}
+.opt .r{width:16px;height:16px;border-radius:50%;border:2px solid var(--ink3);margin-top:3px}
+.opt[aria-pressed="true"]{border-color:var(--you);background:var(--yousoft)}
+.opt[aria-pressed="true"] .r{border-color:var(--you);background:radial-gradient(var(--you) 45%,transparent 50%)}
+.ans{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
+.ans label{font-size:13px;font-weight:600;color:var(--ink2)}
+.ans textarea{width:100%;min-height:64px;font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--sf);color:var(--ink);resize:vertical}
+.ans .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{font:inherit;cursor:pointer;border:1px solid var(--navy);background:var(--navy);color:var(--onnavy);border-radius:8px;padding:7px 14px;font-weight:600}
+.btn.ghost{background:var(--sf);color:var(--ink);border-color:var(--line2);font-weight:500}
+.st{font-size:13px;color:var(--ink3)}
+.st.ok{color:var(--ok)}
+.paused{font-size:13px;font-weight:600;color:var(--attn)}
+.summ td:first-child{white-space:nowrap}
 </style>
 <main>
 <header>
   <div class="eb">Flight Deck · research for the hero skills · 21 November 2026</div>
   <h1>Hero skills and the product lifecycle</h1>
-  <p>You asked for research on the product development lifecycle and where AI helps, to refine the hero skills without splitting the work into too many subskills or making it rigid. I read your product agent and harness library on the Mac mini first, then checked the stage list against the public frameworks. Five decisions follow. Each one is also a card in the thread, asked one at a time.</p>
+  <p>You asked for research on the product development lifecycle and where AI helps, to refine the hero skills without splitting the work into too many subskills or making it rigid. I read your product agent and harness library on the Mac mini first, then checked the stage list against the public frameworks. Five decisions follow.</p>
+  <p class="small">Pick an option on any decision and add a note if you like, then press Save. Your answers are saved with the page and I read them from there; the card in the thread works too. To comment on any part of the page, use the comment button by each decision or the page's comment mode.</p>
 </header>
 
 <section class="card">
@@ -134,6 +152,8 @@ ol.f b{color:var(--ink)}
   <div class="opts">
     <div class="opt"><b>Keep seven, re-tag stages</b><span>Least work and nothing moves for the scenarios, but Decide and Review stay stuck to one stage and the Library still shows eight things.</span></div>
     <div class="opt rec-o"><b>Five arcs, two moves, one companion<span class="tag">Recommended</span></b><span>PRD to dependencies runs Specify (the catalog), Map (the board) and Choose (alternatives with scope and delivery levers, then a phased roadmap), and you can move between them. Engage owners runs each chosen team's onboarding (intake, access, due diligence and gates, terms, provisioning), with the agent's reach set step by step by who answers: self-serve, another agent, or a person. Review and Decide are offered on any artifact. Problem discovery also takes post-launch feedback, so Learn needs no new skill.</span></div>
+    <div class="opt"><b>Engage as a move, four arcs</b><span>Onboarding is offered on any chosen option instead of being its own skill. Fewer names, but long onboarding procedures have no home of their own.</span></div>
+    <div class="opt"><b>Catalog in intent shaping</b><span>Same as five arcs, but the catalog sits at the end of intent shaping and PRD to dependencies starts at Map.</span></div>
     <div class="opt"><b>Three arcs</b><span>Fewest names, but one Define skill has to interrogate you and also produce a catalog, which the research says each do worse when mixed.</span></div>
     <div class="opt"><b>Something else</b><span>Tell me the shape you have in mind.</span></div>
   </div>
@@ -217,7 +237,7 @@ ol.f b{color:var(--ink)}
 
 <!-- HS-5 -->
 <section class="card" id="hs-5">
-  <div class="eb">Decision 5 of 5 · HS-5</div>
+  <div class="eb">Decision 5 of 5 · HS-5 · <span class="paused">paused while the template redesign is idled; answer whenever you like</span></div>
   <h2>Which widgets and templates come first?</h2>
   <p>Five widgets would be shared by every skill because they show the shared registers. Drawn here with notional content.</p>
   <div class="wg">
@@ -258,6 +278,75 @@ ol.f b{color:var(--ink)}
 
 <section class="card">
   <h2>If you accept these</h2>
+  <div id="summary"></div>
   <p>Nothing is built yet. The follow-up work would be: merge the two requirement workflows with both old names kept so scenarios still run; add checkpoints to the workflow file and to the scenario check; let a workflow carry several stages; move Decide out of the stage list and add Learn; offer Review and Decide on every artifact; build the five shared widgets; and give the evals a check that intent shaping changed your answers rather than writing them. The full write-up is in the repo at docs/product/lifecycle-research.md.</p>
 </section>
 </main>
+<script>
+(()=>{
+const KEY="hs-walkthrough-answers";
+let ANS={};try{ANS=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){ANS={}}
+const saveLocal=()=>{try{localStorage.setItem(KEY,JSON.stringify(ANS))}catch(e){}};
+let db=null,comments=null;
+const secs=[...document.querySelectorAll('section[id^="hs-"]')];
+const title=s=>s.querySelector("h2").textContent.trim();
+const recOf=s=>{const o=s.querySelector(".opt.rec-o b");return o?o.childNodes[0].textContent.trim():""};
+function labelOf(o){return o.querySelector("b").childNodes[0].textContent.trim()}
+secs.forEach(s=>{
+  const id=s.id;
+  const opts=[...s.querySelectorAll(".opts .opt")];
+  opts.forEach((d,i)=>{
+    const b=document.createElement("button");b.type="button";b.className=d.className;b.dataset.i=i;
+    b.setAttribute("aria-pressed","false");
+    b.innerHTML='<span class="r"></span><span>'+d.innerHTML+'</span>';
+    d.replaceWith(b);
+    b.addEventListener("click",()=>{ANS[id]={...(ANS[id]||{}),pick:labelOf(b),idx:i,saved:false};paint(s);});
+  });
+  const box=document.createElement("div");box.className="ans";
+  box.innerHTML='<label for="note-'+id+'">Your note (optional)</label><textarea id="note-'+id+'" placeholder="Anything to add, change or ask"></textarea><div class="row"><button type="button" class="btn sv">Save answer</button><button type="button" class="btn ghost cm" hidden>Comment on this decision</button><span class="st" aria-live="polite"></span></div>';
+  s.querySelector(".opts").after(box);
+  const ta=box.querySelector("textarea");
+  ta.addEventListener("input",()=>{ANS[id]={...(ANS[id]||{}),note:ta.value,saved:false};const st=box.querySelector(".st");st.className="st";st.textContent="Not saved yet";});
+  box.querySelector(".sv").addEventListener("click",()=>save(s));
+  box.querySelector(".cm").addEventListener("click",async()=>{if(!comments)return;try{await comments.openComposer({element:s.querySelector("h2")})}catch(e){}});
+  paint(s);
+});
+function paint(s){
+  const a=ANS[s.id]||{};
+  s.querySelectorAll(".opts .opt").forEach(b=>b.setAttribute("aria-pressed",String(a.idx!==undefined&&+b.dataset.i===a.idx)));
+  const ta=s.querySelector(".ans textarea");if(ta&&document.activeElement!==ta)ta.value=a.note||"";
+  const st=s.querySelector(".ans .st");
+  if(a.saved){st.className="st ok";st.textContent="Saved"+(a.at?" "+new Date(a.at).toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"");}
+  else if(a.pick||a.note){st.className="st";st.textContent="Not saved yet";}
+  else{st.className="st";st.textContent="";}
+  summary();
+}
+async function save(s){
+  const id=s.id,a=ANS[id]||{};const st=s.querySelector(".ans .st");
+  if(!a.pick&&!a.note){st.className="st";st.textContent="Pick an option or write a note first";return}
+  const rec={pick:a.pick||"",note:a.note||"",title:title(s),recommended:recOf(s),at:new Date().toISOString()};
+  if(!db){ANS[id]={...a,at:rec.at};saveLocal();st.className="st";st.textContent="Kept in this browser only; saving to the page isn't available here, so tell me in the thread too";return}
+  st.className="st";st.textContent="Saving…";
+  try{await db.collection("answers").doc(id).set(rec);ANS[id]={...a,saved:true,at:rec.at};saveLocal();paint(s)}
+  catch(e){st.className="st";st.textContent="Couldn't save ("+((e&&e.code)||"error")+"). Your pick is kept here; try again or tell me in the thread"}
+}
+function summary(){
+  const el=document.getElementById("summary");if(!el)return;
+  const rows=secs.map(s=>{const a=ANS[s.id]||{};return '<tr><td>'+s.id.toUpperCase()+'</td><td>'+esc(title(s))+'</td><td>'+(a.pick?esc(a.pick):'<span class="small">not answered</span>')+(a.note?'<div class="small">'+esc(a.note)+'</div>':'')+'</td><td>'+(a.saved?'Saved':(a.pick||a.note?'Not saved':''))+'</td></tr>'}).join("");
+  el.innerHTML='<h3>Your answers</h3><div class="tw"><table class="summ"><tr><th>Label</th><th>Decision</th><th>Your answer</th><th>State</th></tr>'+rows+'</table></div>';
+}
+function esc(t){const d=document.createElement("div");d.textContent=t;return d.innerHTML}
+(async()=>{
+  try{comments=await window.claude?.use?.("comments")}catch(e){comments=null}
+  if(comments)document.querySelectorAll(".ans .cm").forEach(b=>b.hidden=false);
+})();
+(async()=>{
+  try{db=await window.claude?.use?.("db")}catch(e){db=null}
+  if(!db)return;
+  try{const snap=await db.collection("answers").get();
+    snap.docs.forEach(x=>{const v=x.data();if(v&&!(ANS[x.id]&&ANS[x.id].saved===false)){const s=secs.find(q=>q.id===x.id);const opts=s?[...s.querySelectorAll(".opts .opt")]:[];const idx=opts.findIndex(o=>labelOf(o)===v.pick);ANS[x.id]={pick:v.pick,note:v.note,idx:idx>=0?idx:undefined,saved:true,at:v.at}}});
+    saveLocal();secs.forEach(paint);
+  }catch(e){}
+})();
+})();
+</script>
