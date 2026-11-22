@@ -2480,7 +2480,7 @@ def routing_problems(workflow: dict[str, Any], name: str, stages: list[str], req
     stage = routing.get("stage")
     if not (isinstance(stage, str) and stage.strip()):
         problems.append(f"{where}.stage is missing")
-    elif stages and stage not in stages:
+    elif stages and stage not in stages and stage != "any":  # "any": a move, usable at every stage
         problems.append(f"{where}.stage {stage!r} is not a lifecycle stage ({', '.join(stages)})")
     examples = routing.get("examples")
     if not isinstance(examples, dict) or not any(_strings(examples.get(k)) for k in ROUTING_EXAMPLE_KINDS):
@@ -2553,7 +2553,8 @@ def cmd_workflows(args: argparse.Namespace) -> None:
         stage = r.get("stage")
         if stage != stage_now:
             stage_now = stage
-            print(f"\n## {titles.get(stage, stage) if stage else 'Not routed: start only when the person names it'}")
+            heading = "Any stage" if stage == "any" else titles.get(stage, stage)
+            print(f"\n## {heading if stage else 'Not routed: start only when the person names it'}")
         print(f"\n{w['id']}: {w['title']} ({w['source']}, {w['folder']})")
         if not r:
             print(f"  {w['summary']}")

@@ -1,0 +1,50 @@
+{
+ "view": "onboarding-track",
+ "layout": "tree-table",
+ "eyebrow": "Engage owners",
+ "title": "{dataset.title}",
+ "subtitle": "Each capability we rely on and its owner's onboarding steps. Waiting is on them; needs you is on us.",
+ "records": { "type": ["capability", "step"] },
+ "summary": { "count_by": "status", "records": { "type": "step" } },
+ "statuses": {
+  "not-started": { "label": "Not started", "tone": "idle" },
+  "in-progress": { "label": "In progress", "tone": "info" },
+  "ready": { "label": "Ready", "tone": "ok" },
+  "drafted": { "label": "Drafted", "tone": "attn" },
+  "sent": { "label": "Sent", "tone": "info" },
+  "waiting": { "label": "Waiting on them", "tone": "idle" },
+  "answered": { "label": "Answered", "tone": "info" },
+  "done": { "label": "Done", "tone": "ok" },
+  "blocked": { "label": "Blocked", "tone": "warn" }
+ },
+ "columns": [
+  { "field": "title", "label": "Capability and steps" },
+  { "field": "owner" },
+  { "field": "step", "as": "chip", "only": "step" },
+  { "field": "counterparty", "as": "chip", "only": "step" },
+  { "field": "lead_time", "label": "Lead (wk)", "only": "step" },
+  { "field": "status", "as": "status" }
+ ],
+ "details": {
+  "capability": {
+   "title": "{title}",
+   "sections": [
+    { "kind": "fields", "fields": [ { "field": "owner" }, { "field": "about" }, { "field": "needed_by", "label": "Needed by" }, { "field": "status", "as": "status" } ] },
+    { "kind": "children", "records": { "type": "step" }, "columns": [ { "field": "title" }, { "field": "counterparty", "as": "chip" }, { "field": "status", "as": "status" } ], "label": "Steps" }
+   ]
+  },
+  "step": {
+   "title": "{title}",
+   "sections": [
+    { "kind": "callout", "field": "note", "label": "Note", "tone": "info" },
+    { "kind": "fields", "fields": [ { "field": "step" }, { "field": "counterparty" }, { "field": "owner" }, { "field": "lead_time", "label": "Lead time (weeks)" }, { "field": "due" }, { "field": "status", "as": "status" } ] },
+    { "kind": "text", "field": "evidence", "label": "Evidence" }
+   ]
+  }
+ },
+ "actions": [
+  { "id": "send", "label": "Send it", "tone": "primary", "when": { "type": "step", "status": "drafted" }, "prompt": "Send the drafted {step} for {id} ({title}) to its counterparty, then mark it sent." },
+  { "id": "chase", "label": "Chase", "when": { "type": "step", "status": ["sent", "waiting"] }, "prompt": "Chase {id} ({title}): " },
+  { "id": "draft", "label": "Draft this step", "when": { "type": "step", "status": "not-started" }, "prompt": "Draft the {step} for {id} ({title})." }
+ ]
+}

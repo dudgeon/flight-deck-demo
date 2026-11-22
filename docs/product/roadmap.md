@@ -330,7 +330,9 @@ every hero skill can read and extend it.
 
 - **Done.** The model and the commands: fixed ids, stamps, `pa artifacts`,
   `pa template`, `pa register`, two shipped templates (intent document,
-  registers) (D-138 to D-142).
+  registers) (D-138 to D-142). The `alternatives` and `onboarding-track`
+  templates for the Choose half and Engage owners, and the five stages in
+  `lifecycle.json` (after D-148 to D-152).
 - **Next.** Make each hero skill follow the contract (stamp its work, name a
   template per work product, use the registers); write the lifecycle skill
   (D-129) on top of it; show the registry and registers on the project page;

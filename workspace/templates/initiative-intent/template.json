@@ -17,7 +17,7 @@
   { "id": "outcome", "heading": "Outcome", "required": true, "owner": "shape", "guide": "What is different if it works, and the measure." },
   { "id": "scope", "heading": "Scope", "required": true, "owner": "shape", "guide": "What is in, and what is deliberately out." },
   { "id": "approach", "heading": "Approach", "required": false, "owner": "specify", "guide": "What we are building, pointing at the PRD or requirements catalog by artifact id." },
-  { "id": "dependencies", "heading": "Dependencies", "required": false, "owner": "map", "guide": "What it relies on and who owns each, pointing at the dependency board." },
+  { "id": "dependencies", "heading": "Dependencies", "required": false, "owner": "specify", "guide": "What it relies on and who owns each, pointing at the dependency board." },
   { "id": "delivery", "heading": "Delivery", "required": false, "owner": "deliver", "guide": "Where it stands against the date, the truth first." }
  ]
 }
