@@ -299,6 +299,18 @@
    "about": "Every utility and hero skill, the proposed four arcs, and the in-chat widget and canvas template designs with real renders, tied to the template data model",
    "decisions": "None (points at HS-1 to HS-5, IN-1, IN-3)",
    "status": "Reference"
+  },
+  {
+   "id": "AhM8FqE6ef4xhB1MUN6epE",
+   "order": 26,
+   "url": "https://claude.ai/artifact/AhM8FqE6ef4xhB1MUN6epE",
+   "slug": "2026-11-22-bolder-template-explorations",
+   "date": "2026-11-22",
+   "title": "Bolder Template Explorations",
+   "kind": "Design exploration",
+   "about": "Six hero-skill widgets and views, each with two bolder directions (instruments, maps) on real scenario data, and which design rules they would bend",
+   "decisions": "None yet",
+   "status": "Open for feedback"
   }
  ]
 }
