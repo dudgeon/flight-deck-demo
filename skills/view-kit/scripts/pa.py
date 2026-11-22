@@ -47,7 +47,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 KIT_DIR = Path(__file__).resolve().parent.parent / "kit"
-LAYOUTS = {"tree-table", "board", "detail", "summary", "form"}
+LAYOUTS = {"tree-table", "board", "detail", "summary", "form", "worksheet"}
 STATUSES = ["queued", "working", "needs-you", "ready", "reviewed", "returned", "failed", "draft"]
 #: Fields whose change does not make derived records stale.
 STATE_FIELDS = {"status", "stage", "locked", "stale", "updated", "note", "return_note", "question", "reviewed_by", "reviewed_at"}

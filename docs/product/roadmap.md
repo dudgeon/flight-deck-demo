@@ -425,7 +425,9 @@ and worksheet templates each needs.
   `workflow.json`, shown by `pa workflows` and noted by `pa check`; Review
   and Decide marked as moves; delivery status titled Deliver. Stages and the
   alternatives and onboarding templates came in PR 52.
-- **Next.** The interactive alternatives worksheet for Choose; the five
+- **Built.** The alternatives worksheet (`worksheet` layout in the view kit,
+  the alternatives template's default view): try options, watch the totals move.
+- **Next.** A phase lane on the worksheet; the five
   shared widgets in the view kit; Review and Decide as launchers on every
   artifact (they still have Library cards); the Engage owners arc on the
   onboarding-track template; Deliver's wider parts.

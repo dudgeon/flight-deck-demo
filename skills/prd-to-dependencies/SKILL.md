@@ -66,19 +66,23 @@ person asks.
 
 ```bash
 $PA template new alternatives --out data/<slug>-alternatives.json --title "<Initiative>: alternatives" [--initiative <key>]
-$PA render <the template's folder>/views/compare.json --data data/<slug>-alternatives.json --out artifacts/<slug>-alternatives.html
+$PA render <the template's folder>/views/worksheet.json --data data/<slug>-alternatives.json --out artifacts/<slug>-alternatives.html
 ```
 
-`$PA template show alternatives` prints the template's folder. Open the view
-with `ui_open_file`, then add records:
+`$PA template show alternatives` prints the template's folder. The worksheet
+lets the person try an option in each choice and watch the totals move (our
+effort, the longest wait, teams relied on, scope traded) against the
+baseline before choosing. `views/compare.json` is the same data as a plain
+table. Open the view with `ui_open_file`, then add records:
 
 - One `choice` per decision, written as a question ("How do we verify
   identity by March?"), with `about` naming the requirement or dependency id.
-- Two to four `option` records under it, never more. Use the four kinds:
+- Two to four `option` records under it, never more. Put the baseline (what
+  the map found) first: the worksheet measures the others against it. Use the four kinds:
   `capability-swap` (another capability or provider, or building it),
   `scope-trade` (do less, or differently), `resequence` (change the order or
   the phase) and `presets` (a default or ready-made instead of building).
-  Include the baseline from the map as one of them.
+  (The baseline from the map is one of the four at most.)
 - `effort` (our own work, person-weeks) and `waiting` (time on other teams,
   weeks) are separate numbers. Put where each number came from in `scope` or
   `relies_on`. Leave a number out rather than guess.

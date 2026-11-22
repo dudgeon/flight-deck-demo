@@ -532,9 +532,15 @@ the decision brief skill when it is installed. `pa workflows` prints each
 workflow's tier, parts and checkpoints; `pa check` notes an unknown tier or a
 malformed part, never fails on one (D-153).
 
-**Not yet.** The interactive alternatives worksheet (lever toggles and a
-phase lane, D-152) is the next build; Choose uses the template's comparison
-table until then.
+**The alternatives worksheet (D-152).** Choose opens on a `worksheet` view
+(a new view-kit layout). Each choice shows its options as cards; pressing one
+*tries* it, and four readouts at the top redraw at once: our effort (summed),
+the longest wait (the one that sets the date), teams relied on, and how many
+choices trade scope, each against the baseline (the first option). The point
+is to feel a trade-off before committing to it: trying is local to the page,
+and choosing still asks for a reason and goes to the agent. The plain table
+(`compare`) stays as a second view. **Not yet:** a phase lane with projected
+dates, which needs dates on options.
 
 ## Problem discovery (a kind of work)
 
