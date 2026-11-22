@@ -13,7 +13,10 @@ into many small subskills.
 ## 1. Four tiers
 
 Every skill in `skills/` and `workspace/.claude/skills/` belongs to one tier.
-The tier decides how the skill is shown and how Aviator offers it.
+The tier decides how the skill is shown and how Aviator offers it. A workflow says its tier with one optional line in
+`workflow.json`, for example `"tier": "move"` (D-153). Leaving it out means
+arc, and an unknown value is only a warning: the field places a skill, it
+does not type anything else.
 
 | Tier | What it is | Shown | How it starts | Today |
 |---|---|---|---|---|
@@ -257,6 +260,6 @@ HS-1 is decided (D-148). These are next, asked one at a time.
 
 | Label | Question | Recommendation |
 |---|---|---|
-| HS-6 | Should "tier" be a field in the workflow manifest, read by routing and the Library? | Yes |
+| HS-6 | Should "tier" be a field in the workflow manifest, read by routing and the Library? | **Decided, D-153:** yes, one optional field; missing means arc; unknown values warn, never fail |
 | HS-7 | Should the four-question rule gate new hero skills in the Hangar? | Yes, as a prompt in the new-workflow flow; failing it lists the workflow as "start only when named", not blocked |
 | HS-8 | Launch and go-to-market (J7): a fifth arc now, or held? | Held until a demo needs it |

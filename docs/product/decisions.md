@@ -1087,6 +1087,17 @@ stays parked; this sets the order, not the look. *They show the shared
 registers every skill uses, and Geoff finds the alternatives worksheet the
 most interesting piece; one brief layout avoids each skill reinventing it.*
 
+**D-153 · 2026-11-22 · Geoff.** A workflow may say what kind of skill it is
+with one optional `tier` field in `workflow.json`: companion, arc, move or
+kit, as defined in [skill-taxonomy.md](skill-taxonomy.md). The app reads it
+to place the skill (arcs in the Library, moves as launchers on artifacts,
+companion and kit out of sight). It is kept loose: a workflow without it
+counts as an arc, an unknown value is a warning in `pa check`, never a
+failure, and nothing else is typed by it. Answers HS-6. *Geoff: "as long as
+the terms are defined somewhere; but don't make things brittle with over
+typing". Without the field the app guesses, and a move built in the Hangar
+would show as a Library card.*
+
 ## Backfilled
 
 Decisions Geoff made on 20 and 21 November that were acted on but never

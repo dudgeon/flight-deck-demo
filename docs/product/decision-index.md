@@ -224,7 +224,7 @@ representation of intent), both built as recommended until answered.
 ## Hero skills and the lifecycle
 
 Spec: [lifecycle-research.md](lifecycle-research.md),
-[skill-taxonomy.md](skill-taxonomy.md). Open: HS-6 to HS-8.
+[skill-taxonomy.md](skill-taxonomy.md). Open: HS-7, HS-8.
 
 | D | Decision | Who | Status |
 |---|---|---|---|
@@ -233,6 +233,7 @@ Spec: [lifecycle-research.md](lifecycle-research.md),
 | D-150 | Discover and Learn are one stage; stages match the arcs: Discover, Shape, Specify, Engage, Deliver; tags, never gates | Geoff asked, Claude chose | Decided, not built |
 | D-151 | Evidence, open questions, decisions and ready checks live on the initiative, shared | Geoff | Registers built (`pa register`); no hero skill uses them yet |
 | D-152 | First: the five shared widgets and the alternatives worksheet, using the decision brief skill | Geoff | Decided, not built |
+| D-153 | Optional `tier` field (companion, arc, move, kit) in `workflow.json`; missing means arc; unknown values warn, never fail | Geoff | Decided, not built |
 
 ## Usage logging
 
@@ -263,7 +264,7 @@ Spec: [usage-logging.md](usage-logging.md).
 
 - Usage logging (UL-1 to UL-3 in [usage-logging.md](usage-logging.md)):
   put to Geoff 2026-11-21; built to the recommendations meanwhile.
-- Skill taxonomy (HS-6 to HS-8 in [skill-taxonomy.md](skill-taxonomy.md));
-  HS-1 to HS-5 were decided 2026-11-22 as D-148 to D-152.
+- Skill taxonomy (HS-7 and HS-8 in [skill-taxonomy.md](skill-taxonomy.md));
+  HS-1 to HS-6 were decided 2026-11-22 as D-148 to D-153.
 - Progressive complexity (D-54).
 - D-24 for production.
