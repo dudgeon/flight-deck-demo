@@ -116,18 +116,20 @@ them).
 
 ## The recommendation
 
-**Four arcs, two moves, one companion.** Seven skills, not eight, and only
-four of them are stages.
+**Four arcs, three moves, one companion.** Eight skills, and only four of
+them are stages. (Revised 2026-11-22 after Geoff's atlas comments: PRD to
+dependencies gains a Choose half, and Engage joins Review and Decide.)
 
 | Kind | Skill | Stages it serves | Stance | Built from |
 |---|---|---|---|---|
 | Companion | **Feature lifecycle** (D-129) | all | Orient and offer | new; owns the initiative record |
 | Arc | **Problem discovery** | Discover, Learn | Produce (synthesis with checked quotes) | `problem-discovery`, plus post-launch feedback as a source |
 | Arc | **Intent shaping** | Shape | Up-level (interrogate, never fill the answer) | `intent-shaping` |
-| Arc | **PRD to dependencies** | Specify, Map | Produce, with an enforce check | `prd-to-requirements` and `requirements-to-dependencies` as two halves of one skill; enter at either half |
+| Arc | **PRD to dependencies** | Specify, Map, Choose | Produce, with an enforce check; the person chooses | `prd-to-requirements` and `requirements-to-dependencies` as its first two halves, plus a new Choose half (analysis of alternatives and a phased roadmap); enter at any half |
 | Arc | **Delivery status** | Deliver | Produce | `delivery-status` |
 | Move | **Review** | any | Enforce | `document-review`, offered on any artifact |
 | Move | **Decide** | any | Present the smallest question; person decides | `decision-review`, offered on any open question |
+| Move | **Engage** | Map, Deliver | Act where self-serve; draft and track where an agent or a person answers | new; offered on any chosen option or dependency |
 
 Why this shape:
 
@@ -149,6 +151,33 @@ Why this shape:
   that half's produce stance and hands its catalog straight to the board);
   the home is still his call. Moving between phases (shape, catalog, map)
   inside one initiative is a requirement whichever home he picks.
+- **Choosing among options is part of mapping, not a separate skill.**
+  Geoff (atlas, 2026-11-22): each dependency "will typically have multiple
+  options to satisfy" it, so an analysis of alternatives and a roadmapping
+  workflow matter, "including both delivery and scope levers". His own
+  research supports one home: Pathfinder keeps a fit record for every
+  requirement and capability pair considered, rejected ones included, and
+  generates the delivery plan as a view over them; and the dependency work
+  shows requirements reworded once their delivery path is known (the
+  "pre-approved" offer), which is a scope lever. So the Choose half reads the
+  board's options, lets the person pull scope levers (reword, defer to a
+  later phase, drop) and delivery levers (another platform, build, a
+  different sequence), and writes a phased roadmap. The agent prepares and
+  compares; the person chooses (finding 6), and each choice is a record in
+  the Decisions register. Delivery status reuses the same alternatives
+  records for its "ways to recover".
+- **Engaging owners is a move, sloped to the counterparty.** Geoff: some
+  engagements "can be fully agentic, like 'just' signing up for a supabase
+  account, others will require engagement and due diligence with agent or
+  human counterparties". The rigidity research says to key the human gate to
+  the action type, not the agent's confidence. Three kinds: *self-serve*
+  (the agent does it after one confirm, since it is a side effect; at work
+  this stays off while the work Mac is offline), *agent counterparty* (the
+  agent exchanges with the other agent; a person approves anything that
+  commits), *person* (the agent drafts the smallest question riding a real
+  ask, a person sends, the agent tracks the wait and writes the answer back
+  as context). It is a move because it runs at Map and through Deliver, on
+  any chosen option.
 - **Learn without a new skill.** Post-launch feedback triage is the job with
   the best evidence that agents help, and it is the same synthesis job as
   discovery. Problem discovery takes post-launch feedback and metrics notes
@@ -180,6 +209,8 @@ make deterministic.
 | Delivery status | Every date change names its cause and source; the update says what is asked of the reader |
 | Review | Every finding points to a line and names who raised it; the author decides each finding |
 | Decide | The person decides; each decision records its reason and supersedes, never edits, an earlier one |
+| Choose (half of PRD to dependencies) | Every option shows its evidence and what it costs in time, scope and risk; the person chooses; a rejected option keeps its reason |
+| Engage | Nothing that commits is sent or signed without a person's yes; every ask names its owner and what it asks; answers are written back with their source |
 
 `pa check` can test the structural half of each (fields present, links
 resolve) on the dataset, the way it checks routing today (D-136).
@@ -235,6 +266,30 @@ reason), and an *initiative header* (name, id, stage tags, linked artifacts).
 | Delivery status | plan, milestone, summary | cause-of-change chip; audience switch on the update | status update (markdown with frontmatter); milestone plan (json) |
 | Review | findings, who form, consent question, summary | works on any artifact kind, not only markdown | review findings (json) |
 | Decide | queue, card, summary | opens on any open-question entry, from any skill | decision log (json, from the Decisions register) |
+| Choose | (new) | the analysis-of-alternatives worksheet, below | alternatives (json, shared with delivery status); phased roadmap (json, with a markdown export) |
+| Engage | (new) | counterparty card (self-serve, agent, person) with its state: drafted, sent, waiting, answered, onboarded | asks (markdown); engagement log (json) |
+
+**The analysis-of-alternatives worksheet** (Geoff: "could be extremely
+interesting, with some fun interactive elements"). One requirement or
+dependency at a time, or the whole board. Recommended elements:
+
+- *Option cards side by side*, each with evidence chips, lead time, effort,
+  risk and what it leaves out; the agent's recommendation is marked, never
+  pre-selected.
+- *Lever toggles*: scope levers (reword this requirement, move it to phase
+  two, drop it) and delivery levers (platform A, platform B, build, change
+  the sequence). Flipping one redraws the date and the phases at once, so the
+  person feels the trade-off instead of reading about it.
+- *A phase lane* (now, next, later) that options and requirements can be
+  dragged between, with the projected date per phase.
+- *A "what would change my mind" line* per option, which the agent fills and
+  the person can edit; it becomes the reason on the decision record.
+- *Commit*: writes the chosen options to the Decisions register, rejected
+  ones keep their reason, and the roadmap view regenerates.
+
+A first sketch is on the Skills and Templates Atlas
+(https://claude.ai/artifact/7nct1TPwFd9131CjVoAHtW#alternatives), on the
+Allowances dependency data.
 
 ## What this changes, if accepted
 
@@ -251,8 +306,8 @@ answers change"), which the rigidity research says an up-level skill needs.
 
 | Label | Question | Recommendation |
 |---|---|---|
-| HS-1 | What shape should the hero-skill set take? | Four arcs, two moves, one companion |
+| HS-1 | What shape should the hero-skill set take? | Four arcs (PRD to dependencies with a Choose half), three moves (Review, Decide, Engage), one companion |
 | HS-2 | How fixed should each skill's steps be? | Suggested path, plus a few checkpoints that always hold |
 | HS-3 | Which stages, and are they gates? | Discover, Shape, Specify, Map, Deliver, Learn; tags, never gates |
 | HS-4 | Where do evidence, open questions, decisions and readiness live? | On the initiative, shared by every skill |
-| HS-5 | Which widgets and templates come first? | The five shared widgets, then the per-skill additions |
+| HS-5 | Which widgets and templates come first? | The five shared widgets and the analysis-of-alternatives worksheet, then the per-skill additions |
