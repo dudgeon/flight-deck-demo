@@ -1,0 +1,23 @@
+{
+ "template": "initiative-intent",
+ "version": 1,
+ "kind": "markdown",
+ "title": "Initiative intent",
+ "summary": "The shared statement of what an initiative is for: one document every workflow reads, each stage writing its own sections and suggesting changes to the rest.",
+ "stage": "any",
+ "out": "projects/{key}/intent.md",
+ "file": "template.md",
+ "fields": {
+  "depth": { "type": "string", "note": "How far the thinking has got, in the intent framework's words (frameworks/intent.md)" }
+ },
+ "sections": [
+  { "id": "goal", "heading": "Goal", "required": true, "owner": "any", "guide": "One in-market goal, in a sentence. The same line as the card's goal." },
+  { "id": "problem", "heading": "Problem", "required": true, "owner": "discover", "guide": "The problem in the users' words, with the evidence ids from the registers (E-01)." },
+  { "id": "customer", "heading": "Customer", "required": true, "owner": "discover", "guide": "Who it is for, and the situation they are in when it matters." },
+  { "id": "outcome", "heading": "Outcome", "required": true, "owner": "shape", "guide": "What is different if it works, and the measure." },
+  { "id": "scope", "heading": "Scope", "required": true, "owner": "shape", "guide": "What is in, and what is deliberately out." },
+  { "id": "approach", "heading": "Approach", "required": false, "owner": "specify", "guide": "What we are building, pointing at the PRD or requirements catalog by artifact id." },
+  { "id": "dependencies", "heading": "Dependencies", "required": false, "owner": "map", "guide": "What it relies on and who owns each, pointing at the dependency board." },
+  { "id": "delivery", "heading": "Delivery", "required": false, "owner": "deliver", "guide": "Where it stands against the date, the truth first." }
+ ]
+}

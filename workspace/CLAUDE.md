@@ -33,6 +33,12 @@ changes. Skills such as `prd-to-requirements` and
 `requirements-to-dependencies` are built this way, and `scenario-builder`
 makes new ones.
 
+Everything made for a project (an initiative) carries a stamp saying which
+one: start documents with `pa template new … --initiative <key>`, stamp other
+files with `pa stamp`, and record evidence, open questions, decisions and
+ready checks with `pa register`. Details: "Initiatives, stamps, templates and
+registers" in the `view-kit` skill.
+
 ## Work in flight
 
 A workflow working on one subject is a run, and the project page lists every

@@ -202,6 +202,20 @@ decided but nothing is built yet.
 | D-137 | Director's notes live in `workspace/director/` (gitignored); a save is refused if the director wrote meanwhile; folded until opened | Claude | Built |
 
 
+## Initiatives, artifacts and templates
+
+Spec: [initiatives-and-templates.md](initiatives-and-templates.md). Open:
+IN-1 (is an initiative the same as a goal project) and IN-3 (the shared
+representation of intent), both built as recommended until answered.
+
+| D | Decision | Who | Status |
+|---|---|---|---|
+| D-138 | Initiatives and artifacts get fixed ids (`ini_`/`art_` + UUID) and a fixed key; names can change | Claude | Built |
+| D-139 | One template contract, three kinds: markdown, records, page; versioned; in `templates/` or a workflow's `templates/` | Claude | Built |
+| D-140 | An artifact's tie to its initiative is a stamp in the file; the registry is read from files; the person's files are listed, not written into | Claude | Built |
+| D-141 | Loose artifacts allowed; stages are tags, never gates; stage state is derived | Claude | Built |
+| D-142 | Hero skill contract: find, read, stamp, register, own sections, extend in your own space; decisions superseded, never edited | Claude | Built in `pa`; no hero skill follows it yet |
+
 ## Usage logging
 
 Spec: [usage-logging.md](usage-logging.md).

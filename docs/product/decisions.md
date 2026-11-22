@@ -910,6 +910,65 @@ internet at runtime (CLAUDE.md); a file a person moves is the only way out
 that keeps that true, and an exporter interface fixed now means the server
 can come later without changing the log.*
 
+## Initiatives, artifacts and templates
+
+Spec: [initiatives-and-templates.md](initiatives-and-templates.md). Geoff
+asked on 2026-11-21 for a template data model and an initiative registry with
+ids that tie artifacts back to a shared representation of the intent, run by
+the project setup skill and extended by the hero skills. Two questions (IN-1,
+IN-3) are with him; these are the choices made while building, following the
+recommended answer to each.
+
+**D-138 · 2026-11-21 · Claude.** An initiative is identified by `id`, `ini_`
+followed by a bare 32-character UUID, and `key`, the slug its card file is
+named by; both are set on the first write and never change, while the name
+can. Artifacts are identified the same way with `art_`. Commands find an
+initiative by id, key or name. *Names were the only key, so renaming a
+project broke every link and dataset that named it; upstream's project id is
+a bare UUID, so production can keep ours as they are, and the prefix lets an
+agent tell the two kinds apart in a sentence.*
+
+**D-139 · 2026-11-21 · Claude.** A template is a folder with a
+`template.json` of one of three kinds: `markdown` (a `template.md` and a list
+of sections, each with an id, heading, owner stage and guide, plus optional
+frontmatter fields), `records` (schemas and view-kit views) or `page` (one
+self-contained HTML file). Each has an id, a whole-number version, stages and
+an `out` pattern. Templates live in the workspace's `templates/` and in a
+workflow's own `templates/`; the older artifact pages are read as `page`
+templates. A workflow's work product may name its template, and `pa check`
+fails if it does not exist. *Geoff named two kinds; the existing artifact
+pages are the third, and leaving them out would split the Library from the
+model. One manifest means one check and one Hangar shelf later.*
+
+**D-140 · 2026-11-21 · Claude.** An artifact says which initiative it belongs
+to in a stamp inside the file (markdown frontmatter, a JSON `artifact` block,
+an HTML `pa-artifact` script), with its template, stages, status, maker and
+the artifacts it was made from. The registry is assembled by reading the
+files (`pa artifacts`). Views drawn from a dataset are renditions of it. The
+person's `context/` files, and files that cannot hold a stamp, are listed on
+the initiative's card instead and never written into. *A stamp travels with
+the file and cannot fall out of step with a central list (the D-121
+reasoning); the person's documents are linked, never changed (D-129). This
+was IN-2 in the design and is a build choice, not a product one.*
+
+**D-141 · 2026-11-21 · Claude.** An artifact may be loose, with no
+initiative, and be adopted later. An artifact's stage is a list of tags,
+never a gate, and an initiative's stage state is read from its runs and
+artifacts, never stored. *The lifecycle research thread found discovery and
+delivery running at once and work looping back; a hero skill used on its own
+must still be able to record what it made.*
+
+**D-142 · 2026-11-21 · Claude.** The hero skill contract: find the initiative
+first (never create one; the lifecycle skill does), read what exists, start
+documents from templates and stamp everything, put evidence, questions,
+decisions and ready checks in the registers, write only the intent
+document's sections its stage owns and suggest changes to the rest, and
+extend only in its own records and templates. Decisions in the registers are
+superseded, never edited, and `pa set` refuses to edit one. *Skills from
+different authors, including ones built in the Hangar, extend one shared
+model; without a contract the first two to touch the same initiative would
+overwrite each other.*
+
 ## Backfilled
 
 Decisions Geoff made on 20 and 21 November that were acted on but never

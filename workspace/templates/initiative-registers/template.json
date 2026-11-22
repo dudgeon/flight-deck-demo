@@ -1,0 +1,12 @@
+{
+ "template": "initiative-registers",
+ "version": 1,
+ "kind": "records",
+ "title": "Initiative registers",
+ "summary": "The checkable layer every workflow reads and adds to: evidence with its source, open questions and assumptions, decisions that are superseded rather than edited, and the checks that say it is ready.",
+ "stage": "any",
+ "out": "projects/{key}/registers.json",
+ "schemas": "schemas/records.json",
+ "views": { "registers": "views/registers.json" },
+ "default_view": "registers"
+}

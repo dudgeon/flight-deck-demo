@@ -384,6 +384,47 @@ in `skills/view-kit/scripts/pa.py`; the chip in `skills/view-kit/kit/`
 mounted in `pages/ProjectHomePage.tsx`. Files: `workspace/projects/*.json`
 (not committed, like `data/`).
 
+## Initiatives, artifacts and templates
+
+**What it is for.** Many workflows, run at different times and by different
+skills, work on one initiative. Each needs to find what the others made, read
+the shared intent and the questions still open, and add its own work without
+overwriting anyone's. And when the person or the lifecycle skill asks "what
+do we have for this feature", the answer has to come from the files
+themselves. Geoff's words: an initiative registry with ids that associates
+artifacts back to a shared representation of the intent.
+
+**What it does.**
+
+- **A fixed id for every initiative** (D-138). A project's card gets `id`
+  and `key` the first time it is written, so renaming it breaks nothing.
+- **A stamp in every artifact** (D-140): which initiative, which template
+  and version, which stages, its status, who made it and what from. A drawn
+  view counts as a rendition of its dataset. The person's own files are
+  listed on the card, never changed.
+- **`pa artifacts`** lists everything by initiative, stage or template, read
+  from the stamps, and flags a copied file that kept its stamp.
+- **Templates in three kinds** (D-139): markdown with sections owned by
+  stages, records with schemas and views, and self-contained pages.
+  `pa template new` writes one into place, stamped; `pa template check`
+  keeps them offline and consistent with the lifecycle stages.
+- **The shared intent**: an intent document with a section per concern,
+  each owned by a stage, and **registers** for evidence (source required),
+  open questions and assumptions, decisions (superseded, never edited) and
+  ready checks, drawn as a board.
+
+**How the agent keeps it.** The hero skill contract (D-142) in the
+`view-kit` skill, "Initiatives, stamps, templates and registers", and one
+rule in `workspace/CLAUDE.md`.
+
+**Not built yet.** The project page and the Hangar do not show it; no hero
+workflow stamps its work yet; the lifecycle skill (D-129) is not written.
+
+**Where.** `skills/view-kit/scripts/pa.py` (section "initiatives, artifacts
+and templates"); `workspace/templates/initiative-intent/` and
+`workspace/templates/initiative-registers/`; `tests/test_slim_initiatives.py`.
+Spec: [initiatives-and-templates.md](initiatives-and-templates.md).
+
 ## Participants
 
 **Intent.** Product work is done with other people and other systems. Their

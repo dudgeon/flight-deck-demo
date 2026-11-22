@@ -1,0 +1,140 @@
+{
+ "evidence": {
+  "required": [
+   "id",
+   "type",
+   "title",
+   "source"
+  ],
+  "fields": {
+   "title": {
+    "type": "string",
+    "note": "What it shows, in a line"
+   },
+   "source": {
+    "type": "string",
+    "note": "Where it came from: a path, an artifact id, a person, a ticket"
+   },
+   "quote": {
+    "type": "string"
+   },
+   "against": {
+    "type": "boolean",
+    "note": "true when it argues against the initiative's view"
+   },
+   "stage": {
+    "type": "array"
+   },
+   "by": {
+    "type": "string"
+   },
+   "status": {
+    "enum": [
+     "recorded"
+    ]
+   }
+  }
+ },
+ "question": {
+  "required": [
+   "id",
+   "type",
+   "title",
+   "status"
+  ],
+  "fields": {
+   "title": {
+    "type": "string",
+    "note": "The question or assumption, in a line"
+   },
+   "owner": {
+    "type": "string",
+    "note": "Who can settle it"
+   },
+   "blocking": {
+    "type": "boolean",
+    "note": "Nothing moves until it is answered"
+   },
+   "status": {
+    "enum": [
+     "open",
+     "answered"
+    ]
+   },
+   "answer": {
+    "type": "string"
+   },
+   "by": {
+    "type": "string"
+   }
+  }
+ },
+ "decision": {
+  "required": [
+   "id",
+   "type",
+   "title",
+   "status"
+  ],
+  "fields": {
+   "title": {
+    "type": "string",
+    "note": "What was decided, in a line. Never edited: supersede it"
+   },
+   "note": {
+    "type": "string",
+    "note": "Why"
+   },
+   "owner": {
+    "type": "string",
+    "note": "Who decided"
+   },
+   "status": {
+    "enum": [
+     "decided",
+     "superseded"
+    ]
+   },
+   "supersedes": {
+    "type": "string"
+   },
+   "superseded_by": {
+    "type": "string"
+   },
+   "by": {
+    "type": "string"
+   }
+  }
+ },
+ "check": {
+  "required": [
+   "id",
+   "type",
+   "title",
+   "status"
+  ],
+  "fields": {
+   "title": {
+    "type": "string",
+    "note": "A pass or fail test of readiness, e.g. 'the riskiest assumption has evidence'"
+   },
+   "owner": {
+    "type": "string"
+   },
+   "status": {
+    "enum": [
+     "pass",
+     "fail",
+     "unknown"
+    ]
+   },
+   "stage": {
+    "type": "array",
+    "note": "The stage it gates the move out of, when it gates one"
+   },
+   "by": {
+    "type": "string"
+   }
+  }
+ }
+}
