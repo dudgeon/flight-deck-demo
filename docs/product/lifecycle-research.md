@@ -310,4 +310,8 @@ answers change"), which the rigidity research says an up-level skill needs.
 | HS-2 | How fixed should each skill's steps be? | Suggested path, plus a few checkpoints that always hold |
 | HS-3 | Which stages, and are they gates? | Discover, Shape, Specify, Map, Deliver, Learn; tags, never gates |
 | HS-4 | Where do evidence, open questions, decisions and readiness live? | On the initiative, shared by every skill |
-| HS-5 | Which widgets and templates come first? | The five shared widgets and the analysis-of-alternatives worksheet, then the per-skill additions |
+| HS-5 | Which widgets and templates come first? (**paused**, Geoff 2026-11-22: the template redesign is idled) | The five shared widgets and the analysis-of-alternatives worksheet, then the per-skill additions |
+
+The skill taxonomy that follows from HS-1 (tiers, one card per skill, how
+work moves, coverage of the ten PM jobs, and the rule for adding a skill) is
+in [skill-taxonomy.md](skill-taxonomy.md), with HS-6 to HS-8.

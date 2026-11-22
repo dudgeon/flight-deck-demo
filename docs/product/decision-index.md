@@ -251,6 +251,8 @@ Spec: [usage-logging.md](usage-logging.md).
 - Usage logging (UL-1 to UL-3 in [usage-logging.md](usage-logging.md)):
   put to Geoff 2026-11-21; built to the recommendations meanwhile.
 - Hero-skill set and the lifecycle (HS-1 to HS-5 in
-  [lifecycle-research.md](lifecycle-research.md)): put to Geoff 2026-11-21.
+  [lifecycle-research.md](lifecycle-research.md), HS-6 to HS-8 in
+  [skill-taxonomy.md](skill-taxonomy.md)): put to Geoff from 2026-11-21;
+  HS-5 paused 2026-11-22.
 - Progressive complexity (D-54).
 - D-24 for production.

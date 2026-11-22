@@ -403,7 +403,13 @@ and worksheet templates each needs.
   companion; a suggested path with fixed checkpoints per skill; stages as
   tags with Learn added and Decide made a move; evidence, open questions,
   decisions and readiness shared on the initiative; five shared widgets.
-- **Open.** HS-1 to HS-5, being put to Geoff one at a time. Nothing built.
+- **Open.** HS-1 to HS-4 and HS-6 to HS-8, put to Geoff one at a time.
+  HS-5 (widgets and templates) is paused: Geoff idled the template redesign
+  on 2026-11-22 and asked for the skill taxonomy to go on. Nothing built.
+- **Taxonomy.** [skill-taxonomy.md](skill-taxonomy.md): four tiers
+  (companion, arc, move, kit), a card per skill, how work moves through the
+  initiative registers, coverage of the ten PM jobs, and a four-question rule
+  for adding a hero skill.
 - **Next, if accepted.** Merge the two requirement workflows (old ids kept),
   `checkpoints` in `workflow.json` and `pa check`, a stage list on routing,
   Learn in `lifecycle.json`, Review and Decide as launchers on every
