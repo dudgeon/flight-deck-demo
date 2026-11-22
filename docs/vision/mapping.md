@@ -43,7 +43,7 @@ part stays short, and agents do the expanding.
 
 | Move | Flight Deck now | Status | The step toward the loop |
 |---|---|---|---|
-| sense | Problem discovery runs on sources a person brings, including post-launch | today (on request) | Watching signals unasked is later |
+| sense | Problem discovery runs on sources a person brings, including post-launch, and finds problems | today (on request) | Name openings in the data as opportunities, not only problems; watching signals unasked is later |
 | investigate | Problem discovery: problems with checked quotes, every claim cites a source | today | Interviews at scale are platform |
 | hypothesize | Intent shaping asks one question at a time and never writes the person's answer | today, next | Add risk accepted and what would prove it wrong |
 | prototype | The Prototype move is designed in PR 54: routed by channel, a default enterprise prototyper that takes design-system packs, and platform teams can ship their own | next | Prototypes in safe copies of real systems are platform |
