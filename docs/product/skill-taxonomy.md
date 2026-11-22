@@ -236,8 +236,8 @@ decides where the work goes.
    then is it a new arc, and it says which stages it tags and which register
    entries it writes.
 
-A Hangar workflow that fails the rule can still be built and flown. It is
-listed as "start only when named" (D-136) and is not offered as a hero skill.
+The rule is guidance for whoever adds a skill, not a gate: a Hangar workflow
+can always be built, flown and listed (HS-7, Claude's call).
 
 ## 6. What this changes, if accepted
 
@@ -261,5 +261,5 @@ HS-1 is decided (D-148). These are next, asked one at a time.
 | Label | Question | Recommendation |
 |---|---|---|
 | HS-6 | Should "tier" be a field in the workflow manifest, read by routing and the Library? | **Decided, D-153:** yes, one optional field; missing means arc; unknown values warn, never fail |
-| HS-7 | Should the four-question rule gate new hero skills in the Hangar? | Yes, as a prompt in the new-workflow flow; failing it lists the workflow as "start only when named", not blocked |
-| HS-8 | Launch and go-to-market (J7): a fifth arc now, or held? | Held until a demo needs it |
+| HS-7 | Should the four-question rule gate new hero skills in the Hangar? | **Claude's call (2026-11-22):** advice only. The Hangar may suggest where a new skill fits; nothing is blocked or hidden. Revisit only if the Library fills with near-duplicates |
+| HS-8 | Launch and go-to-market (J7): a fifth arc now, or held? | **Claude's call (2026-11-22):** when a demo needs it, launch work goes in Deliver as one of its parts (D-148 widened Deliver); nothing built before then |
