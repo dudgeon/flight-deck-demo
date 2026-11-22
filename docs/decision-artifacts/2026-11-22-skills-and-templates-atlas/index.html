@@ -336,6 +336,50 @@ dialog .cap { color: var(--pa-on-navy); background: var(--pa-navy); font-size: v
 dialog .cap button { all: unset; cursor: pointer; text-decoration: underline; }
 footer { color: var(--pa-ink-3); font-size: var(--pa-text-sm); }
 @media (prefers-reduced-motion: no-preference) { figure button.shot img { transition: transform .2s ease; } figure button.shot:hover img { transform: scale(1.02); } }
+.aoa { display: grid; gap: 14px; }
+.aoa-weights { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; font-size: var(--pa-text-sm); color: var(--pa-ink-2); }
+.aoa-weights b { color: var(--pa-ink); font-size: var(--pa-text); }
+.aoa-weights label { display: inline-flex; gap: 6px; align-items: center; }
+.aoa-weights input[type=range] { width: 90px; accent-color: var(--pa-navy); }
+.aoa-weights input[type=checkbox] { accent-color: var(--pa-you); }
+.aoa-deps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 900px) { .aoa-deps { grid-template-columns: 1fr; } }
+.dep { border: 1px solid var(--pa-line); border-radius: var(--pa-r); padding: 10px; display: grid; gap: 8px; align-content: start; background: var(--pa-bg); min-width: 0; }
+.dep .t { font-weight: 600; }
+.dep .r { font-size: var(--pa-text-sm); color: var(--pa-ink-3); }
+.opt { all: unset; box-sizing: border-box; display: grid; gap: 3px; border: 1px solid var(--pa-line-strong); background: var(--pa-surface); border-radius: var(--pa-r); padding: 8px 10px; cursor: pointer; font-size: var(--pa-text-sm); color: var(--pa-ink-2); }
+.opt b { color: var(--pa-ink); font-size: var(--pa-text); font-weight: 600; }
+.opt .top { display: flex; justify-content: space-between; gap: 6px; align-items: center; flex-wrap: wrap; }
+.opt[aria-pressed="true"] { border-color: var(--pa-you); box-shadow: inset 3px 0 0 var(--pa-you); }
+.opt:focus-visible, .lev button:focus-visible { outline: 2px solid var(--pa-info); outline-offset: 2px; }
+.opt .rec { color: var(--pa-ok); background: var(--pa-ok-soft); border-radius: 999px; padding: 0 7px; font-size: 11.5px; }
+.opt .dots { letter-spacing: 1px; color: var(--pa-navy); }
+.opt .gap { color: var(--pa-ink-3); }
+.lev { display: flex; gap: 4px; flex-wrap: wrap; }
+.lev span { font-size: 11.5px; color: var(--pa-ink-3); align-self: center; margin-right: 2px; }
+.lev button { font: inherit; font-size: 11.5px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--pa-line-strong); background: var(--pa-surface); color: var(--pa-ink-2); cursor: pointer; }
+.lev button[aria-pressed="true"] { background: var(--pa-you-soft); color: var(--pa-you); border-color: var(--pa-you); }
+.aoa-out { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 760px) { .aoa-out { grid-template-columns: 1fr; } }
+.aoa-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.aoa-bars { display: grid; gap: 6px; margin-top: 8px; }
+.bar { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 8px; align-items: center; font-size: var(--pa-text-sm); }
+.bar .lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--pa-ink-2); }
+.track { position: relative; height: 18px; background: var(--pa-sunk); border-radius: 4px; }
+.fill { position: absolute; top: 0; bottom: 0; border-radius: 4px; background: var(--pa-navy); transition: left .25s ease, width .25s ease; }
+.fill.unknown { background: repeating-linear-gradient(45deg, var(--pa-attn) 0 6px, var(--pa-attn-soft) 6px 12px); }
+.fill.later { background: var(--pa-idle); opacity: .55; }
+.launch { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--pa-you); transition: left .25s ease; }
+.aoa-axis { display: flex; justify-content: space-between; margin-left: 128px; font-size: 11px; color: var(--pa-ink-3); margin-top: 4px; }
+.eng { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: start; font-size: var(--pa-text-sm); }
+.eng .k { font-size: 11px; border-radius: 4px; padding: 0 6px; white-space: nowrap; }
+.k.self { background: var(--pa-ok-soft); color: var(--pa-ok); }
+.k.agent { background: var(--pa-agent-soft); color: var(--pa-agent); }
+.k.human { background: var(--pa-attn-soft); color: var(--pa-attn); }
+.k.none { background: var(--pa-idle-soft); color: var(--pa-ink-2); }
+.decl { font-size: var(--pa-text-sm); color: var(--pa-ink-2); }
+.decl code { color: var(--pa-ink-3); }
+@media (prefers-reduced-motion: reduce) { .fill, .launch { transition: none; } }
 </style>
 
 <header class="band">
@@ -351,6 +395,7 @@ footer { color: var(--pa-ink-3); font-size: var(--pa-text-sm); }
       <a href="#chat">In-chat widgets</a>
       <a href="#canvas">Canvas templates</a>
       <a href="#proposed">Proposed shared widgets</a>
+      <a href="#alternatives">Alternatives and engaging owners</a>
       <a href="#matrix">Skill by skill</a>
       <a href="#open">Open and not built</a>
     </nav>
@@ -619,6 +664,56 @@ footer { color: var(--pa-ink-3); font-size: var(--pa-text-sm); }
   </div>
 </section>
 
+<section id="alternatives" aria-labelledby="h-aoa">
+  <h2 id="h-aoa">Choosing among alternatives, and engaging owners</h2>
+  <p class="lede">Added from Geoff's comments on 22 Nov. A dependency usually has several ways to be met, so we need an analysis of alternatives that ends in a roadmap, with delivery and scope levers. Then a way to engage the owners of whatever is chosen. <strong>Both are proposals and not decided.</strong> They are also with the lifecycle research thread for HS-1 and HS-5.</p>
+
+  <div class="two">
+    <div class="panel" style="display:grid;gap:8px;align-content:start">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>Recommendation: a "Choose" half on PRD to dependencies</b><span class="pill open">proposed</span></div>
+      <p>The arc already goes from a PRD to requirements and then to the options for each dependency. The proposal adds a third half that <b>chooses a path</b>: the options for each dependency are weighed alongside scope levers (phase, reword, cut) and delivery levers (borrow capacity, reorder, accept a later date). It produces the chosen path and a roadmap. The arc would become Specify, Map, Choose, and you could enter at any of the three.</p>
+      <p>The analysis would be one shared <b>records template</b> (call it <code>alternatives</code>). Each choice becomes a decision in the initiative's register, with the options it beat. <b>Delivery status</b> reuses the same worksheet when a date moves, since its "ways to recover" card is already a small version of it. That way there is one worksheet, used in two places.</p>
+      <p class="lede">Why here and not in intent shaping: intent shaping holds back from answering for the person, while this half produces options and checks them, which is the stance the rest of this arc already has.</p>
+    </div>
+    <div class="panel" style="display:grid;gap:8px;align-content:start">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>Recommendation: an "Engage" move</b><span class="pill open">proposed</span></div>
+      <p>Engage would be a third move, alongside Review and Decide, that you can start on any chosen option or open ask. It sorts the counterparty into one of three kinds and works at the matching level of autonomy:</p>
+      <div class="stack">
+        <div class="chip"><div class="row"><b>Self-serve</b><span class="tag">agent acts</span></div><small>Sign up, request access, subscribe to a stream. The agent does it when the step can be undone and policy allows it, then records it as evidence.</small></div>
+        <div class="chip"><div class="row"><b>Agent counterparty</b><span class="tag">agent to agent</span></div><small>A platform team's agent from the roster. Questions and terms are worked out between agents, and the person signs off on anything binding.</small></div>
+        <div class="chip"><div class="row"><b>Person</b><span class="tag">draft, person sends</span></div><small>Due diligence checklist, drafted ask, follow-ups tracked in the Inbox. Anything that commits money, data or the company waits for the person.</small></div>
+      </div>
+      <p class="lede">It builds on what exists: the participants roster, the Inbox, and today's invariant that asks are drafted and a person sends them.</p>
+    </div>
+  </div>
+
+  <h3>Alternatives worksheet <span class="pill open" style="margin-left:6px">interactive sketch</span></h3>
+  <p class="lede">A working sketch on real data: three dependencies from the Allowances scenario, each with the options the dependency board found. Pick an option, pull a lever and set what matters most, and the roadmap and owner list redraw. The durations are placeholders for the sketch (S is 1 week, M is 3, L is 6, and a planned capability adds 12 weeks of unknown).</p>
+  <div class="aoa panel" id="aoa">
+    <div class="aoa-weights">
+      <b>What matters most</b>
+      <label for="w-speed">Speed <input id="w-speed" type="range" min="0" max="3" value="2"></label>
+      <label for="w-fit">Fit <input id="w-fit" type="range" min="0" max="3" value="2"></label>
+      <label for="w-risk">Low risk <input id="w-risk" type="range" min="0" max="3" value="1"></label>
+      <label class="cap" for="w-cap"><input id="w-cap" type="checkbox"> Borrow capacity (−1 week on M and L work)</label>
+    </div>
+    <div class="aoa-deps" id="aoa-deps"></div>
+    <div class="aoa-out">
+      <div class="aoa-road">
+        <div class="aoa-head"><b>Roadmap</b><span id="aoa-launch" class="tag"></span></div>
+        <div id="aoa-bars" class="aoa-bars"></div>
+        <div class="aoa-axis" aria-hidden="true"><span>wk 0</span><span>4</span><span>8</span><span>12</span><span>16</span></div>
+      </div>
+      <div class="aoa-engage">
+        <div class="aoa-head"><b>Who to engage</b></div>
+        <div id="aoa-eng" class="stack"></div>
+        <div class="aoa-head" style="margin-top:6px"><b>Would record in the Decisions register</b></div>
+        <div id="aoa-dec" class="stack"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section id="matrix" aria-labelledby="h-matrix">
   <h2 id="h-matrix">Skill by skill</h2>
   <p class="lede">What each hero skill draws today, what it makes, and what the research would add (HS-5). Nothing in the last column is built.</p>
@@ -646,6 +741,7 @@ footer { color: var(--pa-ink-3); font-size: var(--pa-text-sm); }
     <div class="row"><b>HS-4</b><span>Where do evidence, open questions, decisions and readiness live?</span><span class="rec">On the initiative, shared by every skill (built that way in PR 42)</span></div>
     <div class="row"><b>HS-5</b><span>Which widgets and templates come first?</span><span class="rec">The five shared widgets, then the per-skill additions</span></div>
     <div class="row"><b>IN-1</b><span>Is an initiative the same as a project with a goal?</span><span class="rec">Yes, one record; the card gains an id (built as recommended)</span></div>
+    <div class="row"><b>AoA</b><span>Where does analysis of alternatives live, and is Engage a move? (Geoff's comments, 22 Nov)</span><span class="rec">Proposed: a Choose half on PRD to dependencies, reused by delivery status; Engage as a third move. Sent to the lifecycle thread</span></div>
     <div class="row"><b>IN-3</b><span>What is the shared representation of intent?</span><span class="rec">Intent document with stage-owned sections plus four registers (built as recommended)</span></div>
   </div>
   <h3>Built pieces that are not joined up yet</h3>
@@ -750,4 +846,115 @@ document.addEventListener('click', e => {
 });
 document.getElementById('zoom-close').addEventListener('click', () => dlg.close());
 dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+// Alternatives worksheet sketch. Data: workspace/scenarios/requirements-to-dependencies/fixtures/allowances.json
+(() => {
+  const WK = { S: 1, M: 3, L: 6 };
+  const DEPS = [
+    { id: 'D-05', req: 'R-06', title: 'Count charges that skip live approval', options: [
+      { id: 'O-08', title: 'Spend events stream', owner: 'Data', maturity: 'Live', fit: 4, effort: 'M', gap: 'Lags by up to 2 hours.', engage: 'self', how: 'Subscribe through the data catalog' },
+      { id: 'O-09', title: 'Stand-in processing settings', owner: 'Card processor', maturity: 'Planned', fit: 3, effort: 'L', gap: 'Planned, with no release date.', engage: 'human', how: 'Due diligence on the roadmap with the processor team' } ] },
+    { id: 'D-11', req: 'R-12', title: 'Card user can ask for a top-up', options: [
+      { id: 'O-18', title: 'Request and approve service', owner: 'Platform', maturity: 'Beta', fit: 4, effort: 'M', gap: 'Beta. No support commitment.', engage: 'agent', how: 'Ask the Platform agent for beta terms; you sign off' },
+      { id: 'O-19', title: 'Build in account controls', owner: 'Mobile app', maturity: 'Live', fit: 2, effort: 'L', gap: 'New storage and notifications to build.', engage: 'none', how: 'Our own build; no counterparty' } ] },
+    { id: 'D-12', req: 'R-15', title: 'Statement shows spend by card user', options: [
+      { id: 'O-20', title: 'Statement composer', owner: 'Statements and billing', maturity: 'Live', fit: 3, effort: 'L', gap: 'A template change takes two statement cycles.', engage: 'human', how: 'Book a release slot with Statements and billing' },
+      { id: 'O-21', title: 'In-app breakdown from spend events', owner: 'Data', maturity: 'Live', fit: 4, effort: 'M', gap: 'Does not change the PDF statement.', engage: 'self', how: 'Reuse the spend events subscription' } ] }
+  ];
+  const SCOPE = [['full', 'Full'], ['phase', 'Phase 2'], ['cut', 'Cut']];
+  const KIND = { self: 'Self-serve', agent: 'Agent', human: 'Person', none: 'None' };
+  const state = { pick: {}, scope: {} };
+  DEPS.forEach(d => { state.scope[d.id] = 'full'; });
+  const $ = id => document.getElementById(id);
+  const w = () => ({ speed: +$('w-speed').value, fit: +$('w-fit').value, risk: +$('w-risk').value, cap: $('w-cap').checked });
+  const dur = (o, W) => { let n = WK[o.effort]; if (W.cap && n > 1) n -= 1; return n; };
+  const unknown = o => o.maturity === 'Planned' ? 12 : 0;
+  const riskOf = o => o.maturity === 'Planned' ? 3 : o.maturity === 'Beta' ? 2 : 0;
+  const score = (o, W) => W.fit * o.fit - W.speed * (dur(o, W) + unknown(o)) / 2 - W.risk * riskOf(o);
+  function best(d, W) { return d.options.reduce((a, b) => score(b, W) > score(a, W) ? b : a); }
+  function render() {
+    const W = w();
+    const box = $('aoa-deps'); box.textContent = '';
+    DEPS.forEach(d => {
+      const rec = best(d, W);
+      if (!state.pick[d.id]) state.pick[d.id] = rec.id;
+      const el = document.createElement('div'); el.className = 'dep';
+      el.innerHTML = `<div><div class="r">${d.id} · for ${d.req}</div><div class="t"></div></div>`;
+      el.querySelector('.t').textContent = d.title;
+      d.options.forEach(o => {
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'opt';
+        b.setAttribute('aria-pressed', String(state.pick[d.id] === o.id));
+        b.innerHTML = `<span class="top"><b></b>${o.id === rec.id ? '<span class="rec">best for these weights</span>' : ''}</span>
+          <span>${o.owner} · ${o.maturity} · effort ${o.effort} · fit <span class="dots">${'●'.repeat(o.fit)}${'○'.repeat(5 - o.fit)}</span></span><span class="gap"></span>`;
+        b.querySelector('b').textContent = o.title; b.querySelector('.gap').textContent = o.gap;
+        b.addEventListener('click', () => { state.pick[d.id] = o.id; render(); });
+        el.appendChild(b);
+      });
+      const lev = document.createElement('div'); lev.className = 'lev'; lev.innerHTML = '<span>Scope</span>';
+      SCOPE.forEach(([k, t]) => {
+        const b = document.createElement('button'); b.type = 'button'; b.textContent = t;
+        b.setAttribute('aria-pressed', String(state.scope[d.id] === k));
+        b.addEventListener('click', () => { state.scope[d.id] = k; render(); });
+        lev.appendChild(b);
+      });
+      el.appendChild(lev); box.appendChild(el);
+    });
+    // roadmap: work runs in parallel from week 0; phase 2 starts after launch; cut drops out
+    const rows = [];
+    let launch = 0, tail = 0;
+    DEPS.forEach(d => {
+      const o = d.options.find(x => x.id === state.pick[d.id]);
+      const s = state.scope[d.id];
+      if (s === 'cut') { rows.push({ d, o, s }); return; }
+      const len = dur(o, W) + unknown(o);
+      if (s === 'full') launch = Math.max(launch, len);
+      rows.push({ d, o, s, len });
+    });
+    launch = Math.max(launch, 1);
+    rows.forEach(r => { if (r.s === 'phase') tail = Math.max(tail, launch + r.len); });
+    const MAX = Math.max(16, Math.ceil(Math.max(launch, tail) / 4) * 4);
+    const ax = document.querySelector('.aoa-axis'); ax.textContent = '';
+    for (let i = 0; i <= 4; i++) { const sp = document.createElement('span'); sp.textContent = (i ? '' : 'wk ') + (MAX * i / 4); ax.appendChild(sp); }
+    const bars = $('aoa-bars'); bars.textContent = '';
+    rows.forEach(r => {
+      const row = document.createElement('div'); row.className = 'bar';
+      row.innerHTML = '<span class="lbl"></span><div class="track"></div>';
+      row.querySelector('.lbl').textContent = `${r.d.id} ${r.s === 'cut' ? '(cut)' : r.o.title}`;
+      row.querySelector('.lbl').title = r.d.title;
+      const tr = row.querySelector('.track');
+      if (r.s !== 'cut') {
+        const start = r.s === 'phase' ? launch : 0;
+        const known = dur(r.o, W), unk = unknown(r.o);
+        const f = document.createElement('div'); f.className = 'fill' + (r.s === 'phase' ? ' later' : '');
+        f.style.left = (Math.min(start, MAX) / MAX * 100) + '%'; f.style.width = (Math.min(known, MAX - start) / MAX * 100) + '%';
+        tr.appendChild(f);
+        if (unk && start + known < MAX) {
+          const u = document.createElement('div'); u.className = 'fill unknown';
+          u.style.left = ((start + known) / MAX * 100) + '%'; u.style.width = (Math.min(unk, MAX - start - known) / MAX * 100) + '%';
+          u.title = 'Planned capability: unknown wait'; tr.appendChild(u);
+        }
+      }
+      const l = document.createElement('div'); l.className = 'launch'; l.style.left = (Math.min(launch, MAX) / MAX * 100) + '%'; tr.appendChild(l);
+      bars.appendChild(row);
+    });
+    $('aoa-launch').textContent = `Launch at week ${launch}`;
+    const eng = $('aoa-eng'); eng.textContent = '';
+    const dec = $('aoa-dec'); dec.textContent = '';
+    let n = 1;
+    rows.forEach(r => {
+      const e = document.createElement('div'); e.className = 'eng';
+      if (r.s === 'cut') { e.innerHTML = '<span class="k none">None</span><span></span>'; e.lastChild.textContent = `${r.d.id} cut from this release`; }
+      else { e.innerHTML = `<span class="k ${r.o.engage}">${KIND[r.o.engage]}</span><span></span>`; e.lastChild.textContent = `${r.o.owner}: ${r.o.how}`; }
+      eng.appendChild(e);
+      const others = r.d.options.filter(x => x.id !== r.o.id).map(x => x.id).join(', ');
+      const t = document.createElement('div'); t.className = 'decl';
+      t.innerHTML = `<code>D-0${n++}</code> <span></span>`;
+      t.lastChild.textContent = r.s === 'cut' ? `Cut ${r.d.req} from launch; ${r.d.id} not needed` :
+        `${r.d.id} met by ${r.o.title}${r.s === 'phase' ? ', in phase 2' : ''}; chosen over ${others}`;
+      dec.appendChild(t);
+    });
+  }
+  ['w-speed', 'w-fit', 'w-risk', 'w-cap'].forEach(id => $(id).addEventListener('input', () => { DEPS.forEach(d => { delete state.pick[d.id]; }); render(); }));
+  render();
+})();
+
 </script>
