@@ -79,7 +79,7 @@
    "Recording a decision already made"
   ],
   "needs": "Where the open questions are: documents, datasets with items waiting on the person, or this conversation",
-  "stage": "decide",
+  "stage": "any",
   "offer": "There are several open decisions here. Decision review prepares each with options and a recommendation and walks you through them one at a time.",
   "examples": {
    "start": [

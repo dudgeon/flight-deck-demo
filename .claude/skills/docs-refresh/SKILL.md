@@ -130,7 +130,7 @@ With the Artifact tool, for each artifact:
    `answers` collection with the ArtifactData tool, `action: "list"`, with an
    `out_dir`. Pass the `answers` folder it writes to `--answers`.
 
-A page made with the `decision-brief` skill (D-153) needs no fetching: its
+A page made with the `decision-brief` skill (D-159) needs no fetching: its
 brief's JSON is in the repo or the project files. Import the answers into it
 (`brief.py import <brief> --db <answers folder>`), render it as a full page
 into a folder, and `add` that folder with `--answers`. Its decision note

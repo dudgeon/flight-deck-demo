@@ -1,13 +1,32 @@
 {
  "lifecycle": "feature",
  "title": "Feature lifecycle",
- "summary": "The stages a feature moves through, from raw material to delivery. Each workflow names the stage it serves in its routing block, so a new workflow appears under its stage without anything here changing. Stages can be skipped.",
+ "summary": "The stages a feature moves through, from raw material to delivery and back (D-148 to D-152). Each workflow names the stage it serves in its routing block, so a new workflow appears under its stage without anything here changing. Stages are tags, not gates: they can be skipped, entered at any point or repeated. Moves that work at every stage, such as review and decide, name the stage \"any\".",
  "stages": [
-  {"id": "discover", "title": "Discover", "question": "What problems do people actually have?"},
-  {"id": "shape", "title": "Shape", "question": "What do we intend to do about it, and is it ready to commit to?"},
-  {"id": "specify", "title": "Specify", "question": "What exactly are we building?"},
-  {"id": "map", "title": "Map", "question": "What does it depend on?"},
-  {"id": "decide", "title": "Decide", "question": "What is still open, and who decides?"},
-  {"id": "deliver", "title": "Deliver", "question": "Will it land when we said, and what moved?"}
+  {
+   "id": "discover",
+   "title": "Discover",
+   "question": "What problems do people actually have, and what did we learn from what shipped?"
+  },
+  {
+   "id": "shape",
+   "title": "Shape",
+   "question": "What do we intend to do about it, and is it ready to commit to?"
+  },
+  {
+   "id": "specify",
+   "title": "Specify",
+   "question": "What exactly are we building, what does it depend on, and which way do we take?"
+  },
+  {
+   "id": "engage",
+   "title": "Engage",
+   "question": "Are the teams we rely on on board, and how far along is each?"
+  },
+  {
+   "id": "deliver",
+   "title": "Deliver",
+   "question": "Will it land when we said, and what moved?"
+  }
  ]
 }

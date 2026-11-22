@@ -195,3 +195,12 @@ def test_a_folder_with_its_own_roster_still_finds_the_shipped_templates(workspac
     (workspace / "participants").mkdir()  # a flown demo folder has its own roster and no templates
     assert "initiative-registers" in pa.list_templates()
     assert pa.main(["register", NAME, "question", "Who owns the date?"]) == 0
+
+
+def test_alternatives_and_onboarding_templates_start_stamped(workspace: Path) -> None:
+    alt, stamp = pa.new_from_template("alternatives", initiative=NAME, title="Release date by March")
+    assert alt == Path("data/release-date-by-march-alternatives.json")
+    assert stamp["stage"] == ["specify", "deliver"]
+    track, stamp = pa.new_from_template("onboarding-track", initiative=NAME)
+    assert stamp["stage"] == ["engage"] and track.name == "held-payment-dates-onboarding.json"
+    assert {a["path"] for a in pa.artifact_registry()["artifacts"]} >= {alt.as_posix(), track.as_posix()}

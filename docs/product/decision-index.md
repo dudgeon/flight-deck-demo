@@ -88,7 +88,7 @@ feature notes of the time and marked *(reconstructed)*.
 | D-32 | More than one question: decision cards, one at a time | Geoff | Active; extended by D-105 | *(reconstructed)* A list in prose is hard to answer from a phone. |
 | D-33 | Never ask Geoff to decide blind | Geoff | Active; built into decision review | *(reconstructed)* A decision without context, options and visuals is not a decision he can make. |
 | D-115 | Decision artifacts are archived in the repo as offline HTML, kept by the `docs-refresh` skill | Geoff asked, Claude chose | Built (`docs/decision-artifacts/`) | A record anyone can open without his claude.ai account, and examples of how to ask. |
-| D-153 | Every complex decision is a decision brief from one skill: the agent writes JSON, a fixed template draws it; answers go to the register and a note | Geoff asked, Claude chose | Pending (`skills/decision-brief`); DB-1 to DB-4 open with Geoff | One consistent page to iterate on, and no tokens spent rebuilding it per decision. |
+| D-159 | Every complex decision is a decision brief from one skill: the agent writes JSON, a fixed template draws it; answers go to the register and a note | Geoff asked, Claude chose | Pending (`skills/decision-brief`); DB-1 to DB-4 open with Geoff | One consistent page to iterate on, and no tokens spent rebuilding it per decision. |
 | D-34 | Intent framework is notional and swappable (`workspace/frameworks/`) | Geoff | Built | *(reconstructed)* The real company framework can replace it without touching the skill. |
 
 ## Name and design language
@@ -210,9 +210,8 @@ decided but nothing is built yet.
 
 ## Initiatives, artifacts and templates
 
-Spec: [initiatives-and-templates.md](initiatives-and-templates.md). Open:
-IN-1 (is an initiative the same as a goal project) and IN-3 (the shared
-representation of intent), both built as recommended until answered.
+Spec: [initiatives-and-templates.md](initiatives-and-templates.md). Nothing
+open: IN-1 and IN-3 were settled as build choices (D-155, D-156).
 
 | D | Decision | Who | Status |
 |---|---|---|---|
@@ -221,6 +220,22 @@ representation of intent), both built as recommended until answered.
 | D-140 | An artifact's tie to its initiative is a stamp in the file; the registry is read from files; the person's files are listed, not written into | Claude | Built |
 | D-141 | Loose artifacts allowed; stages are tags, never gates; stage state is derived | Claude | Built |
 | D-142 | Hero skill contract: find, read, stamp, register, own sections, extend in your own space; decisions superseded, never edited | Claude | Built in `pa`; no hero skill follows it yet |
+| D-155 | An initiative is a project with a goal: one record (IN-1); changeable | Claude | Built |
+| D-156 | Shared intent = intent document plus four registers (IN-3); changeable | Claude | Built |
+
+## Hero skills and the lifecycle
+
+Spec: [lifecycle-research.md](lifecycle-research.md),
+[skill-taxonomy.md](skill-taxonomy.md). Open: HS-7, HS-8.
+
+| D | Decision | Who | Status |
+|---|---|---|---|
+| D-148 | Five arcs (problem discovery, intent shaping, PRD to dependencies with Specify, Map and Choose, Engage owners, Deliver), two moves (Review, Decide), one companion | Geoff | Decided, not built |
+| D-149 | Suggested path plus checkpoints; completion over sequence; flip, leave and return; repeated loops | Geoff | Decided, not built |
+| D-150 | Discover and Learn are one stage; stages match the arcs: Discover, Shape, Specify, Engage, Deliver; tags, never gates | Geoff asked, Claude chose | Decided, not built |
+| D-151 | Evidence, open questions, decisions and ready checks live on the initiative, shared | Geoff | Registers built (`pa register`); no hero skill uses them yet |
+| D-152 | First: the five shared widgets and the alternatives worksheet, using the decision brief skill | Geoff | Decided, not built |
+| D-153 | Optional `tier` field (companion, arc, move, kit) in `workflow.json`; missing means arc; unknown values warn, never fail | Geoff | Decided, not built |
 
 ## Usage logging
 
@@ -255,5 +270,7 @@ Spec: [usage-logging.md](usage-logging.md).
 
 - Usage logging (UL-1 to UL-3 in [usage-logging.md](usage-logging.md)):
   put to Geoff 2026-11-21; built to the recommendations meanwhile.
+- Skill taxonomy (HS-7 and HS-8 in [skill-taxonomy.md](skill-taxonomy.md));
+  HS-1 to HS-6 were decided 2026-11-22 as D-148 to D-153.
 - Progressive complexity (D-54).
 - D-24 for production.

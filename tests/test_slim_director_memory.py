@@ -27,8 +27,8 @@ SHIPPED = ["decision-review", "delivery-status", "document-review", "intent-shap
 # ------------------------------------------------------------------ routing
 
 def test_every_shipped_workflow_is_routable_and_checks_clean() -> None:
-    stages = [s["id"] for s in pa.lifecycle_stages(ROOT / "workspace")]
-    assert stages == ["discover", "shape", "specify", "map", "decide", "deliver"]
+    stages = [s["id"] for s in pa.lifecycle_stages(ROOT / "workspace")] + ["any"]
+    assert stages == ["discover", "shape", "specify", "engage", "deliver", "any"]
     for wid in SHIPPED:
         manifest = json.loads((ROOT / "skills" / wid / "workflow.json").read_text())
         assert pa.routing_problems(manifest, wid, stages, required=True) == [], wid
@@ -40,7 +40,7 @@ def test_the_catalog_lists_workflows_in_lifecycle_order() -> None:
     ids = [w["id"] for w in catalog]
     assert set(SHIPPED) <= set(ids)
     order = [w["routing"]["stage"] for w in catalog if w["routing"]]
-    stages = [s["id"] for s in pa.lifecycle_stages(ROOT / "workspace")]
+    stages = [s["id"] for s in pa.lifecycle_stages(ROOT / "workspace")] + ["any"]  # moves fit every stage, listed last
     assert order == sorted(order, key=stages.index)
 
 

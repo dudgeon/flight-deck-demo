@@ -425,6 +425,10 @@ artifacts back to a shared representation of the intent.
   each owned by a stage, and **registers** for evidence (source required),
   open questions and assumptions, decisions (superseded, never edited) and
   ready checks, drawn as a board.
+- **Alternatives and onboarding tracks**: shared templates for choosing a way
+  forward (effort and waiting kept apart, a reason for every option turned
+  down) and for running each owning team's onboarding steps, with who
+  answers at each step and how long it takes.
 
 **How the agent keeps it.** The hero skill contract (D-142) in the
 `view-kit` skill, "Initiatives, stamps, templates and registers", and one
@@ -484,7 +488,7 @@ research to frame. The product owner asked never to decide those blind
 (D-33), and every walkthrough made for him so far was built by hand. A
 decision brief is the one way any agent, skill or persona puts such a
 decision to a person, so every brief reads the same, improves in one place,
-and costs only its content (D-153).
+and costs only its content (D-159).
 
 **What it does.** Skill `skills/decision-brief`, bundled into every session.
 The agent writes one JSON file: why the person is seeing it, the

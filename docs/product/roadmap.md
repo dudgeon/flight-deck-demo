@@ -30,7 +30,7 @@ in the same pull request.
 | [Dock launcher](#dock-launcher) | Done |
 | [Branding](#branding) | Done; repository renamed (D-114) |
 | [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | D-89 to D-99 and D-116 to D-119 decided; runs and In flight built (PR 24) |
-| [Decision briefs](#decision-briefs) | Built (D-153); DB-1 to DB-4 with Geoff |
+| [Decision briefs](#decision-briefs) | Built (D-159); DB-1 to DB-4 with Geoff |
 | [Aviator coordination and skill routing](#aviator-coordination-and-skill-routing) | Routing, director rules, director memory and the routing suite built (D-120, D-128 to D-137, D-143 to D-145); baseline run, strictness on the strip and lifecycle skill next |
 
 ---
@@ -331,7 +331,7 @@ brief looks and works the same and costs only its content.
 - **Done.** `skills/decision-brief`: the template, `brief.py`
   (new, check, render, answer, import, record, note), the visual components,
   a worked example, and the routing rule in the workspace's `CLAUDE.md`, the
-  director skill and decision review (D-153). The first brief:
+  director skill and decision review (D-159). The first brief:
   https://claude.ai/artifact/CNNpJFboRrwDAsYsBvundE.
 - **Next.** Record Geoff's answers to DB-1 to DB-4 and archive the brief.
   Routing-suite tasks for "brief or card". The lifecycle work's Decide move
@@ -352,14 +352,15 @@ every hero skill can read and extend it.
 
 - **Done.** The model and the commands: fixed ids, stamps, `pa artifacts`,
   `pa template`, `pa register`, two shipped templates (intent document,
-  registers) (D-138 to D-142).
+  registers) (D-138 to D-142). The `alternatives` and `onboarding-track`
+  templates for the Choose half and Engage owners, and the five stages in
+  `lifecycle.json` (after D-148 to D-152).
 - **Next.** Make each hero skill follow the contract (stamp its work, name a
   template per work product, use the registers); write the lifecycle skill
   (D-129) on top of it; show the registry and registers on the project page;
   a Templates shelf in the Hangar.
-- **Open.** IN-1 (is an initiative the same as a goal project) and IN-3 (the
-  shared representation of intent), with Geoff. The stage list may change
-  with the lifecycle research.
+- **Open.** Nothing. IN-1 and IN-3 were settled as changeable build choices
+  (D-155, D-156).
 - **Read.** [initiatives-and-templates.md](initiatives-and-templates.md).
 
 ---
@@ -411,6 +412,42 @@ strictly as the moment needs, measured by evals rather than argued.
   models, D-134 director memory with editable Director's notes. Nothing open.
 - **Read.** [director-coordination.md](director-coordination.md); walkthrough
   at https://claude.ai/artifact/La4Qa5THk5JhwQBQGcVY7d.
+
+## Hero-skill set and the lifecycle
+
+Refine the hero skills into a small, flexible set (Geoff: don't subdivide
+the process into too many subskills, don't make it rigid), with the widgets
+and worksheet templates each needs.
+
+- **Done.** Research (2026-11-21) from Geoff's product agent and harness
+  library and the public lifecycle frameworks, with a recommendation, revised
+  2026-11-22 after Geoff's atlas comments: five arcs (problem discovery,
+  intent shaping, PRD to dependencies running Specify, Map and Choose,
+  engage owners for onboarding with other teams, delivery status, now Deliver), two
+  moves on any artifact (review, decide) and the lifecycle companion; a suggested path with fixed checkpoints per skill; stages as
+  tags with Learn added and Decide made a move; evidence, open questions,
+  decisions and readiness shared on the initiative; five shared widgets.
+- **Decided 2026-11-22.** D-148 to D-152: five arcs (problem discovery,
+  intent shaping, PRD to dependencies, Engage owners, Deliver), the Review
+  and Decide moves and the lifecycle companion; suggested paths with
+  checkpoints and free movement between components and phases; stages
+  Discover, Shape, Specify, Engage, Deliver; the shared registers; the
+  shared widgets and the alternatives worksheet first, using the decision
+  brief skill. Nothing built yet; the template redesign stays parked.
+- **Decided.** D-153: an optional `tier` field in `workflow.json`.
+- **Open.** HS-7 and HS-8 (taxonomy), put to Geoff one at a time.
+- **Taxonomy.** [skill-taxonomy.md](skill-taxonomy.md): four tiers
+  (companion, arc, move, kit), a card per skill, how work moves through the
+  initiative registers, coverage of the ten PM jobs, and a four-question rule
+  for adding a hero skill.
+- **Next, if accepted.** Merge the two requirement workflows (old ids kept),
+  `checkpoints` in `workflow.json` and `pa check`, a stage list on routing,
+  Learn in `lifecycle.json`, Review and Decide as launchers on every
+  artifact, the shared widgets in the view kit. The registers' shape comes
+  from the template and initiative data model work.
+- **Read.** [lifecycle-research.md](lifecycle-research.md); walkthrough at
+  https://claude.ai/artifact/P3hZWy2Ht6es1KCxMDLTEv (offline copy in
+  `docs/decision-artifacts/2026-11-21-hero-skills-and-lifecycle/`).
 
 ## Usage logging
 

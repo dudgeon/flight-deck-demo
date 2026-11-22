@@ -285,21 +285,34 @@
    "title": "Initiatives and templates",
    "kind": "Decision walkthrough",
    "about": "The data model for initiatives, artifact stamps, templates and shared registers; IN-1 and IN-3",
-   "decisions": "D-138 to D-142",
-   "status": "Open (IN-1, IN-3)"
+   "decisions": "D-138 to D-142, D-155, D-156",
+   "status": "Settled without asking"
+  },
+  {
+   "id": "P3hZWy2Ht6es1KCxMDLTEv",
+   "order": 24,
+   "url": "https://claude.ai/artifact/P3hZWy2Ht6es1KCxMDLTEv",
+   "slug": "2026-11-21-hero-skills-and-lifecycle",
+   "date": "2026-11-21",
+   "title": "Hero Skills and the Lifecycle",
+   "kind": "Decision walkthrough",
+   "about": "Research on the product lifecycle and AI help; five questions on the shape of the hero-skill set (HS-1 to HS-5)",
+   "decisions": "D-148 to D-152 (HS-1 to HS-5)",
+   "status": "Answered (5)",
+   "answers_as_of": "2026-11-22"
   },
   {
    "id": "CNNpJFboRrwDAsYsBvundE",
-   "order": 24,
+   "order": 25,
    "url": "https://claude.ai/artifact/CNNpJFboRrwDAsYsBvundE",
    "slug": "2026-11-22-decision-briefs",
    "date": "2026-11-22",
    "title": "How decision briefs should work",
    "kind": "Decision brief",
    "about": "The first brief from the shared decision-brief skill: layout, how answers come back at work, where decisions are recorded, when to make one (DB-1 to DB-4)",
-   "decisions": "D-153",
+   "decisions": "D-159",
    "status": "Open",
-   "note": "Drawn by skills/decision-brief from skills/decision-brief/examples/decision-briefs.json; re-render after Geoff answers."
+   "note": "Drawn by skills/decision-brief from skills/decision-brief/examples/decision-briefs.json."
   }
  ]
 }

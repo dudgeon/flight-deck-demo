@@ -72,7 +72,7 @@
    "No requirements catalog exists yet"
   ],
   "needs": "A requirements dataset from PRD to requirements, and a platform map in context/",
-  "stage": "map",
+  "stage": "specify",
   "offer": "Your requirements are catalogued. The next step maps what the platform offers for each one, on a board you start and review tile by tile.",
   "examples": {
    "start": [
