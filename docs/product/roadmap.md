@@ -370,9 +370,14 @@ strictly as the moment needs, measured by evals rather than argued.
   through the real app with code graders and a Haiku judge, reports by
   split, and blind pairs for Geoff (D-143 to D-145). The ladder moved into
   `workspace/CLAUDE.md` so every session follows it (D-144). Four live trials
-  on Sonnet in the cloud container passed; the first full baseline runs on
-  the Mac mini.
-- **Next.** A full baseline on the Mac mini, then tuning; strictness on the
+  on Sonnet in the cloud container passed.
+- **Baseline and first tuning.** The Mac mini baseline passed 35 of 42 tasks
+  on Sonnet. Tuning (D-146): a plain request for a workflow's work now starts
+  it, open asks and one-paragraph questions get no offer, two offer tasks
+  get the scenario material their workflow needs, and the risk-and-design
+  task is relabelled a start. Waiting on a re-run of the failing tasks and
+  the held-out split.
+- **Next.** The re-run, then strictness on the
   strip and in the run; the lifecycle skill (its two routing tasks wait for
   it).
 - **Decided.** Geoff answered all seven on 2026-11-21, as recommended:

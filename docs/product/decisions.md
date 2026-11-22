@@ -872,6 +872,20 @@ key stays in the run folder. *D-133 asks Geoff to rank ten blind pairs per
 round; the page names neither run, works offline, and his answers can be
 checked against the judge.*
 
+**D-146 · 2026-11-22 · Claude.** The ladder (D-128) gains a rung and two
+limits, from the first baseline (35 of 42 on Sonnet). "Asked for": when the
+person tells Aviator to do the work one workflow does, on material they point
+to ("find the problems worth solving in these notes"), that is asking to run
+it, so it starts, and Aviator says which workflow it started. A clear-fit
+offer is for a situation described or a question asked. Open work ("what else
+could we do") and questions about one paragraph get no offer in that reply.
+The routing suite can give a task fixture files, so an offer task has what its
+workflow needs. *The baseline started too rarely on plain requests (an
+imperative is consent, and an offer then is a wasted turn) and offered on
+open asks 3 of 3 times; two offer tasks failed only because the empty trial
+workspace lacked the workflow's material, which is Aviator behaving
+correctly.*
+
 ## Usage logging
 
 Spec: [usage-logging.md](usage-logging.md). Open questions UL-1 to UL-3 are

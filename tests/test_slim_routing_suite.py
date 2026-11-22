@@ -147,6 +147,32 @@ def test_a_trial_gets_configuration_but_no_state(tmp_path: Path) -> None:
     assert not (dest / ".hangar").exists() and not (dest / "director").exists()
 
 
+def test_offer_tasks_get_fixtures_from_real_scenarios() -> None:
+    tasks = {t["id"]: t for t in rs.load_tasks(ROOT / "workspace")}
+    for tid in ("decision-review-offer-1", "requirements-to-dependencies-offer-1"):
+        fixtures = tasks[tid]["fixtures"]
+        assert fixtures and all((ROOT / "workspace" / src).is_file() for src in fixtures.values()), tid
+
+
+def test_fixtures_for_an_unknown_task_are_refused(tmp_path: Path) -> None:
+    bad = tmp_path / "tasks.json"
+    bad.write_text(json.dumps({"tasks": [], "fixtures": {"nobody": {"data/x.json": "x.json"}}}))
+    with pytest.raises(ValueError, match="do not exist"):
+        rs.load_tasks(ROOT / "workspace", bad)
+
+
+def test_fixtures_are_copied_and_stay_inside_the_trial(tmp_path: Path) -> None:
+    ws = tmp_path / "trial"
+    (ws / "scenarios/s/fixtures").mkdir(parents=True)
+    (ws / "scenarios/s/fixtures/d.json").write_text("{}")
+    assert rs.add_fixtures(ws, {"data/d.json": "scenarios/s/fixtures/d.json"}) == ["data/d.json"]
+    assert (ws / "data/d.json").read_text() == "{}"
+    with pytest.raises(ValueError, match="inside the workspace"):
+        rs.add_fixtures(ws, {"../out.json": "scenarios/s/fixtures/d.json"})
+    with pytest.raises(ValueError, match="not in the workspace"):
+        rs.add_fixtures(ws, {"data/e.json": "scenarios/s/missing.json"})
+
+
 # ------------------------------------------------------------------ the run loop
 
 class FakeDriver:
@@ -162,6 +188,7 @@ class FakeDriver:
         self.calls += 1
         task_id, trial = title.split()[2], int(title.split()[3])
         if prompt.startswith("Run "):
+            assert (workspace / "data" / "d.json").is_file()  # its fixture is in place first
             rs.usagelog.log("tool.used", source="tool", params={"tool": "Skill", "skill": "decision-review"})
             (workspace / "briefs").mkdir(exist_ok=True)
             (workspace / "briefs" / "b.md").write_text('# Brief: decision-review on "x"\n')
@@ -175,12 +202,19 @@ def test_run_suite_tags_each_trial_and_passes_on_two_of_three(tmp_path: Path, us
     src = tmp_path / "ws"
     (src / "briefs").mkdir(parents=True)
     tasks = [
-        {"id": "s1", "prompt": "Run a decision review", "expect": "start", "workflow": "decision-review", "split": "tune"},
+        {"id": "s1", "prompt": "Run a decision review", "expect": "start", "workflow": "decision-review", "split": "tune",
+         "fixtures": {"data/d.json": "seed/d.json"}},
         {"id": "o1", "prompt": "Offer please", "expect": "offer", "workflow": "decision-review", "split": "held-out"},
         {"id": "o2", "prompt": "Offer please", "expect": "offer", "workflow": "decision-review", "split": "tune"},
         {"id": "a1", "prompt": "What is a dependency?", "expect": "answer", "workflow": None, "split": "tune"},
     ]
     driver = FakeDriver(src, flaky={"o2"})
+    judge = lambda prompt, reply, catalog: {"label": "answer", "workflow": None, "why": ""}  # noqa: E731
+    with pytest.raises(ValueError, match="fixtures not in the workspace"):
+        rs.run_suite(tasks, driver, tmp_path / "runs" / "missing", 3, "sonnet", judge, {}, log=lambda _m: None)
+    assert driver.calls == 0
+    (src / "seed").mkdir()
+    (src / "seed" / "d.json").write_text("{}")
     judge = lambda prompt, reply, catalog: {"label": "answer", "workflow": None, "why": ""}  # noqa: E731
     out = tmp_path / "runs" / "20261122-000000-test"
     summary = rs.run_suite(tasks, driver, out, 3, "sonnet", judge, {"decision-review": "Decision review"}, log=lambda _m: None)

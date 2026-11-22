@@ -203,6 +203,7 @@ decided but nothing is built yet.
 | D-143 | The routing suite drives the real app one trial at a time: a fresh workspace copy, a new session on the model under test, threads stopped as they appear; tasks from each workflow's examples plus near misses | Claude | Built |
 | D-144 | The routing ladder lives in `workspace/CLAUDE.md` for every Aviator session; offers are logged with `pa log offer.made` so they are graded by code | Claude | Built |
 | D-145 | Blind pairs: ten prompts where two runs differ most, sides shuffled, the key kept apart; answers come back as JSON | Claude | Built |
+| D-146 | Ladder tuning: a plain request for a workflow's exact work starts it; open asks and one-paragraph questions get no offer; suite tasks can carry fixtures; refines D-128 | Claude | Built, re-run pending |
 
 
 ## Initiatives, artifacts and templates
