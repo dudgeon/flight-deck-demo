@@ -199,6 +199,10 @@ def test_offer_tasks_get_fixtures_from_real_scenarios() -> None:
     for tid in ("decision-review-offer-1", "requirements-to-dependencies-offer-1"):
         fixtures = tasks[tid]["fixtures"]
         assert fixtures and all((ROOT / "workspace" / src).is_file() for src in fixtures.values()), tid
+    # Mapping dependencies starts from requirements that have none yet, or there is nothing to offer.
+    deps = tasks["requirements-to-dependencies-offer-1"]["fixtures"]["data/allowances.json"]
+    records = json.loads((ROOT / "workspace" / deps).read_text())["records"]
+    assert records and not any(r["type"] == "dependency" for r in records)
 
 
 def test_fixtures_for_an_unknown_task_are_refused(tmp_path: Path) -> None:
