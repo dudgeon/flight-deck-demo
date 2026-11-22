@@ -412,7 +412,7 @@ and worksheet templates each needs.
   checkpoints and free movement between components and phases; stages
   Discover, Shape, Specify, Engage, Deliver; the shared registers; the
   shared widgets and the alternatives worksheet first, using the decision
-  brief skill. Nothing built yet; the template redesign stays parked.
+  brief skill. The template redesign stays parked.
 - **Decided.** D-153: an optional `tier` field in `workflow.json`.
 - **Settled without asking.** HS-7 (the add-a-skill rule is advice, never a gate) and HS-8 (launch goes in Deliver when a demo needs it): Claude's calls, easy to change.
 - **Taxonomy.** [skill-taxonomy.md](skill-taxonomy.md): four tiers
