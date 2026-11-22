@@ -29,7 +29,7 @@ A person meets at most seven names: the five arcs and, when they open an
 artifact, the two moves on it. The companion and the kit skills work out of
 sight.
 
-## 2. The eight skills
+## 2. The eight skills, and one proposed move
 
 Each card gives the skill's job, its stance (produce, enforce or up-level,
 from the rigidity research), the stages it tags, where it can be entered,
@@ -177,6 +177,24 @@ checkpoints (HS-2).
 - **Writes:** Decisions, which supersede and never edit (D-142).
 - **Checkpoints:** the person decides; every decision has a reason.
 
+### Prototype (move, proposed 2026-11-22)
+
+- **Job:** turn whatever is open (an intent, a set of requirements, a chosen
+  option) into something people can click or read through, in the look of
+  the channel it will ship in.
+- **Stance:** produce; the person judges.
+- **Offered:** on intent briefs, catalogs and chosen alternatives, at any
+  fidelity: a rough sketch while shaping, a faithful screen flow once the
+  requirements are settled.
+- **Does not draw anything itself.** It finds the prototyper for the
+  channel (web, app, branch, contact centre, email and so on) and hands the
+  work over. See section 6.
+- **Writes:** the prototype as an artifact stamped to the initiative, and
+  Evidence when people react to it.
+- **Checkpoints:** the prototype says which channel, design system and
+  version it used; every screen traces to a requirement or is marked as
+  exploration; nothing loads from the network.
+
 ## 3. How work moves
 
 The registers on the initiative carry the work, not the skills. An arc never
@@ -209,7 +227,7 @@ choosing jobs with the person, with the agent preparing.
 |---|---|---|
 | J1 Customer contact and research synthesis | Problem discovery | Interviewing stays with the person; synthesis with checked quotes is the agent's |
 | J2 Opportunity, strategy, vision | Not an arc; Decide on the choices | Lowest agent suitability in the evidence; problem discovery prepares, the person chooses |
-| J3 Shape the solution | Intent shaping | Up-level stance |
+| J3 Shape the solution | Intent shaping, Prototype | Up-level stance; prototypes make the shape visible |
 | J4 Write, review, ratify the spec | PRD to dependencies (Specify), Review | Ratifying stays with the person; the shaper never ratifies |
 | J5 Prioritise and roadmap | PRD to dependencies (Choose) | Agent prepares options and levers, person decides |
 | J6 Manage delivery | Deliver, Engage owners | Onboarding with other teams is where enterprise delivery time goes (Pathfinder's cause codes: access, waiting, gates) |
@@ -239,7 +257,61 @@ decides where the work goes.
 The rule is guidance for whoever adds a skill, not a gate: a Hangar workflow
 can always be built, flown and listed (HS-7, Claude's call).
 
-## 6. What this changes, if accepted
+## 6. Prototyping across channels and platforms
+
+Geoff, 2026-11-22: prototyping needs an enterprise approach. It could be one
+modular enterprise skill that channel teams extend with their own design
+systems, or prototypers owned by the platform teams, with Aviator knowing
+which one to use for which channel. Both are worked through here, with a
+recommendation that needs no choice yet.
+
+**Option A: one enterprise prototyper, extended per channel.** A single
+skill owns the method (how to read an intent, how to choose fidelity, how to
+lay out a flow, how to stamp the result). Each channel team adds a *design
+system pack*: its tokens, components and patterns, in a folder the skill
+reads. One way of prototyping across the company; packs are small to write.
+But one team owns the method for every channel, so a channel whose
+prototypes work differently (a voice flow, a branch screen, a printed
+letter) has to bend to it, and the owning team becomes a queue.
+
+**Option B: prototypers owned by platform teams, Aviator routes.** Each
+platform team ships its own prototyper skill, built however suits its
+channel, and registers which channels it covers. Aviator picks the one that
+matches. Each channel gets the best prototype its owners can make and keeps
+it current with their system. But there is no shared floor: quality and
+outputs vary, a channel without a prototyper has nothing, and every team
+rebuilds the common parts.
+
+**Recommended: one contract, owned either way.** Both options need the same
+three things, so Flight Deck defines those and lets ownership vary by
+channel:
+
+1. **The Prototype move** (above) is the only thing a person or an arc
+   calls. It defines what goes in (the initiative, what to prototype,
+   the channel, the fidelity) and what comes out (one self-contained,
+   stamped artifact that names its channel, design system and version).
+2. **A prototyper is a kit skill that declares what it covers**, for
+   example `"prototyper": {"channels": ["web", "app"], "design_system":
+   "retail-web", "owner": "Digital platform"}` in its `workflow.json`.
+   Aviator routes by channel to the declared prototyper, the same way it
+   routes to workflows today (D-120): adding one never means editing
+   Aviator.
+3. **A default enterprise prototyper ships with Flight Deck**, built on our
+   own tokens, and takes design-system packs. It covers any channel nobody
+   has claimed.
+
+A channel team then chooses for itself: add a pack to the default (option
+A) or publish its own prototyper (option B). Both meet the same contract,
+so the person sees the same move and the same kind of artifact whichever
+team owns the channel. Nothing about this needs a decision now; when the
+first real channel team arrives, it picks its route.
+
+What stays the same everywhere: prototypes are single self-contained HTML
+files with nothing loaded from the network (design systems are vendored into
+the pack or the prototyper), they are stamped to the initiative (D-140), and
+reactions to them go to the Evidence register.
+
+## 7. What this changes, if accepted
 
 - `workflow.json` gains `tier` (companion, arc, move, kit). The Library shows
   arcs. Moves are offered through `launchers` on every artifact kind. `pa
@@ -254,7 +326,7 @@ can always be built, flown and listed (HS-7, Claude's call).
 - The `scenario-builder` and Hangar new-workflow flow ask the rule's four
   questions before making a new hero skill.
 
-## 7. Open questions
+## 8. Open questions
 
 HS-1 is decided (D-148). These are next, asked one at a time.
 

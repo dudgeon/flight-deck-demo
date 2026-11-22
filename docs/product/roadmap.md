@@ -426,6 +426,11 @@ and worksheet templates each needs.
   alternatives and onboarding templates came in PR 52.
 - **Built.** The alternatives worksheet (`worksheet` layout in the view kit,
   the alternatives template's default view): try options, watch the totals move.
+- **Proposed.** Prototyping across channels (Geoff, 2026-11-22): a
+  Prototype move with one contract, prototypers as kit skills that declare
+  their channels, and a default enterprise prototyper that takes
+  design-system packs; channel teams extend the default or ship their own.
+  See section 6 of [skill-taxonomy.md](skill-taxonomy.md). Not built.
 - **Next.** A phase lane on the worksheet; the five
   shared widgets in the view kit; Review and Decide as launchers on every
   artifact (they still have Library cards); the Engage owners arc on the
