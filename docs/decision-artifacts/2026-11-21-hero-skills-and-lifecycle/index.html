@@ -118,11 +118,12 @@ ol.f b{color:var(--ink)}
       <div class="lane"><span class="chip co">Lifecycle</span></div>
       <div class="lane"><span class="chip arc">Problem discovery</span><span class="chip arc">Intent shaping</span><span class="chip arc">PRD to requirements</span><span class="chip arc">Requirements to dependencies</span><span class="chip arc">Decision review</span><span class="chip arc">Document review</span><span class="chip arc">Delivery status</span></div>
       <div class="small">Eight things, all shown as stages.</div></div>
-    <div class="set pick"><h4>B. Four arcs, two moves, one companion</h4>
+    <div class="set pick"><h4>B. Four arcs, three moves, one companion</h4>
       <div class="lane"><span class="chip co">Feature lifecycle</span></div>
       <div class="lane"><span class="chip arc">Problem discovery</span><span class="chip arc">Intent shaping</span><span class="chip arc">PRD to dependencies</span><span class="chip arc">Delivery status</span></div>
-      <div class="lane"><span class="chip mv">Review</span><span class="chip mv">Decide</span><span class="small">on any artifact</span></div>
-      <div class="small">Seven things; only four are stages.</div></div>
+      <div class="small">PRD to dependencies has three halves you can move between: Specify, Map, Choose.</div>
+      <div class="lane"><span class="chip mv">Review</span><span class="chip mv">Decide</span><span class="chip mv">Engage</span><span class="small">on any artifact</span></div>
+      <div class="small">Eight things; only four are stages.</div></div>
     <div class="set"><h4>C. Three arcs</h4>
       <div class="lane"><span class="chip co">Feature lifecycle</span></div>
       <div class="lane"><span class="chip arc">Understand</span><span class="chip arc">Define</span><span class="chip arc">Deliver</span></div>
@@ -132,11 +133,12 @@ ol.f b{color:var(--ink)}
   <figcaption>Blue: arcs, something a person sets out to do. Purple: moves, done to any artifact at any point. Navy: the companion that holds the initiative.</figcaption></figure>
   <div class="opts">
     <div class="opt"><b>Keep seven, re-tag stages</b><span>Least work and nothing moves for the scenarios, but Decide and Review stay stuck to one stage and the Library still shows eight things.</span></div>
-    <div class="opt rec-o"><b>Four arcs, two moves, one companion<span class="tag">Recommended</span></b><span>PRD to requirements and requirements to dependencies become one skill you can enter at either half. Review and Decide are offered on any artifact. Problem discovery also takes post-launch feedback, so Learn needs no new skill.</span></div>
+    <div class="opt rec-o"><b>Four arcs, three moves, one companion<span class="tag">Recommended</span></b><span>PRD to dependencies runs Specify (the catalog), Map (the board) and Choose (analysis of alternatives with scope and delivery levers, then a phased roadmap), and you can move between them. Review, Decide and Engage (working with platform owners: self-serve, another agent, or a person) are offered on any artifact. Problem discovery also takes post-launch feedback, so Learn needs no new skill.</span></div>
     <div class="opt"><b>Three arcs</b><span>Fewest names, but one Define skill has to interrogate you and also produce a catalog, which the research says each do worse when mixed.</span></div>
     <div class="opt"><b>Something else</b><span>Tell me the shape you have in mind.</span></div>
   </div>
-  <div class="rec"><b>Why B:</b> it splits by the person's goal and by stance, the two lines the evidence supports, and it merges only the two skills that share a stance and a hand-off. Your own two-module model already treats validated requirements to delivery map as one module.</div>
+  <div class="rec"><b>Why B:</b> it splits by your goal and by stance, the two lines the evidence supports. It merges only steps that share a stance and a hand-off. Your Pathfinder design keeps a fit record for every option considered and generates the delivery plan from them, so choosing belongs with mapping. Engage is a move because it spans Map and Deliver, and how much the agent may do is set by who answers.</div>
+  <p class="small">Revised 22 November after your atlas comments on the catalog step's home, alternatives and engaging owners.</p>
 </section>
 
 <!-- HS-2 -->
@@ -225,6 +227,16 @@ ol.f b{color:var(--ink)}
     <div class="w"><span class="lbl">Ready checklist</span><span class="ck"><i class="y">✓</i> Every requirement traces to a line</span><span class="ck"><i class="y">✓</i> Owners named on open questions</span><span class="ck"><i class="n">✗</i> Two dependencies without evidence</span></div>
     <div class="w"><span class="lbl">Initiative header</span><b>Card offer for under-18s</b><span><span class="pill p-info">Shape</span> <span class="pill p-info">Map</span> · 6 linked artifacts</span></div>
   </div>
+  <h3>The analysis-of-alternatives worksheet</h3>
+  <p>One dependency or the whole board. Flip a lever and the dates and phases redraw at once, so you feel the trade-off. Example data is notional.</p>
+  <figure class="stage"><div class="in"><div class="sets">
+    <div class="set"><h4>Option A · Cards platform</h4><span class="small">Lead time 6 weeks · low effort · needs an eligibility call</span><span class="src">cards-platform card, onboarding page</span><span class="small">Would change my mind: if intake takes over 8 weeks</span></div>
+    <div class="set pick"><h4>Option B · Reword to "invited"</h4><span class="small">Scope lever · no eligibility call · ships in phase one</span><span class="src">Decision D3 draft · the agent's recommendation</span><span class="small">Would change my mind: if marketing needs "pre-approved"</span></div>
+    <div class="set"><h4>Option C · Build in-house</h4><span class="small">Lead time 14 weeks · high effort · full control</span><span class="src">no evidence yet</span><span class="small">Would change my mind: a reusable decisioning service</span></div>
+  </div>
+  <div class="lane" style="margin-top:12px"><span class="chip arc">Scope: reword</span><span class="chip st">Scope: move to phase two</span><span class="chip st">Scope: drop</span><span class="chip st">Delivery: platform A</span><span class="chip st">Delivery: build</span><span class="chip st">Delivery: resequence</span></div>
+  <div class="stg" style="margin-top:12px;grid-template-columns:repeat(3,1fr)"><div>Now · 4 requirements · 12 Jan</div><div>Next · 3 requirements · 2 Mar</div><div>Later · 1 requirement</div></div></div>
+  <figcaption>Option cards with evidence, lever toggles (the scope lever is on) and the phase lane with projected dates. Commit writes your choice to the Decisions register, and a rejected option keeps its reason. A live sketch is on the Skills and Templates Atlas.</figcaption></figure>
   <div class="tw"><table>
     <tr><th>Skill</th><th>Add to what it has</th><th>Worksheet templates</th></tr>
     <tr><td>Problem discovery</td><td>Evidence chip on every quote; a post-launch feedback focus</td><td>Problem brief (markdown); problem list (data)</td></tr>
@@ -232,9 +244,11 @@ ol.f b{color:var(--ink)}
     <tr><td>PRD to dependencies</td><td>Trace-to-line on each requirement; drafted-ask card; ready checklist at the hand-off</td><td>PRD or spec (markdown); catalog, board (data); asks (markdown)</td></tr>
     <tr><td>Delivery status</td><td>Cause-of-change chip; audience switch on the update</td><td>Status update (markdown); milestone plan (data)</td></tr>
     <tr><td>Review, Decide</td><td>Open on any artifact kind and any open question</td><td>Review findings, decision log (data)</td></tr>
+    <tr><td>Choose</td><td>The alternatives worksheet above</td><td>Alternatives (data, shared with delivery status's ways to recover); phased roadmap (data)</td></tr>
+    <tr><td>Engage</td><td>Counterparty card: self-serve, agent or person, with its state (drafted, sent, waiting, answered, onboarded)</td><td>Asks (markdown); engagement log (data)</td></tr>
   </table></div>
   <div class="opts">
-    <div class="opt rec-o"><b>Shared widgets first<span class="tag">Recommended</span></b><span>Build the five shared widgets in the view kit, then each skill's additions; every skill gets better at once.</span></div>
+    <div class="opt rec-o"><b>Shared widgets and the alternatives worksheet first<span class="tag">Recommended</span></b><span>Build the five shared widgets and the alternatives worksheet in the view kit, then each skill's additions. Every skill gets better at once, and the worksheet is the showpiece.</span></div>
     <div class="opt"><b>One skill end to end first</b><span>Take intent shaping all the way (its widgets and templates) as the reference, then copy the pattern.</span></div>
     <div class="opt"><b>Templates before widgets</b><span>Settle the markdown and data templates with the data model thread, then draw widgets over them.</span></div>
     <div class="opt"><b>Something else</b><span>Tell me what should come first.</span></div>
