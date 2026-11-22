@@ -189,7 +189,9 @@ This is the third slice of [modes and projects](modes-and-projects.md).
   decides when and what; the brief tells it never to send everything.
   `pa report` records the line in the run's file (the last twenty are kept).
   For a blocker, a need, or a finish the thread also wakes the director with
-  a message. A blocker shows the run as waiting until work moves again.
+  a message (`sys_session_message`, the upstream tool for messaging a session
+  you did not start; `sys_session_send` only reaches a session's own
+  children, which the first live flight showed). A blocker shows the run as waiting until work moves again.
 - **The run card.** The director shows a run as a live card in its chat: the
   workflow and subject, the step, the state, what it needs from the person,
   its last three reports, and a button into the thread ("Answer in the

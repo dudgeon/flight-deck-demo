@@ -202,6 +202,9 @@ def test_a_brief_is_a_file_and_the_threads_first_message(
     for expected in (SESSION, "`intent-shaping` skill", "`context/notes.md`", "Shaped",
                      "data/teen-allowances-intent.json", "never send\neverything", "`risk-review`"):
         assert expected in text, expected
+    # A thread is Aviator's child, so it wakes Aviator with the peer tool:
+    # sys_session_send only reaches a session's own children (first live flight).
+    assert f"`sys_session_message` with `session_id` `{SESSION}`" in text
 
 
 def test_the_run_file_a_brief_names_is_the_one_the_thread_writes(workspace: Path, monkeypatch: pytest.MonkeyPatch) -> None:
