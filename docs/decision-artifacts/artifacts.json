@@ -287,6 +287,19 @@
    "about": "The data model for initiatives, artifact stamps, templates and shared registers; IN-1 and IN-3",
    "decisions": "D-138 to D-142",
    "status": "Open (IN-1, IN-3)"
+  },
+  {
+   "id": "CNNpJFboRrwDAsYsBvundE",
+   "order": 24,
+   "url": "https://claude.ai/artifact/CNNpJFboRrwDAsYsBvundE",
+   "slug": "2026-11-22-decision-briefs",
+   "date": "2026-11-22",
+   "title": "How decision briefs should work",
+   "kind": "Decision brief",
+   "about": "The first brief from the shared decision-brief skill: layout, how answers come back at work, where decisions are recorded, when to make one (DB-1 to DB-4)",
+   "decisions": "D-153",
+   "status": "Open",
+   "note": "Drawn by skills/decision-brief from skills/decision-brief/examples/decision-briefs.json; re-render after Geoff answers."
   }
  ]
 }

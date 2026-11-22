@@ -30,6 +30,7 @@ in the same pull request.
 | [Dock launcher](#dock-launcher) | Done |
 | [Branding](#branding) | Done; repository renamed (D-114) |
 | [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | D-89 to D-99 and D-116 to D-119 decided; runs and In flight built (PR 24) |
+| [Decision briefs](#decision-briefs) | Built (D-153); DB-1 to DB-4 with Geoff |
 | [Aviator coordination and skill routing](#aviator-coordination-and-skill-routing) | Routing, director rules, director memory and the routing suite built (D-120, D-128 to D-137, D-143 to D-145); baseline run, strictness on the strip and lifecycle skill next |
 
 ---
@@ -319,6 +320,27 @@ a project means something (a goal to ship) and knows its relatives.
 - **Read.** [modes-and-projects.md](modes-and-projects.md); D-89 to D-99, D-116 to D-119;
   walkthroughs at https://claude.ai/artifact/HRgpJURjcqasGSCmd3894d and
   https://claude.ai/artifact/YQcb4HDRGMnn6YW82uFNZd.
+
+---
+
+## Decision briefs
+
+One skill and template for every complex decision put to a person, so every
+brief looks and works the same and costs only its content.
+
+- **Done.** `skills/decision-brief`: the template, `brief.py`
+  (new, check, render, answer, import, record, note), the visual components,
+  a worked example, and the routing rule in the workspace's `CLAUDE.md`, the
+  director skill and decision review (D-153). The first brief:
+  https://claude.ai/artifact/CNNpJFboRrwDAsYsBvundE.
+- **Next.** Record Geoff's answers to DB-1 to DB-4 and archive the brief.
+  Routing-suite tasks for "brief or card". The lifecycle work's Decide move
+  and Choose step call it (PR 41). Rebuild the next walkthrough with it
+  rather than by hand.
+- **Open.** DB-1 layout, DB-2 how answers come back at work (one-press send
+  needs an app change), DB-3 where the record goes, DB-4 when to make one.
+- **Read.** [features.md](features.md#decision-briefs),
+  `skills/decision-brief/SKILL.md`.
 
 ---
 

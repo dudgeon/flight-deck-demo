@@ -211,6 +211,28 @@ versions will let others see the artifacts without needing access to my
 Claude account." A skill, rather than a one-off, because walkthroughs keep
 being made and the docs pass needs repeating.*
 
+**D-153 · 2026-11-22 · Geoff asked, Claude chose.** Every complex decision
+put to a person, by any agent, skill or persona in Flight Deck and by
+contributors asking Geoff, is a decision brief made with one bundled skill,
+`decision-brief`. The agent writes only the brief's content as a JSON file;
+a fixed template (`skills/decision-brief/template/brief.html`) draws the
+page, with the context, a visual stage that redraws for the option being
+looked at, options with what each gives up, one recommendation and its
+reason, "Something else" on every decision, a note box and saved answers.
+The same page saves answers to the page on claude.ai, puts them in the chat
+box in Flight Deck (the person presses Send) and offers Copy anywhere else.
+`brief.py` checks the rules (never blind, exactly one recommendation, no
+colors or network loads), imports answers, locks them, writes each to the
+initiative's decisions register and writes a decision note linking the
+research and the archived copy. Other skills point to the skill instead of
+drawing their own. Its first brief puts the open details (layout, how
+answers come back at work, where the record goes, when to make a brief:
+DB-1 to DB-4) to Geoff, and it is built to its recommendations meanwhile.
+*Geoff: "a consistent layout/experience we can iterate on, and without
+wasting tokens reinventing the wheel." The 22 archived walkthroughs each
+rebuilt the same parts with their own styles and saved answers in two
+different shapes; duo-v2's best page held its decisions as data.*
+
 ## Name and design language
 
 **D-35 · 2026-11-21 · Geoff.** The fork of the Omnigent meta-harness is named

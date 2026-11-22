@@ -476,6 +476,48 @@ stored. *Where:* `omnigent/server/routes/slim_participant_inbox.py`,
 `web/src/lib/proactiveInbox.ts`, the participant card in
 `web/src/pages/InboxPage.tsx`, `skills/participants/SKILL.md` step 7.
 
+## Decision briefs
+
+**What it is for.** Some decisions can't be made from a card: they have real
+tradeoffs and are hard to undo, visual, linked to other decisions, or needed
+research to frame. The product owner asked never to decide those blind
+(D-33), and every walkthrough made for him so far was built by hand. A
+decision brief is the one way any agent, skill or persona puts such a
+decision to a person, so every brief reads the same, improves in one place,
+and costs only its content (D-153).
+
+**What it does.** Skill `skills/decision-brief`, bundled into every session.
+The agent writes one JSON file: why the person is seeing it, the
+recommendation in one paragraph, what was read and found, and per decision
+the question, context, what you need to know, a visual stage, two to five
+options with what each gives up, one recommended with its reason, and what
+it depends on. `brief.py render` draws it into a fixed template: a bar
+counting what is answered with "Accept all recommendations", the briefing
+and picture beside "Your call", a stage that redraws for the option pointed
+at, "Something else" on every decision, a note box and a summary of answers.
+Visuals are built from components in the template (wireframes, flows,
+comparisons, file trees, tables, chips), so they follow the tokens in light
+and dark. `brief.py check` refuses a brief that is blind, has no single
+recommendation, sets its own colors or loads anything.
+
+**Where answers go.** On claude.ai the picks save to the page's `answers`
+collection as they are made. In Flight Deck, "Send answers to Claude" puts
+them in the chat box as one line per decision, and the person presses Send.
+Elsewhere, "Copy answers". `brief.py import` reads either; `record` locks
+them and writes each to the initiative's decisions register; `note` writes
+the decision note (pick, note, the recommendation and why, options
+considered, links to the research, the page and its archived copy).
+
+**When it is used.** Two or more real options with tradeoffs, plus one of:
+hard to undo, visual, linked, needed research. A quick choice stays a
+question card. The rule lives in the workspace's `CLAUDE.md` and the skill;
+the director and decision review point to it.
+
+**Open with Geoff (DB-1 to DB-4).** In the first brief: the layout (one
+page, a stepper, or narrated), how answers come back at work (the chat box
+now, one press later), where the record goes (register plus note), and the
+rule for when to make one.
+
 ## Decision review (a kind of work)
 
 **What it is for.** A PM's work stalls on questions nobody has put to them

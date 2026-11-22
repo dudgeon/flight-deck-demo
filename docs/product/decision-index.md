@@ -88,6 +88,7 @@ feature notes of the time and marked *(reconstructed)*.
 | D-32 | More than one question: decision cards, one at a time | Geoff | Active; extended by D-105 | *(reconstructed)* A list in prose is hard to answer from a phone. |
 | D-33 | Never ask Geoff to decide blind | Geoff | Active; built into decision review | *(reconstructed)* A decision without context, options and visuals is not a decision he can make. |
 | D-115 | Decision artifacts are archived in the repo as offline HTML, kept by the `docs-refresh` skill | Geoff asked, Claude chose | Built (`docs/decision-artifacts/`) | A record anyone can open without his claude.ai account, and examples of how to ask. |
+| D-153 | Every complex decision is a decision brief from one skill: the agent writes JSON, a fixed template draws it; answers go to the register and a note | Geoff asked, Claude chose | Pending (`skills/decision-brief`); DB-1 to DB-4 open with Geoff | One consistent page to iterate on, and no tokens spent rebuilding it per decision. |
 | D-34 | Intent framework is notional and swappable (`workspace/frameworks/`) | Geoff | Built | *(reconstructed)* The real company framework can replace it without touching the skill. |
 
 ## Name and design language
@@ -247,6 +248,10 @@ Spec: [usage-logging.md](usage-logging.md).
 | D-106 | Views redraw by rewriting the file; reviewed and locked are the person's | Geoff | Built |
 
 ## Open questions not yet numbered
+
+- Decision briefs (DB-1 to DB-4 in [features.md](features.md#decision-briefs)):
+  put to Geoff 2026-11-22 in the first brief; built to the recommendations
+  meanwhile.
 
 - Usage logging (UL-1 to UL-3 in [usage-logging.md](usage-logging.md)):
   put to Geoff 2026-11-21; built to the recommendations meanwhile.
