@@ -42,6 +42,7 @@ by hand. Generated from `artifacts.json`; do not edit this table directly.
 | 2026-11-21 | Aviator Coordination and Routing | Decision walkthrough | Coordination patterns for the director, routing to hero skills, the feature lifecycle, persona strictness, how to test it, and what the director remembers across sessions (AV-1 to AV-7) | D-120, D-128 to D-134 | Answered (7) | [2026-11-21-aviator-coordination](2026-11-21-aviator-coordination/index.html) |
 | 2026-11-21 | Flight Deck Usage Log | Decision walkthrough | How the local usage log works, and whether logs are committed, what a work Mac pack holds, where the numbers are seen (UL-1 to UL-3) | D-122 to D-127 | Open | [2026-11-21-usage-log](2026-11-21-usage-log/index.html) |
 | 2026-11-21 | Initiatives and templates | Decision walkthrough | The data model for initiatives, artifact stamps, templates and shared registers; IN-1 and IN-3 | D-138 to D-142 | Open (IN-1, IN-3) | [2026-11-21-initiatives-and-templates](2026-11-21-initiatives-and-templates/index.html) |
+| 2026-11-22 | Skills and Templates Atlas | Reference | Every utility and hero skill, the proposed four arcs, and the in-chat widget and canvas template designs with real renders, tied to the template data model | None (points at HS-1 to HS-5, IN-1, IN-3) | Reference | [2026-11-22-skills-and-templates-atlas](2026-11-22-skills-and-templates-atlas/index.html) |
 
 ## Notes
 

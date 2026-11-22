@@ -287,6 +287,18 @@
    "about": "The data model for initiatives, artifact stamps, templates and shared registers; IN-1 and IN-3",
    "decisions": "D-138 to D-142",
    "status": "Open (IN-1, IN-3)"
+  },
+  {
+   "id": "7nct1TPwFd9131CjVoAHtW",
+   "order": 25,
+   "url": "https://claude.ai/artifact/7nct1TPwFd9131CjVoAHtW",
+   "slug": "2026-11-22-skills-and-templates-atlas",
+   "date": "2026-11-22",
+   "title": "Skills and Templates Atlas",
+   "kind": "Reference",
+   "about": "Every utility and hero skill, the proposed four arcs, and the in-chat widget and canvas template designs with real renders, tied to the template data model",
+   "decisions": "None (points at HS-1 to HS-5, IN-1, IN-3)",
+   "status": "Reference"
   }
  ]
 }
