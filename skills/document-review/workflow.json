@@ -72,7 +72,8 @@
   ],
   "not_when": [
    "Listing the requirements in a document",
-   "A quick fix to one sentence"
+   "A quick fix to one sentence",
+   "A question about how one paragraph or passage reads (answer it)"
   ],
   "needs": "The document to review; context/ is checked first",
   "stage": "specify",

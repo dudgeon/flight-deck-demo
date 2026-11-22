@@ -80,7 +80,8 @@
   ],
   "not_when": [
    "Shaping a slide, a roadmap or a document's layout",
-   "A quick question about an intent already written"
+   "A quick question about an intent already written",
+   "Brainstorming options or other ways to tackle something (think it through with them)"
   ],
   "needs": "An idea in a sentence, a note, or a problem picked in discovery",
   "stage": "shape",

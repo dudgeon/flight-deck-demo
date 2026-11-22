@@ -314,9 +314,11 @@ lose is written down where the person can see and correct it (D-134).
 - `pa workflows` lists every workflow by stage with that block (`--json` adds
   the examples); `pa check` fails a Library or shipped workflow without one
   (D-136).
-- The director skill routes by the ladder: named means start; a clear fit
-  gets one offer as a "Start it in a thread" / "Not now" question; open work
-  is done directly; quick questions are answered. It holds other threads'
+- The director skill routes by the ladder: named means start, and so does
+  a plain request for exactly one workflow's work, said in one line (D-146);
+  a clear fit to a situation or question gets one offer as a "Start it in a thread" / "Not now" question; open work
+  is done directly, with no offer in that reply; quick questions, including
+  one about a single paragraph, are answered. It holds other threads'
   news while the person is mid-exchange, except failures and blockers
   (D-132), and changes strictness only when the person says so (D-131).
 - Director memory: a short charter beside the skill, `director/state.md`

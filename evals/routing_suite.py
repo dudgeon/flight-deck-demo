@@ -110,9 +110,18 @@ def load_tasks(workspace: Path | None = None, extra: Path = TASKS_FILE) -> list[
                     "near": wf["id"] if kind == "open" else None,
                     "source": "workflow",
                 })
+    fixtures: dict[str, Any] = {}
     if extra.is_file():
-        for raw in json.loads(extra.read_text(encoding="utf-8")).get("tasks", []):
+        hand = json.loads(extra.read_text(encoding="utf-8"))
+        fixtures = hand.get("fixtures") or {}
+        for raw in hand.get("tasks", []):
             tasks.append({"workflow": None, "near": None, **raw, "source": extra.name})
+    for task in tasks:
+        if task["id"] in fixtures:
+            task["fixtures"] = {**fixtures[task["id"]], **(task.get("fixtures") or {})}
+    unknown = set(fixtures) - {t["id"] for t in tasks}
+    if unknown:
+        raise ValueError(f"fixtures for tasks that do not exist: {', '.join(sorted(unknown))}")
     seen: set[str] = set()
     for task in tasks:
         if task["id"] in seen:
@@ -298,6 +307,27 @@ def copy_workspace(source: Path, dest: Path) -> Path:
     return dest
 
 
+def add_fixtures(ws: Path, fixtures: dict[str, str] | None) -> list[str]:
+    """Copy a task's fixtures into its trial workspace; both paths are relative to it.
+
+    A source is read from the trial's own copy, so it must be configuration
+    that copy_workspace keeps (a scenario's fixtures, say). A destination may
+    not leave the workspace.
+    """
+    placed = []
+    root = ws.resolve()
+    for dest_rel, src_rel in (fixtures or {}).items():
+        src, dest = (ws / src_rel).resolve(), (ws / dest_rel).resolve()
+        if root not in src.parents or root not in dest.parents:
+            raise ValueError(f"fixture {dest_rel}: paths stay inside the workspace")
+        if not src.is_file():
+            raise ValueError(f"fixture {dest_rel}: {src_rel} is not in the workspace")
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(src, dest)
+        placed.append(dest_rel)
+    return placed
+
+
 def trial_lines(task_id: str, trial: str, usage_root: Path | None = None) -> list[dict[str, Any]]:
     """The usage log's lines for one trial."""
     want = {"suite": SUITE, "task": task_id, "trial": trial}
@@ -459,6 +489,10 @@ def run_suite(tasks: list[dict[str, Any]], driver: Any, out: Path, trials: int, 
               usage_root: Path | None = None, log: Callable[[str], None] = print) -> dict[str, Any]:
     out.mkdir(parents=True, exist_ok=True)
     source = driver.source_workspace()
+    missing = [f"{t['id']}: {src}" for t in tasks for src in (t.get("fixtures") or {}).values()
+               if not (source / src).is_file()]
+    if missing:
+        raise ValueError("fixtures not in the workspace: " + "; ".join(missing))
     run_tag = out.name.replace("-", "")
     meta = {"suite": SUITE, "run": out.name, "model": model, "trials": trials,
             "started": _dt.datetime.now().isoformat(timespec="seconds"), "tasks": len(tasks)}
@@ -468,6 +502,7 @@ def run_suite(tasks: list[dict[str, Any]], driver: Any, out: Path, trials: int, 
         for n in range(1, trials + 1):
             trial = f"{run_tag}.{n}"
             ws = copy_workspace(source, out / "ws" / f"{task['id']}.{n}")
+            add_fixtures(ws, task.get("fixtures"))
             usagelog.set_eval_tag(SUITE, task["id"], trial, usage_root)
             try:
                 result = driver.run(task["prompt"], ws, f"eval {SUITE} {task['id']} {n}")
