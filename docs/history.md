@@ -213,7 +213,9 @@ On 23 November:
   messages on every Mac. Sessions now run the `claude-code` agent on the
   claude-sdk harness, with Claude Code's own tools, prompt and permission
   checks, and skills from `.claude/skills/`. Reproduced and tested in the
-  cloud against a copy of those settings.
+  cloud against a copy of those settings. After the Mac mini restart, flown
+  demo projects still named the old agent; start-up now moves any project
+  whose agent is gone onto `claude-code`.
 
 ## Still waiting
 

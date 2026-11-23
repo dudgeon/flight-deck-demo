@@ -839,7 +839,9 @@ without asking; Claude Code's `Skill` tool (which only loads a skill's
 instructions) is allowed by the SDK, and whatever a skill then runs asks as
 usual. The bundled skills are found in `.claude/skills/` like any project
 skill; some unzip tools flatten those links into files, so start-up puts them
-back. Every Mac works this way, so the Mac mini runs what the work Mac runs
+back. Start-up also moves any project whose agent no longer exists (a demo
+flown before this change, say) onto the Claude Code agent, and flying a
+demo again brings its project into line with Workspace. Every Mac works this way, so the Mac mini runs what the work Mac runs
 (D-173). The terminal tab still shows but has no live Claude in it; removing
 it is a follow-up.
 

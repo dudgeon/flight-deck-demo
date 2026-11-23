@@ -104,6 +104,31 @@ def ensure_project(base_url: str, name: str, workspace: Path, icon: str = "ðŸ—‚ï
         return f"created project '{name}' in {workspace}"
 
 
+def repoint_orphaned_projects(base_url: str) -> list[str]:
+    """Point every project whose agent no longer exists at the Claude Code agent.
+
+    Projects made before D-173 (flown demos, ones the person made) can name the
+    old terminal agent, which is gone, so their new sessions would fail. A
+    project whose agent still exists is left as it is. Returns the names moved.
+    """
+    moved: list[str] = []
+    with httpx.Client(base_url=base_url, timeout=15.0) as client:
+        agent_id = _claude_agent_id(client)
+        if not agent_id:
+            return moved
+        known = {str(a["id"]) for a in client.get("/v1/agents").json().get("data", [])}
+        projects = client.get("/v1/projects", params={"limit": 200}).json().get("data", [])
+        for project in projects:
+            config = dict(project.get("config") or {})
+            current = config.get("agent_id")
+            if not current or str(current) in known:
+                continue
+            config["agent_id"] = agent_id
+            client.patch(f"/v1/projects/{project['id']}", json={"config": config}).raise_for_status()
+            moved.append(str(project.get("name")))
+    return moved
+
+
 def main() -> int:
     workspace = Path(os.environ.get("OMNIGENT_SLIM_WORKSPACE", "workspace")).expanduser().resolve()
     workspace.mkdir(parents=True, exist_ok=True)
@@ -130,6 +155,12 @@ def main() -> int:
     except Exception as error:  # report and carry on: the UI still works without it
         print(f"could not set up the project: {error}", file=sys.stderr)
         return 1
+    try:
+        moved = repoint_orphaned_projects(url)
+        if moved:
+            print(f"moved {len(moved)} projects to the Claude Code agent: {', '.join(moved)}")
+    except Exception as error:
+        print(f"could not check the other projects: {error}", file=sys.stderr)
     return 0
 
 
