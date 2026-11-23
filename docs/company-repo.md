@@ -82,9 +82,12 @@ install, move or rename it before cloning into it.
 
 ## 3. Bring in a newer version
 
-1. Download the ZIP of `dudgeon/flight-deck-demo` again in the browser. You
+1. If teammates have pushed since your last update, pull first, so the new
+   version goes on top of their work:
+   `sh ~/flight-deck/stop.sh; git -C ~/flight-deck pull`
+2. Download the ZIP of `dudgeon/flight-deck-demo` again in the browser. You
    don't need to unzip it.
-2. In Terminal: `sh ~/flight-deck/setup.sh`
+3. In Terminal: `sh ~/flight-deck/setup.sh`
 
 Setup finds the newest download in Downloads, updates the clone in place and
 restarts the app, with the same rules as any update:

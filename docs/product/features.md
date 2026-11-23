@@ -817,6 +817,15 @@ place under the same rules, ready to commit and push so teammates get it with
 `git pull`. A developer's clone with no install record never pulls in a
 download unless `--from` names one. Steps: `docs/company-repo.md`.
 
+**Two roles in a company copy.** One maintainer brings in each new ZIP:
+they pull first (so the new version lands on top of teammates' pushes), run
+plain `setup.sh` in their checkout, then commit and push. Everyone else
+simply clones and pulls, running `setup.sh --here`, which never looks in
+Downloads, so a teammate's copy is always exactly what the maintainer pushed.
+*Why:* Geoff now keeps the app in his company's GitHub and will push every
+update there; a stray ZIP in a teammate's Downloads must not quietly change
+their copy. Steps for teammates: README "clone it".
+
 **Where.** `setup.sh`, `scripts/install_sync.py`, `start.sh`,
 `omnigent/slim_bootstrap.py`, `tests/setup_sim/`, `tests/test_slim_install_sync.py`,
 README "Quick start" and "Updating to a newer version", `docs/company-repo.md`.

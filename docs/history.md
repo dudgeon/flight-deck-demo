@@ -219,6 +219,14 @@ On 23 November:
   "Claude SDK": sessions read as Claude Code, lost the terminal tab and got
   the mode and effort pickers back (D-174).
 
+- **Teammates clone the company copy** (PR 67): Geoff put the app into his
+  company's GitHub and will push each update there. The README now starts
+  with a clone path for teammates (`git clone`, then `setup.sh --here`;
+  updates are stop, `git pull`, setup again), and `docs/company-repo.md`
+  splits the maintainer, who pulls, brings in the ZIP and pushes, from
+  everyone else. Teammate commands tested on the Mac mini against a sandbox
+  company repository.
+
 ## Still waiting
 
 - Geoff's first install on the work Mac with `setup.sh` (D-100, D-107,
