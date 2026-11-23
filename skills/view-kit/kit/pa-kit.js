@@ -244,8 +244,8 @@
       var rec = byId[id], e = state.edits[id];
       if (!rec) return;
       Object.keys(e).forEach(function (f) {
-        var before = rec[f] == null ? "(empty)" : rec[f];
-        lines.push("- " + id + " " + f + ": " + JSON.stringify(before) + " -> " + JSON.stringify(e[f]));
+        var was = rec[f] == null || rec[f] === "" ? "" : " (was " + JSON.stringify(rec[f]) + ")";
+        lines.push("- " + id + " " + f + ": " + JSON.stringify(e[f]) + was);
       });
     });
     return lines;
@@ -651,7 +651,7 @@
     return (spec.fields || []).map(function (f) {
       var a = state.answers[f.id];
       if (a == null || a === "" || (Array.isArray(a) && !a.length)) return null;
-      return "- " + f.label + " " + (Array.isArray(a) ? a.join(", ") : a === true ? "Yes" : a === false ? "No" : a);
+      return "- " + f.label + (/[?:.]$/.test(String(f.label || "")) ? " " : ": ") + (Array.isArray(a) ? a.join(", ") : a === true ? "Yes" : a === false ? "No" : a);
     }).filter(Boolean).join("\n");
   }
 
