@@ -85,7 +85,7 @@ as unsent changes and arrive together.
 
 | Message | What you do |
 |---|---|
-| "Save these edits ..." with lines such as `D-2 choice: "(empty)" -> "Within 3 seconds"` or `D-2 note: ...` (`save-edits`) | Apply each line with `$PA set`. For every decision that now has a `choice`, also set `status=reviewed` and `locked=true`. Then do step 4 for those decisions. Confirm in one line with the count. |
+| "Save these edits ..." with lines such as `D-2 choice: "Within 3 seconds"` (a changed value ends with `(was "...")`) or `D-2 note: ...` (`save-edits`) | Apply each line with `$PA set`. For every decision that now has a `choice`, also set `status=reviewed` and `locked=true`. Then do step 4 for those decisions. Confirm in one line with the count. |
 | "I cannot decide D-5 ... yet. What is missing: ..." (`more`) | Set `status=returned` and `return_note`. Find what is missing, or call whoever can. When you have it, add it to `context`, clear `return_note` with `return_note=null` and set `status=ready`. |
 | "@risk-review about decision D-1 ...: ..." (`ask`) | A message for that participant: pass it on as the `participants` skill says. |
 | "Reopen decision D-6 ... because: ..." (`reopen`) | Set `locked=false`, `status=ready`, `choice=null`, and add the reason to `context`. |

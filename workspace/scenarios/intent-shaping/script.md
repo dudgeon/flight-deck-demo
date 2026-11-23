@@ -65,7 +65,7 @@ A scripted run with an invented idea and a notional framework. Press Next, or us
 [reveal G-3]
 
 **Aviator:** Risks and dependencies are at the target, with three gaps noted for the next level. Scope is the last one. You can answer here or write it straight into the area in the canvas.
-[hint: Try it: open Scope in the canvas, write what is in and out, then Send your changes and Send. Or just press Next.]
+[hint: Try it: open Scope in the canvas, write what is in and out, then Send your changes and Send.]
 [wait]
 
 [apply edits]
