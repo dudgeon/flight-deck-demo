@@ -364,6 +364,16 @@ every hero skill can read and extend it.
   a Templates shelf in the Hangar.
 - **Open.** Nothing. IN-1 and IN-3 were settled as changeable build choices
   (D-155, D-156).
+- **Parked (2026-11-22).** A bolder look for the hero skills' widgets and
+  views. Geoff asked for it, saw six views with two directions each, and
+  liked only two: the decision card's trade-off grid (3B) and the discovery
+  summary's heads-up readout (4A). Round two applied their shared style
+  (a readout of big tabular numbers first, a small ring or meter on every
+  row, choices as side-by-side columns with the recommendation tinted) to
+  the dependency board, intent map, delivery plan and review findings.
+  Geoff then set the redesign aside to come back to later; nothing is
+  built in `pa` yet. Start from the archived page,
+  [Bolder template explorations](../decision-artifacts/2026-11-22-bolder-template-explorations/index.html).
 - **Read.** [initiatives-and-templates.md](initiatives-and-templates.md).
 
 ---
