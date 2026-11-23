@@ -107,6 +107,12 @@ def ensure_project(base_url: str, name: str, workspace: Path, icon: str = "ðŸ—‚ï
 def main() -> int:
     workspace = Path(os.environ.get("OMNIGENT_SLIM_WORKSPACE", "workspace")).expanduser().resolve()
     workspace.mkdir(parents=True, exist_ok=True)
+    # Put back skill links that an unzip flattened into files (D-172).
+    from omnigent.slim_skills import repair_skill_links
+
+    fixed = repair_skill_links()
+    if fixed:
+        print(f"repaired {len(fixed)} skill links")
     url = os.environ.get("OMNIGENT_SLIM_URL", DEFAULT_URL).rstrip("/")
     try:
         print(

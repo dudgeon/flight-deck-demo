@@ -253,7 +253,10 @@ technical (D-100).
   Claude Code through its structured messages, on every Mac (D-172, D-173),
   tested against a copy of those settings.
 - **Next.** Geoff updates the work Mac (`sh ~/flight-deck/setup.sh` after a
-  new download) and starts a session.
+  new download) and starts a session. Then tidy the session view for these
+  sessions: drop the empty terminal tab, show "Claude Code" instead of
+  "Claude-code (Claude SDK)" on the composer chip, and bring back the mode
+  and effort pickers.
 - **Hangar edits on the work Mac.** Geoff, 2026-11-21: edits made there only
   need to survive updates (D-111 does that), not reach GitHub; later the repo
   will likely be re-committed to a company repository as a fork. "Send to

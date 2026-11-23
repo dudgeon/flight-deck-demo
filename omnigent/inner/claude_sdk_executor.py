@@ -4126,6 +4126,10 @@ class ClaudeSDKExecutor(Executor):
                 if not isinstance(raw_tname, str) or not raw_tname:
                     continue
                 allowed_tools.append(f"mcp__omnigent__{raw_tname}")
+        # omnigent-slim: pre-approve only ui_open_file; every other tool asks as usual.
+        from omnigent.slim_policy import slim_sdk_preapproved
+
+        allowed_tools = slim_sdk_preapproved(allowed_tools)
 
         # cfg.model > spec model > Databricks default (only on the
         # Databricks-profile gateway path) > None (lets the SDK pick its own

@@ -103,3 +103,31 @@ def test_existing_projects_move_to_the_new_agent(monkeypatch: pytest.MonkeyPatch
     monkeypatch.setattr(slim_bootstrap.httpx, "Client", lambda **kw: real(transport=transport, **kw))
     slim_bootstrap.ensure_project("http://x", "Workspace", tmp_path)
     assert patched and patched[0]["config"]["agent_id"] == "new"
+
+
+def test_flattened_skill_links_are_put_back(tmp_path: Path) -> None:
+    """An unzip that writes links as text files must not cost sessions their skills."""
+    from omnigent.slim_skills import repair_skill_links
+
+    for name in ("alpha", "beta", "gamma"):
+        (tmp_path / "skills" / name).mkdir(parents=True)
+        (tmp_path / "skills" / name / "SKILL.md").write_text("---\nname: x\n---\n")
+    links = tmp_path / ".claude" / "skills"
+    links.mkdir(parents=True)
+    (links / "alpha").write_text("../../skills/alpha")  # flattened by an unzip
+    (links / "beta").symlink_to("../../skills/beta")  # already right
+    (links / "own").mkdir()  # a real skill folder of its own
+    assert repair_skill_links(tmp_path) == ["alpha", "gamma"]
+    for name in ("alpha", "beta", "gamma"):
+        assert (links / name).is_symlink() and (links / name / "SKILL.md").is_file()
+    assert (links / "own").is_dir() and not (links / "own").is_symlink()
+    assert repair_skill_links(tmp_path) == []
+
+
+def test_only_the_file_viewer_is_pre_approved() -> None:
+    from omnigent.slim_policy import slim_sdk_preapproved
+
+    asked = ["mcp__omnigent__ui_open_file", "mcp__omnigent__sys_session_rename", "Bash"]
+    assert slim_sdk_preapproved(asked) == ["mcp__omnigent__ui_open_file"]
+    src = (ROOT / "omnigent/inner/claude_sdk_executor.py").read_text()
+    assert "allowed_tools = slim_sdk_preapproved(allowed_tools)" in src

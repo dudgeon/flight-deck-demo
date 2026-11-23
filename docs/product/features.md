@@ -834,13 +834,18 @@ messages (the channel Claude Code's own desktop agent mode uses). Claude has
 its own tools (Bash, Read, Edit, Write and the rest) and its own system
 prompt. Auto is the default mode and bypass modes are refused (D-03). When
 Claude Code asks permission, the question appears in the chat as an approval
-card. The bundled skills are found in `.claude/skills/` like any project
-skill. Every Mac works this way, so the Mac mini runs what the work Mac runs
-(D-173). Sessions no longer have a live terminal tab.
+card. Only one of the app's own tools, opening a file in the viewer, runs
+without asking; Claude Code's `Skill` tool (which only loads a skill's
+instructions) is allowed by the SDK, and whatever a skill then runs asks as
+usual. The bundled skills are found in `.claude/skills/` like any project
+skill; some unzip tools flatten those links into files, so start-up puts them
+back. Every Mac works this way, so the Mac mini runs what the work Mac runs
+(D-173). The terminal tab still shows but has no live Claude in it; removing
+it is a follow-up.
 
 **Where.** `omnigent/slim_agents/claude-code/config.yaml`, `start.sh`,
 `omnigent/slim_policy.py`, `omnigent/inner/claude_sdk_executor.py`
-(`omnigent-slim:`), `omnigent/slim_bootstrap.py`, `.claude/skills/`,
+(`omnigent-slim:`), `omnigent/slim_bootstrap.py`, `omnigent/slim_skills.py`, `.claude/skills/`,
 `tests/test_slim_claude_sdk.py`.
 
 ## Usage log

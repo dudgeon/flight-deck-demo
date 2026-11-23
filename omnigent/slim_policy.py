@@ -157,3 +157,12 @@ def slim_sdk_model(model: str | None) -> str | None:
 def slim_sdk_effort(effort: str | None) -> str | None:
     """The effort a session names, else the slim default (``None``: Claude's own)."""
     return effort or DEFAULT_CLAUDE_EFFORT or None
+
+
+#: The one Omnigent tool sessions may use without asking: opening a file in the viewer.
+SDK_PREAPPROVED_TOOLS = ("mcp__omnigent__ui_open_file",)
+
+
+def slim_sdk_preapproved(allowed_tools: Iterable[str]) -> list[str]:
+    """Keep only the tools the slim build pre-approves; the rest go through Claude's checks."""
+    return [t for t in allowed_tools if t in SDK_PREAPPROVED_TOOLS]
