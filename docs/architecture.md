@@ -54,10 +54,22 @@ store holds only sessions, projects and the Inbox.
   then `omnigent/slim_bootstrap.py` creates the **Workspace** project (sessions
   run in `workspace/`) and the **Hangar** project (D-59). Data lives in
   `~/.omnigent-slim`. `stop.sh` stops it.
-- **Skills.** `omnigent/slim_skills.py` links every folder in `skills/` into
-  the skill bundle each Claude Code session gets (`--plugin-dir`). A skill
-  appears as `/claude:<name>`. Workspace-built workflows live in
-  `workspace/.claude/skills/` and take over a shipped id (D-72).
+- **Claude Code.** Every session runs the `claude-code` agent
+  (`omnigent/slim_agents/claude-code/config.yaml`), which `start.sh` seeds as
+  the only agent (`OMNIGENT_BUILTIN_AGENT_DIRS`, `OMNIGENT_SEEDED_AGENTS=`).
+  It is upstream's claude-sdk harness: the installed `claude`, driven over its
+  stream-json messages, with Claude Code's own system prompt. Slim rules in
+  `slim_policy.py` (called from `omnigent/inner/claude_sdk_executor.py`,
+  marked `omnigent-slim:`) give it Claude Code's own tools instead of the
+  `sys_os_*` stand-ins, Auto unless an allowed mode is named, the default
+  model and effort, and no plugins. Permission questions reach the chat as
+  approval cards. This works under managed settings that refuse plugin flags,
+  ignore our hooks and limit tool servers (D-172, D-173).
+- **Skills.** Every folder in `skills/` has a link in `.claude/skills/`.
+  Sessions run in `workspace/`, and Claude Code reads `.claude/skills/` in
+  the working folder and the folders above it, so a skill appears as
+  `/<name>`. Workspace-built workflows live in `workspace/.claude/skills/` and
+  take over a shipped id (D-72): the nearer folder wins.
 
 ## The workspace and the four kinds of work
 

@@ -5,7 +5,8 @@ for prototyping an agent workspace for product managers on a locked-down work
 Mac. Its user interface is **Product Aviator**. The repository is
 `dudgeon/flight-deck-demo` (D-114, renamed from `omnigent-slim`); folders,
 commands and code identifiers keep the name `omnigent-slim` (D-35). It drives
-Claude Code as a terminal program, runs offline, and is fully vendored.
+Claude Code through its structured messages (the claude-sdk harness, D-172),
+runs offline, and is fully vendored.
 
 This file is for contributors' agents, whatever harness they run in.
 `CLAUDE.md` is a link to it, so there is one copy to keep current. Read it
@@ -204,9 +205,10 @@ writing down intent is part of every change.
 
 ## Skills
 
-- **Bundled skills** live in `skills/<name>/SKILL.md` and are linked into
-  every session by `omnigent/slim_skills.py`, appearing as `/claude:<name>`
-  (see `skills/README.md`). The main ones: `view-kit` (datasets, views, `pa`),
+- **Bundled skills** live in `skills/<name>/SKILL.md`. Each has a link in
+  `.claude/skills/<name>`, where Claude Code finds it from the workspace, so
+  it appears as `/<name>` (D-172; see `skills/README.md`). Adding a skill
+  means adding its link too; a test checks they match. The main ones: `view-kit` (datasets, views, `pa`),
   `participants`, `document-collaboration`, `scenario-builder`,
   `build-person`, `product-aviator-design`, `decision-brief` (every
   complex decision put to a person), `frontend-design` (vendored,

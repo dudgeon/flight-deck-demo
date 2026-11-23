@@ -204,6 +204,17 @@ On 23 November:
   download, the person's work added, updated to the new version, then a
   company-repository round trip.
 
+- **The work Mac's locked Claude Code** (D-172, D-173): the first real run
+  set up fine, but every session stopped at start-up ("Required terminal
+  exited unexpectedly"). The company's managed settings refuse plugin flags
+  (`disableSideloadFlags`), ignore hooks not in the managed settings
+  (`allowManagedHooksOnly`) and allow only listed tool servers. Geoff chose,
+  in a brief, to have Flight Deck talk to Claude Code through its structured
+  messages on every Mac. Sessions now run the `claude-code` agent on the
+  claude-sdk harness, with Claude Code's own tools, prompt and permission
+  checks, and skills from `.claude/skills/`. Reproduced and tested in the
+  cloud against a copy of those settings.
+
 ## Still waiting
 
 - Geoff's first install on the work Mac with `setup.sh` (D-100, D-107,

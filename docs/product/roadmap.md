@@ -247,10 +247,16 @@ technical (D-100).
   Downloads, a company repository round trip, a developer's clone, and four
   failures. A clone of a company copy of the repository runs in place and
   updates in place, ready to commit and push (D-171, `docs/company-repo.md`).
-- **Next.** Geoff's first real install on the work Mac. The download is now
-  `flight-deck-demo-main.zip`, so the first command is
-  `sh ~/Downloads/flight-deck-demo-main/setup.sh` (older messages that say
-  `omnigent-slim-main` predate the rename).
+- **Done (23 November).** Geoff's first install on the work Mac set up and
+  started, but every session stopped at once: the company's managed Claude
+  Code settings refuse plugin flags and ignore our hooks. Sessions now run
+  Claude Code through its structured messages, on every Mac (D-172, D-173),
+  tested against a copy of those settings.
+- **Next.** Geoff updates the work Mac (`sh ~/flight-deck/setup.sh` after a
+  new download) and starts a session. Then tidy the session view for these
+  sessions: drop the empty terminal tab, show "Claude Code" instead of
+  "Claude-code (Claude SDK)" on the composer chip, and bring back the mode
+  and effort pickers.
 - **Hangar edits on the work Mac.** Geoff, 2026-11-21: edits made there only
   need to survive updates (D-111 does that), not reach GitHub; later the repo
   will likely be re-committed to a company repository as a fork. "Send to

@@ -60,6 +60,11 @@ export OMNIGENT_SLIM_WORKSPACE="${OMNIGENT_SLIM_WORKSPACE:-$ROOT/workspace}"
 export OMNIGENT_SLIM_LIBRARY_DIR="${OMNIGENT_SLIM_LIBRARY_DIR:-$OMNIGENT_SLIM_WORKSPACE/templates}"
 export OMNIGENT_SLIM_PROJECT="${OMNIGENT_SLIM_PROJECT:-Workspace}"
 export OMNIGENT_HOST_NO_OPEN=1
+# Every session runs Claude Code through its structured messages (D-172, D-173):
+# the claude-code agent is the only one offered, so company settings that refuse
+# plugins, hooks and extra tool servers don't stop a session.
+export OMNIGENT_BUILTIN_AGENT_DIRS="${OMNIGENT_BUILTIN_AGENT_DIRS:-$ROOT/omnigent/slim_agents/claude-code}"
+export OMNIGENT_SEEDED_AGENTS="${OMNIGENT_SEEDED_AGENTS-}"
 # Claude Code itself: skip telemetry, error reporting and auto-updates. It still
 # talks to Anthropic for the model, as it does when you run it by hand.
 export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC="${CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC:-1}"

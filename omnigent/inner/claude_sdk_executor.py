@@ -2610,7 +2610,10 @@ class ClaudeSDKExecutor(Executor):
         self._os_env = os_env is not None
         self._model_override = model
         self._context_window = context_window
-        self._permission_mode = permission_mode
+        # omnigent-slim: Auto unless the session names an allowed mode; never bypass (D-173).
+        from omnigent.slim_policy import slim_sdk_permission_mode
+
+        self._permission_mode = slim_sdk_permission_mode(permission_mode)
         self._gateway = gateway
         self._databricks_profile = databricks_profile
         self._gateway_host = gateway_host.rstrip("/") if gateway_host else None
@@ -4006,6 +4009,10 @@ class ClaudeSDKExecutor(Executor):
         except ValueError as exc:
             yield ExecutorError(message=describe_exception(exc), retryable=False)
             return
+        # omnigent-slim: the slim default effort when the session names none (D-173).
+        from omnigent.slim_policy import slim_sdk_effort
+
+        reasoning_effort = slim_sdk_effort(reasoning_effort)
 
         session_key = self._session_key(messages)
         crashed_reason = self._crashed_sessions.get(session_key)
@@ -4119,6 +4126,10 @@ class ClaudeSDKExecutor(Executor):
                 if not isinstance(raw_tname, str) or not raw_tname:
                     continue
                 allowed_tools.append(f"mcp__omnigent__{raw_tname}")
+        # omnigent-slim: pre-approve only ui_open_file; every other tool asks as usual.
+        from omnigent.slim_policy import slim_sdk_preapproved
+
+        allowed_tools = slim_sdk_preapproved(allowed_tools)
 
         # cfg.model > spec model > Databricks default (only on the
         # Databricks-profile gateway path) > None (lets the SDK pick its own
@@ -4126,7 +4137,10 @@ class ClaudeSDKExecutor(Executor):
         # to a ``databricks-*`` model: the Omnigent producer always resolves a
         # concrete model (spec > provider default > catalog default) before
         # spawning, so no ``databricks-*`` default is injected there.
-        model = cfg.model or await self._spec_or_default_model()
+        # omnigent-slim: the slim default model before the provider's default (D-173).
+        from omnigent.slim_policy import slim_sdk_model
+
+        model = cfg.model or slim_sdk_model(None) or await self._spec_or_default_model()
 
         # Build env: Databricks gateway settings derived from profile-backed
         # creds. CLAUDECODE removal happens around the subprocess spawn in
@@ -4208,6 +4222,10 @@ class ClaudeSDKExecutor(Executor):
         # via its own conversation store.
         # Skill interpolation needs Bash, contained with the entire CLI.
         base_tools: list[str] = self._base_tools(sdk)
+        # omnigent-slim: Claude Code's own tools and permission checks (D-173).
+        from omnigent.slim_policy import slim_sdk_tools
+
+        base_tools = slim_sdk_tools(base_tools)
         if self._prepared_cli is not None and self._prepared_cli.sandboxed:
             base_tools.append("Bash")
         # Bundle skills are exposed via the SDK's plugin mechanism.
@@ -4225,6 +4243,10 @@ class ClaudeSDKExecutor(Executor):
         )
         if plugin_dir is not None and (plugin_dir / "skills").is_dir():
             bundle_plugins.append({"type": "local", "path": str(plugin_dir)})
+        # omnigent-slim: no plugins. Managed settings can refuse them
+        # (disableSideloadFlags); Flight Deck's skills load from the project's
+        # .claude/skills folders instead (D-172).
+        bundle_plugins = []
         if resolved.setting_sources == [] and not self._gateway and not brokered:
             env = {**_claude_user_settings_env(self._cwd), **env}
         max_output_tokens = cfg.extra.get("max_tokens")

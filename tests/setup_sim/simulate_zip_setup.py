@@ -128,7 +128,13 @@ def twin_zip(src_zip: Path, out_zip: Path, edit=None) -> None:
     shutil.rmtree(stage, ignore_errors=True)
     stage.mkdir(parents=True)
     with zipfile.ZipFile(src_zip) as z:
-        z.extractall(stage)
+        for info in z.infolist():  # extractall would flatten links into files
+            if (info.external_attr >> 16) & 0o170000 == 0o120000:
+                out = stage / info.filename
+                out.parent.mkdir(parents=True, exist_ok=True)
+                os.symlink(z.read(info).decode(), out)
+            else:
+                z.extract(info, stage)
     app = stage / PREFIX.rstrip("/")
     wheel_dir = app / "vendor/wheels"
     cache = linux_wheels([p.name for p in wheel_dir.glob("*.whl")])

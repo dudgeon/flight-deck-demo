@@ -78,3 +78,45 @@ def link_slim_skills(bundle_dir: Path) -> None:
             target_dir.symlink_to(source.resolve(), target_is_directory=True)
         except OSError:
             _logger.debug("Could not link the %s skill into the bundle", name, exc_info=True)
+
+
+#: Repo root, where ``.claude/skills/<name>`` links to ``skills/<name>`` (D-172).
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+def repair_skill_links(repo_root: Path = REPO_ROOT) -> list[str]:
+    """Make sure ``.claude/skills/<name>`` links to ``skills/<name>`` for every skill.
+
+    Claude Code finds the skills through these committed links. Some unzip
+    tools turn a link into a small text file holding the link's target, which
+    would leave every session without its skills, so start.sh's bootstrap
+    puts each one back. A real folder there (a contributor skill such as
+    ``docs-refresh``) is never touched. Returns the names it repaired.
+    """
+    skills_root = repo_root / "skills"
+    links_dir = repo_root / ".claude" / "skills"
+    repaired: list[str] = []
+    if not skills_root.is_dir():
+        return repaired
+    for entry in sorted(skills_root.iterdir()):
+        if not entry.is_dir() or not (entry / "SKILL.md").is_file():
+            continue
+        link = links_dir / entry.name
+        want = f"../../skills/{entry.name}"
+        try:
+            if link.is_symlink():
+                if os.readlink(link) == want:
+                    continue
+                link.unlink()
+            elif link.is_dir():
+                continue
+            elif link.exists():
+                if link.stat().st_size > 256:
+                    continue  # not a flattened link: leave it alone
+                link.unlink()
+            links_dir.mkdir(parents=True, exist_ok=True)
+            link.symlink_to(want, target_is_directory=True)
+            repaired.append(entry.name)
+        except OSError:
+            _logger.debug("Could not repair the %s skill link", entry.name, exc_info=True)
+    return repaired
