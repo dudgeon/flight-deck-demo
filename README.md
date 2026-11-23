@@ -53,6 +53,56 @@ Anthropic with your own sign-in, as it does when you use it by hand.
 The setup script checks all of this for you and tells you plainly if anything
 is missing.
 
+**Two ways to get it.** If your team keeps Flight Deck in your company's
+GitHub, [clone it from there](#if-your-team-has-it-in-your-companys-github-clone-it):
+it's quicker, and updates are a `git pull`. Otherwise, download the ZIP in
+steps 1 and 2 below.
+
+### If your team has it in your company's GitHub: clone it
+
+You need `git` (type `git --version` in Terminal; if macOS offers to install
+the developer tools, let it, or ask IT) and the repository's address from the
+green **Code** button on its GitHub page.
+
+1. Open **Terminal**: press Command-Space, type `Terminal`, press Return.
+2. Paste this, with your repository's address in place of the example, and
+   press Return:
+
+   ```bash
+   git clone https://github.com/YOUR-COMPANY/flight-deck.git ~/flight-deck
+   ```
+
+   (If it says `~/flight-deck` already exists, an earlier install is there.
+   Rename that folder in Finder, for example to `flight-deck-old`, and try
+   again. Your sessions are kept elsewhere and carry over.)
+3. Paste this and press Return:
+
+   ```bash
+   sh ~/flight-deck/setup.sh --here
+   ```
+
+Setup checks your Mac, unpacks the bundled Python (about a minute the first
+time), adds the **Product Aviator** icon to your Dock and opens the
+**Library**. A clone has no download flag, so there's nothing to unflag. The
+`--here` means "run this clone as it is": setup never looks in your Downloads
+for a ZIP, so the clone stays exactly what your team pushed.
+
+**Next time,** click **Product Aviator** in the Dock.
+
+**To update** when your team pushes a new version, paste this and press
+Return. It stops the app, pulls the new version and starts it again:
+
+```bash
+sh ~/flight-deck/stop.sh; git -C ~/flight-deck pull && sh ~/flight-deck/setup.sh --here
+```
+
+Your sessions (in `~/.omnigent-slim`) are never touched. Files you changed in
+the clone are yours in git: if `git pull` says they would be overwritten, it
+stops without changing anything, so you can commit or move them first.
+
+If you're the one who brings new versions into the company repository from
+the ZIP, see [docs/company-repo.md](docs/company-repo.md) instead.
+
 ### Step 1. Download and unzip
 
 1. Click this link: **https://github.com/dudgeon/flight-deck-demo/archive/refs/heads/main.zip**
@@ -138,15 +188,14 @@ runs the setup, for a first install or an update:
 cd ~/Downloads && curl -fL -o flight-deck-demo-main.zip https://github.com/dudgeon/flight-deck-demo/archive/refs/heads/main.zip && unzip -qo flight-deck-demo-main.zip && sh flight-deck-demo-main/setup.sh
 ```
 
-A download made this way never gets the macOS flag. `git clone` works too, on
-a machine that allows it; run `sh setup.sh --here` in the clone to run it in
-place instead of copying it to `~/flight-deck`.
+A download made this way never gets the macOS flag.
 
 **Keeping it in your company's GitHub.** If you put this copy into a
-repository in your company's GitHub, the clone is its own app folder: run
-`sh setup.sh` inside it, and later downloads update it in place, ready to
-commit and push. See [docs/company-repo.md](docs/company-repo.md) for the
-exact steps.
+repository in your company's GitHub, your folder becomes a git checkout:
+`sh setup.sh` inside it updates it in place from each new download, ready to
+commit and push, and your teammates
+[clone it](#if-your-team-has-it-in-your-companys-github-clone-it). See
+[docs/company-repo.md](docs/company-repo.md) for the exact steps.
 
 **The Dock icon.** Setup builds `~/Applications/Product Aviator.app` and pins
 it to the Dock the first time (D-103). Clicking it starts the server if it

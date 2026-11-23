@@ -47,18 +47,38 @@ the folder, and never go in.
 
 ## 2. Use it from a clone
 
-On any work Mac, yours or a teammate's:
+There are two kinds of clone, and they run setup differently.
+
+**Teammates, who only use it** (everyone except whoever brings in new
+versions). The README's
+[clone steps](../README.md#if-your-team-has-it-in-your-companys-github-clone-it)
+are written for them:
 
 ```bash
 git clone https://github.com/YOUR-COMPANY/flight-deck.git ~/flight-deck
-sh ~/flight-deck/setup.sh
+sh ~/flight-deck/setup.sh --here
 ```
 
-Setup sees a git checkout and runs it in place. The first run unpacks the
-bundled Python (about a minute), adds the Dock icon and starts the app.
+and to update after a push:
 
-If you made the repository in step 1 from `~/flight-deck`, the clone can go
-straight back into `~/flight-deck`: move or delete the old folder first.
+```bash
+sh ~/flight-deck/stop.sh; git -C ~/flight-deck pull && sh ~/flight-deck/setup.sh --here
+```
+
+The `--here` matters. The clone carries the install record, so without it
+setup would also look in Downloads and apply any newer Flight Deck ZIP it
+finds there, turning a teammate's clone into a version nobody pushed. With
+`--here`, a teammate's copy is always exactly what is in the company
+repository.
+
+**The maintainer, who brings in new versions** (section 3). Use the folder
+you pushed from in step 1, or a clone of it, and run plain
+`sh ~/flight-deck/setup.sh`, without `--here`, so it picks up the download.
+
+Either way, setup sees a git checkout and runs it in place; it doesn't copy it
+anywhere. The first run unpacks the bundled Python (about a minute), adds the
+Dock icon and starts the app. If `~/flight-deck` already holds an earlier
+install, move or rename it before cloning into it.
 
 ## 3. Bring in a newer version
 
@@ -83,8 +103,8 @@ cd ~/flight-deck && git add -A && git commit -m "Update Flight Deck" && git push
 ```
 
 `git status` before you commit shows exactly what the update changed.
-Teammates run `git pull`, then `sh ~/flight-deck/setup.sh` to restart on the
-new version. Only one person needs to bring in each download.
+Teammates then update with the one line in section 2. Only one person needs
+to bring in each download.
 
 ## Things to know
 
