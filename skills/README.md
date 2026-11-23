@@ -7,21 +7,31 @@ To add one, drop a folder in here: `skills/<name>/SKILL.md`, plus any files it
 references. New sessions pick it up; running sessions keep what they started
 with. Deleting a folder removes the skill from sessions started afterwards.
 
-In a session the skill appears as `/<agent>:<name>`, e.g.
-`/claude:omnigent-operator` (Claude Code names plugin skills
-`<plugin>:<skill>`, and the plugin is named after the session's agent),
-and Claude can also pick it up on its own from the skill's `description`.
+In a session the skill appears as `/<name>`, e.g. `/omnigent-operator`, and
+Claude can also pick it up on its own from the skill's `description`.
 
 ## How it works
 
-Omnigent already gives every Claude Code session a skill bundle, passed as
-`--plugin-dir`, and links its own skills (`build-omnigent`, `workflow`) into
-it. `omnigent/slim_skills.py` links the folders here into that same bundle,
-called from `_ensure_orchestrator_skills_in_bundle` in
-`omnigent/runner/native/orchestration.py` (marked `omnigent-slim:`). An agent's
-own skill with the same name wins.
+Each folder here has a link in the repository's `.claude/skills/` folder
+(`.claude/skills/<name> -> ../../skills/<name>`). Sessions run in
+`workspace/`, and Claude Code reads the `.claude/skills/` folders of the
+working folder and the folders above it, so it finds them by itself. No
+plugin is passed: company managed settings can refuse plugin flags (D-172).
+A workflow published from the Hangar into `workspace/.claude/skills/` with
+the same name is nearer, so it wins (D-72).
 
-Set `OMNIGENT_SLIM_SKILLS_DIR` to use a different folder.
+**Adding a skill:** add `skills/<name>/SKILL.md` and its link:
+
+```bash
+ln -s ../../skills/<name> .claude/skills/<name>
+```
+
+`tests/test_slim_claude_sdk.py` fails if a skill has no link or a link has
+no skill.
+
+`omnigent/slim_skills.py` (linking into the terminal harness's plugin
+bundle, with `OMNIGENT_SLIM_SKILLS_DIR`) is kept for the terminal harness,
+which sessions no longer use.
 
 For writing skills that use Omnigent's viewer, sessions and other tools, see
 `docs/skill-writers/`. `omnigent-operator` here is a working example.

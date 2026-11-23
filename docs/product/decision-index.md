@@ -30,12 +30,14 @@ feature notes of the time and marked *(reconstructed)*.
 | D | Decision | Who | Status | Why |
 |---|---|---|---|---|
 | D-01 | A cut-down fork of Omnigent, not a new app | Geoff | Active | A work team will productionize Omnigent; staying close keeps the demo transferable. |
-| D-02 | Claude Code as a terminal, no API, offline, no permission bypass, everything vendored | Geoff | Built (`_offline_guard.py`, `slim_policy.py`, `vendor/`) | The work Mac's constraints. |
+| D-02 | Claude Code as a terminal, no API, offline, no permission bypass, everything vendored | Geoff | Built; the terminal part replaced by D-172 (`_offline_guard.py`, `slim_policy.py`, `vendor/`) | The work Mac's constraints. |
 | D-03 | Defaults: Auto permissions, Opus 5.5, medium effort | Geoff | Built | *(reconstructed)* Auto keeps demos flowing without prompts while staying inside Claude Code's own safety checks; Bypass and Don't ask stay removed (D-02). |
 | D-04 | A "product partner" for PMs: unstructured work plus templated flows | Geoff | Active | *(reconstructed)* His vision of PM work: context files and generated artifacts alternating with structured, repeatable flows. |
 | D-107 | Setup clears the download flag on its own folder after asking; curl stays as the other way | Geoff | Built (`setup.sh`) | A browser ZIP is the main way in; this is what "Open Anyway" does, and IT for every install would stall it. |
 | D-111 | App lives in `~/flight-deck`; updates from a newer ZIP never overwrite the person's files or edits | Geoff asked, Claude chose | Built (`setup.sh`, `scripts/install_sync.py`) | A re-download must keep his files, and Terminal navigation is hard: one fixed folder plus a manifest of what was shipped. |
 | D-171 | A git checkout (such as a company copy) is its own app folder; updates apply in place, ready to commit and push; downloads recognized by content | Geoff asked, Claude chose | Built (`setup.sh`, `docs/company-repo.md`) | The downloaded copy will likely live in a company GitHub repository, and updates must keep working there. |
+| D-172 | Claude Code driven through its structured messages (claude-sdk harness, `claude-code` agent), not a terminal with hooks; Claude Code's own tools, prompt and permission checks; skills from `.claude/skills/`, no plugins | Geoff | Built (`omnigent/slim_agents/claude-code`, `slim_policy.py`, `.claude/skills/`) | The work Mac's managed settings refuse plugin flags, ignore our hooks and limit tool servers. Replaces the terminal part of D-02. |
+| D-173 | Every Mac runs Claude the D-172 way, not only locked ones | Geoff | Built (`start.sh`) | The Mac mini should test exactly what runs at work. |
 
 ## Structured work
 

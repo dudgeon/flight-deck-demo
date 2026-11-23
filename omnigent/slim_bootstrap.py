@@ -25,7 +25,8 @@ import httpx
 DEFAULT_URL = "http://127.0.0.1:6767"
 DEFAULT_PROJECT = "Workspace"
 HANGAR_PROJECT = "Hangar"
-CLAUDE_AGENT_NAME = "claude-native-ui"
+#: The agent every session runs (D-173); see omnigent/slim_agents/claude-code.
+CLAUDE_AGENT_NAME = "claude-code"
 
 
 def _wait_for_local_host(client: httpx.Client, timeout_s: float = 30.0) -> str:
@@ -75,6 +76,13 @@ def ensure_project(base_url: str, name: str, workspace: Path, icon: str = "ðŸ—‚ï
         if existing is not None:
             config = dict(existing.get("config") or {})
             stored = str(config.get("workspace") or "")
+            # Projects made before D-173 point at the terminal agent; move them over.
+            agent_id = _claude_agent_id(client)
+            if agent_id and config.get("agent_id") != agent_id:
+                config["agent_id"] = agent_id
+                client.patch(
+                    f"/v1/projects/{existing['id']}", json={"config": config}
+                ).raise_for_status()
             if _other_app_workspace(stored, workspace):
                 config["workspace"] = str(workspace)
                 client.patch(

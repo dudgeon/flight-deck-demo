@@ -8,8 +8,10 @@ repository is `dudgeon/flight-deck-demo` (renamed from `omnigent-slim`, D-114);
 code identifiers, commands and the `~/.omnigent-slim` data folder keep the
 name `omnigent-slim`.
 
-- It drives **Claude Code as a terminal program** (your own `claude` login), so
-  it needs no API key.
+- It drives **Claude Code** (your own installed `claude` and its login) through
+  Claude Code's own structured messages, so it needs no API key, and it works
+  even where your company's Claude Code settings block plugins, hooks and add-on
+  tool servers (D-172).
 - It **never reaches the internet itself**: Python, every package, tmux and the
   built web UI are in this repository.
 - It **never bypasses Claude Code's permissions**.

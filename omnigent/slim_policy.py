@@ -111,3 +111,49 @@ def _has_flag(args: list[str], flag: str) -> bool:
 #: pane that only the Omnigent desktop app has. omnigent-slim ships without it,
 #: and the tools could otherwise load internet pages, so they are not offered.
 EMBEDDED_BROWSER_TOOLS_ENABLED = False
+
+
+# --- Claude Code through its structured messages (D-172, D-173) -------------
+#
+# Every Flight Deck session runs the ``claude-code`` agent
+# (``omnigent/slim_agents/claude-code``) on the claude-sdk harness: the
+# person's installed ``claude`` driven over stream-json instead of in a
+# terminal, because company managed settings can refuse plugins, hooks and
+# extra tool servers. These rules keep it Claude Code: its own tools, its own
+# permission checks, no plugin flags.
+
+#: Claude Code's own tools, offered in place of upstream's ``sys_os_*``
+#: stand-ins, so Claude Code's permission checks (Auto's classifier, Manual's
+#: questions) decide every file change and command. No web tools: Flight Deck
+#: runs offline.
+CLAUDE_CODE_TOOLS: tuple[str, ...] = (
+    "Bash",
+    "Read",
+    "Edit",
+    "Write",
+    "Glob",
+    "Grep",
+    "NotebookEdit",
+    "TodoWrite",
+    "Task",
+)
+
+
+def slim_sdk_tools(base_tools: list[str]) -> list[str]:
+    """Return ``base_tools`` with Claude Code's own tools added, once each."""
+    return list(dict.fromkeys([*base_tools, *CLAUDE_CODE_TOOLS]))
+
+
+def slim_sdk_permission_mode(mode: str | None) -> str:
+    """The permission mode a structured-message session runs in: allowed, Auto if unset."""
+    return allowed_claude_permission_mode(mode)
+
+
+def slim_sdk_model(model: str | None) -> str | None:
+    """The model a session names, else the slim default (``None``: Claude's own)."""
+    return model or DEFAULT_CLAUDE_MODEL or None
+
+
+def slim_sdk_effort(effort: str | None) -> str | None:
+    """The effort a session names, else the slim default (``None``: Claude's own)."""
+    return effort or DEFAULT_CLAUDE_EFFORT or None

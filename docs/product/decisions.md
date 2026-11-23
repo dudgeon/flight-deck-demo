@@ -73,6 +73,33 @@ a company GitHub repository. Updates must still bring in new features
 without losing the team's skills, people, scenarios or Hangar work, and the
 team needs one place, the repository, to share them.*
 
+**D-172 · 2026-11-23 · Geoff.** Flight Deck talks to Claude Code through
+Claude Code's own structured messages (the stream-json channel the Claude
+Agent SDK and Claude Code's desktop agent mode use), not by typing into a
+terminal and listening for hooks. This replaces the "terminal program" part
+of D-02; the rest of D-02 stands: the person's installed `claude` and
+sign-in, no Claude API key, offline, Claude Code's own permission checks.
+Every session runs the `claude-code` agent (`omnigent/slim_agents/`) on the
+claude-sdk harness with Claude Code's own tools (Bash, Read, Edit, Write and
+the rest), Claude Code's own system prompt, and its permission questions
+shown as approval cards in the chat. No plugins are passed: the bundled
+skills are linked into `.claude/skills/`, where Claude Code finds them by
+itself from the workspace, and a Hangar workflow of the same name in
+`workspace/.claude/skills/` still wins (D-72). The live terminal tab goes.
+*On the work Mac every session stopped at start-up: the company's managed
+settings refuse plugin flags (`disableSideloadFlags`), ignore every hook not
+in the managed settings (`allowManagedHooksOnly`) and limit tool servers to
+an approved list. Geoff: "assume the work setup is very locked down." The
+structured messages are plain Claude Code, need nothing from IT and keep
+permission questions in the chat; a copy of those locks confirmed sessions,
+tools, skills and approvals all work this way. Brief:
+https://claude.ai/artifact/2zJJMaZQHiQHPBn116eYHY (WM-1).*
+
+**D-173 · 2026-11-23 · Geoff.** Every Mac works the D-172 way, not only the
+locked ones: the Mac mini runs exactly what runs at work. *What the Mac mini
+tests every day, demos and evals included, should be what runs at work
+(WM-2).*
+
 ## Structured work
 
 **D-05 · 2026-11-20 · Geoff.** One template system serves both the chat
