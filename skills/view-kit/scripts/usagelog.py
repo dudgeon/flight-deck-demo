@@ -515,7 +515,8 @@ def summarize(records: Iterable[dict[str, Any]]) -> dict[str, Any]:
             sessions.add(str(rec["session_id"]))
         workflow = ctx.get("workflow") or params.get("workflow")
         if workflow and name in ("pa.flow", "pa.brief", "skill.started", "workflow.started"):
-            _bump(workflows, workflow)
+            # `pa flow --scenario ../skills/x` and `--scenario x` are one workflow.
+            _bump(workflows, str(workflow).rstrip("/").rsplit("/", 1)[-1])
         if name == "web.page_view":
             _bump(pages, params.get("page"))
         elif name == "web.click":
@@ -534,11 +535,23 @@ def summarize(records: Iterable[dict[str, Any]]) -> dict[str, Any]:
             status = params.get("status")
             turns[status if status in ("completed", "failed") else "other"] += 1
         elif name == "upstream.native_session_usage" and rec.get("session_id"):
-            usage[str(rec["session_id"])] = {
-                "input_tokens": float(params.get("input_tokens") or 0),
-                "output_tokens": float(params.get("output_tokens") or 0),
-                "cost_usd": float(params.get("cost_usd") or 0),
+            # Each reading is the session's running total since its Claude Code
+            # process started. A restart starts the total again from zero, so a
+            # reading below the last one closes a segment: keep what it reached.
+            seg = usage.setdefault(str(rec["session_id"]), {
+                "input_tokens": 0.0, "output_tokens": 0.0, "cost_usd": 0.0,
+                "_in": 0.0, "_out": 0.0, "_cost": 0.0,
+            })
+            reading = {
+                "_in": float(params.get("input_tokens") or 0),
+                "_out": float(params.get("output_tokens") or 0),
+                "_cost": float(params.get("cost_usd") or 0),
             }
+            if reading["_cost"] < seg["_cost"]:
+                seg["input_tokens"] += seg["_in"]
+                seg["output_tokens"] += seg["_out"]
+                seg["cost_usd"] += seg["_cost"]
+            seg.update(reading)
     return {
         "events": total,
         "first": first,
@@ -546,9 +559,9 @@ def summarize(records: Iterable[dict[str, Any]]) -> dict[str, Any]:
         "sessions": len(sessions),
         "turns": turns,
         "tokens": {
-            "input": int(sum(u["input_tokens"] for u in usage.values())),
-            "output": int(sum(u["output_tokens"] for u in usage.values())),
-            "cost_usd": round(sum(u["cost_usd"] for u in usage.values()), 2),
+            "input": int(sum(u["input_tokens"] + u["_in"] for u in usage.values())),
+            "output": int(sum(u["output_tokens"] + u["_out"] for u in usage.values())),
+            "cost_usd": round(sum(u["cost_usd"] + u["_cost"] for u in usage.values()), 2),
         },
         "by_day": sorted(days.items()),
         "by_source": _top(sources),
@@ -571,8 +584,11 @@ def format_summary(summary: dict[str, Any]) -> str:
     lines = [
         f"{summary['events']} events, {summary['first'][:16]} to {summary['last'][:16]} (UTC)",
         f"{summary['sessions']} sessions; turns: {summary['turns']['completed']} completed, "
-        f"{summary['turns']['failed']} failed; tokens in {summary['tokens']['input']:,}, "
-        f"out {summary['tokens']['output']:,}, about ${summary['tokens']['cost_usd']}",
+        f"{summary['turns']['failed']} failed; "
+        # Claude Code run as a terminal reports cost but not tokens; say only what is known.
+        + (f"tokens in {summary['tokens']['input']:,}, out {summary['tokens']['output']:,}, "
+           if summary['tokens']['input'] or summary['tokens']['output'] else "")
+        + f"about ${summary['tokens']['cost_usd']}",
     ]
     sections = [
         ("By day", "by_day"), ("Where from", "by_source"), ("Mode", "by_mode"),
