@@ -4,7 +4,7 @@
  "eyebrow": "Risk Review asks",
  "title": "Who gives consent for a card user under 18?",
  "fields": [
-  { "id": "consent", "label": "Section 7.4 says consent is recorded, but not whose", "kind": "choice", "default": "The cardholder, as parent or guardian",
+  { "id": "consent", "label": "Whose consent does section 7.4 record?", "kind": "choice", "default": "The cardholder, as parent or guardian",
     "options": [
      { "value": "The cardholder, as parent or guardian", "hint": "Matches how authorized users are added today" },
      { "value": "Both the cardholder and the card user", "hint": "Safer for 16 and 17 year olds, adds a step" },
