@@ -43,6 +43,11 @@ file, and type two short lines into Terminal.
   `command not found`, install Claude Code first.
 - About 1 GB of free disk space.
 
+**What you don't need:** no npm, pip, Homebrew or other installs, no admin
+password, no API key and no internet beyond the one download. Python, every
+package, tmux and the web pages are inside the ZIP. Claude Code talks to
+Anthropic with your own sign-in, as it does when you use it by hand.
+
 The setup script checks all of this for you and tells you plainly if anything
 is missing.
 
@@ -114,6 +119,11 @@ Setup finds the newest download in **Downloads**, stops the app, updates
 - Files you deleted stay deleted.
 - Your sessions, kept in `~/.omnigent-slim`, are never touched.
 
+That covers everything you build: your own skills, workflows and people
+(including what you publish from the Hangar), scenarios, Hangar drafts and
+their history, notes, data, artifacts, and the usage log in
+`~/flight-deck/logs/`.
+
 Setup lists all of this as it runs and in its report. (The app's own code,
 outside the `workspace` folder, is always replaced with the new version; if
 you changed any of it, your copy is saved under `updates/<date>/replaced/`.)
@@ -129,6 +139,12 @@ cd ~/Downloads && curl -fL -o flight-deck-demo-main.zip https://github.com/dudge
 A download made this way never gets the macOS flag. `git clone` works too, on
 a machine that allows it; run `sh setup.sh --here` in the clone to run it in
 place instead of copying it to `~/flight-deck`.
+
+**Keeping it in your company's GitHub.** If you put this copy into a
+repository in your company's GitHub, the clone is its own app folder: run
+`sh setup.sh` inside it, and later downloads update it in place, ready to
+commit and push. See [docs/company-repo.md](docs/company-repo.md) for the
+exact steps.
 
 **The Dock icon.** Setup builds `~/Applications/Product Aviator.app` and pins
 it to the Dock the first time (D-103). Clicking it starts the server if it
