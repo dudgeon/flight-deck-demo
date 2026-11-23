@@ -404,6 +404,7 @@ def test_live_marks_only_follow_a_line() -> None:
     with pytest.raises(pa.PaError):
         pa.parse_script("**You:** Hi\n[live]\n", {})
 
+
 def test_send_to_repo_commits_published_config_to_a_new_branch(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -514,8 +515,7 @@ def test_edit_and_add_a_widget_in_a_workflow_draft(
             "files": {
                 "views/card.json": json.dumps(card),
                 "views/scope-check.json": json.dumps(form),
-                "SKILL.md": skill
-                + "\n## The scope-check widget\n\n"
+                "SKILL.md": skill + "\n## The scope-check widget\n\n"
                 "Draw it with `$PA render SKILL_DIR/views/scope-check.json --host chat --data x`.\n",
             },
         },
@@ -543,3 +543,94 @@ def test_edit_and_add_a_widget_in_a_workflow_draft(
         )
     with pytest.raises(HTTPException):
         slim_hangar.render_draft_view("../evil", "card")
+
+
+def test_build_skills_as_folder_drafts(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """D-167: skills that are not workflows are edited, created, published and restored."""
+    workspace = _scratch_workspace(tmp_path, monkeypatch)
+    # Every skill is listed, shipped ones marked, and workflows still say so.
+    skills = {s["id"]: s for s in slim_hangar.load_hangar()["skills"]}
+    assert skills["view-kit"]["builtin"] and skills["view-kit"]["shipped"]
+    assert skills["build-skill"]["description"]
+    assert skills["document-review"]["workflow"]
+    # A new skill starts blank and is held back until it says when it is used.
+    draft = slim_hangar.new_folder_draft("skill", {"name": "Risk memo"})
+    assert draft["id"] == "risk-memo" and draft["action"] == "new"
+    assert any("description" in p for p in draft["problems"])
+    text = next(f for f in draft["files"] if f["path"] == "SKILL.md")["text"]
+    text = text.replace("description: ", "description: Write a risk memo. Use when asked for one.")
+    draft = slim_hangar.edit_folder_draft("skill", "risk-memo", {"files": {"SKILL.md": text}})
+    assert draft["problems"] == [], draft["problems"]
+    assert draft["target"] == ".claude/skills/risk-memo/"
+    slim_hangar.publish_folder("skill", "risk-memo", "first version")
+    skills = {s["id"]: s for s in slim_hangar.load_hangar()["skills"]}
+    assert not skills["risk-memo"]["builtin"] and not skills["risk-memo"]["shipped"]
+    # A wrong name in SKILL.md is caught, and a skill has no manifest fields.
+    slim_hangar.start_folder_draft("skill", "risk-memo")
+    draft = slim_hangar.edit_folder_draft(
+        "skill", "risk-memo", {"files": {"SKILL.md": text.replace("name: risk-memo", "name: x")}}
+    )
+    assert any("name must be" in p for p in draft["problems"])
+    with pytest.raises(HTTPException):
+        slim_hangar.edit_folder_draft("skill", "risk-memo", {"manifest": {"title": "x"}})
+    slim_hangar.discard_folder("skill", "risk-memo")
+    # A shipped skill is changed as a workspace copy, with history and a way back.
+    draft = slim_hangar.start_folder_draft("skill", "participants")
+    assert draft["builtin"] and draft["shipped"]
+    md = next(f for f in draft["files"] if f["path"] == "SKILL.md")["text"]
+    slim_hangar.edit_folder_draft(
+        "skill", "participants", {"files": {"SKILL.md": md + "\nOne more rule.\n"}}
+    )
+    slim_hangar.publish_folder("skill", "participants", "one more rule")
+    copy = workspace / ".claude" / "skills" / "participants" / "SKILL.md"
+    assert copy.read_text().endswith("One more rule.\n")
+    entry = next(s for s in slim_hangar.load_hangar()["skills"] if s["id"] == "participants")
+    assert not entry["builtin"] and entry["shipped"] and len(entry["history"]) == 0
+    slim_hangar.start_folder_draft("skill", "participants", remove=True)
+    slim_hangar.publish_folder("skill", "participants", "back to shipped")
+    assert not copy.exists()
+    # Workflows are not skills here, and ids are shared between the two.
+    with pytest.raises(HTTPException, match="no skill"):
+        slim_hangar.start_folder_draft("skill", "document-review")
+    with pytest.raises(HTTPException, match="taken by a workflow"):
+        slim_hangar.new_folder_draft("skill", {"name": "Document review"})
+
+
+def test_a_new_workflow_starts_blank_and_passes_once_summarised(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """D-169: a blank workflow has steps, a record type and a view that already check out."""
+    _scratch_workspace(tmp_path, monkeypatch)
+    draft = slim_hangar.new_folder_draft("workflow", {"name": "Vendor check"})
+    assert draft["id"] == "vendor-check"
+    assert {f["path"] for f in draft["files"]} == {
+        "SKILL.md",
+        "workflow.json",
+        "schemas/records.json",
+        "views/items.json",
+    }
+    assert draft["problems"] == ["workflow.json: missing summary"], draft["problems"]
+    draft = slim_hangar.edit_folder_draft(
+        "workflow", "vendor-check", {"manifest": {"summary": "Check a vendor before signing."}}
+    )
+    assert draft["problems"] == [], draft["problems"]
+    slim_hangar.publish_folder("workflow", "vendor-check", "new")
+    assert any(w["id"] == "vendor-check" for w in slim_hangar.load_hangar()["workflows"])
+
+
+def test_a_hangar_chat_finds_its_way_back_to_its_draft(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """D-168: opening a Hangar chat in flying mode goes back to its draft's page."""
+    _scratch_workspace(tmp_path, monkeypatch)
+    assert slim_hangar.aviator_home("conv_nobody")["path"] is None
+    slim_hangar.start_person_draft("mara-okafor")
+    slim_hangar.edit_person_draft("mara-okafor", {"aviator": "conv_person"})
+    assert slim_hangar.aviator_home("conv_person")["path"] == "/hangar/drafts/person/mara-okafor"
+    slim_hangar.new_folder_draft("skill", {"name": "Risk memo"})
+    slim_hangar.edit_folder_draft("skill", "risk-memo", {"aviator": "conv_skill"})
+    assert slim_hangar.aviator_home("conv_skill") == {
+        "kind": "skill",
+        "id": "risk-memo",
+        "path": "/hangar/drafts/skill/risk-memo",
+    }

@@ -6,6 +6,10 @@
  * draft here is a copy of the whole folder, so besides the fields every text
  * file in it (the script, fixtures, SKILL.md, context/ and cast/ notes) can be
  * opened and edited in place.
+ *
+ * Skills that are not workflows (D-167) use the same editor: a skill's only
+ * manifest is the name and description at the top of its SKILL.md, so the
+ * page edits those two lines and the instructions below them as one file.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -25,6 +29,7 @@ import {
   folderPreviewPath,
   hangarPath,
   playPrompt,
+  skillTrialPrompt,
   useFolderActions,
   useFolderDraft,
 } from "./hangarApi";
@@ -75,9 +80,11 @@ function editOf(draft: FolderDraft, form: Form): FolderEdit {
   const before = formOf(draft);
   const manifest: Record<string, unknown> = {};
   const keys =
-    draft.kind === "scenario"
-      ? (["title", "summary", "opening", "workflow", "participants"] as const)
-      : (["title", "summary", "steps", "participants", "views"] as const);
+    draft.kind === "skill"
+      ? ([] as const)
+      : draft.kind === "scenario"
+        ? (["title", "summary", "opening", "workflow", "participants"] as const)
+        : (["title", "summary", "steps", "participants", "views"] as const);
   for (const key of keys) {
     if (JSON.stringify(form[key]) !== JSON.stringify(before[key])) {
       manifest[key] = key === "opening" && !form.opening ? null : form[key];
@@ -89,8 +96,38 @@ function editOf(draft: FolderDraft, form: Form): FolderEdit {
   return edit;
 }
 
-const NOUN = { scenario: "scenario", workflow: "workflow" } as const;
-const SHELF = { scenario: "scenarios", workflow: "workflows" } as const;
+const NOUN = { scenario: "scenario", workflow: "workflow", skill: "skill" } as const;
+const SHELF = { scenario: "scenarios", workflow: "workflows", skill: "skills" } as const;
+
+/** A SKILL.md split into its `---` block and the instructions below it. */
+export function splitSkill(text: string): { head: string; body: string } {
+  if (!text.startsWith("---")) return { head: "", body: text };
+  const end = text.indexOf("\n---", 3);
+  if (end < 0) return { head: "", body: text };
+  return {
+    head: text.slice(text.indexOf("\n") + 1, end),
+    body: text
+      .slice(end + 4)
+      .replace(/^[^\n]*\n/, "")
+      .replace(/^\n+/, ""),
+  };
+}
+
+export function joinSkill(head: string, body: string): string {
+  return `---\n${head}\n---\n\n${body}`;
+}
+
+export function skillDescription(head: string): string {
+  const m = /^description:[ \t]*(.*)$/m.exec(head);
+  return m ? m[1].trim().replace(/^(["'])(.*)\1$/, "$2") : "";
+}
+
+/** Set the one-line description, keeping every other line of the block. */
+export function withSkillDescription(head: string, description: string): string {
+  const line = `description: ${description.replace(/\s*\n\s*/g, " ")}`;
+  if (/^description:.*$/m.test(head)) return head.replace(/^description:.*$/m, line);
+  return head ? `${head}\n${line}` : line;
+}
 const ACTION_LABEL = { new: "New", change: "Change", remove: "Removal" } as const;
 
 export function FolderDraftPage({
@@ -110,6 +147,7 @@ export function FolderDraftPage({
 }
 
 function livePath(kind: FolderKind, id: string) {
+  if (kind === "skill") return hangarPath.skill(id);
   return kind === "scenario" ? hangarPath.scenario(id) : hangarPath.workflow(id);
 }
 
@@ -237,6 +275,8 @@ function FolderEditor({ hangar, draft }: { hangar: Hangar; draft: FolderDraft })
   const blocked = draft.problems.length > 0 || save === "saving";
   const noun = NOUN[draft.kind];
   const title = form.title || draft.id;
+  const isSkill = draft.kind === "skill";
+  const skill = isSkill ? splitSkill(fileText("SKILL.md")) : null;
   const workflow = hangar.workflows.find((w) => w.id === form.workflow);
   const changed = draft.files.filter((f) => f.change !== "same");
   const viewFiles = new Set(draft.kind === "workflow" ? Object.values(form.views) : []);
@@ -278,125 +318,168 @@ function FolderEditor({ hangar, draft }: { hangar: Hangar; draft: FolderDraft })
       </p>
       <div className="halves">
         <div className="flex flex-col gap-3.5">
-          <section className="card editing">
-            <span className="lab">What it is</span>
-            <label className="field">
-              <span>Title</span>
-              <input
-                className="hangar-input"
-                value={form.title}
-                onChange={(e) => change({ title: e.target.value })}
-                data-testid="hangar-field-title"
-              />
-            </label>
-            <label className="field">
-              <span>Summary</span>
-              <textarea
-                className="hangar-input short"
-                value={form.summary}
-                onChange={(e) => change({ summary: e.target.value })}
-                placeholder={
-                  draft.kind === "scenario"
-                    ? "What this demo shows, in a sentence"
-                    : "What this kind of work is for, in a sentence"
-                }
-                data-testid="hangar-field-summary"
-              />
-            </label>
-            {draft.kind === "scenario" ? (
-              <>
+          {skill && (
+            <>
+              <section className="card editing">
+                <span className="lab">When the agent uses it</span>
                 <label className="field">
-                  <span>Runs the workflow</span>
-                  <select
-                    className="hangar-input"
-                    value={form.workflow}
-                    onChange={(e) => change({ workflow: e.target.value })}
-                    data-testid="hangar-field-workflow"
-                  >
-                    {hangar.workflows.map((w) => (
-                      <option key={w.id} value={w.id}>
-                        {w.title}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="field">
-                  <span>Opening line</span>
-                  <input
-                    className="hangar-input"
-                    value={form.opening}
-                    onChange={(e) => change({ opening: e.target.value })}
-                    placeholder="What the person says first, e.g. Let's review the Allowances PRD."
-                    data-testid="hangar-field-opening"
+                  <span>Description (the agent reads this to decide when to use the skill)</span>
+                  <textarea
+                    className="hangar-input short"
+                    value={skillDescription(skill.head)}
+                    onChange={(e) =>
+                      setFile(
+                        "SKILL.md",
+                        joinSkill(withSkillDescription(skill.head, e.target.value), skill.body),
+                      )
+                    }
+                    placeholder="What it does, then: Use when the person asks for … or when …"
+                    data-testid="hangar-field-description"
                   />
                 </label>
-              </>
-            ) : (
-              <StepsField value={form.steps} onChange={(steps) => change({ steps })} />
-            )}
-          </section>
-          <section className="card editing">
-            <span className="lab">
-              {draft.kind === "scenario" ? "Cast · who takes part" : "Who may be called"}
-            </span>
-            <div className="castpick single">
-              <fieldset>
-                {hangar.people.map((p) => {
-                  const on = form.participants.includes(p.id);
-                  const outside =
-                    draft.kind === "scenario" &&
-                    on &&
-                    workflow !== undefined &&
-                    workflow.participants.length > 0 &&
-                    !workflow.participants.includes(p.id);
-                  return (
-                    <label key={p.id}>
-                      <input
-                        type="checkbox"
-                        checked={on}
-                        onChange={() =>
-                          change({
-                            participants: on
-                              ? form.participants.filter((i) => i !== p.id)
-                              : [...form.participants, p.id],
-                          })
-                        }
-                      />
-                      <span>
-                        {p.name}
-                        <span className="lab"> · {p.role || p.kind}</span>
-                        {outside && <span className="chip fail"> not called by the workflow</span>}
-                      </span>
-                    </label>
-                  );
-                })}
-              </fieldset>
-            </div>
-          </section>
-          <section className="card editing">
-            <div className="row">
-              <span className="lab">
-                {draft.kind === "scenario"
-                  ? `Script · ${mainFile}`
-                  : "Instructions · SKILL.md (what the agent does)"}
-              </span>
-              <span className="sp" />
-              {draft.kind === "scenario" && (
                 <span className="lab">
-                  **Name:** speaks · [show view] · [wait] · [live] under a line: a real agent
-                  answers it when flown
+                  Name: <span className="font-mono">{draft.id}</span> · every session gets it as{" "}
+                  <span className="font-mono">/{draft.id}</span> once published
                 </span>
-              )}
-            </div>
-            <textarea
-              className="hangar-input brief tall"
-              value={fileText(mainFile)}
-              onChange={(e) => setFile(mainFile, e.target.value)}
-              spellCheck={false}
-              aria-label={mainFile}
-              data-testid="hangar-field-main"
-            />
-          </section>
+              </section>
+              <section className="card editing">
+                <span className="lab">Instructions · what the agent does when it uses it</span>
+                <textarea
+                  className="hangar-input brief tall"
+                  value={skill.body}
+                  onChange={(e) => setFile("SKILL.md", joinSkill(skill.head, e.target.value))}
+                  spellCheck={false}
+                  aria-label="Instructions"
+                  data-testid="hangar-field-main"
+                />
+              </section>
+            </>
+          )}
+          {!isSkill && (
+            <>
+              <section className="card editing">
+                <span className="lab">What it is</span>
+                <label className="field">
+                  <span>Title</span>
+                  <input
+                    className="hangar-input"
+                    value={form.title}
+                    onChange={(e) => change({ title: e.target.value })}
+                    data-testid="hangar-field-title"
+                  />
+                </label>
+                <label className="field">
+                  <span>Summary</span>
+                  <textarea
+                    className="hangar-input short"
+                    value={form.summary}
+                    onChange={(e) => change({ summary: e.target.value })}
+                    placeholder={
+                      draft.kind === "scenario"
+                        ? "What this demo shows, in a sentence"
+                        : "What this kind of work is for, in a sentence"
+                    }
+                    data-testid="hangar-field-summary"
+                  />
+                </label>
+                {draft.kind === "scenario" ? (
+                  <>
+                    <label className="field">
+                      <span>Runs the workflow</span>
+                      <select
+                        className="hangar-input"
+                        value={form.workflow}
+                        onChange={(e) => change({ workflow: e.target.value })}
+                        data-testid="hangar-field-workflow"
+                      >
+                        {hangar.workflows.map((w) => (
+                          <option key={w.id} value={w.id}>
+                            {w.title}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="field">
+                      <span>Opening line</span>
+                      <input
+                        className="hangar-input"
+                        value={form.opening}
+                        onChange={(e) => change({ opening: e.target.value })}
+                        placeholder="What the person says first, e.g. Let's review the Allowances PRD."
+                        data-testid="hangar-field-opening"
+                      />
+                    </label>
+                  </>
+                ) : (
+                  <StepsField value={form.steps} onChange={(steps) => change({ steps })} />
+                )}
+              </section>
+              <section className="card editing">
+                <span className="lab">
+                  {draft.kind === "scenario" ? "Cast · who takes part" : "Who may be called"}
+                </span>
+                <div className="castpick single">
+                  <fieldset>
+                    {hangar.people.map((p) => {
+                      const on = form.participants.includes(p.id);
+                      const outside =
+                        draft.kind === "scenario" &&
+                        on &&
+                        workflow !== undefined &&
+                        workflow.participants.length > 0 &&
+                        !workflow.participants.includes(p.id);
+                      return (
+                        <label key={p.id}>
+                          <input
+                            type="checkbox"
+                            checked={on}
+                            onChange={() =>
+                              change({
+                                participants: on
+                                  ? form.participants.filter((i) => i !== p.id)
+                                  : [...form.participants, p.id],
+                              })
+                            }
+                          />
+                          <span>
+                            {p.name}
+                            <span className="lab"> · {p.role || p.kind}</span>
+                            {outside && (
+                              <span className="chip fail"> not called by the workflow</span>
+                            )}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </fieldset>
+                </div>
+              </section>
+              <section className="card editing">
+                <div className="row">
+                  <span className="lab">
+                    {draft.kind === "scenario"
+                      ? `Script · ${mainFile}`
+                      : "Instructions · SKILL.md (what the agent does)"}
+                  </span>
+                  <span className="sp" />
+                  {draft.kind === "scenario" && (
+                    <span className="lab">
+                      **Name:** speaks · [show view] · [wait] · [live] under a line: a real agent
+                      answers it when flown
+                    </span>
+                  )}
+                </div>
+                <textarea
+                  className="hangar-input brief tall"
+                  value={fileText(mainFile)}
+                  onChange={(e) => setFile(mainFile, e.target.value)}
+                  spellCheck={false}
+                  aria-label={mainFile}
+                  data-testid="hangar-field-main"
+                />
+              </section>
+            </>
+          )}
           <FilesCard
             kind={draft.kind}
             files={others}
@@ -408,7 +491,14 @@ function FolderEditor({ hangar, draft }: { hangar: Hangar; draft: FolderDraft })
         </div>
         <div className="flex flex-col gap-3.5">
           <Section title="Checks">
-            <Checks problems={draft.problems} passed="Every check passes, and it plays through." />
+            <Checks
+              problems={draft.problems}
+              passed={
+                isSkill
+                  ? "Every check passes: it has a name, a description and instructions."
+                  : "Every check passes, and it plays through."
+              }
+            />
           </Section>
           <Section title={isNew ? "The new files" : "What changes"}>
             {changed.length === 0 ? (
@@ -426,6 +516,18 @@ function FolderEditor({ hangar, draft }: { hangar: Hangar; draft: FolderDraft })
               {draft.path} → {draft.target}
             </span>
           </Section>
+          {isSkill && (
+            <Section title="Who brings it">
+              <Links
+                items={(draft.uses.people ?? []).map((p) => ({
+                  to: hangarPath.person(p),
+                  label: hangar.people.find((x) => x.id === p)?.name ?? p,
+                  note: "has it in their skills",
+                }))}
+                empty="Every session gets it. No person lists it in their skills."
+              />
+            </Section>
+          )}
           {draft.kind === "workflow" && (
             <Section title="Used by">
               <Links
@@ -529,20 +631,30 @@ function FolderEditor({ hangar, draft }: { hangar: Hangar; draft: FolderDraft })
         onSession={(aviator) => editMutate({ kind: draft.kind, id: draft.id, edit: { aviator } })}
         firstPrompt={folderAviatorPrompt(draft, title)}
         intro={
-          draft.kind === "scenario"
-            ? "Aviator can write or rework the script, invent fixture data, or add a person to the cast. Its changes land in this draft and show on the page as it works."
-            : "Aviator can rewrite the instructions, add a step or a view, or change who may be called. Its changes land in this draft and show on the page as it works."
+          isSkill
+            ? "Aviator can write the instructions from a description, tighten when the skill is used, or add a checklist or template file. Its changes land in this draft and show on the page as it works."
+            : draft.kind === "scenario"
+              ? "Aviator can write or rework the script, invent fixture data, or add a person to the cast. Its changes land in this draft and show on the page as it works."
+              : "Aviator can rewrite the instructions, add a step or a view, or change who may be called. Its changes land in this draft and show on the page as it works."
         }
         trial={
-          draft.kind === "scenario"
+          isSkill
             ? {
-                tab: "Play it",
+                tab: "Try it",
                 intro:
-                  "Aviator plays the draft the way someone flying would meet it, from the start or from a point you name. Nothing is published.",
-                placeholder: "Where to start, or what to watch (optional)",
-                prompt: (note) => playPrompt(draft.id, note),
+                  "Give Aviator a real request. It follows the draft skill to answer it, as a session would once it is published. Nothing is published or changed.",
+                placeholder: "A request this skill should handle…",
+                prompt: (ask) => skillTrialPrompt(draft.id, ask),
               }
-            : undefined
+            : draft.kind === "scenario"
+              ? {
+                  tab: "Play it",
+                  intro:
+                    "Aviator plays the draft the way someone flying would meet it, from the start or from a point you name. Nothing is published.",
+                  placeholder: "Where to start, or what to watch (optional)",
+                  prompt: (note) => playPrompt(draft.id, note),
+                }
+              : undefined
         }
       />
     </div>
@@ -584,6 +696,7 @@ function StepsField({ value, onChange }: { value: string[]; onChange: (v: string
 const FOLDER_HINT = {
   scenario: "context/brief.md, cast/mara-okafor.md or fixtures/notes.md",
   workflow: "references/brief.md or schemas/records.json",
+  skill: "references/checklist.md or templates/memo.md",
 };
 
 function FilesCard({
@@ -768,6 +881,72 @@ export function FolderActions({
       )}
       <ActionError error={startDraft.error ?? create.error} />
     </div>
+  );
+}
+
+/**
+ * "New skill" (D-167) and "New workflow" (D-169): a name, then the page opens
+ * as the editor on a blank that already passes the shape checks.
+ */
+export function NewSkillButton({ primary = true }: { primary?: boolean }) {
+  return <NewFolderButton kind="skill" primary={primary} />;
+}
+
+export function NewWorkflowButton({ primary = true }: { primary?: boolean }) {
+  return <NewFolderButton kind="workflow" primary={primary} />;
+}
+
+const NEW_HINT = {
+  skill: "What it does, e.g. Risk memo",
+  workflow: "The kind of work, e.g. Vendor check",
+  scenario: "",
+};
+
+function NewFolderButton({ kind, primary }: { kind: "skill" | "workflow"; primary: boolean }) {
+  const navigate = useNavigate();
+  const { create } = useFolderActions();
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  if (!open) {
+    return (
+      <button
+        type="button"
+        className={cn("hangar-btn", primary && "pri")}
+        onClick={() => setOpen(true)}
+        data-testid={`hangar-new-${kind}`}
+      >
+        New {kind}
+      </button>
+    );
+  }
+  return (
+    <form
+      className="row"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!name.trim()) return;
+        create.mutate(
+          { kind, name: name.trim() },
+          { onSuccess: (d) => navigate(hangarPath.folderDraft(kind, d.id)) },
+        );
+      }}
+    >
+      <input
+        className="hangar-input"
+        autoFocus
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder={NEW_HINT[kind]}
+        aria-label={`Name of the ${kind}`}
+      />
+      <button type="submit" className="hangar-btn pri" disabled={!name.trim() || create.isPending}>
+        Create draft
+      </button>
+      <button type="button" className="hangar-btn quiet" onClick={() => setOpen(false)}>
+        Cancel
+      </button>
+      <ActionError error={create.error} />
+    </form>
   );
 }
 

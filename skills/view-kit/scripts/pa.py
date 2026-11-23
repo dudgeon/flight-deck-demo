@@ -3459,8 +3459,8 @@ def restore_version(workspace: Path, pid: str, version: str, skills: Path | None
 # that takes over its id, and removing that copy brings the shipped one back
 # (D-71).
 
-FOLDER_KINDS = {"scenario": "scenarios", "workflow": "workflows"}
-BUILD_KINDS = ["person", "scenario", "workflow"]
+FOLDER_KINDS = {"scenario": "scenarios", "workflow": "workflows", "skill": "skills"}
+BUILD_KINDS = ["person", "scenario", "workflow", "skill"]
 SCENARIO_KEYS = ("title", "summary", "workflow", "participants", "fixtures", "script", "opening")
 WORKFLOW_KEYS = ("title", "summary", "steps", "participants", "inputs", "launchers", "work_products", "views")
 _TEXT_SUFFIXES = {".md", ".json", ".txt", ".csv", ".html", ".yaml", ".yml"}
@@ -3470,7 +3470,7 @@ _MAX_SHOWN = 300_000
 
 def _kind(kind: str) -> str:
     if kind not in FOLDER_KINDS:
-        raise PaError(f"a draft is of a person, scenario or workflow, not {kind!r}")
+        raise PaError(f"a draft is of a person, scenario, workflow or skill, not {kind!r}")
     return kind
 
 
@@ -3482,6 +3482,8 @@ def _fd_paths(workspace: Path, kind: str, fid: str) -> tuple[Path, Path]:
 def _manifest_name(kind: str, folder: Path | None = None) -> str:
     if kind == "scenario":
         return SCENARIO_FILE
+    if kind == "skill":
+        return "SKILL.md"
     found = workflow_manifest_path(folder) if folder else None
     return found.name if found else WORKFLOW_FILE
 
@@ -3489,7 +3491,80 @@ def _manifest_name(kind: str, folder: Path | None = None) -> str:
 def live_folder(workspace: Path, kind: str, fid: str) -> Path | None:
     if _kind(kind) == "scenario":
         return list_scenarios(workspace).get(fid)
+    if kind == "skill":
+        return find_skill(fid, workspace)
     return find_workflow(fid, workspace)
+
+
+# Skills that are not workflows (kits and moves) are built the same way as
+# workflows (D-167): a draft copy of the folder, published into the
+# workspace's `.claude/skills/<id>/`, where a copy of a shipped skill takes
+# over its id the way a workflow copy does (D-72).
+
+def skill_roots(workspace: Path | None = None) -> list[Path]:
+    """Where skills live, first match wins: ones built in the Hangar, then the shipped ones."""
+    return workflow_roots(workspace)
+
+
+def find_skill(sid: str, workspace: Path | None = None) -> Path | None:
+    """The live folder of a skill that is not a workflow."""
+    for root in skill_roots(workspace):
+        folder = root / sid
+        if (folder / "SKILL.md").is_file():
+            return None if workflow_manifest_path(folder) else folder
+    return None
+
+
+def shipped_skill(workspace: Path, sid: str) -> Path | None:
+    for root in skill_roots(workspace):
+        if is_builtin(workspace, root) and (root / sid / "SKILL.md").is_file():
+            return root / sid
+    return None
+
+
+def skill_front_matter(text: str) -> dict[str, str]:
+    """The `name:` and `description:` lines at the top of a SKILL.md."""
+    meta: dict[str, str] = {}
+    if not text.startswith("---"):
+        return meta
+    head, sep, _ = text[3:].partition("\n---")
+    if not sep:
+        return meta
+    for line in head.splitlines():
+        key, colon, raw = line.partition(":")
+        if colon and key.strip() and not line[:1].isspace():
+            meta[key.strip()] = raw.strip().strip('"').strip("'")
+    return meta
+
+
+def skill_problems(folder: Path, sid: str) -> list[str]:
+    """What stops a skill folder from loading as the skill `sid`."""
+    path = folder / "SKILL.md"
+    if not path.is_file():
+        return ["SKILL.md is missing; it is what makes the folder a skill"]
+    text = path.read_text(encoding="utf-8")
+    if not text.startswith("---"):
+        return ["SKILL.md must start with a --- block holding name: and description:"]
+    meta = skill_front_matter(text)
+    problems = []
+    if meta.get("name") != sid:
+        problems.append(f"SKILL.md: name must be {sid!r}, the folder's id")
+    description = meta.get("description", "")
+    if not description:
+        problems.append("SKILL.md: a description is needed; it is how the agent knows when to use the skill")
+    elif len(description) > 1024:
+        problems.append(f"SKILL.md: the description is {len(description)} characters; keep it under 1024")
+    if workflow_manifest_path(folder):
+        problems.append("the folder has a workflow manifest; build it as a workflow instead")
+    body = text[3:].partition("\n---")[2].strip()
+    if not body:
+        problems.append("SKILL.md has no instructions below the --- block")
+    return problems
+
+
+def skill_template(sid: str, name: str) -> str:
+    return (f"---\nname: {sid}\ndescription: \n---\n\n# {name}\n\n"
+            "What this skill is for, in a sentence or two.\n\n## How to do it\n\n1. \n")
 
 
 def publish_target(workspace: Path, kind: str, fid: str) -> Path:
@@ -3555,7 +3630,21 @@ def start_folder_draft(workspace: Path, kind: str, *, fid: str | None = None, na
     folder, meta_path = _fd_paths(workspace, kind, new_id)
     if live_folder(workspace, kind, new_id) or meta_path.is_file():
         raise PaError(f"the id {new_id} is taken; pick a different name")
-    if duplicate_of:
+    if kind in ("skill", "workflow"):
+        # Skills and workflows share `.claude/skills/`, so an id is taken by either.
+        other = "workflow" if kind == "skill" else "skill"
+        if live_folder(workspace, other, new_id) or _fd_paths(workspace, other, new_id)[1].is_file():
+            raise PaError(f"the id {new_id} is taken by a {other}; pick a different name")
+    if kind == "skill" and duplicate_of:
+        source = live_folder(workspace, kind, _checked_id(duplicate_of))
+        if not source:
+            raise PaError(f"there is no skill {duplicate_of}")
+        _copy_folder(source, folder)
+        _rename_skill(folder, duplicate_of, new_id)
+    elif kind == "skill":
+        folder.mkdir(parents=True, exist_ok=True)
+        _write_atomic(folder / "SKILL.md", skill_template(new_id, name))
+    elif duplicate_of:
         source = live_folder(workspace, kind, _checked_id(duplicate_of))
         if not source:
             raise PaError(f"there is no {kind} {duplicate_of}")
@@ -3578,9 +3667,60 @@ def start_folder_draft(workspace: Path, kind: str, *, fid: str | None = None, na
         _write_atomic(folder / SCENARIO_FILE, json.dumps(data, indent=1, ensure_ascii=False) + "\n")
         _write_atomic(folder / "script.md", f"# {name}\n\n**You:** \n\n**Aviator:** \n")
     else:
-        raise PaError("a new workflow starts as a copy of one that exists; give the one to copy")
+        _write_workflow_skeleton(folder, new_id, name)
     _write_folder_meta(workspace, kind, new_id, {"action": "new", "from": duplicate_of})
     return new_id
+
+
+def _write_workflow_skeleton(folder: Path, wid: str, name: str) -> None:
+    """A blank workflow that passes the checks (D-169): three steps, one record type, one list view.
+
+    The builder then renames the steps, reshapes the record and writes the
+    instructions on the workflow's page, with Aviator in the pop-over.
+    """
+    folder.mkdir(parents=True, exist_ok=True)
+    manifest = {
+        "workflow": wid,
+        "title": name,
+        "summary": "",
+        "inputs": [],
+        "dataset": {"path": f"data/{{slug}}-{wid}.json", "adds": ["item"], "status_field": "status"},
+        "steps": ["Gather", "Work through", "Wrap up"],
+        "progress": {"records": {"type": "item"}, "field": "status", "done": ["done"],
+                     "noun": "items", "label": "done"},
+        "schemas": "schemas/records.json",
+        "views": {"items": "views/items.json"},
+        "work_products": [{"name": name, "view": "items", "out": f"artifacts/{{slug}}-{wid}.html"}],
+        "participants": [],
+    }
+    schema = {"item": {"required": ["id", "type", "title", "status"], "fields": {
+        "title": {"type": "string", "note": "One line that names it"},
+        "detail": {"type": "string", "note": "What it is and why it matters"},
+        "status": {"enum": ["open", "needs-you", "done"]},
+    }}}
+    view = {
+        "view": f"{wid}-items", "layout": "tree-table", "eyebrow": name,
+        "title": "{dataset.title}", "subtitle": "Everything this work has turned up so far.",
+        "records": {"type": "item"},
+        "summary": {"count_by": "status", "records": {"type": "item"}},
+        "statuses": {"open": {"label": "Open", "tone": "info"}, "needs-you": {"label": "Needs you", "tone": "attn"},
+                     "done": {"label": "Done", "tone": "ok"}},
+        "columns": [{"field": "title", "label": name}, {"field": "status", "as": "status"}],
+        "details": {"item": {"title": "{title}", "sections": [{"kind": "text", "field": "detail", "label": "Detail"}]}},
+        "actions": [{"id": "done", "label": "Mark done", "tone": "primary", "direct": True,
+                     "when": {"status": ["open", "needs-you"]}, "set": {"status": "done"}, "next": True}],
+    }
+    skill = (f"---\nname: {wid}\ndescription: {name}. Use when the person asks to {name.lower()}.\n---\n\n"
+             f"# {name}\n\nWhat this kind of work is for, in a sentence or two.\n\n"
+             "## Steps\n\n1. **Gather.** Ask what the person is working from, one question at a time.\n"
+             "2. **Work through.** Add each thing you find as an `item` record, and show the items view.\n"
+             "3. **Wrap up.** Say what is done and what still needs the person.\n")
+    for rel, text in (("workflow.json", json.dumps(manifest, indent=1, ensure_ascii=False) + "\n"),
+                      ("schemas/records.json", json.dumps(schema, indent=1, ensure_ascii=False) + "\n"),
+                      ("views/items.json", json.dumps(view, indent=1, ensure_ascii=False) + "\n"),
+                      ("SKILL.md", skill)):
+        (folder / rel).parent.mkdir(parents=True, exist_ok=True)
+        _write_atomic(folder / rel, text)
 
 
 def _write_folder_meta(workspace: Path, kind: str, fid: str, info: dict[str, Any]) -> None:
@@ -3610,6 +3750,8 @@ def edit_folder_draft(workspace: Path, kind: str, fid: str, manifest: dict[str, 
         raise PaError(f"there is no draft of {fid}; start one first")
     if info.get("action") == "remove":
         raise PaError(f"the draft of {fid} removes it; discard it to make changes instead")
+    if manifest and kind == "skill":
+        raise PaError("a skill has no manifest fields; its name and description are at the top of SKILL.md")
     if manifest:
         keys = SCENARIO_KEYS if kind == "scenario" else WORKFLOW_KEYS
         unknown = sorted(set(manifest) - set(keys))
@@ -3687,6 +3829,16 @@ def folder_uses(workspace: Path, kind: str, fid: str) -> dict[str, list[str]]:
     """What depends on a scenario or workflow: a workflow's scenarios and the starters that name it."""
     if kind == "scenario":
         return {"scenarios": [], "starters": []}
+    if kind == "skill":
+        people = []
+        roster = workspace / PARTICIPANTS_DIR
+        for path in sorted(roster.glob("*.md")) if roster.is_dir() else []:
+            try:
+                if fid in (_participant(path).get("skills") or []):
+                    people.append(path.stem)
+            except (OSError, PaError):
+                continue
+        return {"scenarios": [], "starters": [], "people": people}
     scenarios = [f.name for f in scenarios_of(fid, workspace)]
     starters = [p.stem for p in sorted((workspace / "templates" / "sessions").glob("*.md"))
                 if re.search(rf"\b{re.escape(fid)}\b", p.read_text(encoding="utf-8"))]
@@ -3708,10 +3860,17 @@ def folder_draft_info(workspace: Path, kind: str, fid: str) -> dict[str, Any]:
     if action == "remove":
         if not live or builtin:
             problems.append(f"{fid} has no workspace copy to remove")
+        if kind == "skill" and not shipped_skill(workspace, fid):
+            for pid in uses.get("people", []):
+                problems.append(f"{pid} has {fid} in their skills; take it off them first")
         if kind == "workflow" and not shipped_workflow(workspace, fid):
             for sid in uses["scenarios"]:
                 problems.append(f"the scenario {sid} runs {fid}; remove it or move it to another workflow first")
-    else:
+    elif kind == "skill":
+        problems += skill_problems(folder, fid)
+        skill_md = folder / "SKILL.md"
+        manifest = dict(skill_front_matter(skill_md.read_text(encoding="utf-8"))) if skill_md.is_file() else {}
+    if action != "remove" and kind != "skill":
         mpath = folder / _manifest_name(kind, folder)
         try:
             manifest = _read_json(mpath)
@@ -3730,6 +3889,7 @@ def folder_draft_info(workspace: Path, kind: str, fid: str) -> dict[str, Any]:
                 preview_html(folder, roster, workspace)
             except (PaError, OSError, ValueError, KeyError) as err:
                 problems.append(f"the scenario does not play through: {err}")
+    if action != "remove":
         if action == "new" and live is not None:
             problems.append(f"a {kind} called {fid} already exists; pick another name")
         now, before = _files_of(folder), _files_of(live if action != "new" else None)
@@ -3754,7 +3914,8 @@ def folder_draft_info(workspace: Path, kind: str, fid: str) -> dict[str, Any]:
         "action": action,
         "from": meta.get("from"),
         "builtin": builtin,
-        "shipped": bool(kind == "workflow" and shipped_workflow(workspace, fid)),
+        "shipped": bool((kind == "workflow" and shipped_workflow(workspace, fid))
+                        or (kind == "skill" and shipped_skill(workspace, fid))),
         "started": meta.get("started"),
         "updated": meta.get("updated"),
         "step": meta.get("step"),

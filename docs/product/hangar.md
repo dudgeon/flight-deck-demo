@@ -137,8 +137,8 @@ files are keyed by scenario id).
 - Server: a read-only endpoint modelled on `slim_library.py`.
 - `pa`: `draft`, `publish`, `history`, `uses`.
 - Skills: `build-person`, `build-workflow`, `build-scenario`, `build-skill`.
-  Built so far: `build-person`, and `scenario-builder` in place of
-  `build-scenario`.
+  Built: `build-person`, `build-skill` (D-167), and `scenario-builder` in
+  place of `build-scenario` and `build-workflow`.
 - A "Hangar" project so builder sessions stay out of the flying sidebar.
 
 ## Build order (D-45)
@@ -147,6 +147,18 @@ files are keyed by scenario id).
 2. Person builder: drafts, checks, trial, publish, history, used-by guard.
    **Built**; editing in place with the Aviator pop-over (D-63 to D-66).
 3. Scenario and workflow builders, with the D-42 split. **Built** (D-67, D-71 to D-73).
+
+## Finishing people and skills (D-167 to D-169)
+
+- **Skills are built here** (D-167): Edit / "Edit a copy" / Duplicate / Remove
+  on a skill's page and "New skill" on the shelf open the same folder editor,
+  with the description and instructions of `SKILL.md` as fields, a "Try it" tab
+  in the Aviator pop-over, and Publish into `workspace/.claude/skills/<id>/`.
+- **Nothing pops out to flying** (D-168): Hangar chats are hidden from the
+  flying sidebar and redirect to their draft; the building skills hand a
+  flying chat a link to the Hangar page instead of building there.
+- **A new workflow can start blank** (D-169).
+- Plan page for Geoff: https://claude.ai/artifact/D5zTQUAuQndzw6ew7jxd8U
 
 ## Flying a scenario (D-76 to D-81)
 

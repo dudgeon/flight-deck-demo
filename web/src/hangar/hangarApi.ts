@@ -221,7 +221,7 @@ export interface FolderVersion {
   files: string[];
 }
 
-export type FolderKind = "scenario" | "workflow";
+export type FolderKind = "scenario" | "workflow" | "skill";
 
 /** One file of a scenario or workflow draft, beside the live one. */
 export interface FolderFile {
@@ -259,7 +259,7 @@ export interface FolderDraft {
   manifest_file: string;
   files: FolderFile[];
   problems: string[];
-  uses: { scenarios: string[]; starters: string[] };
+  uses: { scenarios: string[]; starters: string[]; people?: string[] };
   path: string;
   target: string;
   /** A workflow draft's widgets and views, placed as they show when flying. */
@@ -277,6 +277,11 @@ export interface HangarSkill {
   name: string;
   description: string;
   workflow: boolean;
+  /** Ships with the app: changed only by publishing a workspace copy (D-72, D-167). */
+  builtin: boolean;
+  /** A skill of this id ships with the app (a workspace copy may hide it). */
+  shipped: boolean;
+  history?: FolderVersion[];
   files: string[];
   path: string;
   used_by: string[];
@@ -545,6 +550,15 @@ export function folderAviatorPrompt(
   draft: Pick<FolderDraft, "kind" | "id">,
   title: string,
 ): string {
+  if (draft.kind === "skill")
+    return [
+      `I'm editing the skill "${title}" in the Hangar, with the build-skill skill.`,
+      `The draft is the folder .hangar/drafts/skills/${draft.id}/.`,
+      "Change files only inside that draft folder (never the live one), keep each change small,",
+      `check it with \`pa draft skill ${draft.id}\`, and tell me in one line what you changed.`,
+      "I can see the page and edit there myself. Nothing is published until I press Publish.",
+      "Read the draft now and say in two lines what the skill does and when it is used. Then wait for me.",
+    ].join(" ");
   return [
     `I'm editing the ${draft.kind} "${title}" in the Hangar, with the scenario-builder skill.`,
     `The draft is the folder ${draft.kind === "scenario" ? ".hangar/drafts/scenarios" : ".hangar/drafts/workflows"}/${draft.id}/.`,
@@ -552,6 +566,16 @@ export function folderAviatorPrompt(
     `check it with \`pa draft ${draft.kind} ${draft.id}\`, and tell me in one line what you changed.`,
     "I can see the page and edit there myself. Nothing is published until I press Publish.",
     "Read the draft now and say in two lines what it does. Then wait for me.",
+  ].join(" ");
+}
+
+/** Ask a draft skill a real request, in the same Aviator session (nothing is published). */
+export function skillTrialPrompt(draftId: string, ask: string): string {
+  return [
+    `Try it: read the unpublished skill draft .hangar/drafts/skills/${draftId}/SKILL.md and follow it`,
+    "for this request as if it were installed, without changing any live files or publishing anything.",
+    "Say first, in one line, whether the request is one the description would pick the skill for.",
+    `The request: ${ask}`,
   ].join(" ");
 }
 
@@ -623,11 +647,6 @@ export function useHangarVersion(id: string, version: string | null) {
 export const HANGAR_PROJECT = "Hangar";
 
 /** A new session in the Hangar project with this prompt in the composer; the user presses Send. */
-export function builderSessionLink(prompt: string): string {
-  const params = new URLSearchParams({ project: HANGAR_PROJECT, prompt });
-  return `/?${params.toString()}`;
-}
-
 export const BUILD_STEPS = [
   "Who they are",
   "How they answer",
@@ -655,19 +674,6 @@ export function trialPrompt(draftId: string, name: string, question: string): st
     `and show their answer as their participant turn. Nothing is published. The question: ${question}`,
   ].join(" ");
 }
-
-export const buildPrompts = {
-  create: () =>
-    "Build a new person or agent for the roster with the build-person skill. Start with step 1: ask me who they are.",
-  edit: (id: string, name: string) =>
-    `Change ${name} with the build-person skill. The draft is .hangar/drafts/people/${id}.md: read it, tell me in two lines what it says now, and ask what I want to change.`,
-  duplicate: (id: string, name: string) =>
-    `Make a new person or agent starting from a copy of ${name} (${id}), with the build-person skill. Ask me for the new name first.`,
-  resume: (id: string, step: string | null) =>
-    `Carry on building the draft .hangar/drafts/people/${id}.md with the build-person skill${step ? `, from the step "${step}"` : ""}.`,
-  trial: (id: string, name: string) =>
-    `Trial of the unpublished draft ${name} (.hangar/drafts/people/${id}.md), with the build-person skill, step 4. Nothing is published. My test question for them: `,
-};
 
 /**
  * Which lines a draft removes and adds, for "what changes". A plain longest
@@ -723,4 +729,21 @@ export function unwrap(text: string): string {
     }
   }
   return out.join("\n");
+}
+
+/**
+ * The Hangar page whose Aviator pop-over holds a session (D-168). A Hangar chat
+ * opened in flying mode goes back to its draft instead.
+ */
+export async function fetchAviatorHome(sessionId: string): Promise<string | null> {
+  try {
+    const res = await authenticatedFetch(
+      `/v1/slim/hangar/aviator/${encodeURIComponent(sessionId)}`,
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as { path?: string | null };
+    return data.path ?? null;
+  } catch {
+    return null;
+  }
 }

@@ -60,7 +60,8 @@ replaces, under History.
 $PA draft scenario <id>                                     # a draft of a live scenario
 $PA draft scenario --name "Fraud rules review" --duplicate document-review
 $PA draft scenario --name "Card freeze demo" --workflow document-review   # a blank one
-$PA draft workflow --name "Policy review" --duplicate document-review     # a new workflow
+$PA draft workflow --name "Policy review" --duplicate document-review     # a new workflow from a copy
+$PA draft workflow --name "Vendor check"                    # a blank workflow that passes the checks (D-169)
 $PA draft workflow document-review                          # change one (a shipped one becomes a workspace copy)
 $PA draft scenario <id> --set title="..." --set participants=risk-review,mara-okafor \
   --file script.md=/tmp/script.md                           # change fields and whole files
@@ -75,6 +76,14 @@ can't be removed while a scenario runs it (unless a shipped one of the same id
 takes over again). In the app, the Hangar page for the draft is the editor and
 you may be the Aviator in its pop-over: keep changes small and say what you
 changed.
+
+**Asked in a flying chat?** If this conversation did not start in the Hangar
+(its first message does not say you are editing something in the Hangar),
+don't build in the chat (D-168). Start the draft, then give the person its page
+and stop: `[Open it in the Hangar](/hangar/drafts/scenario/<id>)` (or
+`/hangar/drafts/workflow/<id>`), and say you'll be in the Ask Aviator
+pop-over there. Use the id `pa` printed. Skills that are not workflows use
+build-skill.
 
 ## Ask before you build
 

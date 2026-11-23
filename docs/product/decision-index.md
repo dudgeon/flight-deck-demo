@@ -127,7 +127,7 @@ feature notes of the time and marked *(reconstructed)*.
 | D-56 | Drafts and history live in `workspace/.hangar/`, gitignored | Claude | Built | Same checks run on a draft; nothing half-made goes live. |
 | D-57 | Restore is a publish, through the same gate | Claude | Built | A way back must not become a way around the gate. |
 | D-58 | "Try them" opens a builder session | Claude | **Replaced by D-64** | It used the real participant turn. |
-| D-59 | Builder sessions live in a "Hangar" project | Claude | Built | Keeps building out of the flying list. |
+| D-59 | Builder sessions live in a "Hangar" project | Claude | Built; refined by D-168 (not listed in the flying sidebar) | Keeps building out of the flying list. |
 | D-60 to D-62 | Never assigned | | Unused | Numbers skipped by parallel threads. |
 | D-63 | A person's Hangar page is their editor, autosaving to a draft | Geoff asked, Claude chose; confirmed by Geoff | Built | Leaving for a flying session was "clunky, opaque, mysterious". |
 | D-64 | Aviator in a pinnable pop-over on the Hangar page | Claude; confirmed by Geoff | Built; replaces D-58 | Stay in the Hangar. |
@@ -135,12 +135,15 @@ feature notes of the time and marked *(reconstructed)*.
 | D-66 | A person brings skills, told to their session | Claude; confirmed by Geoff | Built | He could not see how to give a character skills. |
 | D-67 | D-42 built: `workflow.json` and `workspace/scenarios/<id>/` | Claude | Built | Several scenarios per workflow. |
 | D-71 | Scenarios and workflows edit like people, with folder drafts | Claude | Built | One way to build anything. |
-| D-72 | Shipped workflows are never changed in place; "Edit a copy" | Claude | Built | Shipped workflows stay a safe floor. |
+| D-72 | Shipped workflows are never changed in place; "Edit a copy" | Claude | Built; extended to skills by D-167; blank start by D-169 | Shipped workflows stay a safe floor. |
 | D-73 | A scenario draft plays on its page; `opening` line | Claude | Built | Seeing the demo is the real check. |
 | D-74 | Pictures for people and agents, committed with the repo | Geoff | Built | He asked for avatars chosen from a file. |
 | D-75 | Configuration travels with the repo; a test guards `.gitignore` | Geoff | Built | Personas, skills, workflows and scenarios go to the work Mac. |
 | D-112 | A workflow's widgets and views are shown, edited and added in the Hangar | Geoff asked, Claude chose | Done (PR 27) | He asked that widgets tied to a workflow be visible and editable there. |
 | D-113 | "Send to repo" on git copies: published config to a new branch, pushed, PR opened | Geoff | Done (PR 29) | Hangar edits only shipped once someone committed them by hand. |
+| D-167 | Skills (not workflows) are edited, created, tried and published in the Hangar | Geoff asked, Claude chose | *Pending* (this PR) | The Hangar had no way to change a skill, so the only route was a flying chat. |
+| D-168 | Hangar chats never open in flying mode; build requests in a flying chat hand over to the Hangar | Claude | *Pending* (this PR); refines D-59 | The back doors that kept dropping Geoff out of the Hangar. |
+| D-169 | A new workflow can start blank, not only as a duplicate | Geoff asked, Claude chose | *Pending* (this PR); refines D-72 | Finishing the build: no copying and stripping a workflow to start one. |
 
 ## Views in the chat
 
