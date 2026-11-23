@@ -131,3 +131,41 @@ def test_only_the_file_viewer_is_pre_approved() -> None:
     assert slim_sdk_preapproved(asked) == ["mcp__omnigent__ui_open_file"]
     src = (ROOT / "omnigent/inner/claude_sdk_executor.py").read_text()
     assert "allowed_tools = slim_sdk_preapproved(allowed_tools)" in src
+
+
+def test_projects_whose_agent_is_gone_move_to_claude_code(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A flown demo made before D-173 names the old agent; start-up moves it over."""
+    patched: list[dict] = []
+    transport = _fake_server(
+        [
+            {"id": "p1", "name": "◆ Demo · The launch slips", "config": {"agent_id": "old"}},
+            {"id": "p2", "name": "Workspace", "config": {"agent_id": "new"}},
+            {"id": "p3", "name": "No agent", "config": {}},
+        ],
+        patched,
+    )
+    real = httpx.Client
+    monkeypatch.setattr(slim_bootstrap.httpx, "Client", lambda **kw: real(transport=transport, **kw))
+    assert slim_bootstrap.repoint_orphaned_projects("http://x") == ["◆ Demo · The launch slips"]
+    assert [p["config"]["agent_id"] for p in patched] == ["new"]
+
+
+def test_flying_again_brings_a_demo_project_onto_the_workspace_agent(tmp_path: Path) -> None:
+    from types import SimpleNamespace
+
+    from omnigent.server.routes import slim_hangar
+
+    folder = tmp_path / "demos" / "x"
+    projects = [
+        SimpleNamespace(id="w", name="Workspace", config={"agent_id": "new", "host_id": "h"}),
+        SimpleNamespace(
+            id="d", name="◆ Demo · X", config={"agent_id": "old", "host_id": "h", "workspace": str(folder)}
+        ),
+    ]
+    updates: list[dict] = []
+    store = SimpleNamespace(
+        list=lambda user_id=None: projects,
+        update=lambda pid, user_id=None, config=None: updates.append(config),
+    )
+    assert slim_hangar._ensure_demo_project(store, None, "◆ Demo · X", folder) == "d"
+    assert updates and updates[0]["agent_id"] == "new"

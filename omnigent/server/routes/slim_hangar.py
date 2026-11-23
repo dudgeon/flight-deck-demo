@@ -430,7 +430,10 @@ def _ensure_demo_project(
     config.update({"workspace": str(folder), "use_worktree": False, "icon": DEMO_ICON})
     existing = next((p for p in projects if p.name == name), None)
     if existing is not None:
-        if (existing.config or {}).get("workspace") != str(folder):
+        current = existing.config or {}
+        # Re-flying also brings the agent (and host) back in line with Workspace,
+        # so a demo made before the agent changed (D-173) doesn't keep a dead one.
+        if any(current.get(k) != config.get(k) for k in ("workspace", "agent_id", "host_id")):
             project_store.update(
                 existing.id, user_id=user_id, config={**(existing.config or {}), **config}
             )
