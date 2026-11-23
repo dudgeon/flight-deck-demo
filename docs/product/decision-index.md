@@ -165,11 +165,12 @@ feature notes of the time and marked *(reconstructed)*.
 | D-81 | Flying again: Reset to the start or Keep going | Geoff | Built (PR 17) |
 | D-82 | Keep the Library; every card generated from metadata | Geoff | Built (PR 19) |
 | D-83 | Top half: four to six featured skills (`library` block) | Geoff | Built (PR 19) |
-| D-84 | Skill card: unnumbered steps, a short form, Start | Geoff | Built (PR 19) |
-| D-85 | Demo card: Fly and a Live turns switch | Geoff | Built (PR 19) |
+| D-84 | Skill card: unnumbered steps, a short form, Start | Geoff | Built (PR 19); refined by D-170 (chevron steps and a drawn view) |
+| D-85 | Demo card: Fly and a Live turns switch | Geoff | Built (PR 19); demo cards become board rows (D-170) |
 | D-86 | One project per demo; an In flight strip | Geoff | Built (PR 19) |
 | D-87 | Demo card text comes from `scenario.json` | Not recorded in the entry | Built (PR 19) |
 | D-88 | Artifact templates leave the Library | Geoff | Built (PR 19) |
+| D-170 | Library cards drawn as the Hangar draws a workflow (view, chevron steps, stage, cast); arcs only; demos as one board | Geoff asked, Claude chose | *Pending* (this PR); refines D-83 to D-85 |
 
 When pull requests 17 and 19 merge, change these rows to their real status
 and add a reason to each.

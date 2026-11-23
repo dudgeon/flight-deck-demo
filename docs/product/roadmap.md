@@ -74,8 +74,14 @@ work and demos start.
   start or Keep going (D-76 to D-81). PR 19: the Library shows
   four to six featured skills generated from `workflow.json`, then a card per
   scenario with Fly and a Live turns switch; canned sessions retired and
-  templates moved to the Hangar (D-82 to D-88).
+  templates moved to the Hangar (D-82 to D-88). PR (this one, 2026-11-23):
+  cards reconciled with the Hangar (drawn view, chevron steps, stage, cast),
+  arcs only, demos as one board, "PRD" gone from what the Library shows (D-170,
+  D-153, D-166).
 - **Next.** Run each demo end to end on the Mac mini and the work Mac.
+  Finish the D-166 rename inside the skills and scripts (`SKILL.md` still says
+  "Specify" and "PRD"; the Library no longer does). Engage owners has no arc
+  yet, so its stage shows on no card.
 - **Open.** D-87 does not record who decided it.
 - **Read.** The two pull requests; design round at
   https://claude.ai/artifact/5XhbdjSKp7i2t1ChoxqS6Z.

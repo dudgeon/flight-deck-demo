@@ -596,6 +596,22 @@ show. The seven shipped scenarios were retitled to match.
 **D-88 · 2026-11-21 · Geoff.** Artifact templates leave the Library. They are
 managed in the Hangar, and the agent finds them when asked.
 
+**D-170 · 2026-11-23 · Geoff asked, Claude chose.** The Library's top half
+shows a workflow the way the Hangar shows it. Each card draws the workflow's
+main view from its scenario's sample data (the first work product that is a
+view, preferring a part of the arc that has a scenario), labelled "You get",
+with its steps as the Hangar's chevrons, its stage tag (Discover, Shape,
+Requirements, Engage, Deliver) and who it can call in. Only arcs get a card,
+as D-153 says; Review and Decide demos still show below. The lower half becomes
+one board, a row per demo (story, workflow, cast, turns and minutes, Fly),
+with Fly plain until a row is hovered. A person keeps one author colour across
+the Library, and labels are sentence case with no shadows. Refines D-83 to
+D-85: steps get a picture after all, now that the Hangar draws views. *Geoff
+(2026-11-23): the top half "predates our entire walk through concept and the
+entire hangar — so it needs to be reconciled with the hangar", and it may
+appear in an explainer video. A board of rows lines up for any number of
+demos, where a three-wide grid of seven left one orphan card.*
+
 **D-112 · 2026-11-21 · Geoff asked, Claude chose.** A workflow's widgets and
 views are shown and edited in the Hangar. The workflow page splits them into
 "Widgets · in the chat" and "Views · in the canvas"; a view's page and the
