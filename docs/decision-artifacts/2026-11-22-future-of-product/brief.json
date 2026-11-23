@@ -105,11 +105,11 @@
       "reason": "Tagging keeps what is built and makes the loop visible where it matters, without rebuilding routing while both sides are still changing."
     },
     {
-      "id": "next",
+      "id": "next-v2",
       "label": "FP-2",
       "question": "After what's already in progress, where should the next building effort go?",
       "context": [
-        "None of the built arcs is done. Problem discovery, intent shaping, the solution design arc and Decide keep being refined as they're used, and PR 54 is still building the solution design arc. This question only asks what to add or change next, on top of that refinement."
+        "**Your question was: are the other arcs done? No.** Problem discovery, intent shaping, the solution design arc and Decide all keep being refined as they're used, and PR 54 is still building the solution design arc. This question only asks where the next new effort goes, on top of that refinement. Three of the four options below change arcs that already exist; only the Prototype move is new."
       ],
       "know": [
         "The first option changes arcs that already exist and adds no new arc: intent shaping gets two fields, Review gets a Challenge option, and the intent template splits in two.",
