@@ -10,7 +10,7 @@
     "Both sides now use three artifact names and avoid \"spec\" and \"PRD\": the **statement of intent** (the person's short account of the change, outcome, risk and what would prove it wrong), the **solution design** (drafted by agents and settled by people: how it fits the platforms, its dependencies and the alternatives) and the **decision record**."
   ],
   "how_to_answer": "Pick an option on each decision, or Something else, and add a note if you like. Picks save to this page as you go. Send answers to Claude when you're done.",
-  "recommendation": "Keep Flight Deck's arcs, tag each with the moves it serves, and rename our tier called \"move\", since you use that word for the loop. Build first the things that help today and also lead toward the loop: statement-of-intent fields (risk accepted, what would prove it wrong) and a Challenge option that argues the other side. Rename the \"PRD to dependencies\" arc after what it produces, the solution design, and split the template so the statement of intent stays short. Turn the rewards story into an invented-company scenario whose moves become the first quality evals, and keep the original local.",
+  "recommendation": "Keep Flight Deck's arcs, tag each with the moves it serves, and rename our tier called \"move\", since you use that word for the loop. While the built arcs keep being refined, put the next effort into sharpening them rather than adding new ones: statement-of-intent fields (risk accepted, what would prove it wrong), a Challenge option on Review that argues the other side, and a template split. Rename the \"PRD to dependencies\" arc after what it produces, the solution design, and split the template so the statement of intent stays short. Turn the rewards story into an invented-company scenario whose moves become the first quality evals, and keep the original local.",
   "read": [
     {
       "label": "The Future of Product Work (review doc)",
@@ -107,41 +107,47 @@
     {
       "id": "next",
       "label": "FP-2",
-      "question": "Which should Flight Deck build first, useful today and a step toward the loop?",
+      "question": "After what's already in progress, where should the next building effort go?",
       "context": [
-        "These are the gaps a person's workspace could close. Platform work is left out."
+        "None of the built arcs is done. Problem discovery, intent shaping, the solution design arc and Decide keep being refined as they're used, and PR 54 is still building the solution design arc. This question only asks what to add or change next, on top of that refinement."
       ],
       "know": [
-        "Hypothesis fields are a template and checklist change. Challenge can start as an option on the Review move.",
-        "The Prototype move is already designed (PR 54): one contract, routed by channel, a default prototyper that takes design-system packs, and platform teams can ship their own. It's the largest to build."
+        "The first option changes arcs that already exist and adds no new arc: intent shaping gets two fields, Review gets a Challenge option, and the intent template splits in two.",
+        "The Prototype move is designed in PR 54 (one contract, routed by channel, a default prototyper that takes design-system packs). It's the only new piece here, and the largest."
       ],
-      "stage_title": "The gaps, by size",
+      "stage_title": "What each option changes",
       "stage": {
-        "html": "<table class=\"grid\"><tr><th>Gap</th><th>Moves</th><th>Size</th></tr><tr><td>Hypothesis fields: risk accepted, what would prove it wrong</td><td>hypothesize, learn</td><td>Small</td></tr><tr><td>Challenge: argue the other side, ask for separating evidence</td><td>challenge</td><td>Medium</td></tr><tr><td>Standing discovery on a schedule</td><td>sense</td><td>Medium</td></tr><tr><td>Prototype move and default prototyper (designed)</td><td>prototype</td><td>Large</td></tr></table>",
-        "caption": "What a harness could close"
+        "html": "<table class=\"grid\"><tr><th>Option</th><th>Changes</th><th>New arc?</th><th>Size</th></tr><tr><td>Sharpen the existing arcs</td><td>Intent shaping: risk accepted, what would prove it wrong. Review: a Challenge option. Template split into statement of intent and solution design</td><td class=\"no\">No</td><td>About three PRs</td></tr><tr><td>Measure first</td><td>Quality evals for the built arcs (the suite from FP-3)</td><td class=\"no\">No</td><td>One or two PRs</td></tr><tr><td>Standing discovery</td><td>Problem discovery runs on a schedule over a folder of signals</td><td class=\"no\">No</td><td>One or two PRs</td></tr><tr><td>Prototype move</td><td>The move and default prototyper from PR 54</td><td class=\"yes\">Yes</td><td>Several PRs</td></tr></table>",
+        "caption": "Three of the four refine what exists"
       },
       "options": [
         {
-          "id": "bet",
-          "label": "Hypothesis fields and Challenge",
+          "id": "sharpen",
+          "label": "Sharpen the existing arcs",
           "recommended": true,
-          "cost": "About two PRs",
-          "consequence": "Shaping produces a falsifiable bet, and any hypothesis can be attacked on purpose: the strongest case for each rival explanation, the evidence that would separate them, and a check for bias in that evidence (in the rewards story, whether only engaged customers find a hidden feature). That is more than a second opinion on a document. Prototyping waits."
+          "cost": "About three PRs",
+          "consequence": "Intent shaping draws out the risk accepted and what would prove it wrong; Review can argue the other side of a hypothesis (the strongest case for each rival explanation, the evidence that would separate them, a bias check); the template splits so the statement of intent stays short. All useful today, and each is a step toward the loop. Prototyping waits."
         },
         {
-          "id": "proto",
-          "label": "Prototype move first",
-          "cost": "Several PRs",
-          "consequence": "The most visible demo of truth 5, testing and describing converging. Bigger, and the bet it prototypes still has no falsifier."
+          "id": "measure",
+          "label": "Measure the built arcs first",
+          "cost": "One or two PRs",
+          "consequence": "Build the quality evals from FP-3 before changing anything, so every later change is measured. Nothing a person sees improves until after."
         },
         {
           "id": "sense",
-          "label": "Standing discovery first",
+          "label": "Standing discovery",
           "cost": "One or two PRs",
-          "consequence": "Problems surface unasked, which truth 1 leans on. It's mostly a future capability, and a demo would have to invent the signals to watch."
+          "consequence": "Problem discovery raises problems and opportunities unasked. It leans toward the future loop, and a demo has to invent the signals to watch."
+        },
+        {
+          "id": "proto",
+          "label": "Build the Prototype move",
+          "cost": "Several PRs",
+          "consequence": "The one new piece: the most visible demo of testing and describing converging. Bigger, and the hypothesis it prototypes still has no 'what would prove it wrong'."
         }
       ],
-      "reason": "Both help a product person today, since a sharper bet and a deliberate counter-argument are useful in any team. Both also build the human-judgment moves the loop puts first, and they make the evals in FP-3 possible."
+      "reason": "It improves what people already use, adds no new arc, and gives the evals from FP-3 something to measure."
     },
     {
       "id": "scenario",
