@@ -307,23 +307,45 @@ def copy_workspace(source: Path, dest: Path) -> Path:
     return dest
 
 
-def add_fixtures(ws: Path, fixtures: dict[str, str] | None) -> list[str]:
-    """Copy a task's fixtures into its trial workspace; both paths are relative to it.
+FIXTURES_DIR = Path(__file__).resolve().parent / "routing" / "fixtures"
+_OWN_FIXTURES = "evals/routing/fixtures/"
 
-    A source is read from the trial's own copy, so it must be configuration
-    that copy_workspace keeps (a scenario's fixtures, say). A destination may
-    not leave the workspace.
+
+def fixture_source(workspace: Path, src_rel: str) -> Path:
+    """Where a fixture comes from: the suite's own ``evals/routing/fixtures/``
+    (material no scenario has, such as raw interviews), or the workspace."""
+    if src_rel.startswith(_OWN_FIXTURES):
+        src = (FIXTURES_DIR / src_rel[len(_OWN_FIXTURES):]).resolve()
+        if FIXTURES_DIR.resolve() not in src.parents:
+            raise ValueError(f"fixture {src_rel}: stays inside {_OWN_FIXTURES}")
+        return src
+    src = (workspace / src_rel).resolve()
+    if workspace.resolve() not in src.parents:
+        raise ValueError(f"fixture {src_rel}: paths stay inside the workspace")
+    return src
+
+
+def add_fixtures(ws: Path, fixtures: dict[str, str] | None) -> list[str]:
+    """Copy a task's fixtures into its trial workspace.
+
+    A destination is relative to the workspace and may not leave it. A source
+    is read from the trial's own copy (configuration copy_workspace keeps,
+    such as a scenario's fixtures) or from the suite's own fixtures folder.
+    A source that is a folder is copied whole.
     """
     placed = []
     root = ws.resolve()
     for dest_rel, src_rel in (fixtures or {}).items():
-        src, dest = (ws / src_rel).resolve(), (ws / dest_rel).resolve()
-        if root not in src.parents or root not in dest.parents:
+        src, dest = fixture_source(ws, src_rel), (ws / dest_rel).resolve()
+        if root not in dest.parents:
             raise ValueError(f"fixture {dest_rel}: paths stay inside the workspace")
-        if not src.is_file():
+        if not src.exists():
             raise ValueError(f"fixture {dest_rel}: {src_rel} is not in the workspace")
         dest.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(src, dest)
+        if src.is_dir():
+            shutil.copytree(src, dest, dirs_exist_ok=True)
+        else:
+            shutil.copyfile(src, dest)
         placed.append(dest_rel)
     return placed
 
@@ -530,7 +552,7 @@ def run_suite(tasks: list[dict[str, Any]], driver: Any, out: Path, trials: int, 
     out.mkdir(parents=True, exist_ok=True)
     source = driver.source_workspace()
     missing = [f"{t['id']}: {src}" for t in tasks for src in (t.get("fixtures") or {}).values()
-               if not (source / src).is_file()]
+               if not fixture_source(source, src).exists()]
     if missing:
         raise ValueError("fixtures not in the workspace: " + "; ".join(missing))
     run_tag = out.name.replace("-", "")

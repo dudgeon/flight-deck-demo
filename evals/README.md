@@ -23,8 +23,10 @@ python3 evals/routing_suite.py pairs evals/runs/<a> evals/runs/<b>
   work, cross-workflow offers, and two lifecycle prompts that wait for the
   lifecycle skill. A new workflow brings its own tasks. `fixtures` in
   `tasks.json` gives a task, by id, files copied into its trial workspace
-  first (destination: source, both inside the workspace), so an offer task
-  has what its workflow needs. Each task's split
+  first (destination: source), so an offer task has what its workflow needs.
+  A source is a file or folder in the workspace (a scenario's fixtures) or,
+  for material no scenario has, in `routing/fixtures/` (the twelve invented
+  interviews). Each task's split
   (tuning 60%, held out 40%) is fixed by its id.
 - **A trial.** A fresh copy of the Workspace project's folder (configuration,
   no data, runs or drafts), a new session in that project on the model under

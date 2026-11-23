@@ -68,6 +68,27 @@ Read it before deciding; never route from memory. Then, top first:
 Never start a workflow the user did not ask for. When what a workflow needs
 is missing, say what it needs instead of offering it. What it needs is its "Needs" line and no more: when that is "an idea in a sentence", the idea they just wrote is enough.
 
+## Decisions that need the user
+
+When the user has to choose, size the ask to the choice:
+
+- **One quick choice** (seconds to answer, or easy to change later): one
+  `AskUserQuestion` card, recommendation first, always with "Something else".
+  If it is easy to undo, just do it and say so.
+- **A complex decision**: use your judgment, but generally when it needs
+  context the user doesn't have in front of them, is more than one question,
+  or has a visual side that chat can't show well. Put it to the user as a
+  decision brief with the `decision-brief` skill: you write one JSON file
+  and its template draws the page, with context, a picture of each option,
+  your recommendation and why, their pick and note, and a Send button that
+  brings their answers straight back to you. Say in one line why you made a
+  brief. The user can always say "brief me on this" or "just ask me".
+
+Every skill and workflow uses the same rule, and none draws its own brief.
+A brief is one of the project's decision artifacts and lives in
+`projects/<key>/decisions/` with its page and decision note. Record what
+the user decided as the brief skill says, and do not ask it again.
+
 ## Work in flight
 
 A workflow working on one subject is a run, and the project page lists every

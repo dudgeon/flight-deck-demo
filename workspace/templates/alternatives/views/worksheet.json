@@ -1,0 +1,189 @@
+{
+ "view": "alternatives-worksheet",
+ "layout": "worksheet",
+ "eyebrow": "Alternatives worksheet",
+ "title": "{dataset.title}",
+ "subtitle": "Try an option in each choice and watch the totals move. Effort is our own work; waiting is time on other teams, and the longest wait sets the date. Choose when you are ready; every option turned down keeps its reason.",
+ "records": {
+  "type": [
+   "choice",
+   "option"
+  ]
+ },
+ "statuses": {
+  "open": {
+   "label": "Open",
+   "tone": "attn"
+  },
+  "chosen": {
+   "label": "Chosen",
+   "tone": "ok"
+  },
+  "proposed": {
+   "label": "Proposed",
+   "tone": "info"
+  },
+  "rejected": {
+   "label": "Turned down",
+   "tone": "idle"
+  }
+ },
+ "worksheet": {
+  "group": "choice",
+  "item": "option",
+  "kind": "kind",
+  "gives": "scope",
+  "relies": "relies_on",
+  "readouts": [
+   {
+    "field": "effort",
+    "label": "Our effort",
+    "short": "Effort",
+    "unit": "pw"
+   },
+   {
+    "field": "waiting",
+    "label": "Longest wait",
+    "short": "Waiting",
+    "unit": "wk",
+    "agg": "max"
+   }
+  ]
+ },
+ "details": {
+  "choice": {
+   "title": "{title}",
+   "sections": [
+    {
+     "kind": "fields",
+     "fields": [
+      {
+       "field": "about"
+      },
+      {
+       "field": "decision",
+       "label": "Recorded as"
+      }
+     ]
+    },
+    {
+     "kind": "children",
+     "as": "options",
+     "records": {
+      "type": "option"
+     },
+     "fields": [
+      {
+       "field": "kind",
+       "as": "chip"
+      },
+      {
+       "field": "scope"
+      },
+      {
+       "field": "effort",
+       "label": "Effort (pw)"
+      },
+      {
+       "field": "waiting",
+       "label": "Waiting (wk)"
+      }
+     ],
+     "pick": {
+      "field": "selected_option"
+     }
+    }
+   ]
+  },
+  "option": {
+   "title": "{title}",
+   "sections": [
+    {
+     "kind": "callout",
+     "field": "reason",
+     "label": "Why",
+     "tone": "you"
+    },
+    {
+     "kind": "fields",
+     "fields": [
+      {
+       "field": "kind"
+      },
+      {
+       "field": "effort",
+       "label": "Effort (person-weeks)"
+      },
+      {
+       "field": "waiting",
+       "label": "Waiting (weeks)"
+      },
+      {
+       "field": "status",
+       "as": "status"
+      }
+     ]
+    },
+    {
+     "kind": "text",
+     "field": "scope",
+     "label": "Scope"
+    },
+    {
+     "kind": "list",
+     "field": "relies_on",
+     "label": "Relies on"
+    },
+    {
+     "kind": "list",
+     "field": "risks",
+     "label": "Risks"
+    }
+   ]
+  }
+ },
+ "actions": [
+  {
+   "id": "choose",
+   "label": "Choose this",
+   "tone": "primary",
+   "when": {
+    "type": "option",
+    "status": "proposed"
+   },
+   "ask": {
+    "label": "Why this one?",
+    "field": "reason"
+   },
+   "set": {
+    "status": "chosen"
+   },
+   "prompt": "I choose option {id} ({title}) because: {note}. Record it as a decision and turn the others down with their reasons."
+  },
+  {
+   "id": "reject",
+   "label": "Turn down",
+   "when": {
+    "type": "option",
+    "status": "proposed"
+   },
+   "ask": {
+    "label": "Why not?",
+    "field": "reason"
+   },
+   "set": {
+    "status": "rejected"
+   },
+   "prompt": "Turn down option {id} ({title}). Reason: {note}"
+  },
+  {
+   "id": "more",
+   "label": "Find another option",
+   "when": {
+    "type": "choice",
+    "status": "open"
+   },
+   "prompt": "Find another option for {id} ({title}): "
+  }
+ ]
+}

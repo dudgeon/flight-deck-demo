@@ -30,6 +30,7 @@ in the same pull request.
 | [Dock launcher](#dock-launcher) | Done |
 | [Branding](#branding) | Done; repository renamed (D-114) |
 | [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | D-89 to D-99 and D-116 to D-119 decided; runs and In flight built (PR 24) |
+| [Decision briefs](#decision-briefs) | Built (D-159 to D-163); Send button reaches the agent from the brief |
 | [Aviator coordination and skill routing](#aviator-coordination-and-skill-routing) | Routing, director rules, director memory and the routing suite built (D-120, D-128 to D-137, D-143 to D-145); baseline run, strictness on the strip and lifecycle skill next |
 
 ---
@@ -322,6 +323,30 @@ a project means something (a goal to ship) and knows its relatives.
 
 ---
 
+## Decision briefs
+
+One skill and template for every complex decision put to a person, so every
+brief looks and works the same and costs only its content.
+
+- **Done.** `skills/decision-brief`: the template, `brief.py`
+  (new, check, render, answer, import, record, note), the visual components,
+  a worked example, and the routing rule in the workspace's `CLAUDE.md`, the
+  director skill and decision review (D-159). Geoff answered the first brief
+  (https://claude.ai/artifact/CNNpJFboRrwDAsYsBvundE): one page (D-160), a
+  Send button in the brief that reaches the agent directly, through
+  `omnigent.answer` in the app and a comment to Claude on claude.ai (D-161),
+  briefs kept in the project's `decisions/` folder (D-162), and a
+  judgment-based rule for when to make one (D-163).
+- **Next.** Fly a brief in the app on the Mac mini (the Send path through
+  `omnigent.answer` is unit-tested and checked with a stub, not yet flown).
+  Routing-suite tasks for "brief or card". The lifecycle work's Decide move
+  and Choose step call it. Make the next walkthrough with it.
+- **Later.** Narration as another view of the same brief (D-160).
+- **Read.** [features.md](features.md#decision-briefs),
+  `skills/decision-brief/SKILL.md`.
+
+---
+
 ## Initiatives, artifacts and templates
 
 One data model for what an initiative is, what it has produced and what
@@ -337,9 +362,8 @@ every hero skill can read and extend it.
   template per work product, use the registers); write the lifecycle skill
   (D-129) on top of it; show the registry and registers on the project page;
   a Templates shelf in the Hangar.
-- **Open.** IN-1 (is an initiative the same as a goal project) and IN-3 (the
-  shared representation of intent), with Geoff. The stage list may change
-  with the lifecycle research.
+- **Open.** Nothing. IN-1 and IN-3 were settled as changeable build choices
+  (D-155, D-156).
 - **Read.** [initiatives-and-templates.md](initiatives-and-templates.md).
 
 ---
@@ -412,18 +436,30 @@ and worksheet templates each needs.
   checkpoints and free movement between components and phases; stages
   Discover, Shape, Specify, Engage, Deliver; the shared registers; the
   shared widgets and the alternatives worksheet first, using the decision
-  brief skill. Nothing built yet; the template redesign stays parked.
+  brief skill. The template redesign stays parked.
 - **Decided.** D-153: an optional `tier` field in `workflow.json`.
-- **Open.** HS-7 and HS-8 (taxonomy), put to Geoff one at a time.
+- **Settled without asking.** HS-7 (the add-a-skill rule is advice, never a gate) and HS-8 (launch goes in Deliver when a demo needs it): Claude's calls, easy to change.
 - **Taxonomy.** [skill-taxonomy.md](skill-taxonomy.md): four tiers
   (companion, arc, move, kit), a card per skill, how work moves through the
   initiative registers, coverage of the ten PM jobs, and a four-question rule
   for adding a hero skill.
-- **Next, if accepted.** Merge the two requirement workflows (old ids kept),
-  `checkpoints` in `workflow.json` and `pa check`, a stage list on routing,
-  Learn in `lifecycle.json`, Review and Decide as launchers on every
-  artifact, the shared widgets in the view kit. The registers' shape comes
-  from the template and initiative data model work.
+- **Built.** The PRD to dependencies arc with Specify, Map and Choose
+  (`skills/prd-to-dependencies/`; the two older workflows are its parts,
+  old ids kept); `tier`, `parts`, `part_of` and `checkpoints` in
+  `workflow.json`, shown by `pa workflows` and noted by `pa check`; Review
+  and Decide marked as moves; delivery status titled Deliver. Stages and the
+  alternatives and onboarding templates came in PR 52.
+- **Built.** The alternatives worksheet (`worksheet` layout in the view kit,
+  the alternatives template's default view): try options, watch the totals move.
+- **Proposed.** Prototyping across channels (Geoff, 2026-11-22): a
+  Prototype move with one contract, prototypers as kit skills that declare
+  their channels, and a default enterprise prototyper that takes
+  design-system packs; channel teams extend the default or ship their own.
+  See section 6 of [skill-taxonomy.md](skill-taxonomy.md). Not built.
+- **Next.** A phase lane on the worksheet; the five
+  shared widgets in the view kit; Review and Decide as launchers on every
+  artifact (they still have Library cards); the Engage owners arc on the
+  onboarding-track template; Deliver's wider parts.
 - **Read.** [lifecycle-research.md](lifecycle-research.md); walkthrough at
   https://claude.ai/artifact/P3hZWy2Ht6es1KCxMDLTEv (offline copy in
   `docs/decision-artifacts/2026-11-21-hero-skills-and-lifecycle/`).

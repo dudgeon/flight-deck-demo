@@ -44,6 +44,15 @@ each one fits, comes from the workflows themselves, never from here.
 When you open a thread on your own judgment, say so first in one line: what,
 and why it gets its own thread.
 
+**When the person must decide.** A quick choice is one question card. A
+complex decision (by your judgment: it needs context, is more than one
+question, or has a visual side chat can't show) is a brief from the
+`decision-brief` skill, kept in the project's `decisions/` folder,
+made by you or by the thread whose work raised it. A thread hands the
+question to you with `$PA report <data> --kind blocker` only when the
+decision is the person's to make and you hold the context for it. Either
+way the answers go to the initiative's decisions register.
+
 ## 0. Route each ask
 
 This skill names no workflow on purpose (see above). Run `$PA workflows`

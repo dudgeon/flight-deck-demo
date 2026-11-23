@@ -211,6 +211,57 @@ versions will let others see the artifacts without needing access to my
 Claude account." A skill, rather than a one-off, because walkthroughs keep
 being made and the docs pass needs repeating.*
 
+**D-159 · 2026-11-22 · Geoff asked, Claude chose.** Every complex decision
+put to a person, by any agent, skill or persona in Flight Deck and by
+contributors asking Geoff, is a decision brief made with one bundled skill,
+`decision-brief`. The agent writes only the brief's content as a JSON file;
+a fixed template (`skills/decision-brief/template/brief.html`) draws the
+page, with the context, a visual stage that redraws for the option being
+looked at, options with what each gives up, one recommendation and its
+reason, "Something else" on every decision, a note box and saved answers.
+The same page saves answers to the page on claude.ai, puts them in the chat
+box in Flight Deck (the person presses Send) and offers Copy anywhere else.
+`brief.py` checks the rules (never blind, exactly one recommendation, no
+colors or network loads), imports answers, locks them, writes each to the
+initiative's decisions register and writes a decision note linking the
+research and the archived copy. Other skills point to the skill instead of
+drawing their own. Its first brief puts the open details (layout, how
+answers come back at work, where the record goes, when to make a brief:
+DB-1 to DB-4) to Geoff, and it is built to its recommendations meanwhile.
+*Geoff: "a consistent layout/experience we can iterate on, and without
+wasting tokens reinventing the wheel." The 22 archived walkthroughs each
+rebuilt the same parts with their own styles and saved answers in two
+different shapes; duo-v2's best page held its decisions as data.*
+
+**D-160 · 2026-11-22 · Geoff.** A brief is one scrolling page with the
+briefing and picture beside "Your call", stacked on a phone (DB-1). A
+narrated version (a voice and an animated stage) may come later as another
+way to view the same brief, but it is not part of the core. *Geoff: "We may
+later add the narrations; they're useful but not a core feature set."*
+
+**D-161 · 2026-11-22 · Geoff.** Answers leave from a Send button in the
+brief itself and reach the agent directly (DB-2, refines D-159): in Flight
+Deck through a new bridge call, `omnigent.answer`, whose message the app
+writes from checked ids with each note quoted as the person's words; on
+claude.ai as a comment sent to Claude, with picks still saved to the page as
+they are made. The composer remains the fallback on older builds. *Geoff
+picked the direct send as a hybrid: "send button in the brief; keeps user
+focused in the brief (no toggling back to chat)."*
+
+**D-162 · 2026-11-22 · Geoff.** Briefs live exclusively within their project:
+`projects/<key>/decisions/` holds each brief's data, page and decision note
+together (DB-3). The decision also gets one line in the project's decisions
+register, which is in the same project, so other skills don't ask again.
+*Geoff: "briefs are just a decision artifact, so put them in the project
+decisions folder." The register line is Claude's reading; it stays inside
+the project.*
+
+**D-163 · 2026-11-22 · Geoff.** When to make a brief is the agent's
+judgment: generally when the decision requires context, is more than one
+question, and/or has a visual side that isn't well suited to chat (DB-4,
+replacing the proposed fixed rule). A single quick choice stays a question
+card. *Geoff's own wording; a fixed rubric would misfire.*
+
 ## Name and design language
 
 **D-35 · 2026-11-21 · Geoff.** The fork of the Omnigent meta-harness is named
@@ -987,9 +1038,9 @@ away from changing, so nothing is locked in.*
 Spec: [initiatives-and-templates.md](initiatives-and-templates.md). Geoff
 asked on 2026-11-21 for a template data model and an initiative registry with
 ids that tie artifacts back to a shared representation of the intent, run by
-the project setup skill and extended by the hero skills. Two questions (IN-1,
-IN-3) are with him; these are the choices made while building, following the
-recommended answer to each.
+the project setup skill and extended by the hero skills. The two questions this raised (IN-1, IN-3)
+were settled as build choices, D-155 and D-156; these are the choices made
+while building.
 
 **D-138 · 2026-11-21 · Claude.** An initiative is identified by `id`, `ini_`
 followed by a bare 32-character UUID, and `key`, the slug its card file is
@@ -1040,6 +1091,22 @@ superseded, never edited, and `pa set` refuses to edit one. *Skills from
 different authors, including ones built in the Hangar, extend one shared
 model; without a contract the first two to touch the same initiative would
 overwrite each other.*
+
+
+**D-155 · 2026-11-22 · Claude.** An initiative is a project with a goal: one
+record, the card that `pa project` writes, with no separate layer above it.
+Settles IN-1 without asking. Easy to change: if one initiative ever has to
+span several projects, add a `parent` key to the card. *Geoff asked not to be
+asked low-stakes questions (2026-11-22); this reuses D-97 and adds nothing
+for a PM to learn.*
+
+**D-156 · 2026-11-22 · Claude.** The shared representation of an
+initiative's intent is its intent document (judgment, sections owned by
+stages) plus four registers (evidence, open questions, decisions, ready
+checks). Settles IN-3 without asking. Easy to change: both are templates,
+so their sections or record types can change without touching a command.
+*It is what the lifecycle research found missing (evidence still attached
+from research to intent), and Geoff asked for loose calls over questions.*
 
 ## Hero skills and the lifecycle
 

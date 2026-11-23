@@ -21,7 +21,8 @@ import pa  # noqa: E402
 from omnigent.server.routes.slim_director import create_slim_director_router, read_notes  # noqa: E402
 
 SHIPPED = ["decision-review", "delivery-status", "document-review", "intent-shaping",
-           "prd-to-requirements", "problem-discovery", "requirements-to-dependencies"]
+           "prd-to-dependencies", "prd-to-requirements", "problem-discovery",
+           "requirements-to-dependencies"]
 
 
 # ------------------------------------------------------------------ routing
@@ -51,6 +52,32 @@ def test_the_director_skill_names_no_workflow() -> None:
         assert wid not in text, wid
         title = json.loads((ROOT / "skills" / wid / "workflow.json").read_text())["title"]
         assert title not in text, title
+
+
+def test_tier_parts_and_checkpoints_are_loose_notes() -> None:
+    # D-148, D-149, D-153: a missing tier means arc; odd values are notes, never problems.
+    assert pa.workflow_tier({}) == "arc"
+    assert pa.workflow_tier({"tier": "move"}) == "move"
+    assert pa.workflow_tier({"tier": "wizard"}) == "arc"
+    known = {"prd-to-requirements"}
+    notes = " | ".join(pa.workflow_notes(
+        {"tier": "wizard", "checkpoints": "always", "parts": [{"title": "Map", "workflow": "nope"}], "part_of": "gone"},
+        "w.json", known))
+    for words in ("not one of", "checkpoints should be", "'nope'", "part_of names 'gone'"):
+        assert words in notes
+    assert pa.workflow_notes({"tier": "arc", "checkpoints": ["x"], "parts": [{"title": "A"}]}, "w.json", known) == []
+
+
+def test_prd_to_dependencies_is_one_arc_with_three_parts() -> None:
+    catalog = {w["id"]: w for w in pa.workflow_catalog(ROOT / "workspace")}
+    arc = catalog["prd-to-dependencies"]
+    assert arc["tier"] == "arc" and [p["id"] for p in arc["parts"]] == ["specify", "map", "choose"]
+    assert arc["checkpoints"]
+    for part in ("prd-to-requirements", "requirements-to-dependencies"):
+        assert catalog[part]["part_of"] == "prd-to-dependencies"
+    assert catalog["decision-review"]["tier"] == "move" and catalog["document-review"]["tier"] == "move"
+    library = json.loads((ROOT / "skills" / "prd-to-requirements" / "workflow.json").read_text())["library"]
+    assert library["show"] is False  # the arc's card replaces it; it still runs when named
 
 
 def test_routing_problems_catch_what_would_make_a_workflow_unroutable() -> None:

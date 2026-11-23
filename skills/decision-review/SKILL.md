@@ -77,6 +77,13 @@ skill) and ask for the options and their recommendation. Set
 
 Order matters. Put first whatever blocks other people, then by impact.
 
+A decision that cannot be made in seconds from its card (it needs context,
+is several linked questions, or has a visual side) goes to a brief instead:
+prepare it with the `decision-brief` skill, set the record's
+`status=needs-you` with `question` naming the brief's file, and
+copy the pick back into the record (`choice`, `note`, `status=reviewed`,
+`locked=true`) once the person answers there.
+
 ## 3. Walk the user through them
 
 Say how many are ready and which to start with. The user decides in the
