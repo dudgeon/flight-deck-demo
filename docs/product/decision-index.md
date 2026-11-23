@@ -244,6 +244,9 @@ Spec: [lifecycle-research.md](lifecycle-research.md),
 | D-151 | Evidence, open questions, decisions and ready checks live on the initiative, shared | Geoff | Registers built (`pa register`); no hero skill uses them yet |
 | D-152 | First: the five shared widgets and the alternatives worksheet, using the decision brief skill | Geoff | Decided, not built |
 | D-153 | Optional `tier` field (companion, arc, move, kit) in `workflow.json`; missing means arc; unknown values warn, never fail | Geoff | Decided, not built |
+| D-164 | Keep the arcs, tag each with the loop's moves; rename the "move" tier | Geoff | Pending (PR 58); not built |
+| D-165 | Rewards scenario at an invented company; its moves become the first quality evals | Geoff | Pending (PR 58); not built |
+| D-166 | "PRD to dependencies" becomes "Solution design", Specify becomes Requirements; no "spec" or "PRD" | Geoff | Pending (PR 58); not built |
 
 ## Usage logging
 

@@ -1228,6 +1228,33 @@ the terms are defined somewhere; but don't make things brittle with over
 typing". Without the field the app guesses, and a move built in the Hangar
 would show as a Library card.*
 
+**D-164 · 2026-11-22 · Geoff.** Flight Deck keeps its arcs, and each arc is
+tagged with the moves of the future product loop it serves (sense,
+investigate, hypothesize, prototype, challenge, decide, design, build,
+verify, release, learn; defined in the future-of-product research, mapped in
+[docs/vision/mapping.md](../vision/mapping.md)). Flight Deck's tier called
+"move" (Review, Decide) is renamed, because Geoff uses "moves" for the loop.
+Answers FP-1. *It keeps what is built and makes the loop visible, without
+rebuilding routing while both sides are still changing; moves map
+many-to-many onto arcs.*
+
+**D-165 · 2026-11-22 · Geoff.** The research's rewards scenario becomes a
+Flight Deck scenario set at an invented company, keeping its moves and
+dropping anything specific to the original setting; the original stays local
+to the research project. Each move in it becomes a task in Flight Deck's
+first skill-quality eval suite. Answers FP-3. *One story tests both sides,
+and Flight Deck gets its first measure of whether a skill does its move
+well, beyond routing.*
+
+**D-166 · 2026-11-22 · Geoff.** The arc called "PRD to dependencies" is
+renamed "Solution design", and its Specify step becomes "Requirements"
+(Map and Choose keep their names). Flight Deck and the research use three
+artifact names: statement of intent, solution design and decision record,
+never "spec" or "PRD". Answers FP-4. *Geoff asked that neither side use
+"spec" or "PRD", since people pour their own meaning into them; the arc
+produces a solution design, and renaming now costs least while PR 54 is
+open.*
+
 ## Backfilled
 
 Decisions Geoff made on 20 and 21 November that were acted on but never
