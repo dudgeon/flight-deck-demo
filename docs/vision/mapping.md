@@ -1,8 +1,10 @@
 # Flight Deck today, and the step it takes toward the future loop
 
-Mapped against product-agent-and-harness's working tree of 2026-11-22
-(commit `15c00d8` plus uncommitted changes: truths in `04-truths.md`, the
-moves in `07-product-system.md`, artifacts and assets in `08-assets.md`).
+Mapped against product-agent-and-harness at commit `a35cf31` (2026-11-22).
+The one-file version is
+`tasks/research-future-of-product/the-future-of-product-work.md`; the parts
+are `04-truths.md`, `07-product-system.md` (moves, artifacts, tensions) and
+`08-assets.md`.
 Flight Deck as of `main` at `ecb6813`, with open PRs 53 (decision brief) and
 54 (the arc called "PRD to dependencies", and the prototyping approach in the
 taxonomy's section 6). Second pass, by Claude; not reviewed by Geoff.
@@ -32,7 +34,7 @@ read their own meaning into.
 | Artifact | What it holds | What produces it in Flight Deck |
 |---|---|---|
 | **Statement of intent** | Written by the person: what will change, the outcome, the risk accepted, what would prove it wrong, the trade-offs | Intent shaping, into the `initiative-intent` template's Goal, Problem, Customer, Outcome and Scope sections. There is no field for the risk accepted or what would prove it wrong (**next**) |
-| **Solution design** | Drafted by agents, settled by people: how the change fits existing platforms, connections, dependencies, alternatives considered, trade-offs decided | The "PRD to dependencies" arc: Specify (requirements traced to lines), Map (dependencies) and Choose (alternatives with what each gives up). The template's Approach, Dependencies and Delivery sections hold it. Today it's one document with the statement of intent (**next**: split it) |
+| **Solution design** | Drafted by agents, settled by people: how the change fits existing platforms, connections, dependencies, alternatives considered, trade-offs decided | The arc being renamed "Solution design" (D-166; today "PRD to dependencies"): Specify, to become Requirements, (requirements traced to lines), Map (dependencies) and Choose (alternatives with what each gives up). The template's Approach, Dependencies and Delivery sections hold it. Today it's one document with the statement of intent (**next**: split it) |
 | **Decision record** | What was chosen or stopped, and why, linked to evidence | The Decisions register (supersede, never edit), `decision-review` and `decision-brief` (**today**) |
 
 Seen this way, the earlier "tension" with truth 7 dissolves. Specify adds
@@ -67,11 +69,11 @@ Most truths describe outcomes, so the note says where Flight Deck helps now.
 | 4. accountability attaches to outcomes | The Decisions register | platform |
 | 5. testing an idea converges with describing it | The Prototype move (designed) | next |
 | 6. several answers explored in parallel | Choose: up to four alternatives beside a baseline | today, for solution designs |
-| 7. the statement of intent shrinks | A short intent template; Specify works on the solution design | today; split the two, next |
+| 7. the statement of intent shrinks; solution design and dependencies are increasingly automated | A short intent template; the Solution design arc (D-166) drafts requirements, maps dependencies and lays out alternatives for the person to settle | today; split the two, next |
 | 8. validation in loops of rising realism | | platform |
 | 9. insight from the highest-signal method | Problem discovery takes any source, traced back | today |
 | 10. agents do the fetch-and-carry | Delivery status; the dependency catalog ("can we already do this?") | today |
-| 11. a steward agent per platform, journey and process | Engage owners (planned) is the person's side of it | later; the steward is platform |
+| 11. a steward agent per platform, journey and process; more platform changes come from the feature teams that need them | Engage owners (planned) is the person's side: its self-serve and agent modes are how a feature team sends a well-shaped request or pull request to a platform, with the owner's approval where needed | later; the steward is platform |
 | 12. production stays linked to intent | Initiative registers and stamped artifacts, up to hand-off | today |
 | 13 to 15. ambition rises; capacity funds bigger bets | Outcomes, not skills; the usage log could measure time saved | n/a |
 
