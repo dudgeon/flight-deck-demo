@@ -211,6 +211,57 @@ versions will let others see the artifacts without needing access to my
 Claude account." A skill, rather than a one-off, because walkthroughs keep
 being made and the docs pass needs repeating.*
 
+**D-159 · 2026-11-22 · Geoff asked, Claude chose.** Every complex decision
+put to a person, by any agent, skill or persona in Flight Deck and by
+contributors asking Geoff, is a decision brief made with one bundled skill,
+`decision-brief`. The agent writes only the brief's content as a JSON file;
+a fixed template (`skills/decision-brief/template/brief.html`) draws the
+page, with the context, a visual stage that redraws for the option being
+looked at, options with what each gives up, one recommendation and its
+reason, "Something else" on every decision, a note box and saved answers.
+The same page saves answers to the page on claude.ai, puts them in the chat
+box in Flight Deck (the person presses Send) and offers Copy anywhere else.
+`brief.py` checks the rules (never blind, exactly one recommendation, no
+colors or network loads), imports answers, locks them, writes each to the
+initiative's decisions register and writes a decision note linking the
+research and the archived copy. Other skills point to the skill instead of
+drawing their own. Its first brief puts the open details (layout, how
+answers come back at work, where the record goes, when to make a brief:
+DB-1 to DB-4) to Geoff, and it is built to its recommendations meanwhile.
+*Geoff: "a consistent layout/experience we can iterate on, and without
+wasting tokens reinventing the wheel." The 22 archived walkthroughs each
+rebuilt the same parts with their own styles and saved answers in two
+different shapes; duo-v2's best page held its decisions as data.*
+
+**D-160 · 2026-11-22 · Geoff.** A brief is one scrolling page with the
+briefing and picture beside "Your call", stacked on a phone (DB-1). A
+narrated version (a voice and an animated stage) may come later as another
+way to view the same brief, but it is not part of the core. *Geoff: "We may
+later add the narrations; they're useful but not a core feature set."*
+
+**D-161 · 2026-11-22 · Geoff.** Answers leave from a Send button in the
+brief itself and reach the agent directly (DB-2, refines D-159): in Flight
+Deck through a new bridge call, `omnigent.answer`, whose message the app
+writes from checked ids with each note quoted as the person's words; on
+claude.ai as a comment sent to Claude, with picks still saved to the page as
+they are made. The composer remains the fallback on older builds. *Geoff
+picked the direct send as a hybrid: "send button in the brief; keeps user
+focused in the brief (no toggling back to chat)."*
+
+**D-162 · 2026-11-22 · Geoff.** Briefs live exclusively within their project:
+`projects/<key>/decisions/` holds each brief's data, page and decision note
+together (DB-3). The decision also gets one line in the project's decisions
+register, which is in the same project, so other skills don't ask again.
+*Geoff: "briefs are just a decision artifact, so put them in the project
+decisions folder." The register line is Claude's reading; it stays inside
+the project.*
+
+**D-163 · 2026-11-22 · Geoff.** When to make a brief is the agent's
+judgment: generally when the decision requires context, is more than one
+question, and/or has a visual side that isn't well suited to chat (DB-4,
+replacing the proposed fixed rule). A single quick choice stays a question
+card. *Geoff's own wording; a fixed rubric would misfire.*
+
 ## Name and design language
 
 **D-35 · 2026-11-21 · Geoff.** The fork of the Omnigent meta-harness is named
@@ -872,6 +923,34 @@ key stays in the run folder. *D-133 asks Geoff to rank ten blind pairs per
 round; the page names neither run, works offline, and his answers can be
 checked against the judge.*
 
+**D-146 · 2026-11-22 · Claude.** The ladder (D-128) gains a rung and two
+limits, from the first baseline (35 of 42 on Sonnet). "Asked for": when the
+person tells Aviator to do the work one workflow does, on material they point
+to ("find the problems worth solving in these notes"), that is asking to run
+it, so it starts, and Aviator says which workflow it started. A clear-fit
+offer is for a situation described or a question asked. Open work ("what else
+could we do") and questions about one paragraph get no offer in that reply.
+The routing suite can give a task fixture files, so an offer task has what its
+workflow needs. *The baseline started too rarely on plain requests (an
+imperative is consent, and an offer then is a wasted turn) and offered on
+open asks 3 of 3 times; two offer tasks failed only because the empty trial
+workspace lacked the workflow's material, which is Aviator behaving
+correctly.*
+
+**D-147 · 2026-11-22 · Claude.** Second tuning round, from tune1 (5 of 7
+fixed; two open tasks and two offers still failing). A question card counts
+as an offer only when one of its answers starts something ("Start it",
+"Run", "Yes") or names a workflow; any other card is a clarifying question,
+and the judge reads its words with the reply. `report --regrade` grades saved
+trials again with the current grader. What a workflow needs is its `Needs`
+line and no more, so an idea in a sentence is enough for intent shaping,
+whose `When` now covers "is this a real thing?". The delivery-status offer
+task gets its scenario's milestone plan. *On the Mac mini every failing open
+trial was Aviator asking "which calls?" or "which paragraph?" on a card,
+which is the right behaviour graded wrong; the offer regressions were
+Aviator demanding evidence for an idea, and saying what a date check needs
+when the trial had no plan.*
+
 ## Usage logging
 
 Spec: [usage-logging.md](usage-logging.md). Open questions UL-1 to UL-3 are
@@ -941,14 +1020,27 @@ internet at runtime (CLAUDE.md); a file a person moves is the only way out
 that keeps that true, and an exporter interface fixed now means the server
 can come later without changing the log.*
 
+**D-157 · 2026-11-21 · Geoff.** Usage logs stay out of the repo's git
+history for now ("not yet"). Each machine keeps its own `logs/usage/`
+(gitignored), and a pack is carried by hand when wanted. Answers UL-1. *Git
+history is permanent; there is no need yet to put test logs in it.*
+
+**D-158 · 2026-11-22 · Claude.** UL-2 and UL-3 are settled loosely, without
+asking, and either can change whenever it matters. Packs keep names as
+written by default; `pa usage pack --fingerprint` is there for a pack that
+leaves the work Mac. The numbers are read with `pa usage summary` for now;
+a Usage page in the Hangar gets built only when someone wants it. *Geoff
+asked not to be held up by low-stakes choices. Both are one flag or one page
+away from changing, so nothing is locked in.*
+
 ## Initiatives, artifacts and templates
 
 Spec: [initiatives-and-templates.md](initiatives-and-templates.md). Geoff
 asked on 2026-11-21 for a template data model and an initiative registry with
 ids that tie artifacts back to a shared representation of the intent, run by
-the project setup skill and extended by the hero skills. Two questions (IN-1,
-IN-3) are with him; these are the choices made while building, following the
-recommended answer to each.
+the project setup skill and extended by the hero skills. The two questions this raised (IN-1, IN-3)
+were settled as build choices, D-155 and D-156; these are the choices made
+while building.
 
 **D-138 · 2026-11-21 · Claude.** An initiative is identified by `id`, `ini_`
 followed by a bare 32-character UUID, and `key`, the slug its card file is
@@ -1000,6 +1092,92 @@ different authors, including ones built in the Hangar, extend one shared
 model; without a contract the first two to touch the same initiative would
 overwrite each other.*
 
+
+**D-155 · 2026-11-22 · Claude.** An initiative is a project with a goal: one
+record, the card that `pa project` writes, with no separate layer above it.
+Settles IN-1 without asking. Easy to change: if one initiative ever has to
+span several projects, add a `parent` key to the card. *Geoff asked not to be
+asked low-stakes questions (2026-11-22); this reuses D-97 and adds nothing
+for a PM to learn.*
+
+**D-156 · 2026-11-22 · Claude.** The shared representation of an
+initiative's intent is its intent document (judgment, sections owned by
+stages) plus four registers (evidence, open questions, decisions, ready
+checks). Settles IN-3 without asking. Easy to change: both are templates,
+so their sections or record types can change without touching a command.
+*It is what the lifecycle research found missing (evidence still attached
+from research to intent), and Geoff asked for loose calls over questions.*
+
+## Hero skills and the lifecycle
+
+Spec: [lifecycle-research.md](lifecycle-research.md) and
+[skill-taxonomy.md](skill-taxonomy.md). Geoff answered HS-1 to HS-5 on the
+walkthrough on 22 November (archived in
+[decision-artifacts](../decision-artifacts/2026-11-21-hero-skills-and-lifecycle/)).
+
+**D-148 · 2026-11-22 · Geoff.** The hero-skill set is five arcs, two moves
+and one companion. Arcs: problem discovery, intent shaping, PRD to
+dependencies, Engage owners and Deliver. Moves, offered on any artifact:
+Review and Decide. Companion: the feature lifecycle skill (D-129). PRD to
+dependencies is the multi-stage arc: Specify (the catalog), Map (the board)
+and Choose (analysis of alternatives with scope and delivery levers, then a
+phased roadmap), and the person moves between them freely. The delivery arc
+is called **Deliver**, not delivery status: status updates are one part of
+it, with the rest of delivery work beside them. Engage owners runs each
+chosen team's onboarding, with the agent's reach set per step by who answers
+(self-serve, another agent, a person). *It splits skills by the person's goal
+and by the agent's stance, the two lines the research supports, and merges
+only steps that share both; Geoff: "PRD to dependencies will be complex and
+multi stage, including the analysis of alternatives", and delivery is more
+than statusing.*
+
+**D-149 · 2026-11-22 · Geoff.** Each skill has a suggested path plus a few
+checkpoints that always hold, never a fixed sequence. Completing every
+component matters more than the order: the person can flip between a
+skill's components, leave and come back, work on another lifecycle phase in
+between, and run the same initiative through every phase again in repeated
+loops. *Fix the ritual, free the content; Geoff: "completion of all
+components matters more to me than enforcing a sequence".*
+
+**D-150 · 2026-11-22 · Geoff asked, Claude chose.** Discover and Learn are
+one stage, Discover: post-launch feedback is a source for problem discovery,
+not a stage of its own. The stage list aligns with the arcs of D-148, one tag
+per arc: Discover, Shape, Specify, Engage, Deliver. Specify covers PRD to
+dependencies' three parts (Specify, Map, Choose); Decide leaves the list and
+becomes a move. Stages stay tags, never gates (D-141), and Deliver loops back
+to Discover. Refines the stage list in `lifecycle.json`. *Geoff: "Discover and
+learn should be the same thing ... the answer here needs to align to the
+answer to decision 1". The one job Learn named, checking shipped outcomes
+against the intent's success measures, is kept as a post-launch focus of
+problem discovery so it is not lost.*
+
+**D-151 · 2026-11-22 · Geoff.** Evidence, open questions, decisions and
+ready checks live on the initiative, shared by every skill: the four
+registers built as `pa register` (D-141, D-142). Skill datasets keep their
+own records and link to these by id. *One place for the why: a decision made
+while shaping must be visible to the dependency board.*
+
+**D-152 · 2026-11-22 · Geoff.** The first widgets and templates to build are
+the five shared ones (evidence chip, open-question card, decision record,
+ready checklist, initiative header) and the analysis-of-alternatives
+worksheet, then the per-skill additions. The Decide move and the worksheet's
+commit step use the reusable decision brief skill being built in its own
+thread, so every complex decision has one layout. The template redesign
+stays parked; this sets the order, not the look. *They show the shared
+registers every skill uses, and Geoff finds the alternatives worksheet the
+most interesting piece; one brief layout avoids each skill reinventing it.*
+
+**D-153 · 2026-11-22 · Geoff.** A workflow may say what kind of skill it is
+with one optional `tier` field in `workflow.json`: companion, arc, move or
+kit, as defined in [skill-taxonomy.md](skill-taxonomy.md). The app reads it
+to place the skill (arcs in the Library, moves as launchers on artifacts,
+companion and kit out of sight). It is kept loose: a workflow without it
+counts as an arc, an unknown value is a warning in `pa check`, never a
+failure, and nothing else is typed by it. Answers HS-6. *Geoff: "as long as
+the terms are defined somewhere; but don't make things brittle with over
+typing". Without the field the app guesses, and a move built in the Hangar
+would show as a Library card.*
+
 ## Backfilled
 
 Decisions Geoff made on 20 and 21 November that were acted on but never
@@ -1047,8 +1225,6 @@ canvas reload work; reviewed and locked are the person's judgment.*
 
 ## Open
 
-- Usage logging (UL-1 to UL-3 in [usage-logging.md](usage-logging.md)):
-  committing logs, what a work Mac pack holds, where the numbers are seen.
 - Progressive complexity (from D-54): how a workflow shows less at first and
   more on demand, to the person and to the agent. Not designed yet.
 - The intent graph's level of detail is deliberately held (D-98).

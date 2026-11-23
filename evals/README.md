@@ -21,7 +21,12 @@ python3 evals/routing_suite.py pairs evals/runs/<a> evals/runs/<b>
 - **Tasks.** Every workflow's `routing.examples` (start, offer, open), plus
   `routing/tasks.json`: near misses across workflows, quick answers, open
   work, cross-workflow offers, and two lifecycle prompts that wait for the
-  lifecycle skill. A new workflow brings its own tasks. Each task's split
+  lifecycle skill. A new workflow brings its own tasks. `fixtures` in
+  `tasks.json` gives a task, by id, files copied into its trial workspace
+  first (destination: source), so an offer task has what its workflow needs.
+  A source is a file or folder in the workspace (a scenario's fixtures) or,
+  for material no scenario has, in `routing/fixtures/` (the twelve invented
+  interviews). Each task's split
   (tuning 60%, held out 40%) is fixed by its id.
 - **A trial.** A fresh copy of the Workspace project's folder (configuration,
   no data, runs or drafts), a new session in that project on the model under
@@ -33,6 +38,10 @@ python3 evals/routing_suite.py pairs evals/runs/<a> evals/runs/<b>
   question card. Only when these are silent does the judge (Claude Code on
   Haiku, `--judge-model`; `--no-judge` for code only) read the reply, to tell
   an offer in words from open work or an answer.
+- **Question cards.** A card is an offer only when an answer on it starts
+  something ("Start it", "Run", "Yes") or names a workflow. A clarifying card
+  ("Which paragraph?") goes to the judge with its words added to the reply.
+  `report <run> --regrade` grades a saved run again with the current grader.
 - **Passing.** start: the named workflow started. offer: offered, nothing
   started. open and answer: nothing started, nothing offered. A task passes
   on 2 of 3 trials (`--trials`).

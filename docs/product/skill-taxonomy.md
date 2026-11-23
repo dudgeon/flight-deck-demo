@@ -1,0 +1,337 @@
+# The skill taxonomy
+
+Date: 2026-11-22. Filed by Claude (thread "Research the product lifecycle and
+AI help"). Status: **proposal, not decided.** It builds on the recommendation
+in [lifecycle-research.md](lifecycle-research.md) (HS-1, decided as D-148) and on the
+initiative model that is already built ([initiatives-and-templates.md](initiatives-and-templates.md),
+D-138 to D-142). Geoff (2026-11-22): the skill template redesign is paused
+and the overall skill taxonomy goes on. So this note leaves out widgets and
+templates (HS-5). It covers which skills exist, what each one is for, how
+they hand work to each other, and the rule that stops the set from growing
+into many small subskills.
+
+## 1. Four tiers
+
+Every skill in `skills/` and `workspace/.claude/skills/` belongs to one tier.
+The tier decides how the skill is shown and how Aviator offers it. A workflow says its tier with one optional line in
+`workflow.json`, for example `"tier": "move"` (D-153). Leaving it out means
+arc, and an unknown value is only a warning: the field places a skill, it
+does not type anything else.
+
+| Tier | What it is | Shown | How it starts | Today |
+|---|---|---|---|---|
+| **Companion** | Holds the initiative: finds or creates it, links it, says where it stands and offers the next arc | Not in the Library (D-129) | "I'm working on a new feature", or opening an initiative | the lifecycle skill (D-129, not built) |
+| **Arc** | Something a person sets out to do, from material to a result | In the Library as a hero skill | Named, offered once on a clear fit (D-128, D-146), or from the companion | problem discovery, intent shaping, PRD to dependencies, engage owners, delivery status |
+| **Move** | Something done to an artifact at any point, in any arc | As a launcher on an artifact and an offer in the chat, not as a stage | From an artifact, or offered when an arc reaches one of its moments | review, decide |
+| **Kit** | Tools that the other tiers and the Hangar use | Never | Called by other skills | view-kit, participants, document-collaboration, scenario-builder, build-person, product-aviator-design, frontend-design, director, omnigent-operator |
+
+A person meets at most seven names: the five arcs and, when they open an
+artifact, the two moves on it. The companion and the kit skills work out of
+sight.
+
+## 2. The eight skills, and one proposed move
+
+Each card gives the skill's job, its stance (produce, enforce or up-level,
+from the rigidity research), the stages it tags, where it can be entered,
+what it reads from and writes to the initiative registers (D-142), and its
+checkpoints (HS-2).
+
+### Feature lifecycle (companion)
+
+- **Job:** keep one initiative whole while work moves between arcs and
+  people. It finds or creates the initiative, links related ones, shows the
+  stage tags and what is open, and offers the next arc in one line.
+- **Stance:** orient and offer. It never does an arc's work itself.
+- **Reads:** the whole initiative: stage state (derived, D-141), the Ready
+  checks, open blocking questions.
+- **Writes:** the initiative record and its links. The registers are only
+  written by the skills that own the work.
+- **Next-arc rule:** offer the arc whose Ready checks fail first, in lifecycle
+  order. If a blocking question is open, offer Decide (or Engage owners, when
+  the question is an owner's) before any other arc. Offer once (D-128). When the person declines, it stays quiet until
+  something changes.
+
+### Problem discovery (arc)
+
+- **Job:** turn raw material (interviews, tickets, feedback, notes,
+  post-launch metrics) into problems worth solving, each with its evidence.
+- **Stance:** produce, with checked quotes. The person chooses.
+- **Stages:** Discover, including post-launch learning (D-150).
+- **Enter with:** any pile of sources, or a question ("what's going on with
+  onboarding?").
+- **Writes:** Evidence (sources, checked quotes), Open (problems not yet
+  chosen), Decisions (which problem is worth solving, and why).
+- **Hands to:** intent shaping, through the chosen problem and its evidence.
+- **Checkpoints:** every problem cites a source; every quote is checked
+  against its source; the person chooses.
+
+### Intent shaping (arc)
+
+- **Job:** take an idea from a sentence to something a team could commit to,
+  by questioning the person rather than writing for them.
+- **Stance:** up-level. One question at a time, with the agent's guess, and
+  it never fills in the person's answer.
+- **Stages:** Shape.
+- **Enter with:** a sentence, a chosen problem, or a brief to strengthen.
+- **Writes:** Open (gaps, each with an owner), Decisions (scope in and out),
+  Ready (the depth checks from the intent framework); it owns the intent
+  document's problem, customer, outcome and scope sections (D-142).
+- **Hands to:** PRD to dependencies, through the intent document and its
+  Ready checks.
+- **Checkpoints:** never writes the person's answer; every gap has an owner
+  or is marked open; the person says when the target depth is reached.
+
+### PRD to dependencies (arc)
+
+- **Job:** turn intent or an existing PRD into requirements, find what each
+  one depends on, and choose how to satisfy them, with a phased roadmap.
+- **Stance:** produce, then enforce the trace; the person chooses.
+- **Stages:** Specify (its parts are Specify, Map, Choose; Choose is a step of this arc, not a
+  stage). The person can move between the three at any time (Geoff,
+  2026-11-22).
+- **Enter with:** an intent document (starts at Specify), a PRD (Specify), a
+  requirements list (Map), or a board with options (Choose).
+- **Writes:** Evidence (each requirement traced to a line; each option's
+  evidence), Open ("could not find" dependencies), Decisions (each chosen
+  option; a rejected option keeps its reason), Ready (the hand-off checks);
+  it owns the intent document's approach and dependencies sections.
+- **Hands to:** engage owners, through each chosen option that needs an
+  owner; delivery status, through the roadmap.
+- **Choose follows Pathfinder:** four kinds of alternative (capability swap
+  including build, scope trade, resequence, presets), at most four beside
+  the baseline, each saying what you give up; effort and waiting as separate
+  numbers; every number labelled with its source.
+- **Checkpoints:** every requirement traces to a line; every dependency has
+  evidence or is listed "could not find"; every option shows its cost in
+  time, scope and risk; the person chooses.
+
+### Engage owners (arc)
+
+- **Job:** get each chosen platform, process or capability in place, by
+  running its owner's onboarding procedure: intake, access, due diligence
+  and gates, terms, provisioning, integration ready. Onboarding at a large
+  enterprise runs for weeks across several teams, so this is an arc, not a
+  move (it passes question 4 of the rule in section 5; Pathfinder also puts
+  it downstream "with their own skills").
+- **Stages:** Engage (D-150).
+- **Enter with:** the chosen options from PRD to dependencies, or one
+  capability the person names ("get us onto the notifications platform").
+- **Stance:** set by the counterparty. *Self-serve:* the agent acts after one
+  yes from the person (off on the offline work Mac). *Agent:* the agent
+  exchanges with the owner's agent, and a person approves anything that
+  commits. *Person:* the agent drafts the smallest question riding a real
+  ask, a person sends it, and the agent tracks the wait.
+  Each step of a procedure can have a different counterparty, so the kind is
+  set per step, not per capability.
+- **Grows by maturity (from Geoff's dependency research):** crawl, the agent
+  drafts asks and pre-fills intake forms from the spec and a person sends;
+  walk, it submits where an owner's intake accepts agent requests, on behalf
+  of a named person; run, routine requests are approved by policy and
+  exceptions go to people. Gate evidence packs are pre-filled from the
+  first stage and never submitted without a person.
+- **Writes:** Evidence (answers and gate evidence, with their source, written
+  back as context so no owner is asked twice), Open (steps waiting, with
+  their owner and lead time), Decisions (terms accepted, due-diligence
+  findings accepted).
+- **Hands to:** delivery status, through each capability's ready date; back
+  to Choose when an owner's answer changes an option's cost or date.
+- **Checkpoints:** nothing binding is sent, submitted or signed without a
+  person's yes; every step names its owner and its evidence; an answer once
+  given is never asked again.
+
+### Deliver (arc)
+
+- **Job:** check a plan against what is happening, project the date when
+  something moves, find ways to recover, and write the update for whoever
+  needs it.
+- **Stance:** produce.
+- **Stages:** Deliver.
+- **Enter with:** a roadmap from PRD to dependencies, or any plan or list of
+  milestones.
+- **Writes:** Evidence (what each owner said), Decisions (a recovery chosen),
+  Open (dates at risk); it owns the intent document's delivery section.
+- **Hands to:** problem discovery (post-launch) after launch; to choose, when a
+  recovery needs a new option.
+- **Checkpoints:** every date change names its cause and source; the update
+  says what it asks of the reader.
+
+### Review (move)
+
+- **Job:** get second opinions on any artifact from agents and people, and
+  gather every finding in one list.
+- **Stance:** enforce.
+- **Offered:** on any artifact (a problem brief, an intent brief, a PRD, a
+  board, a status update), and at the end of any arc.
+- **Writes:** findings (its own records), and Decisions (the author's call on
+  each finding).
+- **Checkpoints:** every finding points to a line and names who raised it;
+  the author decides each finding.
+
+### Decide (move)
+
+- **Job:** settle what is open, one question at a time, and record the
+  reason.
+- **Stance:** present the smallest question; the person decides.
+- **Offered:** on any open question, from any skill, and by the companion
+  when a blocking question holds up an arc.
+- **Writes:** Decisions, which supersede and never edit (D-142).
+- **Checkpoints:** the person decides; every decision has a reason.
+
+### Prototype (move, proposed 2026-11-22)
+
+- **Job:** turn whatever is open (an intent, a set of requirements, a chosen
+  option) into something people can click or read through, in the look of
+  the channel it will ship in.
+- **Stance:** produce; the person judges.
+- **Offered:** on intent briefs, catalogs and chosen alternatives, at any
+  fidelity: a rough sketch while shaping, a faithful screen flow once the
+  requirements are settled.
+- **Does not draw anything itself.** It finds the prototyper for the
+  channel (web, app, branch, contact centre, email and so on) and hands the
+  work over. See section 6.
+- **Writes:** the prototype as an artifact stamped to the initiative, and
+  Evidence when people react to it.
+- **Checkpoints:** the prototype says which channel, design system and
+  version it used; every screen traces to a requirement or is marked as
+  exploration; nothing loads from the network.
+
+## 3. How work moves
+
+The registers on the initiative carry the work, not the skills. An arc never
+calls another arc. It finishes or pauses, and leaves the initiative in a state
+that the companion reads.
+
+```
+                 ┌──────────── companion: feature lifecycle ────────────┐
+                 │  reads stage state, Ready, Open; offers the next arc │
+                 └──────────────────────────────────────────────────────┘
+ sources ─▶ Problem discovery ─▶ Intent shaping ─▶ PRD to dependencies ─▶ Engage owners ─▶ Deliver
+   ▲          (Discover)          (Shape)       (Specify ⇄ Map ⇄ Choose)   (onboarding)      (Deliver)
+   └──────────────────────────── after launch: feedback and metrics ─────────────────────────────┘
+
+ Moves on any artifact:  Review · Decide
+ Shared on the initiative: Evidence · Open · Decisions · Ready
+```
+
+Work may go backwards at any time: a requirement reworded in Choose
+reopens a scope decision from shaping; a slipped date in delivery reopens
+Choose. Going back is an ordinary entry into the earlier arc, not a failure.
+
+## 4. Coverage against the ten PM jobs
+
+The jobs come from Geoff's jobs-to-be-done map (J1 to J10). The set covers the
+jobs where agents have the best evidence, and it deliberately leaves the
+choosing jobs with the person, with the agent preparing.
+
+| Job | Covered by | Note |
+|---|---|---|
+| J1 Customer contact and research synthesis | Problem discovery | Interviewing stays with the person; synthesis with checked quotes is the agent's |
+| J2 Opportunity, strategy, vision | Not an arc; Decide on the choices | Lowest agent suitability in the evidence; problem discovery prepares, the person chooses |
+| J3 Shape the solution | Intent shaping, Prototype | Up-level stance; prototypes make the shape visible |
+| J4 Write, review, ratify the spec | PRD to dependencies (Specify), Review | Ratifying stays with the person; the shaper never ratifies |
+| J5 Prioritise and roadmap | PRD to dependencies (Choose) | Agent prepares options and levers, person decides |
+| J6 Manage delivery | Deliver, Engage owners | Onboarding with other teams is where enterprise delivery time goes (Pathfinder's cause codes: access, waiting, gates) |
+| J7 Launch and go-to-market | Gap | A candidate next arc; held until a demo needs it |
+| J8 Stakeholder and exec comms | Deliver (the update), Review | An audience choice on the update, not a skill of its own |
+| J9 Metrics and experiments | Problem discovery (post-launch) | Metrics readouts come in as sources |
+| J10 Post-launch feedback triage | Problem discovery (post-launch) | The job with the best evidence that agents help |
+
+## 5. The rule for adding a skill
+
+This rule keeps the set small. Before anyone adds a hero skill, in the repo or
+in the Hangar, the proposal answers four questions in order. The first "yes"
+decides where the work goes.
+
+1. **Is it something done to an artifact at any stage?** Then it is a move,
+   or an option on an existing move.
+2. **Does it share an existing arc's stance and hand straight into or out of
+   it?** Then it is a step or half of that arc (as the catalog and Choose
+   are for PRD to dependencies).
+3. **Is it the same job on different sources or for a different audience?**
+   Then it is a focus or input option on the existing arc (as post-launch learning is for
+   problem discovery, and the audience switch is for the status update).
+4. **Is it a different goal for the person, with a different stance?** Only
+   then is it a new arc, and it says which stages it tags and which register
+   entries it writes.
+
+The rule is guidance for whoever adds a skill, not a gate: a Hangar workflow
+can always be built, flown and listed (HS-7, Claude's call).
+
+## 6. Prototyping across channels and platforms
+
+Geoff, 2026-11-22: prototyping needs an enterprise approach. It could be one
+modular enterprise skill that channel teams extend with their own design
+systems, or prototypers owned by the platform teams, with Aviator knowing
+which one to use for which channel. Both are worked through here, with a
+recommendation that needs no choice yet.
+
+**Option A: one enterprise prototyper, extended per channel.** A single
+skill owns the method (how to read an intent, how to choose fidelity, how to
+lay out a flow, how to stamp the result). Each channel team adds a *design
+system pack*: its tokens, components and patterns, in a folder the skill
+reads. One way of prototyping across the company; packs are small to write.
+But one team owns the method for every channel, so a channel whose
+prototypes work differently (a voice flow, a branch screen, a printed
+letter) has to bend to it, and the owning team becomes a queue.
+
+**Option B: prototypers owned by platform teams, Aviator routes.** Each
+platform team ships its own prototyper skill, built however suits its
+channel, and registers which channels it covers. Aviator picks the one that
+matches. Each channel gets the best prototype its owners can make and keeps
+it current with their system. But there is no shared floor: quality and
+outputs vary, a channel without a prototyper has nothing, and every team
+rebuilds the common parts.
+
+**Recommended: one contract, owned either way.** Both options need the same
+three things, so Flight Deck defines those and lets ownership vary by
+channel:
+
+1. **The Prototype move** (above) is the only thing a person or an arc
+   calls. It defines what goes in (the initiative, what to prototype,
+   the channel, the fidelity) and what comes out (one self-contained,
+   stamped artifact that names its channel, design system and version).
+2. **A prototyper is a kit skill that declares what it covers**, for
+   example `"prototyper": {"channels": ["web", "app"], "design_system":
+   "retail-web", "owner": "Digital platform"}` in its `workflow.json`.
+   Aviator routes by channel to the declared prototyper, the same way it
+   routes to workflows today (D-120): adding one never means editing
+   Aviator.
+3. **A default enterprise prototyper ships with Flight Deck**, built on our
+   own tokens, and takes design-system packs. It covers any channel nobody
+   has claimed.
+
+A channel team then chooses for itself: add a pack to the default (option
+A) or publish its own prototyper (option B). Both meet the same contract,
+so the person sees the same move and the same kind of artifact whichever
+team owns the channel. Nothing about this needs a decision now; when the
+first real channel team arrives, it picks its route.
+
+What stays the same everywhere: prototypes are single self-contained HTML
+files with nothing loaded from the network (design systems are vendored into
+the pack or the prototyper), they are stamped to the initiative (D-140), and
+reactions to them go to the Evidence register.
+
+## 7. What this changes, if accepted
+
+- `workflow.json` gains `tier` (companion, arc, move, kit). The Library shows
+  arcs. Moves are offered through `launchers` on every artifact kind. `pa
+  workflows` and the routing ladder read the tier, so a move is never
+  offered as a starting point for open work.
+- `routing.stage` becomes a list (the model already allows stage lists,
+  D-141). `lifecycle.json` loses Decide and Map, and gains Engage (D-150).
+- The routing eval suite (D-133, D-143) gets one case per tier boundary:
+  "review this PRD" starts Review, not PRD to dependencies; "what should we
+  build next?" gets no arc offer; "I'm working on a new feature" goes to the
+  companion.
+- The `scenario-builder` and Hangar new-workflow flow ask the rule's four
+  questions before making a new hero skill.
+
+## 8. Open questions
+
+HS-1 is decided (D-148). These are next, asked one at a time.
+
+| Label | Question | Recommendation |
+|---|---|---|
+| HS-6 | Should "tier" be a field in the workflow manifest, read by routing and the Library? | **Decided, D-153:** yes, one optional field; missing means arc; unknown values warn, never fail |
+| HS-7 | Should the four-question rule gate new hero skills in the Hangar? | **Claude's call (2026-11-22):** advice only. The Hangar may suggest where a new skill fits; nothing is blocked or hidden. Revisit only if the Library fills with near-duplicates |
+| HS-8 | Launch and go-to-market (J7): a fifth arc now, or held? | **Claude's call (2026-11-22):** when a demo needs it, launch work goes in Deliver as one of its parts (D-148 widened Deliver); nothing built before then |

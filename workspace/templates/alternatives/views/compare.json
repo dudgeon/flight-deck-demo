@@ -1,0 +1,46 @@
+{
+ "view": "alternatives",
+ "layout": "tree-table",
+ "eyebrow": "Alternatives",
+ "title": "{dataset.title}",
+ "subtitle": "Each choice with its options. Effort is our work; waiting is time on others. Pick one, and say why the others were turned down.",
+ "records": { "type": ["choice", "option"] },
+ "summary": { "count_by": "status", "records": { "type": "option" } },
+ "statuses": {
+  "open": { "label": "Open", "tone": "attn" },
+  "chosen": { "label": "Chosen", "tone": "ok" },
+  "proposed": { "label": "Proposed", "tone": "info" },
+  "rejected": { "label": "Turned down", "tone": "idle" }
+ },
+ "columns": [
+  { "field": "title", "label": "Choice and options" },
+  { "field": "kind", "as": "chip", "only": "option" },
+  { "field": "effort", "label": "Effort (pw)", "only": "option" },
+  { "field": "waiting", "label": "Waiting (wk)", "only": "option" },
+  { "field": "status", "as": "status" }
+ ],
+ "details": {
+  "choice": {
+   "title": "{title}",
+   "sections": [
+    { "kind": "fields", "fields": [ { "field": "about" }, { "field": "decision", "label": "Recorded as" } ] },
+    { "kind": "children", "as": "options", "records": { "type": "option" }, "fields": [ { "field": "kind", "as": "chip" }, { "field": "scope" }, { "field": "effort", "label": "Effort (pw)" }, { "field": "waiting", "label": "Waiting (wk)" } ], "pick": { "field": "selected_option" } }
+   ]
+  },
+  "option": {
+   "title": "{title}",
+   "sections": [
+    { "kind": "callout", "field": "reason", "label": "Why", "tone": "you" },
+    { "kind": "fields", "fields": [ { "field": "kind" }, { "field": "effort", "label": "Effort (person-weeks)" }, { "field": "waiting", "label": "Waiting (weeks)" }, { "field": "status", "as": "status" } ] },
+    { "kind": "text", "field": "scope", "label": "Scope" },
+    { "kind": "list", "field": "relies_on", "label": "Relies on" },
+    { "kind": "list", "field": "risks", "label": "Risks" }
+   ]
+  }
+ },
+ "actions": [
+  { "id": "choose", "label": "Choose this", "tone": "primary", "when": { "type": "option", "status": "proposed" }, "ask": { "label": "Why this one?", "field": "reason" }, "set": { "status": "chosen" }, "prompt": "I choose option {id} ({title}) because: {note}. Record it as a decision and turn the others down with their reasons." },
+  { "id": "reject", "label": "Turn down", "when": { "type": "option", "status": "proposed" }, "ask": { "label": "Why not?", "field": "reason" }, "set": { "status": "rejected" }, "prompt": "Turn down option {id} ({title}). Reason: {note}" },
+  { "id": "more", "label": "Find another option", "when": { "type": "choice", "status": "open" }, "prompt": "Find another option for {id} ({title}): " }
+ ]
+}

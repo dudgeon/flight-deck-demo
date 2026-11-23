@@ -9,6 +9,7 @@ This script copies them, as CSS variables named --pa-<name>, into:
                                          current tokens to every artifact frame
   skills/view-kit/kit/pa-kit.css         chat widgets and canvas views
   skills/view-kit/kit/harness.html       the scenario preview player
+  skills/decision-brief/template/brief.html  the decision brief page
   workspace/templates/artifacts/*.html   artifact templates
 
 In the last three, only the text between the `pa-tokens:begin` and
@@ -33,6 +34,7 @@ REGION = re.compile(r"/\* pa-tokens:begin[^*]*\*/.*?/\* pa-tokens:end \*/", re.S
 REGION_FILES = [
     ROOT / "skills/view-kit/kit/pa-kit.css",
     ROOT / "skills/view-kit/kit/harness.html",
+    ROOT / "skills/decision-brief/template/brief.html",
 ]
 TEMPLATE_DIR = ROOT / "workspace/templates/artifacts"
 

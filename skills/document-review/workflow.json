@@ -1,6 +1,7 @@
 {
  "workflow": "document-review",
  "title": "Review a document with others",
+ "tier": "move",
  "summary": "Review a document, then call in other agents and people for second opinions. Everyone's comments and findings land in one list, each with who raised it.",
  "library": {
   "show": true,
@@ -72,7 +73,8 @@
   ],
   "not_when": [
    "Listing the requirements in a document",
-   "A quick fix to one sentence"
+   "A quick fix to one sentence",
+   "A question about how one paragraph or passage reads (answer it)"
   ],
   "needs": "The document to review; context/ is checked first",
   "stage": "specify",

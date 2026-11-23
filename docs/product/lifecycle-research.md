@@ -1,0 +1,377 @@
+# The product lifecycle, AI help, and the hero-skill set
+
+Date: 2026-11-21. Filed by Claude (thread "Research the product lifecycle and
+AI help"). Status: **decided 2026-11-22.** Geoff answered HS-1 to HS-5 on the
+walkthrough: D-148 to D-152 (see "Geoff's answers" at the end, and the
+decision note in the archive folder). Where his answers changed the
+recommendation (Deliver as the arc's name, one Discover stage, stages that
+match the arcs), the sections below say so. The walkthrough page that puts them to Geoff
+is archived in [../decision-artifacts/](../decision-artifacts/).
+
+Geoff's brief: refine the hero skills (problem discovery, intent shaping, PRD
+to requirements, requirements to dependencies, decision review, document
+review, delivery status, plus the lifecycle skill of D-129), with the widgets
+and worksheet templates each needs, **without subdividing the process into
+too many subskills and without making it rigid.**
+
+## Where this comes from
+
+1. **Geoff's own research library** on the Mac mini
+   (`claude-home/project-agent-and-harness/`, about 1,500 source notes). The
+   pieces read for this note:
+   - `tasks/research-skill-rigidity-spectrum/` (01 synthesis, 03 design
+     guide): how skills set rigidity, with randomised evidence on stance.
+   - `tasks/research-pm-agents-jobs-to-be-done/00-brief.md` and the jobs map:
+     ten PM jobs, where agents have and have not worked.
+   - `tasks/pdlc-cross-ecosystem-map/`: the lifecycle across nine companies
+     (Stripe, Ramp, Shopify, Anthropic, Atlassian, Intercom, Airbnb, Spotify,
+     Block).
+   - `tasks/define-shaping-and-dependency-agents/00-overview.md`: the two
+     modules (intent shaping, delivery dependency mapping) and the intent
+     lifecycle record.
+   - `tasks/pathfinder-design/pathfinder-component-design.md`: seven typed
+     records with stable keys, files as the truth.
+   - Geoff's two first-party proposals, "Building and accelerating the intent
+     factory" and "Intent shaping in a well-managed environment" (source
+     notes `geoff-building-accelerating-intent-factory`,
+     `geoff-intent-shaping-well-managed-environment`).
+2. **Public lifecycle frameworks**, to check the stage list against practice:
+   the Design Council's Double Diamond
+   (https://www.designcouncil.org.uk/our-resources/framework-for-innovation),
+   dual-track agile (Jeff Patton, https://jpattonassociates.com/dual-track-development/),
+   Teresa Torres's continuous discovery and opportunity solution tree
+   (https://www.producttalk.org/opportunity-solution-tree-origin/),
+   Shape Up (https://basecamp.com/shapeup), Amazon's Working Backwards
+   PR/FAQ (https://www.aboutamazon.com/news/workplace/an-insider-look-at-amazons-culture-and-processes),
+   and spec-driven development (GitHub Spec Kit, Kiro; notes already in
+   Geoff's library).
+
+Evidence labels carry over from the library: nearly everything about PM
+agents is first-party or anecdote. The strongest independent evidence is on
+*stance* (how a skill treats the person's thinking), from education and
+decision-support studies, not product work.
+
+## Seven findings
+
+**1. The jobs are stable; the frameworks agree on a few kinds of thinking,
+not on steps.** Atlassian's CPO: the PM job "is really the same as it always
+was". The jobs map has ten recurring jobs. The public frameworks reduce to the
+same four moves, named differently: understand the problem (Double Diamond's
+Discover and Define; Torres's opportunity space), shape a bet (Shape Up's
+shaping and pitch; Amazon's PR/FAQ; Double Diamond's Develop), commit and
+build (Shape Up's betting table and cycle; delivery), and learn (Torres's
+assumption tests; post-launch triage). Nobody who is doing well runs more
+than four or five named phases.
+
+**2. Stages overlap and loop; they are not a sequence of gates.** Dual-track
+agile runs discovery and delivery *at the same time*, as two kinds of work,
+not two teams. Torres's discovery is weekly and never "done". Geoff's own
+dependency research shows the arrow back: a requirement is reworded once its
+delivery path is known (the "pre-approved" offer example). The cross-ecosystem
+map finds code to review to release documented everywhere and goal to intent
+inferred or unknown in six of nine. So stage is a lens on the work, not a
+place the work is.
+
+**3. Deciding, reviewing and reporting are not stages; they happen at every
+stage.** A decision is needed in discovery (which problem), shaping (what is
+out of scope), specifying (which wording) and delivery (cut scope or slip).
+Review is the same: a problem brief, an intent brief and a PRD all get second
+opinions. The rigidity research names these as "rituals" (silent read,
+alternatives required, pre-mortem, senior speaks last) that are fixed in form
+and open in content, and that apply to any artifact.
+
+**4. A skill is a score, not a dial.** Every real skill file sets its freedom
+per step. Make a step rigid only where a rule must always hold (every claim
+has a source link, the person decides, the definition of ready is checked);
+leave the rest to the model with a stopping condition. "Fix the ritual, free
+the content." This is how a small set of skills can stay flexible: few fixed
+checkpoints, a free path between them. D-130's strictness levels (light
+touch, guide, by the book) already move along this axis.
+
+**5. A skill should do one job: produce, enforce or up-level.** The designs
+are opposite (deliver the answer vs withhold it). Intent shaping is an
+up-level job (ask before drafting, one question at a time with a guess, never
+fill the person's answer). PRD to requirements and dependency mapping are
+produce jobs with an enforce check at the end. Document review is enforce.
+Mixing an up-level step and a produce step in one skill is fine only as
+clearly separate steps. This is the limit on merging: merge skills that share
+a stance, not ones that don't.
+
+**6. AI is best at bounded, reviewable work, and worst at choosing.**
+Strongest evidence: feedback and research synthesis *with quotes checked
+against source* (Torres found about 30% of a model's direct quotes wrong or
+missing), status aggregation and drafting, spec first drafts plus gap review,
+"ask the org" Q&A. Weakest: choosing the opportunity, strategy, trade-offs,
+interviewing. Over-reliance is the default and grows as the agent improves,
+so the person keeps the decision and the agent makes verification cheap
+(show the line and its source).
+
+**7. The seam nobody has solved is research to intent with the evidence still
+attached, across people.** In none of the nine companies is it documented.
+Each closes it by role blur, a shared place, a senior person, or an object
+that carries the *what* without the *why*. This is the strongest argument for
+Flight Deck's initiative record: if every skill writes its evidence, open
+questions and decisions to the same initiative, the *why* travels with the
+work. Geoff's Pathfinder design reaches the same place from the other side
+(typed records with stable keys, files as the truth, views generated over
+them).
+
+## The recommendation
+
+**Five arcs, two moves, one companion.** Eight skills. (Revised twice on
+2026-11-22 after Geoff's atlas comments: PRD to dependencies gained a Choose
+half; Engage, first proposed as a move, became an arc of its own once the
+onboarding procedures it has to run were weighed. See "Engaging owners is an
+arc" below.)
+
+| Kind | Skill | Stages it serves | Stance | Built from |
+|---|---|---|---|---|
+| Companion | **Feature lifecycle** (D-129) | all | Orient and offer | new; owns the initiative record |
+| Arc | **Problem discovery** | Discover (including post-launch learning, D-150) | Produce (synthesis with checked quotes) | `problem-discovery`, plus post-launch feedback as a source |
+| Arc | **Intent shaping** | Shape | Up-level (interrogate, never fill the answer) | `intent-shaping` |
+| Arc | **PRD to dependencies** | Specify (its parts: Specify, Map, Choose) | Produce, with an enforce check; the person chooses | `prd-to-requirements` and `requirements-to-dependencies` as its first two halves, plus a new Choose half (analysis of alternatives and a phased roadmap); enter at any half |
+| Arc | **Engage owners** | Engage | Act within limits set by the counterparty; the person signs anything binding | new; starts from the chosen options |
+| Arc | **Deliver** (was delivery status, D-148) | Deliver | Produce | `delivery-status`, widened: status updates are one part of delivery work |
+| Move | **Review** | any | Enforce | `document-review`, offered on any artifact |
+| Move | **Decide** | any | Present the smallest question; person decides | `decision-review`, offered on any open question |
+
+Why this shape:
+
+- **Arcs are the person's goal, moves are rituals.** An arc is something a
+  person sets out to do ("make sense of these interviews", "get this idea to
+  committable"). A move is something done *to* an artifact at any point
+  ("get second opinions", "settle what's open"). Moves appear as launchers on
+  an artifact and as offers in the director (D-128), not as stages.
+- **One merge, chosen by stance.** PRD to requirements and requirements to
+  dependencies share a stance (produce, then check) and a hand-off (the
+  catalog is the board's input). Geoff's own two-module model treats
+  "validated requirements to delivery map" as one module. Intent shaping
+  stays separate because its stance is the opposite.
+- **The catalog step needs one home, and phases must toggle.** Geoff
+  (comment on the Skills and Templates Atlas, 2026-11-22): the PRD to
+  requirements step "needs a primary home, either intent shaping or prd to
+  dependencies; either can plausibly work, user must be able to toggle
+  between phases anyway". This note recommends PRD to dependencies (it shares
+  that half's produce stance and hands its catalog straight to the board);
+  the home is still his call. Moving between phases (shape, catalog, map)
+  inside one initiative is a requirement whichever home he picks.
+- **Choosing among options is part of mapping, not a separate skill.**
+  Geoff (atlas, 2026-11-22): each dependency "will typically have multiple
+  options to satisfy" it, so an analysis of alternatives and a roadmapping
+  workflow matter, "including both delivery and scope levers". His own
+  research supports one home: Pathfinder keeps a fit record for every
+  requirement and capability pair considered, rejected ones included, and
+  generates the delivery plan as a view over them; and the dependency work
+  shows requirements reworded once their delivery path is known (the
+  "pre-approved" offer), which is a scope lever. So the Choose half reads the
+  board's options, lets the person pull scope levers (reword, defer to a
+  later phase, drop) and delivery levers (another platform, build, a
+  different sequence), and writes a phased roadmap. The agent prepares and
+  compares; the person chooses (finding 6), and each choice is a record in
+  the Decisions register. Delivery status reuses the same alternatives
+  records for its "ways to recover".
+- **How Choose works, from Geoff's Pathfinder design.** Pathfinder already
+  specifies the method, so the Choose half adopts it rather than inventing
+  one: four kinds of alternative (a capability swap, including build; a
+  scope trade, which touches only "should" and "could" requirements unless
+  the person opens a "must"; a resequence, starting long-lead asks first or
+  splitting into phases; and presets: fastest, lowest effort, fewest teams);
+  at most four alternatives beside the baseline, each saying what the person
+  gives up; effort and waiting shown as separate numbers, because a cheap
+  integration can still hold a launch for weeks in a queue; and every
+  number labelled with where it came from (an owner's answer, observed
+  actuals, or the capability card). The atlas sketch adds weights the person
+  sets (speed, fit, risk) and "borrow capacity" as a delivery lever.
+- **Engaging owners is an arc, not a move.** Geoff (atlas, 2026-11-22): some
+  engagements are fully agentic, "like 'just' signing up for a supabase
+  account"; others need "engagement and due diligence with agent or human
+  counterparties, especially in a large, complex enterprise", and he asked
+  that navigating complex onboarding with other teams be weighed. Weighed
+  against the rule for adding a skill (in [skill-taxonomy.md](skill-taxonomy.md)),
+  it fails the first three questions and passes the fourth: it is not done to
+  any artifact at any stage (only to chosen options); it does not share
+  Choose's stance (it acts and negotiates with others, over weeks); and it is
+  a different goal for the person (get the capability in place). Geoff's
+  own designs say the same: Pathfinder puts "engaging capability owners and
+  carrying out onboarding and integration" downstream "with their own
+  skills", and the dependency-agent research names three of its seven
+  values here (V2 intake translation and submission, V4 routing and asking,
+  V5 governance evidence assembly), each with its own crawl, walk and run
+  stage. Small questions during mapping (a fit the card can't settle) stay
+  inside PRD to dependencies as asks; Engage owns the onboarding itself.
+  What it runs for each chosen capability is that owner's procedure:
+  intake, access, due diligence and gates, terms, provisioning, integration
+  ready, with each step's state, owner, lead time and evidence.
+- **The counterparty sets how far the agent may go.** Geoff: some
+  engagements "can be fully agentic, like 'just' signing up for a supabase
+  account, others will require engagement and due diligence with agent or
+  human counterparties". The rigidity research says to key the human gate to
+  the action type, not the agent's confidence. Three kinds: *self-serve*
+  (the agent does it after one confirm, since it is a side effect; at work
+  this stays off while the work Mac is offline), *agent counterparty* (the
+  agent exchanges with the other agent; a person approves anything that
+  commits), *person* (the agent drafts the smallest question riding a real
+  ask, a person sends, the agent tracks the wait and writes the answer back
+  as context). The kind is set per step of an owner's procedure, since one
+  onboarding can mix a self-serve sign-up, an agent-run intake and a
+  person's due-diligence review.
+- **Learn without a new skill.** Post-launch feedback triage is the job with
+  the best evidence that agents help, and it is the same synthesis job as
+  discovery. Problem discovery takes post-launch feedback and metrics notes
+  as sources and tags its output Learn, which loops straight back to
+  Discover.
+- **Flexible by construction.** Any arc can be entered at any point (bring a
+  PRD and start at its catalog half; bring a sentence and start shaping).
+  Stages are tags, steps are suggested, and only a few checkpoints per arc
+  are fixed (below).
+
+Alternatives considered (on the walkthrough with their trade-offs): keep the
+seven as they are and only re-tag stages; three arcs (Understand, Define,
+Deliver), which is fewer but forces an up-level and a produce stance into one
+"Define" skill; and something else.
+
+## Fixed checkpoints, free path (HS-2)
+
+**Decided (D-149):** as recommended, and completing every component matters
+more than the order. The person can flip between components, leave and
+return, work on another phase, and loop the same initiative through every
+phase again.
+
+Today each workflow's `steps` list reads as a fixed sequence. Recommended:
+keep `steps` as the suggested path the agent may skip or reorder, and add a
+short list of **checkpoints** per arc that always hold, whatever the
+strictness level. These are the checkable layer the rigidity research says to
+make deterministic.
+
+| Arc or move | Checkpoints that always hold |
+|---|---|
+| Problem discovery | Every problem cites at least one source; every quote is checked against its source; the person chooses what is worth solving |
+| Intent shaping | The agent never writes the person's answer; every gap has an owner or is marked open; the person sets the target depth and says when it is reached |
+| PRD to dependencies | Every requirement traces to a line in the document; every dependency has evidence or is listed "could not find"; asks are drafted, a person sends |
+| Delivery status | Every date change names its cause and source; the update says what is asked of the reader |
+| Review | Every finding points to a line and names who raised it; the author decides each finding |
+| Decide | The person decides; each decision records its reason and supersedes, never edits, an earlier one |
+| Choose (half of PRD to dependencies) | Every option shows its evidence and what it costs in time, scope and risk; the person chooses; a rejected option keeps its reason |
+| Engage owners | Nothing binding is sent, submitted or signed without a person's yes; every step names its owner, its procedure step and its evidence; answers are written back with their source and never asked twice |
+
+`pa check` can test the structural half of each (fields present, links
+resolve) on the dataset, the way it checks routing today (D-136).
+
+## Stages (HS-3)
+
+**Decided (D-150):** Discover and Learn are one stage, and the stages match
+the arcs: **Discover, Shape, Specify, Engage, Deliver**, tags never gates,
+with Deliver looping back to Discover. The recommendation below was the
+starting point.
+
+Recommended stage list, as loose tags: **Discover, Shape, Specify, Map,
+Deliver, Learn.** Decide leaves the list and becomes a move. A workflow, an
+artifact and an initiative may carry several stages; nothing gates on a stage.
+This was sent to the "Design template and initiative data model" thread,
+which keeps stage a loose tag in its model so the list can change without
+changing the model.
+
+## The initiative's shared registers (HS-4)
+
+Each skill keeps its own dataset today. Recommended: the initiative record
+owns four registers that every skill reads and appends to, so the *why*
+travels between skills and people (finding 7):
+
+- **Evidence:** sources with links and checked quotes.
+- **Open:** questions and assumptions, each with an owner and a blocking flag.
+- **Decisions:** small, numbered, immutable records, superseded rather than
+  edited, each with its reason.
+- **Ready:** the definition of ready, as pass/fail checks with their reason.
+
+Skill datasets keep their own records (problems, areas, requirements,
+dependencies, milestones) and link to register entries by id. The registers
+are the checkable layer; the documents are the judgment layer. The data
+model work owns the shape; this note owns the reason. That work (PR 42,
+[initiatives-and-templates.md](initiatives-and-templates.md)) builds the four
+registers this way through `pa register`, and makes stages a list on every
+artifact, never a gate (D-141). With it, dropping Decide and adding Learn is a
+one-line change to `lifecycle.json`, plus a "What we learned" section in the
+intent template owned by Learn.
+
+## Widgets and worksheet templates per skill (HS-5)
+
+"Have" are the views each workflow ships today. "Add" is recommended. Three
+widgets are shared by every skill because they show the shared registers.
+
+**Shared widgets (new):** an *evidence chip* (a claim with its source line,
+one click to the source; the Torres check made visible), an *open-question
+card* (owner, blocking flag, answer in place), a *decision record card*
+(reason, who, what it supersedes), a *ready checklist* (pass/fail with the
+reason), and an *initiative header* (name, id, stage tags, linked artifacts).
+
+| Skill | Have | Add (widgets) | Worksheet templates (kind) |
+|---|---|---|---|
+| Feature lifecycle | project page, run card | stage strip with tags not gates; "what's next" offer | initiative record (json) |
+| Problem discovery | focus form, sources, problems, summary | evidence chip on every quote; a "post-launch feedback" focus option | problem brief (markdown with frontmatter); problem list (json) |
+| Intent shaping | target form, map, area, summary | one-question card with the agent's guess; pre-mortem card; assumption list | intent brief or one-pager (markdown with frontmatter); shaping map (json) |
+| PRD to dependencies | scope form, catalog, board, review card, summaries | trace-to-line on each requirement; drafted-ask card; ready checklist at the hand-off | PRD or spec (markdown); requirements catalog (json); dependency board (json); asks (markdown) |
+| Delivery status | plan, milestone, summary | cause-of-change chip; audience switch on the update | status update (markdown with frontmatter); milestone plan (json) |
+| Review | findings, who form, consent question, summary | works on any artifact kind, not only markdown | review findings (json) |
+| Decide | queue, card, summary | opens on any open-question entry, from any skill | decision log (json, from the Decisions register) |
+| Choose | (new) | the analysis-of-alternatives worksheet, below | alternatives (json, shared with delivery status); phased roadmap (json, with a markdown export) |
+| Engage owners | (new) | an onboarding track per capability (intake, access, due diligence and gates, terms, provisioning, integration ready), each step with its counterparty kind, owner, state, lead time and evidence; a gate evidence pack | asks and intake drafts (markdown); onboarding track and engagement log (json) |
+
+**The analysis-of-alternatives worksheet** (Geoff: "could be extremely
+interesting, with some fun interactive elements"). One requirement or
+dependency at a time, or the whole board. Recommended elements:
+
+- *Option cards side by side*, each with evidence chips, lead time, effort,
+  risk and what it leaves out; the agent's recommendation is marked, never
+  pre-selected.
+- *Lever toggles*: scope levers (reword this requirement, move it to phase
+  two, drop it) and delivery levers (platform A, platform B, build, change
+  the sequence). Flipping one redraws the date and the phases at once, so the
+  person feels the trade-off instead of reading about it.
+- *A phase lane* (now, next, later) that options and requirements can be
+  dragged between, with the projected date per phase.
+- *A "what would change my mind" line* per option, which the agent fills and
+  the person can edit; it becomes the reason on the decision record.
+- *Commit*: writes the chosen options to the Decisions register, rejected
+  ones keep their reason, and the roadmap view regenerates.
+
+A first sketch is on the Skills and Templates Atlas
+(https://claude.ai/artifact/7nct1TPwFd9131CjVoAHtW#alternatives), on the
+Allowances dependency data.
+
+## What this changes, if accepted
+
+Not built. If Geoff accepts the shape, the follow-up work is: merge the two
+requirement workflows into one with two entry points (keeping both ids as
+aliases so scenarios keep working); add `checkpoints` to `workflow.json` and
+to `pa check`; let `routing.stage` take a list; move Decide out of
+`lifecycle.json` and add Learn; offer Review and Decide as launchers on every
+artifact kind; build the five shared widgets in the view kit; and give the
+eval suites (D-133) a stance check for intent shaping ("did the person's
+answers change"), which the rigidity research says an up-level skill needs.
+
+## Open questions
+
+| Label | Question | Recommendation |
+|---|---|---|
+| HS-1 | What shape should the hero-skill set take? | Five arcs (PRD to dependencies with a Choose half; Engage owners), two moves (Review, Decide), one companion |
+| HS-2 | How fixed should each skill's steps be? | Suggested path, plus a few checkpoints that always hold |
+| HS-3 | Which stages, and are they gates? | Discover, Shape, Specify, Map, Deliver, Learn; tags, never gates |
+| HS-4 | Where do evidence, open questions, decisions and readiness live? | On the initiative, shared by every skill |
+| HS-5 | Which widgets and templates come first? (**paused**, Geoff 2026-11-22: the template redesign is idled) | The five shared widgets and the analysis-of-alternatives worksheet, then the per-skill additions |
+
+The skill taxonomy that follows from HS-1 (tiers, one card per skill, how
+work moves, coverage of the ten PM jobs, and the rule for adding a skill) is
+in [skill-taxonomy.md](skill-taxonomy.md), with HS-6 to HS-8.
+
+## Geoff's answers (2026-11-22)
+
+| Label | Geoff's pick | His note | D |
+|---|---|---|---|
+| HS-1 | Five arcs, two moves, one companion | Delivery status should be called Deliver and include statusing and other delivery work; PRD to dependencies will be complex and multi-stage, including the analysis of alternatives | D-148 |
+| HS-2 | Suggested path plus checkpoints | Completion of all components over enforcing a sequence; flip between components, leave and return, work on other phases, repeated loops of one initiative | D-149 |
+| HS-3 | Something else | Discover and Learn should be the same thing; align with HS-1 | D-150 (Claude chose the aligned list) |
+| HS-4 | On the initiative, shared | | D-151 |
+| HS-5 | Shared widgets and the alternatives worksheet first | Coordinate with the decision brief skill | D-152 |
+
+The decision note with the rationale is
+[decision-note.md](../decision-artifacts/2026-11-21-hero-skills-and-lifecycle/decision-note.md).

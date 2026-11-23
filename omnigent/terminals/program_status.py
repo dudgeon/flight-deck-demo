@@ -235,6 +235,16 @@ def blocked_reason(report: ProgramStatus) -> str | None:
     return "".join(c for c in text if unicodedata.category(c) != "Cf") or "input needed"
 
 
+def _drain(fd: int) -> None:
+    """omnigent-slim: read and drop what is waiting on a non-blocking PTY master."""
+    for _ in range(64):
+        try:
+            if not os.read(fd, 65536):
+                return
+        except OSError:
+            return
+
+
 def _write_all(fd: int, data: bytes) -> None:
     while data:
         data = data[os.write(fd, data) :]
@@ -382,14 +392,26 @@ def relay(path: Path, app: str, command: list[str]) -> int:
             if child:
                 exit_status = result
             else:
+                # omnigent-slim: keep draining the PTY. On macOS a child's exit
+                # blocks closing its terminal until unread output is consumed,
+                # so a relay that stops reading here and then waits forever
+                # leaves both stuck (seen live: hundreds of relays, each
+                # holding two PTYs, until the Mac ran out of terminals).
+                _drain(master)
                 time.sleep(0.01)
         if exit_status is None:
             with contextlib.suppress(ProcessLookupError, PermissionError):
                 os.killpg(pid, signal.SIGKILL)
             with contextlib.suppress(ProcessLookupError, PermissionError):
                 os.kill(pid, signal.SIGKILL)
+            # omnigent-slim: close the master first, which hangs up the PTY,
+            # so a child stuck flushing output can finish exiting.
+            with contextlib.suppress(OSError):
+                os.close(master)
+            master = -1
             _, exit_status = os.waitpid(pid, 0)
-        os.close(master)
+        if master >= 0:
+            os.close(master)
         with contextlib.suppress(OSError, termios.error):
             termios.tcsetattr(0, termios.TCSANOW, original)
         with contextlib.suppress(OSError):

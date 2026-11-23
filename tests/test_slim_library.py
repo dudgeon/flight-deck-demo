@@ -31,12 +31,18 @@ def test_featured_skills_in_lifecycle_order_with_one_spotlight() -> None:
         "problem-discovery",
         "intent-shaping",
         "document-review",
-        "prd-to-requirements",
+        "prd-to-dependencies",
         "decision-review",
         "delivery-status",
     ]
     # Utility workflows have no library flag and never show.
     assert "requirements-to-dependencies" not in ids
+    # Parts of an arc run when named but have no card of their own (D-148).
+    assert "prd-to-requirements" not in ids
+    # Its demo shows on the arc's card instead.
+    arc = next(s for s in lib["skills"] if s["id"] == "prd-to-dependencies")
+    assert "prd-to-requirements" in [d["id"] for d in arc["demos"]]
+    assert "requirements-to-dependencies" in [d["id"] for d in arc["demos"]]
     assert [s["id"] for s in lib["skills"] if s["spotlight"]] == ["intent-shaping"]
     assert "templates" not in lib and "sessions" not in lib
 

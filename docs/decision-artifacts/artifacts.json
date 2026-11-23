@@ -273,8 +273,8 @@
    "title": "Flight Deck Usage Log",
    "kind": "Decision walkthrough",
    "about": "How the local usage log works, and whether logs are committed, what a work Mac pack holds, where the numbers are seen (UL-1 to UL-3)",
-   "decisions": "D-122 to D-127",
-   "status": "Open"
+   "decisions": "D-122 to D-127, D-157, D-158",
+   "status": "Answered (UL-1); UL-2, UL-3 settled by Claude"
   },
   {
    "id": "DHcM1SxdoecNJKtNgJ6t5p",
@@ -285,12 +285,39 @@
    "title": "Initiatives and templates",
    "kind": "Decision walkthrough",
    "about": "The data model for initiatives, artifact stamps, templates and shared registers; IN-1 and IN-3",
-   "decisions": "D-138 to D-142",
-   "status": "Open (IN-1, IN-3)"
+   "decisions": "D-138 to D-142, D-155, D-156",
+   "status": "Settled without asking"
+  },
+  {
+   "id": "P3hZWy2Ht6es1KCxMDLTEv",
+   "order": 24,
+   "url": "https://claude.ai/artifact/P3hZWy2Ht6es1KCxMDLTEv",
+   "slug": "2026-11-21-hero-skills-and-lifecycle",
+   "date": "2026-11-21",
+   "title": "Hero Skills and the Lifecycle",
+   "kind": "Decision walkthrough",
+   "about": "Research on the product lifecycle and AI help; five questions on the shape of the hero-skill set (HS-1 to HS-5)",
+   "decisions": "D-148 to D-152 (HS-1 to HS-5)",
+   "status": "Answered (5)",
+   "answers_as_of": "2026-11-22"
+  },
+  {
+   "id": "CNNpJFboRrwDAsYsBvundE",
+   "order": 25,
+   "url": "https://claude.ai/artifact/CNNpJFboRrwDAsYsBvundE",
+   "slug": "2026-11-22-decision-briefs",
+   "date": "2026-11-22",
+   "title": "How decision briefs should work",
+   "kind": "Decision brief",
+   "about": "The first brief from the shared decision-brief skill: layout, how answers come back at work, where decisions are recorded, when to make one (DB-1 to DB-4)",
+   "decisions": "D-159 to D-163",
+   "status": "Answered (4)",
+   "note": "Drawn by skills/decision-brief from skills/decision-brief/examples/decision-briefs.json.",
+   "answers_as_of": "2026-11-22"
   },
   {
    "id": "7nct1TPwFd9131CjVoAHtW",
-   "order": 25,
+   "order": 26,
    "url": "https://claude.ai/artifact/7nct1TPwFd9131CjVoAHtW",
    "slug": "2026-11-22-skills-and-templates-atlas",
    "date": "2026-11-22",
@@ -302,7 +329,7 @@
   },
   {
    "id": "AhM8FqE6ef4xhB1MUN6epE",
-   "order": 26,
+   "order": 27,
    "url": "https://claude.ai/artifact/AhM8FqE6ef4xhB1MUN6epE",
    "slug": "2026-11-22-bolder-template-explorations",
    "date": "2026-11-22",

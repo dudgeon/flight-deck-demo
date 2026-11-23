@@ -30,6 +30,7 @@ in the same pull request.
 | [Dock launcher](#dock-launcher) | Done |
 | [Branding](#branding) | Done; repository renamed (D-114) |
 | [Modes, projects and the intent graph](#modes-projects-and-the-intent-graph) | D-89 to D-99 and D-116 to D-119 decided; runs and In flight built (PR 24) |
+| [Decision briefs](#decision-briefs) | Built (D-159 to D-163); Send button reaches the agent from the brief |
 | [Aviator coordination and skill routing](#aviator-coordination-and-skill-routing) | Routing, director rules, director memory and the routing suite built (D-120, D-128 to D-137, D-143 to D-145); baseline run, strictness on the strip and lifecycle skill next |
 
 ---
@@ -322,6 +323,30 @@ a project means something (a goal to ship) and knows its relatives.
 
 ---
 
+## Decision briefs
+
+One skill and template for every complex decision put to a person, so every
+brief looks and works the same and costs only its content.
+
+- **Done.** `skills/decision-brief`: the template, `brief.py`
+  (new, check, render, answer, import, record, note), the visual components,
+  a worked example, and the routing rule in the workspace's `CLAUDE.md`, the
+  director skill and decision review (D-159). Geoff answered the first brief
+  (https://claude.ai/artifact/CNNpJFboRrwDAsYsBvundE): one page (D-160), a
+  Send button in the brief that reaches the agent directly, through
+  `omnigent.answer` in the app and a comment to Claude on claude.ai (D-161),
+  briefs kept in the project's `decisions/` folder (D-162), and a
+  judgment-based rule for when to make one (D-163).
+- **Next.** Fly a brief in the app on the Mac mini (the Send path through
+  `omnigent.answer` is unit-tested and checked with a stub, not yet flown).
+  Routing-suite tasks for "brief or card". The lifecycle work's Decide move
+  and Choose step call it. Make the next walkthrough with it.
+- **Later.** Narration as another view of the same brief (D-160).
+- **Read.** [features.md](features.md#decision-briefs),
+  `skills/decision-brief/SKILL.md`.
+
+---
+
 ## Initiatives, artifacts and templates
 
 One data model for what an initiative is, what it has produced and what
@@ -330,14 +355,15 @@ every hero skill can read and extend it.
 
 - **Done.** The model and the commands: fixed ids, stamps, `pa artifacts`,
   `pa template`, `pa register`, two shipped templates (intent document,
-  registers) (D-138 to D-142).
+  registers) (D-138 to D-142). The `alternatives` and `onboarding-track`
+  templates for the Choose half and Engage owners, and the five stages in
+  `lifecycle.json` (after D-148 to D-152).
 - **Next.** Make each hero skill follow the contract (stamp its work, name a
   template per work product, use the registers); write the lifecycle skill
   (D-129) on top of it; show the registry and registers on the project page;
   a Templates shelf in the Hangar.
-- **Open.** IN-1 (is an initiative the same as a goal project) and IN-3 (the
-  shared representation of intent), with Geoff. The stage list may change
-  with the lifecycle research.
+- **Open.** Nothing. IN-1 and IN-3 were settled as changeable build choices
+  (D-155, D-156).
 - **Parked (2026-11-22).** A bolder look for the hero skills' widgets and
   views. Geoff asked for it, saw six views with two directions each, and
   liked only two: the decision card's trade-off grid (3B) and the discovery
@@ -380,9 +406,16 @@ strictly as the moment needs, measured by evals rather than argued.
   through the real app with code graders and a Haiku judge, reports by
   split, and blind pairs for Geoff (D-143 to D-145). The ladder moved into
   `workspace/CLAUDE.md` so every session follows it (D-144). Four live trials
-  on Sonnet in the cloud container passed; the first full baseline runs on
-  the Mac mini.
-- **Next.** A full baseline on the Mac mini, then tuning; strictness on the
+  on Sonnet in the cloud container passed.
+- **Baseline and first tuning.** The Mac mini baseline passed 35 of 42 tasks
+  on Sonnet. Tuning (D-146): a plain request for a workflow's work now starts
+  it, open asks and one-paragraph questions get no offer, two offer tasks
+  get the scenario material their workflow needs, and the risk-and-design
+  task is relabelled a start. The re-run fixed 5 of the 7; the second round
+  (D-147) stops counting clarifying question cards as offers, adds
+  `report --regrade`, and fixes the two offer regressions. Waiting on a
+  regrade of tune1 and a held-out re-run on the Mac mini.
+- **Next.** The re-run, then strictness on the
   strip and in the run; the lifecycle skill (its two routing tasks wait for
   it).
 - **Decided.** Geoff answered all seven on 2026-11-21, as recommended:
@@ -392,6 +425,54 @@ strictly as the moment needs, measured by evals rather than argued.
   models, D-134 director memory with editable Director's notes. Nothing open.
 - **Read.** [director-coordination.md](director-coordination.md); walkthrough
   at https://claude.ai/artifact/La4Qa5THk5JhwQBQGcVY7d.
+
+## Hero-skill set and the lifecycle
+
+Refine the hero skills into a small, flexible set (Geoff: don't subdivide
+the process into too many subskills, don't make it rigid), with the widgets
+and worksheet templates each needs.
+
+- **Done.** Research (2026-11-21) from Geoff's product agent and harness
+  library and the public lifecycle frameworks, with a recommendation, revised
+  2026-11-22 after Geoff's atlas comments: five arcs (problem discovery,
+  intent shaping, PRD to dependencies running Specify, Map and Choose,
+  engage owners for onboarding with other teams, delivery status, now Deliver), two
+  moves on any artifact (review, decide) and the lifecycle companion; a suggested path with fixed checkpoints per skill; stages as
+  tags with Learn added and Decide made a move; evidence, open questions,
+  decisions and readiness shared on the initiative; five shared widgets.
+- **Decided 2026-11-22.** D-148 to D-152: five arcs (problem discovery,
+  intent shaping, PRD to dependencies, Engage owners, Deliver), the Review
+  and Decide moves and the lifecycle companion; suggested paths with
+  checkpoints and free movement between components and phases; stages
+  Discover, Shape, Specify, Engage, Deliver; the shared registers; the
+  shared widgets and the alternatives worksheet first, using the decision
+  brief skill. The template redesign stays parked.
+- **Decided.** D-153: an optional `tier` field in `workflow.json`.
+- **Settled without asking.** HS-7 (the add-a-skill rule is advice, never a gate) and HS-8 (launch goes in Deliver when a demo needs it): Claude's calls, easy to change.
+- **Taxonomy.** [skill-taxonomy.md](skill-taxonomy.md): four tiers
+  (companion, arc, move, kit), a card per skill, how work moves through the
+  initiative registers, coverage of the ten PM jobs, and a four-question rule
+  for adding a hero skill.
+- **Built.** The PRD to dependencies arc with Specify, Map and Choose
+  (`skills/prd-to-dependencies/`; the two older workflows are its parts,
+  old ids kept); `tier`, `parts`, `part_of` and `checkpoints` in
+  `workflow.json`, shown by `pa workflows` and noted by `pa check`; Review
+  and Decide marked as moves; delivery status titled Deliver. Stages and the
+  alternatives and onboarding templates came in PR 52.
+- **Built.** The alternatives worksheet (`worksheet` layout in the view kit,
+  the alternatives template's default view): try options, watch the totals move.
+- **Proposed.** Prototyping across channels (Geoff, 2026-11-22): a
+  Prototype move with one contract, prototypers as kit skills that declare
+  their channels, and a default enterprise prototyper that takes
+  design-system packs; channel teams extend the default or ship their own.
+  See section 6 of [skill-taxonomy.md](skill-taxonomy.md). Not built.
+- **Next.** A phase lane on the worksheet; the five
+  shared widgets in the view kit; Review and Decide as launchers on every
+  artifact (they still have Library cards); the Engage owners arc on the
+  onboarding-track template; Deliver's wider parts.
+- **Read.** [lifecycle-research.md](lifecycle-research.md); walkthrough at
+  https://claude.ai/artifact/P3hZWy2Ht6es1KCxMDLTEv (offline copy in
+  `docs/decision-artifacts/2026-11-21-hero-skills-and-lifecycle/`).
 
 ## Usage logging
 
@@ -406,11 +487,11 @@ a server.
   ids and words, never sentences. `pa usage summary|tail|check|pack|eval`.
   Eval trials are tagged and kept apart. Packs can be fingerprinted or written
   in upstream's gateway shape.
-- **Next.** A Usage page in the Hangar (UL-3); `pa log offer.made` in the
+- **Next.** `pa log offer.made` in the
   director skill with the routing suite; run it on the Mac mini with a live
   session to see the tool and upstream feeds for real.
-- **Open.** UL-1 committing logs, UL-2 what a work Mac pack holds, UL-3 where
-  the numbers are seen.
+- **Settled.** Logs stay out of git for now (D-157); packs keep names unless
+  `--fingerprint`, and a Hangar Usage page waits until wanted (D-158).
 - **Read.** [usage-logging.md](usage-logging.md);
   [../skill-writers/usage-log.md](../skill-writers/usage-log.md); walkthrough
   at https://claude.ai/artifact/7tXLiAF95CZpCp81UKVVMB.

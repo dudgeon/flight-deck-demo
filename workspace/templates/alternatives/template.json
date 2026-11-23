@@ -1,0 +1,18 @@
+{
+ "template": "alternatives",
+ "version": 1,
+ "kind": "records",
+ "title": "Alternatives",
+ "summary": "Ways to meet a goal or recover a slip, compared on scope, effort and waiting time, with the one chosen and a reason kept for every one turned down. The choice itself goes in the initiative's decisions register.",
+ "stage": [
+  "specify",
+  "deliver"
+ ],
+ "out": "data/{slug}-alternatives.json",
+ "schemas": "schemas/records.json",
+ "views": {
+  "compare": "views/compare.json",
+  "worksheet": "views/worksheet.json"
+ },
+ "default_view": "worksheet"
+}

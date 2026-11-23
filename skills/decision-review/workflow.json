@@ -1,6 +1,7 @@
 {
  "workflow": "decision-review",
  "title": "Decision review",
+ "tier": "move",
  "summary": "Gather the open decisions on a piece of work, prepare each with options and a recommendation, and walk the person through them one at a time. What they decide is recorded with who raised it and why.",
  "library": {
   "show": true,
@@ -79,7 +80,7 @@
    "Recording a decision already made"
   ],
   "needs": "Where the open questions are: documents, datasets with items waiting on the person, or this conversation",
-  "stage": "decide",
+  "stage": "any",
   "offer": "There are several open decisions here. Decision review prepares each with options and a recommendation and walks you through them one at a time.",
   "examples": {
    "start": [

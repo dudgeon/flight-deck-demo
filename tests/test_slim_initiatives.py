@@ -195,3 +195,29 @@ def test_a_folder_with_its_own_roster_still_finds_the_shipped_templates(workspac
     (workspace / "participants").mkdir()  # a flown demo folder has its own roster and no templates
     assert "initiative-registers" in pa.list_templates()
     assert pa.main(["register", NAME, "question", "Who owns the date?"]) == 0
+
+
+def test_alternatives_and_onboarding_templates_start_stamped(workspace: Path) -> None:
+    alt, stamp = pa.new_from_template("alternatives", initiative=NAME, title="Release date by March")
+    assert alt == Path("data/release-date-by-march-alternatives.json")
+    assert stamp["stage"] == ["specify", "deliver"]
+    track, stamp = pa.new_from_template("onboarding-track", initiative=NAME)
+    assert stamp["stage"] == ["engage"] and track.name == "held-payment-dates-onboarding.json"
+    assert {a["path"] for a in pa.artifact_registry()["artifacts"]} >= {alt.as_posix(), track.as_posix()}
+
+
+def test_the_alternatives_worksheet_is_the_default_and_draws() -> None:
+    # D-152: Choose opens on the worksheet, where options are tried before one is chosen.
+    folder = ROOT / "workspace" / "templates" / "alternatives"
+    t = json.loads((folder / "template.json").read_text())
+    assert t["default_view"] == "worksheet"
+    spec = json.loads((folder / "views" / "worksheet.json").read_text())
+    assert pa._check_spec(spec, "worksheet.json") == []
+    data = {"title": "Teen cards", "records": [
+        {"id": "C-1", "type": "choice", "title": "How do we verify identity?", "status": "open"},
+        {"id": "O-1", "type": "option", "parent": "C-1", "title": "Platform", "kind": "capability-swap", "effort": 2, "waiting": 6, "status": "proposed"},
+        {"id": "O-2", "type": "option", "parent": "C-1", "title": "Parent-verified", "kind": "scope-trade", "effort": 1, "waiting": 0, "status": "proposed"},
+    ]}
+    html = pa.page(spec, data)
+    assert '"layout": "worksheet"' in html or '"layout":"worksheet"' in html
+    assert "function worksheet()" in html

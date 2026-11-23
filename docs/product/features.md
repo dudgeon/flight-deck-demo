@@ -314,9 +314,11 @@ lose is written down where the person can see and correct it (D-134).
 - `pa workflows` lists every workflow by stage with that block (`--json` adds
   the examples); `pa check` fails a Library or shipped workflow without one
   (D-136).
-- The director skill routes by the ladder: named means start; a clear fit
-  gets one offer as a "Start it in a thread" / "Not now" question; open work
-  is done directly; quick questions are answered. It holds other threads'
+- The director skill routes by the ladder: named means start, and so does
+  a plain request for exactly one workflow's work, said in one line (D-146);
+  a clear fit to a situation or question gets one offer as a "Start it in a thread" / "Not now" question; open work
+  is done directly, with no offer in that reply; quick questions, including
+  one about a single paragraph, are answered. It holds other threads'
   news while the person is mid-exchange, except failures and blockers
   (D-132), and changes strictness only when the person says so (D-131).
 - Director memory: a short charter beside the skill, `director/state.md`
@@ -331,7 +333,8 @@ lose is written down where the person can see and correct it (D-134).
   prompt with what should happen (start, offer, open, answer), run through
   the real app on the model under test; the report says how many passed, on
   the tuning and the held-out sets, and shows every failing reply. Geoff
-  compares two runs on a blind page of ten pairs (D-145). The ladder is in
+  compares two runs on a blind page of ten pairs (D-145). A question card
+  that only asks what the person means is not an offer (D-147). The ladder is in
   `workspace/CLAUDE.md`, so every Aviator session routes this way (D-144).
 
 **Where.** `evals/routing_suite.py` and `evals/routing/tasks.json`
@@ -422,6 +425,10 @@ artifacts back to a shared representation of the intent.
   each owned by a stage, and **registers** for evidence (source required),
   open questions and assumptions, decisions (superseded, never edited) and
   ready checks, drawn as a board.
+- **Alternatives and onboarding tracks**: shared templates for choosing a way
+  forward (effort and waiting kept apart, a reason for every option turned
+  down) and for running each owning team's onboarding steps, with who
+  answers at each step and how long it takes.
 
 **How the agent keeps it.** The hero skill contract (D-142) in the
 `view-kit` skill, "Initiatives, stamps, templates and registers", and one
@@ -473,6 +480,58 @@ stored. *Where:* `omnigent/server/routes/slim_participant_inbox.py`,
 `web/src/lib/proactiveInbox.ts`, the participant card in
 `web/src/pages/InboxPage.tsx`, `skills/participants/SKILL.md` step 7.
 
+## Decision briefs
+
+**What it is for.** Some decisions can't be made from a card: they need
+context the person doesn't have in front of them, are more than one
+question, or have a visual side chat can't show. The product owner asked never to decide those blind
+(D-33), and every walkthrough made for him so far was built by hand. A
+decision brief is the one way any agent, skill or persona puts such a
+decision to a person, so every brief reads the same, improves in one place,
+and costs only its content (D-159).
+
+**What it does.** Skill `skills/decision-brief`, bundled into every session.
+The agent writes one JSON file: why the person is seeing it, the
+recommendation in one paragraph, what was read and found, and per decision
+the question, context, what you need to know, a visual stage, two to five
+options with what each gives up, one recommended with its reason, and what
+it depends on. `brief.py render` draws it into a fixed template: a bar
+counting what is answered with "Accept all recommendations", the briefing
+and picture beside "Your call", a stage that redraws for the option pointed
+at, "Something else" on every decision, a note box and a summary of answers.
+Visuals are built from components in the template (wireframes, flows,
+comparisons, file trees, tables, chips), so they follow the tokens in light
+and dark. `brief.py check` refuses a brief that is blind, has no single
+recommendation, sets its own colors or loads anything.
+
+**How answers come back.** A "Send answers to Claude" button on the brief
+itself, so the person stays focused in the brief rather than switching to
+the chat (D-161). In Flight Deck it calls `omnigent.answer`: the app checks
+the brief, decision and option ids, quotes each note as the person's words,
+writes the message itself and sends it straight to the agent (like
+`omnigent.act`, the only other artifact text that skips the composer). On
+claude.ai picks save to the page's `answers` collection as they are made,
+and Send posts them as a comment sent to Claude. Elsewhere, "Copy answers".
+`brief.py import` reads any of them.
+
+**Where it lives.** A brief is one of the project's decision artifacts, so
+its data, page and decision note sit together in `projects/<key>/decisions/`
+(D-162). `record` locks the answers and adds one line per decision to the
+project's decisions register, so other skills see them; `note` writes the
+decision note (pick, note, the recommendation and why, options considered,
+links to the research, the page and its archived copy).
+
+**When it is used.** By the agent's judgment: generally when a decision
+needs context, is more than one question, or has a visual side that isn't
+well suited to chat (D-163). A quick choice stays a question card. The rule
+lives in the workspace's `CLAUDE.md` and the skill; the director and
+decision review point to it.
+
+**Layout.** One scrolling page, briefing and picture beside "Your call",
+stacked on a phone (D-160). Narration (a voice and an animated stage, as in
+the duo-v2 walkthroughs) may be added later as another way to view the same
+data, but it is not part of the core.
+
 ## Decision review (a kind of work)
 
 **What it is for.** A PM's work stalls on questions nobody has put to them
@@ -501,6 +560,39 @@ options can use it.
 **Why it is the first of the four.** It reuses the most (one list, cards,
 participants, the workflow card) and it proves the kit is not shaped around
 requirements documents.
+
+## PRD to dependencies (an arc in three parts)
+
+**What it is for.** A product manager with a PRD needs to know what the work
+depends on and what their options are when a dependency won't be ready, not
+just a list of requirements. This arc (D-148) takes them from the document to
+a choice, in three parts they can move between in any order, leaving and
+coming back (D-149): **Specify** (the requirements catalog, run by
+`prd-to-requirements`), **Map** (the platform capabilities each requirement
+needs, run by `requirements-to-dependencies`) and **Choose** (for each
+dependency that needs a decision, two to four alternatives of Pathfinder's
+four kinds, with effort and waiting kept as separate numbers, and the
+person's choice written to the initiative's decisions register).
+
+**How it works.** `skills/prd-to-dependencies/` has the arc's SKILL.md and a
+`workflow.json` that lists its `parts` and `checkpoints` (the few rules that
+always hold, whatever the order). The two older workflows stay as they were,
+with `part_of` set, so their scenarios still fly and they still start when
+named; only the arc has a Library card, and the parts' demos show on it.
+Choose uses the `alternatives` records template (PR 52). Complex choices go to
+the decision brief skill when it is installed. `pa workflows` prints each
+workflow's tier, parts and checkpoints; `pa check` notes an unknown tier or a
+malformed part, never fails on one (D-153).
+
+**The alternatives worksheet (D-152).** Choose opens on a `worksheet` view
+(a new view-kit layout). Each choice shows its options as cards; pressing one
+*tries* it, and four readouts at the top redraw at once: our effort (summed),
+the longest wait (the one that sets the date), teams relied on, and how many
+choices trade scope, each against the baseline (the first option). The point
+is to feel a trade-off before committing to it: trying is local to the page,
+and choosing still asks for a reason and goes to the agent. The plain table
+(`compare`) stays as a second view. **Not yet:** a phase lane with projected
+dates, which needs dates on options.
 
 ## Problem discovery (a kind of work)
 

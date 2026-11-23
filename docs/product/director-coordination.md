@@ -434,4 +434,8 @@ and how edits are saved is D-137.
 
 **Built (step 2):** the routing suite, `evals/routing_suite.py`
 (`evals/README.md`; D-143 to D-145). The ladder also went into
-`workspace/CLAUDE.md` (D-144). Next: a full baseline on the Mac mini.
+`workspace/CLAUDE.md` (D-144). The Mac mini baseline passed 35 of 42; the
+first tuning round (D-146) adds the "asked for" rung, keeps offers off open
+asks, and gives two offer tasks fixtures; the second (D-147) fixes the
+grader, which counted a clarifying question card as an offer. Next: regrade
+tune1 and re-run the held-out split.

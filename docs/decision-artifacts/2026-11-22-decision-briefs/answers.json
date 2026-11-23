@@ -1,0 +1,38 @@
+{
+  "answers": {
+    "at": "2026-11-22T03:16:39.939Z",
+    "label": "Straight to the agent, one press",
+    "note": "hybrid: send button in the brief —- keeps user focused in the brief (no toggling back to chat)",
+    "pick": "direct",
+    "question": "Inside Flight Deck at work, how do your answers reach the agent?",
+    "recommended": "composer",
+    "via": "page"
+  },
+  "layout": {
+    "at": "2026-11-22T03:14:41.250Z",
+    "label": "One page, briefing beside your call",
+    "note": "We may later add the narrations — they’re useful but not a core feature set ",
+    "pick": "page",
+    "question": "How should a brief lay out each decision?",
+    "recommended": "page",
+    "via": "page"
+  },
+  "record": {
+    "at": "2026-11-22T03:18:32.319Z",
+    "label": "Something else",
+    "note": "Should be exclusively within the project; briefs are just a decision artifact, so put them in the project decisions folder",
+    "pick": "else",
+    "question": "Where should a decision be written down once you lock it?",
+    "recommended": "register-and-note",
+    "via": "page"
+  },
+  "trigger": {
+    "at": "2026-11-22T03:19:33.561Z",
+    "label": "Something else",
+    "note": "Agents will need to use judgment, but generally when the decision requires context, is more than one question, and/or has a visual component to the decision that isn’t well suited to chat",
+    "pick": "else",
+    "question": "When should an agent make a brief instead of asking with a card?",
+    "recommended": "rubric",
+    "via": "page"
+  }
+}

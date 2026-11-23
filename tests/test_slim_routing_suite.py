@@ -87,6 +87,7 @@ def test_a_bad_task_file_is_refused(tmp_path: Path) -> None:
         ("start", "intent-shaping", _ev(skills=["view-kit", "director"]), "answer", False, "answer"),
         ("offer", "intent-shaping", _ev(offers=["intent-shaping"]), None, True, "offer"),
         ("offer", "intent-shaping", _ev(question=True, asked=["intent-shaping"]), None, True, "offer"),
+        ("open", None, _ev(question=True), "open", True, "open"),
         ("offer", "intent-shaping", _ev(skills=["intent-shaping"]), None, False, "start"),
         ("offer", "intent-shaping", _ev(), "offer", True, "offer"),
         ("offer", "intent-shaping", _ev(), "open", False, "open"),
@@ -109,8 +110,8 @@ def test_grading_follows_the_ladder(expect: str, workflow: str | None, ev: dict[
     graded = rs.grade(task, ev, "reply", CATALOG, judge)
     assert (graded["pass"], graded["observed"]) == (ok, observed)
     # The judge is asked only when the code evidence is silent.
-    has_code = any(ev[k] for k in ("skills", "offers", "asked", "question", "threads", "briefed", "runs")) and not (
-        set(ev["skills"]) <= {"view-kit", "director"} and not any(ev[k] for k in ("offers", "asked", "question", "threads", "briefed", "runs")))
+    has_code = any(ev[k] for k in ("skills", "offers", "asked", "threads", "briefed", "runs")) and not (
+        set(ev["skills"]) <= {"view-kit", "director"} and not any(ev[k] for k in ("offers", "asked", "threads", "briefed", "runs")))
     assert bool(calls) == (not has_code)
 
 
@@ -120,10 +121,56 @@ def test_evidence_reads_skills_threads_offers_and_question_cards() -> None:
         {"event_name": "tool.used", "params": {"tool": "mcp__omnigent__sys_session_create"}},
         {"event_name": "offer.made", "params": {"workflow": "decision-review"}},
     ]
-    result = {"question": [{"questions": [{"question": "Start Problem discovery in a thread?"}]}], "threads": []}
+    result = {"question": [{"questions": [{"question": "Start Problem discovery in a thread?",
+                                           "options": [{"label": "Start it"}, {"label": "Not now"}]}]}],
+              "threads": []}
     ev = rs.evidence(result, lines, {"briefed": [], "runs": []}, CATALOG)
     assert ev["skills"] == ["intent-shaping"] and ev["threads"] is True
     assert ev["offers"] == ["decision-review"] and ev["asked"] == ["problem-discovery"]
+
+
+def test_a_clarifying_card_is_not_an_offer() -> None:
+    # Seen on the Mac mini: "Which calls do you mean?" was graded an offer.
+    ask = {"questions": [{"question": "Which calls do you mean?", "header": "Calls",
+                          "options": [{"label": "Calls to participants", "description": "Agents on the roster"},
+                                      {"label": "Customer or user calls", "description": "Fits problem discovery later"}]}]}
+    ev = rs.evidence({"question": [ask], "threads": []}, [], {"briefed": [], "runs": []}, CATALOG)
+    assert ev["question"] is True and ev["asked"] == [] and not ev["card_offers"]
+    assert "Which calls do you mean?" in ev["card_text"]
+    seen: dict[str, str] = {}
+
+    def judge(prompt: str, reply: str, catalog: dict[str, str]) -> dict[str, Any]:
+        seen["reply"] = reply
+        return {"label": "open", "workflow": None, "why": ""}
+
+    task = {"id": "t", "prompt": "What else could we do about those calls?", "expect": "open", "workflow": None}
+    graded = rs.grade(task, ev, "Which calls?", CATALOG, judge)
+    assert graded["pass"] and graded["observed"] == "open"
+    assert "[Question card] Which calls do you mean?" in seen["reply"]
+    # A card whose answer starts something is an offer, even naming no workflow.
+    start = {"questions": [{"question": "Shall I?", "options": [{"label": "Yes, start"}, {"label": "Not now"}]}]}
+    ev2 = rs.evidence({"question": [start], "threads": []}, [], {"briefed": [], "runs": []}, CATALOG)
+    assert ev2["asked"] == ["?"]
+    assert rs.observe(ev2, CATALOG) == ("offer", [], "offer logged or asked on a card")
+    # Naming a workflow in an answer counts; "intent-shaping-ish" text elsewhere does not.
+    named = {"questions": [{"question": "Next?", "options": [{"label": "Decision review"}, {"label": "Not now"}]}]}
+    ev3 = rs.evidence({"question": [named], "threads": []}, [], {"briefed": [], "runs": []}, CATALOG)
+    assert ev3["asked"] == ["decision-review"]
+
+
+def test_regrade_reads_old_trials_with_the_new_grader(tmp_path: Path) -> None:
+    run = tmp_path / "run"
+    run.mkdir()
+    ask = {"questions": [{"question": "Which paragraph should I read?",
+                          "options": [{"label": "I'll paste it"}, {"label": "A file in context/"}]}]}
+    old = {"task": {"id": "document-review-open-1", "prompt": "Does this opening paragraph read well?",
+                    "expect": "open", "workflow": None, "split": "tune"},
+           "trial": 1, "result": {"question": [ask], "reply": "", "threads": []},
+           "evidence": {**_ev(question=True, asked=["document-review"])}, "pass": False, "observed": "offer"}
+    (run / "trials.jsonl").write_text(json.dumps(old) + "\n")
+    rs.main(["report", str(run), "--regrade", "--no-judge"])
+    again = rs.load_records(run)[0]
+    assert again["pass"] and again["observed"] == "none" and again["evidence"]["asked"] == []
 
 
 def test_workspace_evidence_reads_briefs_and_runs(tmp_path: Path) -> None:
@@ -147,6 +194,44 @@ def test_a_trial_gets_configuration_but_no_state(tmp_path: Path) -> None:
     assert not (dest / ".hangar").exists() and not (dest / "director").exists()
 
 
+def test_offer_tasks_get_fixtures_from_real_scenarios() -> None:
+    tasks = {t["id"]: t for t in rs.load_tasks(ROOT / "workspace")}
+    for tid in ("decision-review-offer-1", "requirements-to-dependencies-offer-1", "delivery-status-offer-1",
+                "problem-discovery-offer-1"):
+        fixtures = tasks[tid]["fixtures"]
+        assert fixtures and all(rs.fixture_source(ROOT / "workspace", src).exists() for src in fixtures.values()), tid
+    # "I've got twelve interview transcripts": twelve of them, in context/.
+    ws_src = tasks["problem-discovery-offer-1"]["fixtures"]["context/interviews"]
+    assert len(list(rs.fixture_source(ROOT / "workspace", ws_src).glob("*.md"))) == 12
+    # Mapping dependencies starts from requirements that have none yet, or there is nothing to offer.
+    deps = tasks["requirements-to-dependencies-offer-1"]["fixtures"]["data/allowances.json"]
+    records = json.loads((ROOT / "workspace" / deps).read_text())["records"]
+    assert records and not any(r["type"] == "dependency" for r in records)
+
+
+def test_fixtures_for_an_unknown_task_are_refused(tmp_path: Path) -> None:
+    bad = tmp_path / "tasks.json"
+    bad.write_text(json.dumps({"tasks": [], "fixtures": {"nobody": {"data/x.json": "x.json"}}}))
+    with pytest.raises(ValueError, match="do not exist"):
+        rs.load_tasks(ROOT / "workspace", bad)
+
+
+def test_fixtures_are_copied_and_stay_inside_the_trial(tmp_path: Path) -> None:
+    ws = tmp_path / "trial"
+    (ws / "scenarios/s/fixtures").mkdir(parents=True)
+    (ws / "scenarios/s/fixtures/d.json").write_text("{}")
+    assert rs.add_fixtures(ws, {"data/d.json": "scenarios/s/fixtures/d.json"}) == ["data/d.json"]
+    assert (ws / "data/d.json").read_text() == "{}"
+    with pytest.raises(ValueError, match="inside the workspace"):
+        rs.add_fixtures(ws, {"../out.json": "scenarios/s/fixtures/d.json"})
+    with pytest.raises(ValueError, match="not in the workspace"):
+        rs.add_fixtures(ws, {"data/e.json": "scenarios/s/missing.json"})
+    with pytest.raises(ValueError, match="stays inside"):
+        rs.add_fixtures(ws, {"context/x": "evals/routing/fixtures/../../routing_suite.py"})
+    assert rs.add_fixtures(ws, {"context/interviews": "evals/routing/fixtures/interviews"})
+    assert len(list((ws / "context/interviews").glob("*.md"))) == 12
+
+
 # ------------------------------------------------------------------ the run loop
 
 class FakeDriver:
@@ -162,6 +247,7 @@ class FakeDriver:
         self.calls += 1
         task_id, trial = title.split()[2], int(title.split()[3])
         if prompt.startswith("Run "):
+            assert (workspace / "data" / "d.json").is_file()  # its fixture is in place first
             rs.usagelog.log("tool.used", source="tool", params={"tool": "Skill", "skill": "decision-review"})
             (workspace / "briefs").mkdir(exist_ok=True)
             (workspace / "briefs" / "b.md").write_text('# Brief: decision-review on "x"\n')
@@ -175,12 +261,19 @@ def test_run_suite_tags_each_trial_and_passes_on_two_of_three(tmp_path: Path, us
     src = tmp_path / "ws"
     (src / "briefs").mkdir(parents=True)
     tasks = [
-        {"id": "s1", "prompt": "Run a decision review", "expect": "start", "workflow": "decision-review", "split": "tune"},
+        {"id": "s1", "prompt": "Run a decision review", "expect": "start", "workflow": "decision-review", "split": "tune",
+         "fixtures": {"data/d.json": "seed/d.json"}},
         {"id": "o1", "prompt": "Offer please", "expect": "offer", "workflow": "decision-review", "split": "held-out"},
         {"id": "o2", "prompt": "Offer please", "expect": "offer", "workflow": "decision-review", "split": "tune"},
         {"id": "a1", "prompt": "What is a dependency?", "expect": "answer", "workflow": None, "split": "tune"},
     ]
     driver = FakeDriver(src, flaky={"o2"})
+    judge = lambda prompt, reply, catalog: {"label": "answer", "workflow": None, "why": ""}  # noqa: E731
+    with pytest.raises(ValueError, match="fixtures not in the workspace"):
+        rs.run_suite(tasks, driver, tmp_path / "runs" / "missing", 3, "sonnet", judge, {}, log=lambda _m: None)
+    assert driver.calls == 0
+    (src / "seed").mkdir()
+    (src / "seed" / "d.json").write_text("{}")
     judge = lambda prompt, reply, catalog: {"label": "answer", "workflow": None, "why": ""}  # noqa: E731
     out = tmp_path / "runs" / "20261122-000000-test"
     summary = rs.run_suite(tasks, driver, out, 3, "sonnet", judge, {"decision-review": "Decision review"}, log=lambda _m: None)

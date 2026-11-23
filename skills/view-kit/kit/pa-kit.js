@@ -1,6 +1,6 @@
 /* Product Aviator view kit runtime.
    Reads a view spec (#pa-spec) and a dataset (#pa-data) from the page and draws
-   one of the standard layouts: tree-table, board, detail, summary, form.
+   one of the standard layouts: tree-table, board, detail, summary, form, worksheet.
    No dependencies, no network. Works in the Omnigent viewer, in the preview
    harness, and opened as a plain file. See references/spec.md. */
 (function () {
@@ -23,7 +23,7 @@
   var SF = spec.status_field || "status";
 
   /* ---------- state that survives a redraw and, where the host allows, a reload ---------- */
-  var state = { detail: [], wide: false, collapsed: {}, filter: null, edits: {}, direct: {}, sent: false, answers: {}, answered: false, asking: null };
+  var state = { detail: [], wide: false, collapsed: {}, filter: null, edits: {}, direct: {}, sent: false, answers: {}, answered: false, asking: null, trial: {} };
   (function load() {
     var saved = null;
     try { saved = window.omnigent && window.omnigent.state && window.omnigent.state[KEY]; } catch (e) {}
@@ -300,7 +300,7 @@
   }
 
   /* ---------- shared pieces ---------- */
-  var LAYOUT_NAMES = { "tree-table": "Catalog", board: "Board", detail: "Detail", summary: "Summary", form: "Form" };
+  var LAYOUT_NAMES = { "tree-table": "Catalog", board: "Board", detail: "Detail", summary: "Summary", form: "Form", worksheet: "Worksheet" };
   function head() {
     var acts = actionsFor("view").map(function (a) { return actionBtn(a); }).join("");
     return '<div class="pa-head"><div class="pa-headmain"><span class="pa-eyebrow">' + esc(spec.eyebrow ? fmt(spec.eyebrow) : "Template · " + (LAYOUT_NAMES[spec.layout] || spec.layout || "View")) + "</span>" +
@@ -416,6 +416,73 @@
             (acts.length ? '<div class="pa-meta">' + acts.map(function (a) { return actionBtn(a, r, true); }).join("") + "</div>" : "") + "</div>";
         }).join("") : '<div class="pa-lane-empty">None</div>') + "</div>";
     }).join("") + "</div>";
+  }
+
+  /* ---------- worksheet: try options, watch the totals move ----------
+     Groups (a choice) hold items (its options). Pressing an option tries it: the readouts
+     at the top add up the tried option of every group and show the change from the
+     baseline (each group's first option), so a trade-off is felt before it is chosen.
+     Trying is local to the page; choosing still goes through the spec's actions. */
+  function worksheet() {
+    var w = spec.worksheet || {};
+    var gType = w.group || "choice", iType = w.item || "option";
+    var groups = recs().filter(function (r) { return r.type === gType && match(r, spec.records_group); });
+    if (!groups.length) return '<div class="pa-empty">' + esc(spec.empty || "No choices yet.") + "</div>";
+    var readouts = w.readouts || [];
+    var opts = function (g) { return childrenOf(g.id, { type: iType }); };
+    function tried(g) {
+      var list = opts(g), id = state.trial[g.id];
+      var pick = list.filter(function (o) { return o.id === id; })[0];
+      if (pick) return pick;
+      var chosen = list.filter(function (o) { return o.id === val(g, "selected_option") || val(o, SF) === "chosen"; })[0];
+      return chosen || list.filter(function (o) { return val(o, SF) !== "rejected"; })[0] || list[0];
+    }
+    function num(o, f) { var v = o ? Number(val(o, f)) : NaN; return isNaN(v) ? null : v; }
+    function total(rd, pickFn) {
+      var vals = groups.map(function (g) { return num(pickFn(g), rd.field); }).filter(function (v) { return v != null; });
+      if (!vals.length) return null;
+      return rd.agg === "max" ? Math.max.apply(null, vals) : vals.reduce(function (a, b) { return a + b; }, 0);
+    }
+    function round(v) { return Math.round(v * 10) / 10; }
+    var base = function (g) { return opts(g)[0]; };
+    var teams = {}, teamsBase = {};
+    groups.forEach(function (g) {
+      [].concat(val(tried(g), w.relies || "relies_on") || []).forEach(function (x) { teams[x] = 1; });
+      [].concat(val(base(g), w.relies || "relies_on") || []).forEach(function (x) { teamsBase[x] = 1; });
+    });
+    var meters = readouts.map(function (rd) {
+      var now = total(rd, tried), was = total(rd, base);
+      var delta = now != null && was != null ? round(now - was) : 0;
+      var tone = delta < 0 ? "ok" : delta > 0 ? "attn" : "idle";
+      return '<div class="pa-readout"><span class="pa-lab">' + esc(rd.label || label(rd.field)) + '</span><b>' + (now == null ? "–" : esc(round(now))) + '<small>' + esc(rd.unit || "") + "</small></b>" +
+        (delta ? '<span class="pa-delta tone-' + tone + '">' + (delta > 0 ? "+" : "−") + esc(Math.abs(delta)) + " " + esc(rd.unit || "") + " vs baseline</span>" : '<span class="pa-delta">baseline</span>') + "</div>";
+    });
+    var nT = Object.keys(teams).length, dT = nT - Object.keys(teamsBase).length;
+    meters.push('<div class="pa-readout"><span class="pa-lab">Teams relied on</span><b>' + nT + "</b>" + (dT ? '<span class="pa-delta tone-' + (dT < 0 ? "ok" : "attn") + '">' + (dT > 0 ? "+" : "−") + Math.abs(dT) + " vs baseline</span>" : '<span class="pa-delta">baseline</span>') + "</div>");
+    var traded = groups.filter(function (g) { var o = tried(g); return o && o !== base(g) && val(o, w.kind || "kind") === "scope-trade"; }).length;
+    meters.push('<div class="pa-readout"><span class="pa-lab">Scope traded</span><b>' + traded + "</b>" + '<span class="pa-delta">' + (traded ? (traded === 1 ? "one choice gives up scope" : traded + " choices give up scope") : "nothing given up") + "</span></div>");
+    var hint = '<p class="pa-sub">Press an option to try it. The totals add up the option you are trying in every choice; nothing is chosen until you choose it.</p>';
+    var body = groups.map(function (g) {
+      var t = tried(g), list = opts(g);
+      return '<section class="pa-wsgroup"><div class="pa-wshead"><span class="pa-id">' + esc(g.id) + '</span><h3>' + esc(val(g, "title")) + "</h3>" + pill(val(g, SF)) + "</div>" +
+        '<div class="pa-wsopts">' + list.map(function (o, i) {
+          var st = val(o, SF), on = t && t.id === o.id;
+          var nums = readouts.map(function (rd) { var v = num(o, rd.field); return '<span><span class="pa-lab">' + esc(rd.short || rd.label || label(rd.field)) + "</span> " + (v == null ? "–" : esc(v) + " " + esc(rd.unit || "")) + "</span>"; }).join("");
+          var gives = val(o, w.gives || "scope"), relies = [].concat(val(o, w.relies || "relies_on") || []);
+          return '<div class="pa-wsopt' + (on ? " is-on" : "") + (st === "rejected" ? " is-out" : "") + (st === "chosen" ? " tone-ok is-chosen" : "") + '">' +
+            '<button class="pa-wstry" data-act="try" data-g="' + esc(g.id) + '" data-id="' + esc(o.id) + '" aria-pressed="' + (on ? "true" : "false") + '">' +
+            '<span class="pa-id">' + esc(o.id) + (i === 0 ? " · baseline" : "") + "</span>" +
+            '<span class="pa-t">' + esc(val(o, "title")) + "</span>" +
+            (val(o, w.kind || "kind") ? '<span class="pa-chip">' + esc(label(val(o, w.kind || "kind"))) + "</span>" : "") +
+            '<span class="pa-wsnums">' + nums + "</span>" +
+            (gives ? '<span class="pa-wsgives">' + esc(gives) + "</span>" : "") +
+            (relies.length ? '<span class="pa-meta">' + relies.map(function (x) { return '<span class="pa-chip">' + esc(x) + "</span>"; }).join("") + "</span>" : "") +
+            (st === "rejected" && val(o, "reason") ? '<span class="pa-wsgives">Turned down: ' + esc(val(o, "reason")) + "</span>" : "") +
+            "</button>" +
+            '<div class="pa-wsfoot">' + pill(st) + (detailSpec(o) ? '<button class="pa-btn small" data-act="open" data-id="' + esc(o.id) + '">Details</button>' : "") + "</div></div>";
+        }).join("") + "</div></section>";
+    }).join("");
+    return '<div class="pa-readouts" role="status" aria-live="polite">' + meters.join("") + "</div>" + hint + body;
   }
 
   /* ---------- detail ---------- */
@@ -592,7 +659,7 @@
   function render() {
     index();
     var y = window.scrollY, pb = document.querySelector(".pa-panelbody"), py = pb ? pb.scrollTop : 0;
-    var body = spec.layout === "board" ? board() : spec.layout === "detail" ? detailLayout() : spec.layout === "summary" ? summary() : spec.layout === "form" ? form() : treeTable();
+    var body = spec.layout === "board" ? board() : spec.layout === "detail" ? detailLayout() : spec.layout === "summary" ? summary() : spec.layout === "form" ? form() : spec.layout === "worksheet" ? worksheet() : treeTable();
     var collectionLayout = spec.layout === "board" || spec.layout === "tree-table" || !spec.layout;
     var inner = head() + (collectionLayout ? strip() : "") + body + foot();
     app.innerHTML = (host === "chat" ? '<div class="pa-shell">' + inner + "</div>" : inner) + panel() + pending();
@@ -648,6 +715,7 @@
     else if (act === "nav") { var n = neighbour(state.detail[0], Number(el.getAttribute("data-d"))); if (n) state.detail = [n]; }
     else if (act === "twist") { if (state.collapsed[id]) delete state.collapsed[id]; else state.collapsed[id] = true; }
     else if (act === "filter") { var v = el.getAttribute("data-v"); state.filter = !v || state.filter === v ? null : v; }
+    else if (act === "try") { state.trial[el.getAttribute("data-g")] = id; }
     else if (act === "pick") setEdit(el.getAttribute("data-parent"), el.getAttribute("data-field"), id);
     else if (act === "choose") setEdit(id, el.getAttribute("data-field"), el.getAttribute("data-v"));
     else if (act === "send-edits") sendEdits();

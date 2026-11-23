@@ -110,9 +110,18 @@ def load_tasks(workspace: Path | None = None, extra: Path = TASKS_FILE) -> list[
                     "near": wf["id"] if kind == "open" else None,
                     "source": "workflow",
                 })
+    fixtures: dict[str, Any] = {}
     if extra.is_file():
-        for raw in json.loads(extra.read_text(encoding="utf-8")).get("tasks", []):
+        hand = json.loads(extra.read_text(encoding="utf-8"))
+        fixtures = hand.get("fixtures") or {}
+        for raw in hand.get("tasks", []):
             tasks.append({"workflow": None, "near": None, **raw, "source": extra.name})
+    for task in tasks:
+        if task["id"] in fixtures:
+            task["fixtures"] = {**fixtures[task["id"]], **(task.get("fixtures") or {})}
+    unknown = set(fixtures) - {t["id"] for t in tasks}
+    if unknown:
+        raise ValueError(f"fixtures for tasks that do not exist: {', '.join(sorted(unknown))}")
     seen: set[str] = set()
     for task in tasks:
         if task["id"] in seen:
@@ -298,6 +307,49 @@ def copy_workspace(source: Path, dest: Path) -> Path:
     return dest
 
 
+FIXTURES_DIR = Path(__file__).resolve().parent / "routing" / "fixtures"
+_OWN_FIXTURES = "evals/routing/fixtures/"
+
+
+def fixture_source(workspace: Path, src_rel: str) -> Path:
+    """Where a fixture comes from: the suite's own ``evals/routing/fixtures/``
+    (material no scenario has, such as raw interviews), or the workspace."""
+    if src_rel.startswith(_OWN_FIXTURES):
+        src = (FIXTURES_DIR / src_rel[len(_OWN_FIXTURES):]).resolve()
+        if FIXTURES_DIR.resolve() not in src.parents:
+            raise ValueError(f"fixture {src_rel}: stays inside {_OWN_FIXTURES}")
+        return src
+    src = (workspace / src_rel).resolve()
+    if workspace.resolve() not in src.parents:
+        raise ValueError(f"fixture {src_rel}: paths stay inside the workspace")
+    return src
+
+
+def add_fixtures(ws: Path, fixtures: dict[str, str] | None) -> list[str]:
+    """Copy a task's fixtures into its trial workspace.
+
+    A destination is relative to the workspace and may not leave it. A source
+    is read from the trial's own copy (configuration copy_workspace keeps,
+    such as a scenario's fixtures) or from the suite's own fixtures folder.
+    A source that is a folder is copied whole.
+    """
+    placed = []
+    root = ws.resolve()
+    for dest_rel, src_rel in (fixtures or {}).items():
+        src, dest = fixture_source(ws, src_rel), (ws / dest_rel).resolve()
+        if root not in dest.parents:
+            raise ValueError(f"fixture {dest_rel}: paths stay inside the workspace")
+        if not src.exists():
+            raise ValueError(f"fixture {dest_rel}: {src_rel} is not in the workspace")
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        if src.is_dir():
+            shutil.copytree(src, dest, dirs_exist_ok=True)
+        else:
+            shutil.copyfile(src, dest)
+        placed.append(dest_rel)
+    return placed
+
+
 def trial_lines(task_id: str, trial: str, usage_root: Path | None = None) -> list[dict[str, Any]]:
     """The usage log's lines for one trial."""
     want = {"suite": SUITE, "task": task_id, "trial": trial}
@@ -323,6 +375,46 @@ def workspace_evidence(ws: Path) -> dict[str, list[str]]:
     return {"briefed": sorted(briefed), "runs": sorted(runs)}
 
 
+_CARD_KEYS = {"question", "header", "label", "description", "title", "message", "text", "prompt"}
+_START_LABEL = re.compile(r"^\s*(start|run|yes|begin|go ahead)\b", re.I)
+
+
+def _names(text: str, wid: str, title: str) -> bool:
+    return any(re.search(rf"(?<![\w-]){re.escape(n.lower())}(?![\w-])", text) for n in (wid, title))
+
+
+def question_card(question: Any, workflows: dict[str, str] | None = None) -> dict[str, Any]:
+    """The words a person sees on a question card, and whether it offers to start something.
+
+    A card is an offer only when one of its answers starts something ("Start
+    it", "Run it", "Yes") or names a workflow. A card that only asks which
+    paragraph or which calls is a clarifying question, graded by the judge
+    like any reply.
+    """
+    texts: list[str] = []
+    labels: list[str] = []
+
+    def walk(node: Any, key: str = "") -> None:
+        if isinstance(node, dict):
+            for k, v in node.items():
+                walk(v, k)
+        elif isinstance(node, list):
+            for v in node:
+                walk(v, key)
+        elif isinstance(node, str) and key in _CARD_KEYS:
+            (labels if key == "label" else texts).append(node)
+
+    walk(question)
+    answers = " ".join(labels).lower()
+    offers = any(_START_LABEL.match(label) for label in labels) or any(
+        _names(answers, wid, title) for wid, title in (workflows or {}).items())
+    seen = " ".join(texts + labels).lower()
+    named = [wid for wid, title in (workflows or {}).items() if _names(seen, wid, title)]
+    # "?" marks an offer that names no workflow.
+    return {"text": " ".join(texts + labels)[:4000], "labels": labels, "offers": offers,
+            "asked": (named or ["?"]) if offers else []}
+
+
 def evidence(result: dict[str, Any], lines: list[dict[str, Any]], files: dict[str, list[str]],
              workflows: dict[str, str]) -> dict[str, Any]:
     """What the turn did, from what the app recorded."""
@@ -338,16 +430,16 @@ def evidence(result: dict[str, Any], lines: list[dict[str, Any]], files: dict[st
                 skills.append(str(params["skill"]))
         elif name == "offer.made" and params.get("workflow"):
             offers.append(str(params["workflow"]))
-    asked: list[str] = []
-    if result.get("question"):
-        text = json.dumps(result["question"]).lower()
-        asked = [wid for wid, title in workflows.items() if wid in text or title.lower() in text]
+    card = question_card(result.get("question"), workflows)
+    asked = card["asked"]
     threads = bool(result.get("threads")) or any("sys_session_create" in t for t in tools)
     return {
         "skills": sorted(set(skills)),
         "offers": sorted(set(offers)),
         "asked": sorted(set(asked)),
         "question": bool(result.get("question")),
+        "card_offers": card["offers"],
+        "card_text": card["text"],
         "threads": threads,
         "briefed": files["briefed"],
         "runs": files["runs"],
@@ -375,7 +467,7 @@ The assistant replied (it may have been cut off):
 Classify the reply:
 - "offer": it proposes running one of the workflows above (by name or by describing it) and asks whether to start.
 - "answer": it answers a direct question or does a small task, with no workflow proposed.
-- "open": it thinks the problem through with the person (questions, options, ideas), with no workflow proposed.
+- "open": it thinks the problem through with the person (questions, options, ideas), with no workflow proposed. Asking which document, paragraph or thing they mean is "open", not an offer.
 - "start": it says it has started one of the workflows.
 Name the workflow id for offer or start, else null. If you cannot tell, use "unknown".
 
@@ -417,11 +509,10 @@ def observe(ev: dict[str, Any], catalog: dict[str, str], lifecycle_skill: str | 
     workflows = sorted(touched & set(catalog))
     if workflows or ev["threads"]:
         return "start", workflows, "skill loaded, brief, run or thread"
-    offered = sorted(set(ev["offers"]) | set(ev["asked"]))
-    if offered:
-        return "offer", offered, "offer logged or asked on a card"
+    if ev["offers"] or ev["asked"]:
+        return "offer", sorted((set(ev["offers"]) | set(ev["asked"])) - {"?"}), "offer logged or asked on a card"
     if ev["question"]:
-        return "offer", [], "a question card naming no workflow"
+        return "none", [], "a question card that starts nothing"
     return "none", [], "no workflow started or offered"
 
 
@@ -431,7 +522,8 @@ def grade(task: dict[str, Any], ev: dict[str, Any], reply: str, catalog: dict[st
     label, workflows, how = observe(ev, catalog, task.get("requires_skill") if task["expect"] == "lifecycle" else None)
     verdict = None
     if label == "none" and judge is not None:
-        verdict = judge(task["prompt"], reply, catalog)
+        card = ev.get("card_text") or ""
+        verdict = judge(task["prompt"], f"{reply}\n\n[Question card] {card}" if card else reply, catalog)
         if verdict["label"] == "offer":
             label, workflows, how = "offer", [verdict["workflow"]] if verdict["workflow"] else [], "judge: offer in words"
         elif verdict["label"] in ("open", "answer"):
@@ -459,6 +551,10 @@ def run_suite(tasks: list[dict[str, Any]], driver: Any, out: Path, trials: int, 
               usage_root: Path | None = None, log: Callable[[str], None] = print) -> dict[str, Any]:
     out.mkdir(parents=True, exist_ok=True)
     source = driver.source_workspace()
+    missing = [f"{t['id']}: {src}" for t in tasks for src in (t.get("fixtures") or {}).values()
+               if not fixture_source(source, src).exists()]
+    if missing:
+        raise ValueError("fixtures not in the workspace: " + "; ".join(missing))
     run_tag = out.name.replace("-", "")
     meta = {"suite": SUITE, "run": out.name, "model": model, "trials": trials,
             "started": _dt.datetime.now().isoformat(timespec="seconds"), "tasks": len(tasks)}
@@ -468,6 +564,7 @@ def run_suite(tasks: list[dict[str, Any]], driver: Any, out: Path, trials: int, 
         for n in range(1, trials + 1):
             trial = f"{run_tag}.{n}"
             ws = copy_workspace(source, out / "ws" / f"{task['id']}.{n}")
+            add_fixtures(ws, task.get("fixtures"))
             usagelog.set_eval_tag(SUITE, task["id"], trial, usage_root)
             try:
                 result = driver.run(task["prompt"], ws, f"eval {SUITE} {task['id']} {n}")
@@ -688,11 +785,26 @@ def cmd_run(args: argparse.Namespace) -> None:
     print(f"\n{_pct(summary['overall'])} tasks passed; report: {out / 'report.md'}")
 
 
+def regrade(record: dict[str, Any], catalog: dict[str, str], judge: Callable[..., dict[str, Any]] | None) -> dict[str, Any]:
+    """Grade a saved trial again with today's grader: the card is re-read, the rest of the evidence kept."""
+    result, ev = record["result"], dict(record["evidence"])
+    card = question_card(result.get("question"), catalog)
+    ev.update(card_offers=card["offers"], card_text=card["text"], asked=sorted(card["asked"]))
+    if result.get("error") and not result.get("reply"):
+        return {**record, "evidence": ev}
+    return {**record, "evidence": ev, **grade(record["task"], ev, result.get("reply", ""), catalog, judge)}
+
+
 def cmd_report(args: argparse.Namespace) -> None:
     run = Path(args.run_dir)
     records = load_records(run)
     if not records:
         raise SystemExit(f"no trials in {run}")
+    if args.regrade:
+        judge = None if args.no_judge else claude_judge(args.judge_model)
+        records = [regrade(r, _catalog(None), judge) for r in records]
+        with (run / "trials.jsonl").open("w", encoding="utf-8") as fh:
+            fh.writelines(json.dumps(r, ensure_ascii=False) + "\n" for r in records)
     meta = json.loads((run / "run.json").read_text()) if (run / "run.json").is_file() else {"run": run.name, "model": "?", "trials": "?"}
     summary = summarize(records)
     (run / "summary.json").write_text(json.dumps(summary, indent=1) + "\n")
@@ -736,6 +848,9 @@ def main(argv: list[str] | None = None) -> None:
             p.add_argument("--out")
     p = sub.add_parser("report", help="re-grade a run's summary and print its report")
     p.add_argument("run_dir")
+    p.add_argument("--regrade", action="store_true", help="grade every saved trial again with this grader")
+    p.add_argument("--judge-model", default=DEFAULT_JUDGE_MODEL)
+    p.add_argument("--no-judge", action="store_true", help="code graders only")
     p.set_defaults(func=cmd_report)
     p = sub.add_parser("pairs", help="a blind page of ten pairs from two runs, for Geoff")
     p.add_argument("a")

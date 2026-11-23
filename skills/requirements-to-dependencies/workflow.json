@@ -1,6 +1,7 @@
 {
  "workflow": "requirements-to-dependencies",
  "title": "Requirements to dependencies",
+ "part_of": "prd-to-dependencies",
  "summary": "For each requirement, a sub-agent finds the platform capabilities that could meet it. The product manager starts, answers and reviews twenty explorations on one board.",
  "inputs": [
   {
@@ -72,7 +73,7 @@
    "No requirements catalog exists yet"
   ],
   "needs": "A requirements dataset from PRD to requirements, and a platform map in context/",
-  "stage": "map",
+  "stage": "specify",
   "offer": "Your requirements are catalogued. The next step maps what the platform offers for each one, on a board you start and review tile by tile.",
   "examples": {
    "start": [
