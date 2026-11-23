@@ -1136,6 +1136,11 @@ def configured_harness_map() -> dict[str, HarnessAvailability]:
         availability_cache = {cache_key: future.result() for cache_key, future in futures.items()}
         tmux_usable = tmux_future is None or tmux_future.result() is None
 
+    # omnigent-slim: sessions run the installed ``claude`` through claude-sdk (D-172), and that
+    # CLI brings its own sign-in or company gateway; it is ready whenever the CLI is (minus tmux).
+    native = availability_cache.get(("harness", "claude-native"))
+    if native is not None and ("harness", "claude-sdk") in availability_cache:
+        availability_cache[("harness", "claude-sdk")] = native
     return {
         spelling: _with_tmux_requirement(
             _canonical_harness(spelling), availability_cache[cache_key], tmux_usable

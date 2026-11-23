@@ -19,7 +19,8 @@ import { authenticatedFetch } from "@/lib/identity";
  */
 export const BRAIN_HARNESS_LABELS: Record<string, string> = {
   // Insertion order IS the fly-out's menu order.
-  "claude-sdk": "Claude SDK",
+  // omnigent-slim: it runs the installed Claude Code; "SDK" would mislead (D-174).
+  "claude-sdk": "Claude Code",
   codex: "Codex",
   cursor: "Cursor",
   pi: "Pi",
@@ -90,7 +91,9 @@ export async function fetchHarnessCatalog(): Promise<HarnessCatalog> {
   const res = await authenticatedFetch("/v1/harnesses");
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
   const body = (await res.json()) as HarnessCatalogWire;
-  const labels: Record<string, string> = { ...BRAIN_HARNESS_LABELS };
+  // omnigent-slim: only what the server offers (Claude Code), not upstream's built-in
+  // list, so no harness choice of one is shown (D-174).
+  const labels: Record<string, string> = {};
   const acpHarnesses = new Set<string>();
   const fileMentionHarnesses = new Set<string>();
   for (const row of body.data ?? []) {
@@ -228,5 +231,7 @@ export function useHarnessEffortFamilies(enabled = true): Record<string, string>
  */
 export function capitalizeAgentName(name: string): string {
   if (name.length === 0) return name;
+  // omnigent-slim: the agent every session runs reads as the product (D-174).
+  if (name === "claude-code") return "Claude Code";
   return name.charAt(0).toUpperCase() + name.slice(1);
 }

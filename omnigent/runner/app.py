@@ -1487,6 +1487,8 @@ def create_runner_app(
     # snapshot and updated by ``effort_change``. In-process harnesses learn the
     # effort only from the forwarded turn body, which is built field by field.
     _session_reasoning_effort: dict[str, str] = {}
+    # omnigent-slim: each Claude Code session's picked permission mode (D-174).
+    _session_permission_mode: dict[str, str] = {}
     _session_skills_cache: dict[str, tuple[float, list[SkillSpec], bool]] = {}
     _session_workspace_cache: dict[str, str | None] = {}  # session_id → workspace path
     _session_cursor_model_names: dict[str, dict[str, str]] = {}
@@ -2796,6 +2798,10 @@ def create_runner_app(
             _session_sub_agent_names[session_id] = envelope.sub_agent_name
         if snapshot.reasoning_effort:
             _session_reasoning_effort[session_id] = snapshot.reasoning_effort
+        # omnigent-slim: a mode picked before a restart comes back from its label (D-174).
+        _picked_mode = (snapshot.labels or {}).get("omnigent.claude_native.permission_mode")
+        if _picked_mode:
+            _session_permission_mode[session_id] = _picked_mode
         _session_init_envelopes[session_id] = (time.monotonic(), envelope)
         return _SessionInitContext(envelope=envelope)
 
@@ -3648,8 +3654,11 @@ def create_runner_app(
                 _relay_task.add_done_callback(_background_tasks.discard)
                 _background_tasks.add(_relay_task)
 
+        from omnigent.slim_policy import SLIM_REPL_TERMINAL
+
         if (
-            spec is not None
+            SLIM_REPL_TERMINAL  # omnigent-slim: no REPL terminal tab (D-174)
+            and spec is not None
             and not is_native_harness(harness_name)
             and not _sa_name
             and resource_registry.terminal_registry is not None
@@ -6421,6 +6430,8 @@ def create_runner_app(
                     harness_name,
                     format_supported(_supported) if _supported else "no effort override",
                 )
+        if conv in _session_permission_mode:  # omnigent-slim (D-174)
+            harness_body["permission_mode"] = _session_permission_mode[conv]
         if _session_histories[conv]:
             harness_body["content"] = _session_histories[conv]
         else:
@@ -8630,6 +8641,23 @@ def create_runner_app(
 
         if body_type == "permission_mode_change":
             harness = _session_harness_name(conversation_id)
+            if harness == "claude-sdk":
+                # omnigent-slim: remembered and sent with each turn; Claude Code applies
+                # it from the next message (D-174). Bypass modes are refused.
+                from omnigent.slim_policy import ALLOWED_CLAUDE_PERMISSION_MODES
+
+                mode = body.get("permission_mode") if isinstance(body, dict) else None
+                if mode not in ALLOWED_CLAUDE_PERMISSION_MODES:
+                    return JSONResponse(
+                        status_code=400,
+                        content={
+                            "error": "invalid_input",
+                            "detail": "permission_mode must be one of "
+                            + ", ".join(ALLOWED_CLAUDE_PERMISSION_MODES),
+                        },
+                    )
+                _session_permission_mode[conversation_id] = cast(str, mode)
+                return Response(status_code=204)
             if harness in ("claude-native", "devin-native"):
                 mode = body.get("permission_mode") if isinstance(body, dict) else None
                 if mode is not None and not isinstance(mode, str):

@@ -288,6 +288,8 @@ class ExecutorAdapter(HarnessApp):
             effort = request.reasoning.get("effort")
             if effort:
                 extra["reasoning_effort"] = effort
+        if request.permission_mode:  # omnigent-slim: the session's picked mode (D-174)
+            extra["permission_mode"] = request.permission_mode
         if request.max_output_tokens is not None:
             extra["max_tokens"] = int(request.max_output_tokens)
         # model_override is the per-request override; takes precedence over the spec default.

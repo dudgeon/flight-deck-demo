@@ -11329,7 +11329,11 @@ def _repl_terminal_ui_labels(
         terminal, else ``{}``.
     """
     from omnigent.harness_aliases import is_native_harness
+    from omnigent.slim_policy import SLIM_REPL_TERMINAL
 
+    # omnigent-slim: no Omnigent REPL terminal beside Claude Code sessions (D-174).
+    if not SLIM_REPL_TERMINAL:
+        return {}
     if agent_cache is None or harness_override == "auto":
         return {}
     if harness_override:

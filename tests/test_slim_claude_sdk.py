@@ -36,7 +36,10 @@ def test_the_agent_is_claude_code_over_structured_messages() -> None:
 
 def test_start_offers_only_that_agent() -> None:
     start = (ROOT / "start.sh").read_text()
-    assert 'OMNIGENT_BUILTIN_AGENT_DIRS="${OMNIGENT_BUILTIN_AGENT_DIRS:-$ROOT/omnigent/slim_agents/claude-code}"' in start
+    assert (
+        'OMNIGENT_BUILTIN_AGENT_DIRS="${OMNIGENT_BUILTIN_AGENT_DIRS:-$ROOT/omnigent/slim_agents/claude-code}"'
+        in start
+    )
     assert 'OMNIGENT_SEEDED_AGENTS="${OMNIGENT_SEEDED_AGENTS-}"' in start
 
 
@@ -49,8 +52,12 @@ def test_claude_code_keeps_its_own_tools() -> None:
 
 @pytest.mark.parametrize(
     ("asked", "runs"),
-    [(None, slim_policy.DEFAULT_CLAUDE_PERMISSION_MODE), ("default", "default"),
-     ("bypassPermissions", "default"), ("dontAsk", "default")],
+    [
+        (None, slim_policy.DEFAULT_CLAUDE_PERMISSION_MODE),
+        ("default", "default"),
+        ("bypassPermissions", "default"),
+        ("dontAsk", "default"),
+    ],
 )
 def test_permission_modes_never_skip_checks(asked: str | None, runs: str) -> None:
     assert slim_policy.slim_sdk_permission_mode(asked) == runs
@@ -93,14 +100,24 @@ def _fake_server(projects: list[dict], patched: list[dict]) -> httpx.MockTranspo
     return httpx.MockTransport(handle)
 
 
-def test_existing_projects_move_to_the_new_agent(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_existing_projects_move_to_the_new_agent(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     patched: list[dict] = []
     transport = _fake_server(
-        [{"id": "p1", "name": "Workspace", "config": {"agent_id": "old", "workspace": str(tmp_path)}}],
+        [
+            {
+                "id": "p1",
+                "name": "Workspace",
+                "config": {"agent_id": "old", "workspace": str(tmp_path)},
+            }
+        ],
         patched,
     )
     real = httpx.Client
-    monkeypatch.setattr(slim_bootstrap.httpx, "Client", lambda **kw: real(transport=transport, **kw))
+    monkeypatch.setattr(
+        slim_bootstrap.httpx, "Client", lambda **kw: real(transport=transport, **kw)
+    )
     slim_bootstrap.ensure_project("http://x", "Workspace", tmp_path)
     assert patched and patched[0]["config"]["agent_id"] == "new"
 
@@ -145,7 +162,9 @@ def test_projects_whose_agent_is_gone_move_to_claude_code(monkeypatch: pytest.Mo
         patched,
     )
     real = httpx.Client
-    monkeypatch.setattr(slim_bootstrap.httpx, "Client", lambda **kw: real(transport=transport, **kw))
+    monkeypatch.setattr(
+        slim_bootstrap.httpx, "Client", lambda **kw: real(transport=transport, **kw)
+    )
     assert slim_bootstrap.repoint_orphaned_projects("http://x") == ["◆ Demo · The launch slips"]
     assert [p["config"]["agent_id"] for p in patched] == ["new"]
 
@@ -159,7 +178,9 @@ def test_flying_again_brings_a_demo_project_onto_the_workspace_agent(tmp_path: P
     projects = [
         SimpleNamespace(id="w", name="Workspace", config={"agent_id": "new", "host_id": "h"}),
         SimpleNamespace(
-            id="d", name="◆ Demo · X", config={"agent_id": "old", "host_id": "h", "workspace": str(folder)}
+            id="d",
+            name="◆ Demo · X",
+            config={"agent_id": "old", "host_id": "h", "workspace": str(folder)},
         ),
     ]
     updates: list[dict] = []
@@ -169,3 +190,70 @@ def test_flying_again_brings_a_demo_project_onto_the_workspace_agent(tmp_path: P
     )
     assert slim_hangar._ensure_demo_project(store, None, "◆ Demo · X", folder) == "d"
     assert updates and updates[0]["agent_id"] == "new"
+
+
+# --- The session view says Claude Code, has no terminal tab, and picks mode and effort (D-174).
+
+
+def test_the_harness_reads_as_claude_code_and_offers_effort() -> None:
+    from omnigent.harness_plugins import SLIM_PICKER_HARNESSES, harness_catalog
+
+    rows = {row["id"]: row for row in harness_catalog()}
+    assert "claude-sdk" in SLIM_PICKER_HARNESSES
+    assert rows["claude-sdk"]["label"] == "Claude Code"
+    assert rows["claude-sdk"]["capabilities"]["effort"] == "anthropic"
+
+
+def test_no_word_sdk_where_people_see_it() -> None:
+    web = ROOT / "web/src"
+    assert '"claude-sdk": "Claude Code"' in (web / "lib/agentLabels.ts").read_text()
+    assert (
+        'if (name === "claude-code") return "Claude Code";'
+        in (web / "lib/agentLabels.ts").read_text()
+    )
+    assert 'startsWith("claude_sdk_")' in (web / "lib/nativeCodingAgents.ts").read_text()
+    executor = (ROOT / "omnigent/inner/claude_sdk_executor.py").read_text()
+    assert "Claude SDK session crashed" not in executor
+    assert "Claude SDK connect failed: {exc}" not in executor
+
+
+def test_sessions_get_no_repl_terminal_tab() -> None:
+    from omnigent.server.routes._sessions.helpers import _repl_terminal_ui_labels
+    from omnigent.slim_policy import SLIM_REPL_TERMINAL
+
+    assert SLIM_REPL_TERMINAL is False
+    assert _repl_terminal_ui_labels(agent=None, agent_cache=object(), harness_override=None) == {}
+    assert "SLIM_REPL_TERMINAL  # omnigent-slim" in (ROOT / "omnigent/runner/app.py").read_text()
+
+
+def test_claude_code_is_ready_whenever_the_cli_is(monkeypatch: pytest.MonkeyPatch) -> None:
+    """No "isn't configured, run omni setup" banner when the CLI is signed in."""
+    from omnigent.onboarding import harness_readiness as hr
+
+    monkeypatch.setattr(
+        hr, "_harness_availability", lambda h: True if h == "claude-native" else "needs-auth"
+    )
+    monkeypatch.setattr(hr, "tmux_unavailable_reason", lambda: None)
+    assert hr.configured_harness_map()["claude-sdk"] is True
+
+
+def test_a_picked_mode_reaches_claude_code() -> None:
+    from omnigent.server.schemas import CreateResponseRequest
+
+    assert (
+        CreateResponseRequest(
+            model="claude-code", input="hi", permission_mode="plan"
+        ).permission_mode
+        == "plan"
+    )
+    adapter = (ROOT / "omnigent/runtime/harnesses/_executor_adapter.py").read_text()
+    assert 'extra["permission_mode"] = request.permission_mode' in adapter
+    runner = (ROOT / "omnigent/runner/app.py").read_text()
+    assert "_session_permission_mode[conversation_id] = cast(str, mode)" in runner
+    assert 'harness_body["permission_mode"] = _session_permission_mode[conv]' in runner
+    executor = (ROOT / "omnigent/inner/claude_sdk_executor.py").read_text()
+    assert "new_mode = slim_sdk_permission_mode(requested_mode)" in executor
+    assert "or mode_changed or" in executor
+    # The picker never offers a bypass: the server checks against the slim list.
+    routes = (ROOT / "omnigent/server/routes/sessions/routes_core.py").read_text()
+    assert "allowed_permission_modes = tuple(ALLOWED_CLAUDE_PERMISSION_MODES)" in routes

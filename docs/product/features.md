@@ -842,8 +842,9 @@ skill; some unzip tools flatten those links into files, so start-up puts them
 back. Start-up also moves any project whose agent no longer exists (a demo
 flown before this change, say) onto the Claude Code agent, and flying a
 demo again brings its project into line with Workspace. Every Mac works this way, so the Mac mini runs what the work Mac runs
-(D-173). The terminal tab still shows but has no live Claude in it; removing
-it is a follow-up.
+(D-173). The session reads as Claude Code everywhere, with no terminal tab;
+the composer picks the permission mode (never a bypass) and the effort, and a
+picked mode applies from the next message (D-174).
 
 **Where.** `omnigent/slim_agents/claude-code/config.yaml`, `start.sh`,
 `omnigent/slim_policy.py`, `omnigent/inner/claude_sdk_executor.py`

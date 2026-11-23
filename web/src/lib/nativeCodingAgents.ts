@@ -345,6 +345,9 @@ const NATIVE_POLICY_PREFIXES: readonly (readonly [string, NativeCodingAgentSpec]
 export function nativeCodingAgentForPolicyName(
   policyName: string,
 ): NativeCodingAgentSpec | undefined {
+  // omnigent-slim: Claude Code sessions (claude-sdk) ask as "claude_sdk_permission";
+  // the card names Claude Code and hides the internal id and phase (D-174).
+  if (policyName.startsWith("claude_sdk_")) return BY_AGENT_NAME.get("claude-native-ui");
   return NATIVE_POLICY_PREFIXES.find(([prefix]) => policyName.startsWith(prefix))?.[1];
 }
 

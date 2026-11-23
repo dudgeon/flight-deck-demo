@@ -1188,11 +1188,20 @@ const SECONDARY_HARNESS_ORDER: readonly string[] = ["opencode", "pi"];
 // How many rows the backfill promotes — matches the inline list's usual size.
 const INLINE_HARNESS_FALLBACK = PRIMARY_HARNESS_ORDER.length;
 
+/**
+ * omnigent-slim: whether there is more than one harness to pick. With only
+ * Claude Code on offer (D-174), an "SDK" choice of one would only confuse.
+ */
+function hasHarnessChoice(brainHarnessLabels: Readonly<Record<string, string>>): boolean {
+  return Object.keys(brainHarnessLabels).filter((id) => id !== AUTO_HARNESS_ID).length > 1;
+}
+
 function agentHasAdvancedSettings(
   agent: AvailableAgent | undefined,
   brainHarnessLabels: Readonly<Record<string, string>>,
 ): boolean {
   return (
+    hasHarnessChoice(brainHarnessLabels) &&
     agent?.harness != null &&
     agent.harness in brainHarnessLabels &&
     !nativeAgentHasCapability(agent, "permissionMode") &&
@@ -4129,7 +4138,11 @@ function NewChatLandingContent({
         devinPermissionMode;
       return [{ label: "Permission mode", value: devinValue }, ...routingRow];
     }
-    if (selectedAgent?.harness != null && selectedAgent.harness in brainHarnessLabelsAll) {
+    if (
+      hasHarnessChoice(brainHarnessLabelsAll) &&
+      selectedAgent?.harness != null &&
+      selectedAgent.harness in brainHarnessLabelsAll
+    ) {
       const active = pickedHarness ?? selectedAgent.harness;
       return [{ label: "SDK", value: brainHarnessLabelsAll[active] ?? active }, ...routingRow];
     }

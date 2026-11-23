@@ -13525,6 +13525,14 @@ async def _create_session_from_existing_agent(
         )
         if repl_labels:
             initial_labels.update(repl_labels)
+    # omnigent-slim: a Claude Code session starts in the slim default mode, which the
+    # web picker shows and changes (D-174).
+    if body.sub_agent_name is None and selected_harness == "claude-sdk":
+        from omnigent.slim_policy import DEFAULT_CLAUDE_PERMISSION_MODE
+
+        initial_labels.setdefault(
+            "omnigent.claude_native.permission_mode", DEFAULT_CLAUDE_PERMISSION_MODE
+        )
 
     if harness_override == "auto" or _native_smart_routing:
         from omnigent.runner.subagent_routing import AUTO_HARNESS_LABEL_KEY
