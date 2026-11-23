@@ -232,7 +232,7 @@ def test_build_scenarios_and_workflows_as_folder_drafts(
     assert len(entry["history"]) == 1
     slim_hangar.restore_folder("scenario", "document-review", entry["history"][0]["version"])
     entry = next(s for s in slim_hangar.load_hangar()["scenarios"] if s["id"] == "document-review")
-    assert entry["title"] == "Second opinions on a PRD"
+    assert entry["title"] == "Second opinions on a requirements document"
     # A broken script is caught before publishing.
     slim_hangar.start_folder_draft("scenario", "document-review")
     draft = slim_hangar.edit_folder_draft(
@@ -361,9 +361,9 @@ def test_fly_a_scenario_as_a_demo(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
 
     first = slim_hangar.fly_scenario("document-review", None, store, None)
     assert first["state"] == "created"
-    assert first["prompt"] == "I have finished the Allowances PRD. Help me review it."
+    assert first["prompt"] == "I have finished the Allowances requirements document. Help me review it."
     name = first["project"]["name"]
-    assert name == "◆ Demo · Second opinions on a PRD"
+    assert name == "◆ Demo · Second opinions on a requirements document"
     demo = ws / "demos" / "document-review"
     project = next(r for r in store.rows if r.name == name)
     # Settings follow the Workspace project; the folder is the demo's own.

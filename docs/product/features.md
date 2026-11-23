@@ -735,17 +735,24 @@ page that starts a PRD review can show someone what one looks like. Nothing is
 typed into the Library: a card is only as good as the workflow's or scenario's
 own metadata, which keeps one source of truth as skills and scenarios change.
 
-**Behaviour.** "Start with a skill" shows one spotlight card and a grid of the
-featured workflows, in lifecycle order. Each card has the title, a summary,
-the steps as an unnumbered list (D-84), a short form made from its inputs, and
-Start, which opens a new session in the Workspace project with the prompt
+A card shows a workflow the way the Hangar does (D-170), so what a builder
+sees and what a person flying sees are the same thing: the view the work makes,
+drawn from sample data, its steps as chevrons and who it can call in. A
+person deciding where to start sees what they will get, not only a list.
+
+**Behaviour.** "Start your own work" shows one spotlight card and a grid of the
+arcs (D-153: moves and kits never get a card), in lifecycle order. Each card
+has its main view drawn from its scenario's sample data ("You get: Intent
+map"), its stage tag, the title, a summary, the steps as chevrons, who it can
+call in, a short form made from its inputs, and Start, which opens a new session in the Workspace project with the prompt
 filled in; nothing is sent until the person presses Send. A Hangar starter
 that names the workflow shows as "Other ways in", and the scenarios that run
-it as "See it flown". "Scenarios and demos" shows an "In flight" strip of
+it as "See it flown". "Fly a demo" shows an "In flight" strip of
 demos already flown (Continue offers Reset to the start or Keep going), then a
-card per published scenario: kind (Scripted or Mixed), title, summary, the
-workflow it shows, the cast, a meter of live turns, about how long it takes,
-Fly and, when the script has live turns, a "Live turns" switch (D-85). Fly
+board with a row per published scenario: title, summary, the workflow it shows
+(the arc's name for a part of one), the cast in their author colours, a meter
+of live turns, turns and minutes, Fly and, when the script has live turns, a
+"Live turns" switch (D-85, D-170). Fly
 uses the same route and button as the Hangar's "Fly this". Templates are not
 listed here (D-88).
 

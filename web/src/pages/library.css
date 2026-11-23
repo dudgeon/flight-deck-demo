@@ -1,4 +1,5 @@
-/* omnigent-slim: the Library (D-82 to D-88). Flying mode, so navy, never the Hangar's build colour. */
+/* omnigent-slim: the Library (D-82 to D-88, polished by D-170). Flying mode, so
+   navy, never the Hangar's build colour. Tokens only; sentence case; no shadows. */
 
 .pa-library {
   height: 100%;
@@ -8,16 +9,17 @@
   font: var(--pa-text) / 1.5 var(--pa-font);
 }
 .pa-library .lib-wrap {
-  max-width: 1080px;
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 32px 32px 56px;
+  padding: 36px 40px 64px;
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 40px;
 }
 @media (max-width: 720px) {
-  .pa-library .lib-wrap { padding: 64px 16px 40px; }
+  .pa-library .lib-wrap { padding: 64px 16px 40px; gap: 32px; }
 }
+.pa-library header { display: flex; flex-direction: column; gap: 2px; }
 .pa-library h1 {
   margin: 0;
   font-size: var(--pa-text-title);
@@ -25,118 +27,181 @@
   letter-spacing: var(--pa-tracking-title);
 }
 .pa-library h2 {
-  margin: 0 0 12px;
-  font-size: 15px;
+  margin: 0;
+  font-size: 17px;
   font-weight: 600;
+  letter-spacing: var(--pa-tracking-title);
 }
-.pa-library h2 small {
-  margin-left: 8px;
-  font-size: var(--pa-text-sm);
-  font-weight: 400;
-  color: var(--pa-ink-3);
-}
-.pa-library h3 { margin: 0; font-size: 15px; font-weight: 600; }
-.pa-library .lib-sum { margin: 4px 0 0; color: var(--pa-ink-2); }
+.pa-library h3 { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.35; }
+.pa-library .lib-sum { margin: 0; color: var(--pa-ink-2); }
 .pa-library .lib-empty { color: var(--pa-ink-3); font-size: var(--pa-text-sm); }
 .pa-library .lib-error { color: var(--pa-fail); font-size: var(--pa-text-sm); }
 .pa-library code { font-family: var(--pa-mono); font-size: 12px; }
 
-.pa-library .lib-section { display: flex; flex-direction: column; gap: 14px; }
-.pa-library .lib-lower { border-top: 1px solid var(--pa-line); padding-top: 24px; }
-.pa-library .lib-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 14px;
-}
+.pa-library .lib-section { display: flex; flex-direction: column; gap: 16px; }
+.pa-library .lib-section-head { display: flex; flex-direction: column; gap: 2px; }
+.pa-library .lib-section-head p { margin: 0; color: var(--pa-ink-3); font-size: var(--pa-text-sm); }
 
+/* Cards. */
 .pa-library .lib-card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 16px;
+  gap: 10px;
+  padding: 18px;
   border: 1px solid var(--pa-line);
   border-radius: var(--pa-r-panel);
   background: var(--pa-surface);
 }
-.pa-library .lib-card .lib-sum { margin: 0; }
-.pa-library .lib-head { display: flex; align-items: center; gap: 8px; }
-.pa-library .lib-head h3 { flex: 1; min-width: 0; }
-.pa-library .lib-demo .lib-head .lib-kind { flex: 1; }
+.pa-library .lib-head { display: flex; align-items: center; gap: 6px; min-height: 22px; }
+.pa-library .lib-grow { flex: 1; }
+.pa-library .lib-stage,
+.pa-library .lib-here {
+  padding: 1px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+.pa-library .lib-stage { background: var(--pa-sunk); color: var(--pa-ink-2); }
+.pa-library .lib-here { border: 1px solid var(--pa-navy); color: var(--pa-navy); line-height: 16px; }
 
-/* The spotlight: the first featured skill, larger, its steps beside the start box. */
-.pa-library .lib-skill.spot {
-  padding: 22px 24px;
-  border-color: var(--pa-line-strong);
-  box-shadow: var(--pa-shadow);
-}
-.pa-library .lib-skill.spot h3 { font-size: 19px; }
-.pa-library .lib-eyebrow,
-.pa-library .lib-kind {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--pa-ink-3);
-}
-.pa-library .lib-skill.spot .lib-head { flex-wrap: wrap; }
-.pa-library .lib-skill.spot .lib-eyebrow { flex-basis: 100%; color: var(--pa-navy); }
-.pa-library .lib-body { display: flex; flex-direction: column; gap: 12px; flex: 1; }
-.pa-library .lib-body.split {
+/* The grid of arcs: cards in a row share their rows, so the start boxes line up. */
+.pa-library .lib-skills {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-  gap: 24px;
-  margin-top: 6px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
 }
-@media (max-width: 720px) {
-  .pa-library .lib-body.split { grid-template-columns: minmax(0, 1fr); }
+@supports (grid-template-rows: subgrid) {
+  .pa-library .lib-skills > .lib-card {
+    display: grid;
+    grid-template-rows: subgrid;
+    grid-row: span 7;
+    align-content: start;
+  }
 }
-.pa-library .lib-start { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
-.pa-library .lib-body.split .lib-start { margin-top: 0; }
 
-/* Steps are tasks and outcomes more than a sequence, so they aren't numbered. */
+/* Steps, drawn as the Hangar draws them: one chevron each. */
 .pa-library .lib-steps {
-  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  row-gap: 4px;
+  margin: 2px 0 0;
   padding: 0;
   list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  font-size: var(--pa-text-sm);
-  color: var(--pa-ink-2);
+  align-self: start;
 }
-.pa-library .lib-steps li { position: relative; padding-left: 14px; }
-.pa-library .lib-steps li::before {
+.pa-library .lib-steps li {
+  padding: 3px 11px 3px 17px;
+  margin-right: -2px;
+  background: var(--pa-sunk);
+  color: var(--pa-ink-2);
+  font-size: 12px;
+  line-height: 18px;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100%, 8px 50%);
+}
+.pa-library .lib-steps li:first-child {
+  padding-left: 11px;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100%);
+}
+
+/* Who it can call in. */
+.pa-library .lib-crew {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--pa-ink-3);
+}
+.pa-library .lib-crew > span:last-child { min-width: 0; }
+
+/* What the work makes: its main view, drawn from sample data. */
+.pa-library .lib-preview { margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.pa-library .lib-frame {
+  position: relative;
+  height: 150px;
+  overflow: hidden;
+  border: 1px solid var(--pa-line);
+  border-radius: var(--pa-r);
+  background: var(--pa-bg);
+  pointer-events: none;
+}
+.pa-library .lib-frame iframe {
+  display: block;
+  width: 250%;
+  height: 375px;
+  border: 0;
+  background: transparent;
+  transform: scale(0.4);
+  transform-origin: 0 0;
+}
+.pa-library .lib-frame::after {
   content: "";
   position: absolute;
-  left: 2px;
-  top: 0.6em;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--pa-line-strong);
+  inset: auto 0 0 0;
+  height: 36px;
+  background: linear-gradient(to bottom, transparent, var(--pa-bg));
 }
-.pa-library .lib-skill.spot .lib-steps { font-size: var(--pa-text); gap: 6px; }
+.pa-library .lib-preview figcaption { font-size: 12px; color: var(--pa-ink-3); }
+.pa-library .lib-preview figcaption b { font-weight: 500; color: var(--pa-ink-2); }
+.pa-library .lib-preview.large { height: 100%; }
+.pa-library .lib-preview.large .lib-frame { flex: 1; height: auto; min-height: 300px; }
+.pa-library .lib-preview.large .lib-frame iframe { width: 180%; height: 180%; transform: scale(0.5556); }
 
-.pa-library .lib-form { display: flex; flex-direction: column; gap: 8px; }
+.pa-library .lib-start {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-self: start;
+  padding-top: 12px;
+  border-top: 1px solid var(--pa-line);
+}
+
+/* The spotlight: the work on the left, what it makes on the right. */
+.pa-library .lib-skill.spot {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  grid-template-rows: auto auto auto auto auto 1fr;
+  column-gap: 32px;
+  row-gap: 12px;
+  padding: 24px 26px;
+  border-color: var(--pa-line-strong);
+}
+.pa-library .lib-skill.spot > * { grid-column: 1; }
+.pa-library .lib-skill.spot > .lib-preview { grid-column: 2; grid-row: 1 / -1; }
+.pa-library .lib-skill.spot > h3 { font-size: 21px; letter-spacing: var(--pa-tracking-title); }
+.pa-library .lib-skill.spot > .lib-sum { font-size: 14.5px; }
+.pa-library .lib-skill.spot > .lib-start { align-self: end; }
+@media (max-width: 860px) {
+  .pa-library .lib-skill.spot { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; padding: 20px; }
+  .pa-library .lib-skill.spot > .lib-preview { grid-column: 1; grid-row: auto; order: -1; }
+  .pa-library .lib-skill.spot .lib-preview.large .lib-frame { height: 200px; min-height: 0; flex: none; }
+}
+
+/* The start form. */
+.pa-library .lib-form { display: flex; flex-direction: column; gap: 10px; }
 .pa-library .lib-form label {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   font-size: var(--pa-text-sm);
+  font-weight: 500;
   color: var(--pa-ink-2);
 }
 .pa-library .lib-input {
+  min-width: 0;
   border: 1px solid var(--pa-line-strong);
   border-radius: var(--pa-r);
   background: var(--pa-surface);
   color: var(--pa-ink);
-  padding: 6px 10px;
+  padding: 7px 10px;
   font: var(--pa-text) var(--pa-font);
+  text-overflow: ellipsis;
 }
-.pa-library .lib-input::placeholder { color: var(--pa-ink-3); }
+.pa-library .lib-input::placeholder { color: var(--pa-ink-3); text-overflow: ellipsis; }
 .pa-library .lib-input:focus-visible { outline: 2px solid var(--pa-navy); outline-offset: -1px; }
 .pa-library .lib-acts { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.pa-library .lib-note { font-size: 11.5px; color: var(--pa-ink-3); }
+.pa-library .lib-note { font-size: 12px; color: var(--pa-ink-3); }
 .pa-library .lib-more { font-size: var(--pa-text-sm); color: var(--pa-ink-3); }
 .pa-library .lib-starter-head { display: flex; gap: 8px; align-items: baseline; font-size: var(--pa-text-sm); }
 .pa-library .lib-link {
@@ -147,9 +212,12 @@
   color: var(--pa-navy);
   font: inherit;
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-decoration-color: var(--pa-line-strong);
+  text-underline-offset: 3px;
   cursor: pointer;
 }
+.pa-library .lib-link:hover { text-decoration-color: currentColor; }
+.pa-library .lib-diamond { color: var(--pa-navy); font-size: 11px; }
 
 /* Buttons: the Library's own, and FlyButton's (shared with the Hangar). */
 .pa-library .lib-btn,
@@ -161,7 +229,7 @@
   background: var(--pa-surface);
   color: var(--pa-ink);
   border-radius: var(--pa-r);
-  padding: 5px 14px;
+  padding: 6px 16px;
   font: 500 13px var(--pa-font);
   cursor: pointer;
   white-space: nowrap;
@@ -199,77 +267,146 @@
   font-size: var(--pa-text-sm);
 }
 
-/* Demo cards. */
-.pa-library .lib-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  font-size: var(--pa-text-sm);
-  color: var(--pa-ink-3);
+/* The demo board: one row per demo, so any number of demos lines up. */
+.pa-library .lib-board {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--pa-line);
+  border-radius: var(--pa-r-panel);
+  background: var(--pa-surface);
+  overflow: hidden;
 }
+.pa-library .lib-demo {
+  display: grid;
+  grid-template-columns: minmax(0, 2.3fr) minmax(0, 1.1fr) 150px 150px;
+  gap: 24px;
+  align-items: center;
+  padding: 16px 20px;
+  scroll-margin-top: 24px;
+}
+.pa-library .lib-demo + .lib-demo { border-top: 1px solid var(--pa-line); }
+.pa-library .lib-demo:target { background: var(--pa-sunk); box-shadow: inset 3px 0 0 var(--pa-navy); }
+.pa-library .lib-demo-story { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.pa-library .lib-demo-title { display: flex; align-items: center; gap: 8px; }
+.pa-library .lib-demo-story .lib-sum { font-size: var(--pa-text-sm); padding-left: 19px; }
+.pa-library .lib-demo-who { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.pa-library .lib-demo-turns {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--pa-text-sm);
+  color: var(--pa-ink-2);
+}
+.pa-library .lib-nums { font-variant-numeric: tabular-nums; }
+.pa-library .lib-howlive { font-size: 12px; color: var(--pa-ink-3); }
+.pa-library .lib-demo-fly { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+/* Many rows, so Fly is plain until hovered: one primary action per screen region. */
+.pa-library .lib-board .hangar-btn.pri.fly {
+  background: var(--pa-surface);
+  border-color: var(--pa-line-strong);
+  color: var(--pa-navy);
+}
+.pa-library .lib-board .hangar-btn.pri.fly:hover,
+.pa-library .lib-board .lib-demo:hover .hangar-btn.pri.fly {
+  background: var(--pa-navy);
+  border-color: var(--pa-navy);
+  color: var(--pa-on-navy);
+}
+@media (max-width: 900px) {
+  .pa-library .lib-demo {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px 16px;
+    padding: 16px;
+  }
+  .pa-library .lib-demo-story { grid-column: 1 / -1; }
+  .pa-library .lib-demo-who { flex-direction: row; align-items: center; flex-wrap: wrap; }
+  .pa-library .lib-demo-turns { grid-column: 1; }
+  .pa-library .lib-demo-fly { grid-column: 2; grid-row: 2 / span 2; align-self: end; }
+}
+
 .pa-library .lib-chip {
-  padding: 1px 8px;
+  padding: 1px 9px;
   border-radius: 999px;
   background: var(--pa-sunk);
   color: var(--pa-ink-2);
   font-size: 12px;
+  line-height: 18px;
 }
 .pa-library .lib-marks { display: inline-flex; }
 .pa-library .lib-mark {
+  --lib-hue: var(--pa-author-1);
   display: inline-grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
-  margin-left: -3px;
+  width: 26px;
+  height: 26px;
+  margin-left: -4px;
   border: 2px solid var(--pa-surface);
   border-radius: 50%;
   overflow: hidden;
-  background: var(--pa-agent-soft);
-  color: var(--pa-agent);
-  font-size: 9.5px;
+  background: color-mix(in srgb, var(--lib-hue) 18%, var(--pa-surface));
+  color: var(--lib-hue);
+  font-size: 10px;
   font-weight: 600;
 }
 .pa-library .lib-mark:first-child { margin-left: 0; }
 .pa-library .lib-mark img { width: 100%; height: 100%; object-fit: cover; }
-.pa-library .lib-meter { display: inline-flex; gap: 2px; }
+.pa-library .lib-meter { display: inline-flex; gap: 3px; }
 .pa-library .lib-meter i {
-  width: 10px;
+  width: 14px;
   height: 6px;
   border-radius: 2px;
   background: var(--pa-line-strong);
 }
 .pa-library .lib-meter i.live { background: var(--pa-agent); }
-.pa-library .lib-fly {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  margin-top: auto;
-  padding-top: 6px;
-}
+
+/* Live turns: a real switch. Indigo, because a live turn is the agent working. */
 .pa-library .lib-switch {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding-top: 5px;
-  font-size: var(--pa-text-sm);
+  font-size: 12px;
   color: var(--pa-ink-2);
   cursor: pointer;
 }
-.pa-library .lib-switch input { accent-color: var(--pa-agent); }
+.pa-library .lib-switch input {
+  appearance: none;
+  position: relative;
+  width: 26px;
+  height: 15px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--pa-line-strong);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.pa-library .lib-switch input::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--pa-surface);
+  transition: transform 0.15s;
+}
+.pa-library .lib-switch input:checked { background: var(--pa-agent); }
+.pa-library .lib-switch input:checked::before { transform: translateX(11px); }
+.pa-library .lib-switch input:focus-visible { outline: 2px solid var(--pa-navy); outline-offset: 2px; }
 
 /* In flight: demos already flown, to pick up again. */
 .pa-library .lib-inflight { display: flex; flex-direction: column; gap: 8px; }
 .pa-library .lib-inflight h3 { font-size: 13px; color: var(--pa-ink-2); }
 .pa-library .lib-flight {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
   padding: 10px 14px;
   border: 1px solid var(--pa-line);
+  border-left: 3px solid var(--pa-agent);
   border-radius: var(--pa-r-panel);
   background: var(--pa-surface);
 }
-.pa-library .lib-diamond { color: var(--pa-navy); padding-top: 2px; }
 .pa-library .lib-flight-text { flex: 1; display: flex; flex-direction: column; font-size: var(--pa-text-sm); color: var(--pa-ink-3); }
 .pa-library .lib-flight-text b { color: var(--pa-ink); font-size: var(--pa-text); }

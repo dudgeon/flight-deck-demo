@@ -30,11 +30,11 @@ def test_featured_skills_in_lifecycle_order_with_one_spotlight() -> None:
     assert ids == [
         "problem-discovery",
         "intent-shaping",
-        "document-review",
         "prd-to-dependencies",
-        "decision-review",
         "delivery-status",
     ]
+    # Only arcs show (D-153): Review and Decide are moves, offered on artifacts.
+    assert "document-review" not in ids and "decision-review" not in ids
     # Utility workflows have no library flag and never show.
     assert "requirements-to-dependencies" not in ids
     # Parts of an arc run when named but have no card of their own (D-148).
@@ -56,9 +56,25 @@ def test_a_skill_card_reads_its_workflow() -> None:
     # The workflow's cast is named so the agent can call them in.
     assert "Participants for this session: risk-review" in shaping["prompt"]
     assert {"id": "intent-shaping", "title": "Release dates, from a hunch"} in shaping["demos"]
-    # A Hangar starter that names the workflow is an extra way in.
-    review = skills["document-review"]
-    assert [s["id"] for s in review["starters"]] == ["risk-read-first"]
+    # Each card carries its lifecycle stage, titled from the framework (D-166).
+    assert shaping["stage"] == "Shape"
+    design = skills["prd-to-dependencies"]
+    assert design["title"] == "Solution design" and design["stage"] == "Requirements"
+    # Nothing the Library shows says "PRD" (D-166).
+    lib = _library()
+    shown = [s["title"] + s["summary"] + " ".join(s["steps"]) for s in lib["skills"]]
+    shown += [f["hint"] for s in lib["skills"] for f in s["fields"]]
+    shown += [d["title"] + d["summary"] + d["arc_title"] for d in lib["demos"]]
+    assert not [text for text in shown if "PRD" in text]
+
+
+def test_a_starter_that_names_a_featured_skill_is_an_extra_way_in(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    (tmp_path / "sessions").mkdir()
+    (tmp_path / "sessions" / "first.md").write_text(
+        "---\ntitle: Shape it first\n---\nUse the intent-shaping skill on {{idea}}.\n"
+    )
+    skills = {s["id"]: s for s in slim_library.load_library(tmp_path)["skills"]}
+    assert [s["id"] for s in skills["intent-shaping"]["starters"]] == ["first"]
 
 
 def test_prompt_is_made_from_inputs_without_a_library_prompt() -> None:
@@ -72,13 +88,21 @@ def test_demo_cards_read_the_scenario_and_its_script() -> None:
     demos = {d["id"]: d for d in _library()["demos"]}
     assert len(demos) == 7
     review = demos["document-review"]
-    assert review["title"] == "Second opinions on a PRD"
+    assert review["title"] == "Second opinions on a requirements document"
     assert review["workflow_title"] == "Review a document with others"
     assert [c["initials"] for c in review["cast"]] == ["RR", "MO"]
     assert review["turns"] == len(review["meter"]) == 6
     assert review["live_turns"] == 1 and review["kind"] == "Mixed"
     assert review["length_minutes"] == 6
     assert demos["decision-review"]["kind"] == "Scripted"
+    # A part of an arc shows under the arc's name; a move keeps its own.
+    assert demos["prd-to-requirements"]["arc_title"] == "Solution design"
+    assert review["arc_title"] == "Review a document with others"
+    # One colour per person, the same on every card.
+    hues = {c["id"]: c["hue"] for d in demos.values() for c in d["cast"]}
+    for d in demos.values():
+        for c in d["cast"]:
+            assert c["hue"] == hues[c["id"]] and 1 <= c["hue"] <= 8
     for demo in demos.values():
         assert len(demo["summary"].split()) <= 25, demo["id"]
 

@@ -15,6 +15,10 @@ The Library is built from what is published in the Hangar, never typed into it:
   ``"library": {"show": false}``. Title, summary, cast and the workflow it runs
   come from ``scenario.json``; how many turns are live comes from its script.
 
+Each demo names the card it belongs to (``arc_title``): a part of an arc shows
+under the arc's name, not its own. Each cast member has a ``hue`` (1 to 8), its
+place in the roster, so a person keeps one colour everywhere in the Library.
+
 Artifact templates are no longer listed here (D-88): they are managed in the
 Hangar and the agent finds them when asked. ``parse_artifact_template`` stays
 for the Hangar.
@@ -185,6 +189,8 @@ def load_library(root: Path | None) -> dict[str, Any]:
     ws = slim_hangar.workspace_dir()
     roster = slim_hangar._roster(pa)
     starters = _starters(root)
+    stages = _stage_titles(ws)
+    hues = {pid: i % 8 + 1 for i, pid in enumerate(sorted(roster))}
 
     skills: list[dict[str, Any]] = []
     titles: dict[str, str] = {}
@@ -197,8 +203,23 @@ def load_library(root: Path | None) -> dict[str, Any]:
         lib = manifest.get("library") or {}
         if not isinstance(lib, dict) or not lib.get("show"):
             continue
+        if manifest.get("tier") in _HIDDEN_TIERS:
+            continue  # moves are offered on artifacts, not in the Library (D-153)
+        routing = manifest.get("routing") if isinstance(manifest.get("routing"), dict) else {}
+        stage = routing.get("stage")
+        stage = stage[0] if isinstance(stage, list) and stage else stage
         participants = [p for p in manifest.get("participants") or [] if isinstance(p, str)]
         prompt = skill_prompt(wid, manifest, participants)
+        parts = [
+            str(part["workflow"])
+            for part in manifest.get("parts") or []
+            if isinstance(part, dict) and part.get("workflow")
+        ]
+        crew = list(participants)
+        for part in parts:
+            for pid in _manifest_of(pa, part, ws).get("participants") or []:
+                if isinstance(pid, str) and pid not in crew:
+                    crew.append(pid)
         skills.append(
             {
                 "id": wid,
@@ -208,6 +229,9 @@ def load_library(root: Path | None) -> dict[str, Any]:
                 "prompt": prompt,
                 "fields": _fields(prompt),
                 "spotlight": bool(lib.get("spotlight")),
+                "stage": stages.get(str(stage)) if stage else None,
+                "view": _main_view(pa, wid, manifest, parts, ws),
+                "cast": [_cast_member(pa, roster, hues, pid) for pid in crew],
                 "sort": _order(lib, titles[wid]),
                 "starters": [],
                 "demos": [],
@@ -245,17 +269,7 @@ def load_library(root: Path | None) -> dict[str, Any]:
         except Exception:  # noqa: BLE001 -- a broken scenario can't be flown, so it isn't listed
             _logger.warning("skipping scenario %s", sid, exc_info=True)
             continue
-        cast = []
-        for pid in manifest.get("participants") or []:
-            person = roster.get(pid) or {}
-            cast.append(
-                {
-                    "id": pid,
-                    "name": str(person.get("name") or pid),
-                    "initials": str(person.get("initials") or pid[:2].upper()),
-                    "avatar": slim_hangar._avatar_url(pa, pid),
-                }
-            )
+        cast = [_cast_member(pa, roster, hues, pid) for pid in manifest.get("participants") or []]
         minutes = raw.get("length_minutes")
         demo = {
             "id": sid,
@@ -274,6 +288,8 @@ def load_library(root: Path | None) -> dict[str, Any]:
         }
         # A part of an arc (D-148) has no card; its demos show on the arc's card.
         card = wid if wid in by_skill else _arc_of(pa, wid, ws)
+        demo["arc"] = card if card in by_skill else wid
+        demo["arc_title"] = by_skill[card]["title"] if card in by_skill else demo["workflow_title"]
         if card in by_skill:
             demo["sort_skill"] = card
             by_skill[card]["demos"].append({"id": sid, "title": demo["title"]})
@@ -290,15 +306,70 @@ def load_library(root: Path | None) -> dict[str, Any]:
     }
 
 
-def _arc_of(pa: Any, wid: str, ws: Path) -> str | None:
-    """The arc a workflow is a part of (its ``part_of``), if any."""
+_HIDDEN_TIERS = ("move", "kit", "companion")
+
+
+def _stage_titles(ws: Path) -> dict[str, str]:
+    """Stage id to its title, from the lifecycle framework (Discover, Shape, ...)."""
+    try:
+        data = json.loads((ws / "frameworks" / "lifecycle.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return {
+        str(s["id"]): str(s.get("title") or s["id"])
+        for s in data.get("stages") or []
+        if isinstance(s, dict) and s.get("id")
+    }
+
+
+def _cast_member(pa: Any, roster: dict[str, Any], hues: dict[str, int], pid: str) -> dict[str, Any]:
+    """A person as a Library card shows them: name, initials, picture and colour."""
+    from omnigent.server.routes import slim_hangar
+
+    person = roster.get(pid) or {}
+    return {
+        "id": pid,
+        "name": str(person.get("name") or pid),
+        "initials": str(person.get("initials") or pid[:2].upper()),
+        "avatar": slim_hangar._avatar_url(pa, pid),
+        "hue": hues.get(pid, 1),
+    }
+
+
+def _manifest_of(pa: Any, wid: str, ws: Path) -> dict[str, Any]:
     folder = pa.find_workflow(wid, ws)
     path = pa.workflow_manifest_path(folder) if folder else None
     try:
         manifest = json.loads(Path(path).read_text(encoding="utf-8")) if path else None
     except (OSError, ValueError):
         manifest = None
-    part_of = (manifest or {}).get("part_of")
+    return manifest if isinstance(manifest, dict) else {}
+
+
+def _main_view(
+    pa: Any, wid: str, manifest: dict[str, Any], parts: list[str], ws: Path
+) -> dict[str, str] | None:
+    """What the work makes, drawn the way the Hangar draws it (D-170).
+
+    The first work product that is a view. A part of the arc that has the same
+    view is preferred, because its scenario gives the drawing real sample data.
+    """
+    for product in manifest.get("work_products") or []:
+        if not isinstance(product, dict) or not product.get("view"):
+            continue
+        name = str(product["view"])
+        owner = next(
+            (p for p in parts if name in (_manifest_of(pa, p, ws).get("views") or {})),
+            wid if name in (manifest.get("views") or {}) else None,
+        )
+        if owner:
+            return {"workflow": owner, "name": name, "title": str(product.get("name") or name)}
+    return None
+
+
+def _arc_of(pa: Any, wid: str, ws: Path) -> str | None:
+    """The arc a workflow is a part of (its ``part_of``), if any."""
+    part_of = _manifest_of(pa, wid, ws).get("part_of")
     return str(part_of) if part_of else None
 
 

@@ -1,7 +1,7 @@
 {
  "scenario": "prd-to-requirements",
- "title": "From PRD to a catalog",
- "summary": "Twenty testable requirements pulled from the Allowances PRD, three of them waiting on your answer before you lock it.",
+ "title": "From a document to a catalog",
+ "summary": "Twenty testable requirements pulled from the Allowances requirements document, three of them waiting on your answer before you lock it.",
  "length_minutes": 4,
  "workflow": "prd-to-requirements",
  "fixtures": {
@@ -9,5 +9,5 @@
   "document": "context/allowances-prd.md"
  },
  "script": "script.md",
- "opening": "Catalog the requirements in this PRD."
+ "opening": "Catalog the requirements in this document."
 }

@@ -1,7 +1,7 @@
 {
  "scenario": "document-review",
- "title": "Second opinions on a PRD",
- "summary": "The Allowances PRD is done. Risk Review and a stand-in for the designer read it, comment, and list what they find.",
+ "title": "Second opinions on a requirements document",
+ "summary": "The Allowances requirements document is done. Risk Review and a stand-in for the designer read it, comment, and list what they find.",
  "length_minutes": 6,
  "workflow": "document-review",
  "participants": [
@@ -13,5 +13,5 @@
   "document": "context/allowances-prd.md"
  },
  "script": "script.md",
- "opening": "I have finished the Allowances PRD. Help me review it."
+ "opening": "I have finished the Allowances requirements document. Help me review it."
 }

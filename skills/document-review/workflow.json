@@ -7,7 +7,7 @@
   "show": true,
   "order": 3,
   "summary": "Review a document, then call in agents and people for second opinions. Every finding lands in one list with who raised it.",
-  "prompt": "Review {{document: a file in context/, or \"the demo PRD\"}} using the document-review skill.\n\nStart with your own review, then ask me who else should look at it."
+  "prompt": "Review {{document: a file in context/, or \"the Allowances document\"}} using the document-review skill.\n\nStart with your own review, then ask me who else should look at it."
  },
  "inputs": [
   {
