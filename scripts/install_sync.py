@@ -139,6 +139,8 @@ def sync(source: Path, dest: Path, dry_run: bool = False) -> dict[str, list[str]
             out["updated"].append(rel)
             if not dry_run:
                 _copy(src, dst)
+        elif rel.startswith(PERSON_AREA) and new_hash == was:
+            continue  # their edit, and the release didn't change the file: nothing to offer
         elif rel.startswith(PERSON_AREA):
             out["kept_yours"].append(rel)
             if not dry_run:

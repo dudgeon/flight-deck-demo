@@ -194,10 +194,20 @@ Later that evening:
   from a scenario (D-76 to D-81) and the new Library (D-82 to D-88) are on
   `main`.
 
+On 23 November:
+
+- **Work-Mac install check** (D-171): Geoff asked to confirm clear install
+  steps, updates that keep everything, and a path into a company GitHub
+  repository. A clone of a company copy now runs and updates in place, setup
+  recognizes downloads by content, and `docs/company-repo.md` has the steps.
+  Tested for real on the Mac mini: main installed from a browser-style
+  download, the person's work added, updated to the new version, then a
+  company-repository round trip.
+
 ## Still waiting
 
 - Geoff's first install on the work Mac with `setup.sh` (D-100, D-107,
-  D-111).
+  D-111, D-171).
 - The Mac mini pulled and restarted (it was still at PR 11).
 - Live runs of decision review and problem discovery.
 - Progressive complexity (D-54) and the remaining modes questions (M-8,

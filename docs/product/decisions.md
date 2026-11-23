@@ -57,6 +57,22 @@ folder in the home folder, outside iCloud and OneDrive sync, gives updates a
 place to find, and comparing against what was shipped is the only way to
 tell his edits from ours.*
 
+**D-171 · 2026-11-23 · Geoff asked, Claude chose.** A git checkout is its own
+app folder. Running `setup.sh` in a clone, for example of the company's copy
+of this repository, runs it in place rather than copying it to
+`~/flight-deck`. When the checkout has an install record
+(`.install-manifest.json`, now committed rather than ignored), a newer
+download updates the checkout in place under the D-111 rules, and setup
+prints the commit-and-push line. A checkout without a record, such as a
+developer's clone, never pulls in a download unless `--from` names one.
+Setup recognizes a download by its contents rather than its file name, so a
+ZIP of the company's repository works as well as one of
+`dudgeon/flight-deck-demo`. `--no-dock` skips the Dock icon. The steps are in
+`docs/company-repo.md`. *Geoff expects the downloaded copy to be pushed into
+a company GitHub repository. Updates must still bring in new features
+without losing the team's skills, people, scenarios or Hangar work, and the
+team needs one place, the repository, to share them.*
+
 ## Structured work
 
 **D-05 · 2026-11-20 · Geoff.** One template system serves both the chat

@@ -126,9 +126,9 @@ workspace/.hangar/
 # omnigent-slim: flown demos are made from scenarios and never committed.
 workspace/demos/
 
-# Written by setup.sh: its report, the install manifest and saved versions (D-111).
+# Written by setup.sh: its report and saved versions (D-111). The install
+# manifest, .install-manifest.json, is committed in a company copy (D-171).
 setup-report.txt
-.install-manifest.json
 /updates/
 
 # The usage log (D-122): local to each machine, never committed or shipped.

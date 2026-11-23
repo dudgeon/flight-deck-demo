@@ -9,10 +9,15 @@
 #   --no-open      don't open the browser at the end
 #   --from PATH    update from this unzipped folder or ZIP
 #   --here         run this folder where it is; don't install or update
+#   --no-dock      don't build or pin the Dock icon
 #
 # The app lives in one fixed folder, ~/flight-deck (OMNIGENT_SLIM_HOME
 # changes it). A download is copied into it; a newer download updates it
 # without overwriting anything you made or changed (scripts/install_sync.py).
+#
+# In a git checkout (for example a clone of your company's copy of this
+# repository) the checkout itself is the app folder (D-171): setup runs it in
+# place and updates it there from a newer download, ready to commit and push.
 #
 # It never downloads or installs anything from the internet: Python, its
 # packages and tmux are in the download. It checks what this Mac needs, says
@@ -30,6 +35,12 @@ set -u
 
 HERE=$(cd "$(dirname "$0")" && pwd)
 APP=${OMNIGENT_SLIM_HOME:-$HOME/flight-deck}
+# A git checkout is its own app folder (D-171).
+IS_GIT=0
+if [ -z "${OMNIGENT_SLIM_HOME:-}" ] && [ -e "$HERE/.git" ]; then
+    APP=$HERE
+    IS_GIT=1
+fi
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/flight-deck-setup.XXXXXX") || exit 1
 trap 'rm -rf "$WORK"' EXIT
 REPORT="$WORK/setup-report.txt"
@@ -38,15 +49,17 @@ PORT=6767
 ASSUME_YES=0
 OPEN_BROWSER=1
 IN_PLACE=0
+MAKE_DOCK=1
 FROM=
 while [ $# -gt 0 ]; do
     case $1 in
         -y|--yes) ASSUME_YES=1 ;;
         --no-open) OPEN_BROWSER=0 ;;
         --here) IN_PLACE=1 ;;
+        --no-dock) MAKE_DOCK=0 ;;
         --from) [ $# -ge 2 ] || { echo "--from needs a folder or ZIP" >&2; exit 2; }
                 FROM=$2; shift ;;
-        -h|--help) sed -n '2,27p' "$0"; exit 0 ;;
+        -h|--help) sed -n '2,32p' "$0"; exit 0 ;;
         *) echo "Unknown option: $1 (try: sh setup.sh --help)" >&2; exit 2 ;;
     esac
     shift
@@ -187,17 +200,24 @@ use_zip() {
 # that is newer than the last install. Prints nothing when there is none.
 newer_download() {
     stamp="$APP/.install-manifest.json"
+    # A checkout that was never installed from a download (a developer's
+    # clone) has no manifest; it is only updated when --from names a download.
+    [ "$IS_GIT" = 1 ] && [ ! -f "$stamp" ] && return 0
     best=
-    # flight-deck-demo is the repository's name since D-114; omnigent-slim is
-    # its old name, which older downloads still carry.
-    for d in "$HOME"/Downloads/flight-deck-demo*.zip "$HOME"/Downloads/flight-deck-demo-main* \
-             "$HOME"/Downloads/omnigent-slim*.zip "$HOME"/Downloads/omnigent-slim-main*; do
-        case $d in
-            *.zip) [ -f "$d" ] || continue ;;
-            *) [ -f "$d/setup.sh" ] && [ -f "$d/start.sh" ] || continue ;;
-        esac
+    # Any ZIP or unzipped folder in Downloads that holds this app, whatever
+    # it is called: dudgeon/flight-deck-demo (D-114), its old name
+    # omnigent-slim, or a company copy of the repository (D-171).
+    for d in "$HOME"/Downloads/*.zip "$HOME"/Downloads/*/; do
+        d=${d%/}
+        [ -e "$d" ] || continue
         [ -f "$stamp" ] && [ ! "$d" -nt "$stamp" ] && continue
-        if [ -z "$best" ] || [ "$d" -nt "$best" ]; then best=$d; fi
+        same_dir "$d" "$APP" && continue
+        if [ -n "$best" ] && [ ! "$d" -nt "$best" ]; then continue; fi
+        case $d in
+            *.zip) unzip -Z1 "$d" 2>/dev/null | grep -q '^[^/]*/omnigent/slim_bootstrap\.py$' || continue ;;
+            *) [ -f "$d/setup.sh" ] && [ -f "$d/omnigent/slim_bootstrap.py" ] || continue ;;
+        esac
+        best=$d
     done
     printf '%s' "$best"
 }
@@ -223,6 +243,9 @@ elif same_dir "$HERE" "$APP"; then
         case $found in *.zip) use_zip "$found" ;; *) SRC=$found ;; esac
     else
         ok "No newer download in Downloads; starting the installed app"
+        [ "$IS_GIT" = 1 ] && [ ! -f "$APP/.install-manifest.json" ] && \
+            info "(This is a git checkout with no install record, so setup doesn't" && \
+            info " look in Downloads. To update it from a ZIP: sh setup.sh --from <the ZIP>)"
     fi
 else
     SRC=$HERE
@@ -328,6 +351,11 @@ if [ -n "$SRC" ]; then
         esac
     done < "$WORK/sync.log"
     ROOT=$APP
+    if [ "$IS_GIT" = 1 ]; then
+        info "This folder is a git checkout. To share the update with your team,"
+        info "commit and push it (docs/company-repo.md):"
+        info "  cd $(nice "$APP") && git add -A && git commit -m 'Update Flight Deck' && git push"
+    fi
     case $SRC in
         "$WORK"/*) ;;
         *) info "The download in $(nice "$SRC") isn't needed any more; you can delete it." ;;
@@ -509,7 +537,7 @@ esac
 
 # The Dock icon (D-103). It remembers the app folder, so rebuild it whenever
 # setup installs or updates; pin it to the Dock only the first time.
-if [ -n "$SRC" ] && [ -x "$ROOT/scripts/make_dock_app.sh" ]; then
+if [ -n "$SRC" ] && [ "$MAKE_DOCK" = 1 ] && [ -x "$ROOT/scripts/make_dock_app.sh" ]; then
     dock_args=
     [ -d "$HOME/Applications/Product Aviator.app" ] || dock_args=--add-to-dock
     if "$ROOT/scripts/make_dock_app.sh" $dock_args > "$WORK/dock.log" 2>&1; then

@@ -244,7 +244,9 @@ technical (D-100).
   from a newer download without overwriting the person's files or edits
   (D-111). `tests/setup_sim/simulate_zip_setup.py` rehearses it in a Linux
   container: install, update with the person's edits, moving out of
-  Downloads, and four failures.
+  Downloads, a company repository round trip, a developer's clone, and four
+  failures. A clone of a company copy of the repository runs in place and
+  updates in place, ready to commit and push (D-171, `docs/company-repo.md`).
 - **Next.** Geoff's first real install on the work Mac. The download is now
   `flight-deck-demo-main.zip`, so the first command is
   `sh ~/Downloads/flight-deck-demo-main/setup.sh` (older messages that say
@@ -256,7 +258,7 @@ technical (D-100).
 - **Open.** Whether the work Mac's management locks the download flag or
   blocks the bundled binaries; setup detects both and says so, but only the
   real machine will tell.
-- **Read.** README "Quick start"; D-02, D-100, D-107, D-111; `setup.sh`, `scripts/install_sync.py`; [../architecture.md](../architecture.md)
+- **Read.** README "Quick start"; D-02, D-100, D-107, D-111, D-171; `setup.sh`, `scripts/install_sync.py`, `docs/company-repo.md`; [../architecture.md](../architecture.md)
   "Setup on the work Mac".
 
 ## Canvas tools across several tabs

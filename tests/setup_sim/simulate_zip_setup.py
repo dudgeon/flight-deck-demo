@@ -14,6 +14,10 @@ the rig exits non-zero if any fails.
   update        after an install the person adds and edits files; a newer ZIP
                 lands in ~/Downloads; `sh ~/flight-deck/setup.sh` updates
                 without losing any of it
+  company       the install goes into a company git repo (a local bare repo);
+                a clone runs in place and a newer ZIP, under any name, updates
+                it in place, ready to commit and push (D-171)
+  dev-checkout  a developer's git clone never pulls in a download by itself
   moved         the app was first run from the Downloads folder itself
                 (--here); setup installs it and moves the Workspace project
   no-claude     Claude Code missing: stop and say so
@@ -270,7 +274,7 @@ def s_update(z: Path, c: Check) -> None:
         (w / "participants/mara-okafor.md").write_text("Mara, release 2\n")
         (w / "participants/risk-review.md").write_text("Risk review, release 2\n")
         (w / "frameworks/intent.md").write_text("intent, release 2\n")
-        (w / "context/platform-map.md").unlink()
+        (w / "participants/support-insights.md").unlink()
         (w / "context/new-in-release-2.md").write_text("new\n")
         (app / "docs/history.md").write_text("history, release 2\n")
 
@@ -288,7 +292,7 @@ def s_update(z: Path, c: Check) -> None:
     c("new version of my edited file saved beside it", saved and saved[0].read_text() == "Mara, release 2\n")
     c("unedited shipped file updated", (ws / "participants/risk-review.md").read_text() == "Risk review, release 2\n")
     c("file I deleted stays deleted", not (ws / "frameworks/intent.md").exists())
-    c("file dropped by the release removed", not (ws / "context/platform-map.md").exists())
+    c("file dropped by the release removed", not (ws / "participants/support-insights.md").exists())
     c("file new in the release added", (ws / "context/new-in-release-2.md").exists())
     c("app file updated", (mac.app / "docs/history.md").read_text() == "history, release 2\n")
     c("app answers on 6767", answers())
@@ -339,10 +343,90 @@ def _killed(mac: Mac, dl: Path) -> None:
     (dl / "vendor/bin/tmux").write_text("#!/bin/sh\nkill -9 $$\n")
 
 
+def _git(mac: "Mac", *args: str, cwd: Path) -> str:
+    env = dict(mac.env, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t", GIT_COMMITTER_NAME="t",
+               GIT_COMMITTER_EMAIL="t@t")
+    return subprocess.run(["git", *args], cwd=cwd, env=env, text=True, check=True,
+                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout
+
+
+def s_company(z: Path, c: Check) -> None:
+    """D-171: push the install to a company repo, clone it, update the clone."""
+    mac = Mac("company")
+    dl = mac.download(z)
+    rc, _ = mac.setup(dl / "setup.sh")
+    c("install ok", rc == 0)
+    mac.stop()
+    bare = mac.root / "company.git"
+    subprocess.run(["git", "init", "-q", "--bare", "--initial-branch=main", str(bare)], check=True)
+    _git(mac, "init", "-q", "-b", "main", cwd=mac.app)
+    _git(mac, "add", "-A", cwd=mac.app)
+    _git(mac, "commit", "-qm", "Flight Deck", cwd=mac.app)
+    _git(mac, "remote", "add", "origin", str(bare), cwd=mac.app)
+    _git(mac, "push", "-q", "-u", "origin", "main", cwd=mac.app)
+    tree = _git(mac, "ls-tree", "-r", "--name-only", "main", cwd=bare).splitlines()
+    c("manifest committed", ".install-manifest.json" in tree)
+    c("runtime, logs, drafts, updates not committed",
+      not any(t.startswith((".runtime/", "logs/", "workspace/.hangar/", "updates/")) for t in tree))
+    clone = mac.home / "team-clone"
+    _git(mac, "clone", "-q", str(bare), str(clone), cwd=mac.home)
+    rc, out = mac.setup(clone / "setup.sh", "--no-dock")
+    c("clone runs in place", rc == 0 and "No newer download" in out)
+    (clone / "workspace/.claude/skills/team-skill").mkdir(parents=True)
+    (clone / "workspace/.claude/skills/team-skill/SKILL.md").write_text("---\nname: team-skill\n---\nours\n")
+    _git(mac, "add", "-A", cwd=clone)
+    _git(mac, "commit", "-qm", "team skill", cwd=clone)
+    subprocess.run(["sh", str(clone / "stop.sh")], env=mac.env, capture_output=True)
+    time.sleep(1.1)
+
+    def release3(app: Path) -> None:
+        (app / "workspace/participants/risk-review.md").write_text("Risk review, release 3\n")
+
+    z3 = WORK / "release3.zip"
+    twin_zip(ORIGINAL_ZIP, z3, release3)
+    shutil.copy(z3, mac.home / "Downloads/some-company-name-main.zip")
+    rc, out = mac.setup(clone / "setup.sh", "--no-dock")
+    print(out)
+    c("update in the clone ok", rc == 0 and "Found a newer download" in out)
+    c("any download name is recognized", "some-company-name-main.zip" in out)
+    c("updated in place, not copied to ~/flight-deck",
+      (clone / "workspace/participants/risk-review.md").read_text() == "Risk review, release 3\n")
+    c("team skill kept", (clone / "workspace/.claude/skills/team-skill/SKILL.md").exists())
+    c("commit-and-push hint shown", "git push" in out)
+    status = _git(mac, "status", "--porcelain", cwd=clone)
+    c("git sees the update", "risk-review.md" in status and ".install-manifest.json" in status)
+    _git(mac, "add", "-A", cwd=clone)
+    _git(mac, "commit", "-qm", "update", cwd=clone)
+    _git(mac, "push", "-q", cwd=clone)
+    c("pushed to the company repo", "release 3" in _git(mac, "show", "main:workspace/participants/risk-review.md", cwd=bare))
+    subprocess.run(["sh", str(clone / "stop.sh")], env=mac.env, capture_output=True)
+
+
+def s_dev_checkout(z: Path, c: Check) -> None:
+    """A developer's clone (no install record) never pulls in a download by itself."""
+    mac = Mac("dev-checkout")
+    src = mac.root / "src"
+    with zipfile.ZipFile(z) as zf:
+        zf.extractall(src)
+    dev = src / PREFIX.rstrip("/")
+    _git(mac, "init", "-q", cwd=dev)
+    shutil.copy(z, mac.home / "Downloads/flight-deck-demo-main.zip")
+    before = (dev / "workspace/participants/risk-review.md").read_text()
+    rc, out = mac.setup(dev / "setup.sh", "--no-dock")
+    print(out)
+    c("runs in place", rc == 0 and "No newer download" in out)
+    c("download not applied", not (dev / ".install-manifest.json").exists()
+      and (dev / "workspace/participants/risk-review.md").read_text() == before)
+    c("nothing copied to ~/flight-deck", not mac.app.exists())
+    subprocess.run(["sh", str(dev / "stop.sh")], env=mac.env, capture_output=True)
+
+
 SCENARIOS = {
     "install": s_install,
     "update": s_update,
     "moved": s_moved,
+    "company": s_company,
+    "dev-checkout": s_dev_checkout,
     "no-claude": _failure("no-claude", "isn't installed, or Terminal can't find it", _no_claude),
     "locked": _failure("locked", "wouldn't let setup remove the download flag", extra={"SIM_XATTR_LOCKED": "1"}),
     "killed": _failure("killed", "stopped the bundled tmux from running", _killed),

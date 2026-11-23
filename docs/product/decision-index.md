@@ -35,6 +35,7 @@ feature notes of the time and marked *(reconstructed)*.
 | D-04 | A "product partner" for PMs: unstructured work plus templated flows | Geoff | Active | *(reconstructed)* His vision of PM work: context files and generated artifacts alternating with structured, repeatable flows. |
 | D-107 | Setup clears the download flag on its own folder after asking; curl stays as the other way | Geoff | Built (`setup.sh`) | A browser ZIP is the main way in; this is what "Open Anyway" does, and IT for every install would stall it. |
 | D-111 | App lives in `~/flight-deck`; updates from a newer ZIP never overwrite the person's files or edits | Geoff asked, Claude chose | Built (`setup.sh`, `scripts/install_sync.py`) | A re-download must keep his files, and Terminal navigation is hard: one fixed folder plus a manifest of what was shipped. |
+| D-171 | A git checkout (such as a company copy) is its own app folder; updates apply in place, ready to commit and push; downloads recognized by content | Geoff asked, Claude chose | Built (`setup.sh`, `docs/company-repo.md`) | The downloaded copy will likely live in a company GitHub repository, and updates must keep working there. |
 
 ## Structured work
 
