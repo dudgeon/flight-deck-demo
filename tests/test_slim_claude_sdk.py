@@ -257,3 +257,21 @@ def test_a_picked_mode_reaches_claude_code() -> None:
     # The picker never offers a bypass: the server checks against the slim list.
     routes = (ROOT / "omnigent/server/routes/sessions/routes_core.py").read_text()
     assert "allowed_permission_modes = tuple(ALLOWED_CLAUDE_PERMISSION_MODES)" in routes
+
+
+def test_the_viewer_reads_claude_code_session_files() -> None:
+    """The agent has no os_env, yet views and artifacts must load, not 404 (D-175)."""
+    routes = (ROOT / "omnigent/runner/resource_routes.py").read_text()
+    assert 'and spec.executor.config.get("harness") == "claude-sdk"' in routes
+
+
+def test_flown_demos_start_on_sonnet(tmp_path: Path) -> None:
+    from omnigent import slim_policy
+
+    demo = tmp_path / "workspace" / "demos" / "problem-discovery"
+    assert slim_policy.is_demo_workspace(str(demo))
+    assert slim_policy.slim_new_session_model(str(demo)) == "claude-sonnet-5-5"
+    assert slim_policy.slim_new_session_model(str(tmp_path / "workspace")) is None
+    assert slim_policy.slim_new_session_model(None) is None
+    orchestration = (ROOT / "omnigent/server/routes/_sessions/orchestration.py").read_text()
+    assert "model_override = slim_new_session_model(canonical_workspace)" in orchestration

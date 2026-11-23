@@ -255,7 +255,9 @@ technical (D-100).
 - **Next.** Geoff updates the work Mac (`sh ~/flight-deck/setup.sh` after a
   new download) and starts a session. The session view was tidied the same
   day: "Claude Code" everywhere, no terminal tab, mode and effort pickers
-  (D-174).
+  (D-174). Geoff's first demo there stopped at its first view ("404 Not Found":
+  the viewer refused to read Claude Code sessions' files); fixed, and demos
+  now run on Sonnet (D-175).
 - **Hangar edits on the work Mac.** Geoff, 2026-11-21: edits made there only
   need to survive updates (D-111 does that), not reach GitHub; later the repo
   will likely be re-committed to a company repository as a fork. "Send to
