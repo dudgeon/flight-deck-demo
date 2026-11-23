@@ -300,6 +300,20 @@
    "decisions": "D-148 to D-152 (HS-1 to HS-5)",
    "status": "Answered (5)",
    "answers_as_of": "2026-11-22"
+  },
+  {
+   "id": "CNNpJFboRrwDAsYsBvundE",
+   "order": 25,
+   "url": "https://claude.ai/artifact/CNNpJFboRrwDAsYsBvundE",
+   "slug": "2026-11-22-decision-briefs",
+   "date": "2026-11-22",
+   "title": "How decision briefs should work",
+   "kind": "Decision brief",
+   "about": "The first brief from the shared decision-brief skill: layout, how answers come back at work, where decisions are recorded, when to make one (DB-1 to DB-4)",
+   "decisions": "D-159 to D-163",
+   "status": "Answered (4)",
+   "note": "Drawn by skills/decision-brief from skills/decision-brief/examples/decision-briefs.json.",
+   "answers_as_of": "2026-11-22"
   }
  ]
 }

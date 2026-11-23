@@ -480,6 +480,58 @@ stored. *Where:* `omnigent/server/routes/slim_participant_inbox.py`,
 `web/src/lib/proactiveInbox.ts`, the participant card in
 `web/src/pages/InboxPage.tsx`, `skills/participants/SKILL.md` step 7.
 
+## Decision briefs
+
+**What it is for.** Some decisions can't be made from a card: they need
+context the person doesn't have in front of them, are more than one
+question, or have a visual side chat can't show. The product owner asked never to decide those blind
+(D-33), and every walkthrough made for him so far was built by hand. A
+decision brief is the one way any agent, skill or persona puts such a
+decision to a person, so every brief reads the same, improves in one place,
+and costs only its content (D-159).
+
+**What it does.** Skill `skills/decision-brief`, bundled into every session.
+The agent writes one JSON file: why the person is seeing it, the
+recommendation in one paragraph, what was read and found, and per decision
+the question, context, what you need to know, a visual stage, two to five
+options with what each gives up, one recommended with its reason, and what
+it depends on. `brief.py render` draws it into a fixed template: a bar
+counting what is answered with "Accept all recommendations", the briefing
+and picture beside "Your call", a stage that redraws for the option pointed
+at, "Something else" on every decision, a note box and a summary of answers.
+Visuals are built from components in the template (wireframes, flows,
+comparisons, file trees, tables, chips), so they follow the tokens in light
+and dark. `brief.py check` refuses a brief that is blind, has no single
+recommendation, sets its own colors or loads anything.
+
+**How answers come back.** A "Send answers to Claude" button on the brief
+itself, so the person stays focused in the brief rather than switching to
+the chat (D-161). In Flight Deck it calls `omnigent.answer`: the app checks
+the brief, decision and option ids, quotes each note as the person's words,
+writes the message itself and sends it straight to the agent (like
+`omnigent.act`, the only other artifact text that skips the composer). On
+claude.ai picks save to the page's `answers` collection as they are made,
+and Send posts them as a comment sent to Claude. Elsewhere, "Copy answers".
+`brief.py import` reads any of them.
+
+**Where it lives.** A brief is one of the project's decision artifacts, so
+its data, page and decision note sit together in `projects/<key>/decisions/`
+(D-162). `record` locks the answers and adds one line per decision to the
+project's decisions register, so other skills see them; `note` writes the
+decision note (pick, note, the recommendation and why, options considered,
+links to the research, the page and its archived copy).
+
+**When it is used.** By the agent's judgment: generally when a decision
+needs context, is more than one question, or has a visual side that isn't
+well suited to chat (D-163). A quick choice stays a question card. The rule
+lives in the workspace's `CLAUDE.md` and the skill; the director and
+decision review point to it.
+
+**Layout.** One scrolling page, briefing and picture beside "Your call",
+stacked on a phone (D-160). Narration (a voice and an animated stage, as in
+the duo-v2 walkthroughs) may be added later as another way to view the same
+data, but it is not part of the core.
+
 ## Decision review (a kind of work)
 
 **What it is for.** A PM's work stalls on questions nobody has put to them

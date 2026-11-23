@@ -43,9 +43,11 @@ by hand. Generated from `artifacts.json`; do not edit this table directly.
 | 2026-11-21 | Flight Deck Usage Log | Decision walkthrough | How the local usage log works, and whether logs are committed, what a work Mac pack holds, where the numbers are seen (UL-1 to UL-3) | D-122 to D-127 | Open | [2026-11-21-usage-log](2026-11-21-usage-log/index.html) |
 | 2026-11-21 | Initiatives and templates | Decision walkthrough | The data model for initiatives, artifact stamps, templates and shared registers; IN-1 and IN-3 | D-138 to D-142, D-155, D-156 | Settled without asking | [2026-11-21-initiatives-and-templates](2026-11-21-initiatives-and-templates/index.html) |
 | 2026-11-21 | Hero Skills and the Lifecycle | Decision walkthrough | Research on the product lifecycle and AI help; five questions on the shape of the hero-skill set (HS-1 to HS-5) | D-148 to D-152 (HS-1 to HS-5) | Answered (5) | [2026-11-21-hero-skills-and-lifecycle](2026-11-21-hero-skills-and-lifecycle/index.html) |
+| 2026-11-22 | How decision briefs should work | Decision brief | The first brief from the shared decision-brief skill: layout, how answers come back at work, where decisions are recorded, when to make one (DB-1 to DB-4) | D-159 to D-163 | Answered (4) | [2026-11-22-decision-briefs](2026-11-22-decision-briefs/index.html) |
 
 ## Notes
 
 - **Product Aviator: what we agreed and what is open**: This one is a Claude Doc, not a page, so there is no HTML file to copy. Its content is folded into decisions.md (D-05 to D-16) and history.md. To archive it, export it as HTML from the doc's menu (or the Claude Docs export tool) and run `add` on a folder holding that file as index.html.
 - **Collaborative markdown editor mockup**: From the project files (collab-editor/mockup.html); it was never published as a page.
 - **Participant messages in the Inbox mockup**: From the project files (inbox-participants/mockup.html); it was never published as a page.
+- **How decision briefs should work**: Drawn by skills/decision-brief from skills/decision-brief/examples/decision-briefs.json.

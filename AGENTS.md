@@ -182,7 +182,11 @@ writing down intent is part of every change.
 - **Asking Geoff.** One question at a time as a decision card, never a list in
   prose (D-32); always with a "Something else" option (D-105); never blind:
   context, real options with consequences, the actual visuals, and a
-  recommendation with its reason (D-33).
+  recommendation with its reason (D-33). A walkthrough or any complex
+  decision is a brief made with `skills/decision-brief` (D-159): write the
+  brief's JSON, render it with `--fragment`, publish it with the `db` and
+  `comments` capabilities, read his answers back with `brief.py import --db`,
+  then `record` and `note`. Don't hand-build a walkthrough page.
 
 ## Pull requests
 
@@ -204,7 +208,8 @@ writing down intent is part of every change.
   every session by `omnigent/slim_skills.py`, appearing as `/claude:<name>`
   (see `skills/README.md`). The main ones: `view-kit` (datasets, views, `pa`),
   `participants`, `document-collaboration`, `scenario-builder`,
-  `build-person`, `product-aviator-design`, `frontend-design` (vendored,
+  `build-person`, `product-aviator-design`, `decision-brief` (every
+  complex decision put to a person), `frontend-design` (vendored,
   Apache 2.0, unchanged), `omnigent-operator` (an example for skill writers),
   and the workflows `problem-discovery`, `intent-shaping`, `decision-review`,
   `delivery-status`, `document-review`, `prd-to-requirements` and

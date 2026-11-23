@@ -18,6 +18,19 @@ To ship a skill with omnigent-slim, drop its folder in the repo's
 folder. [`skills/omnigent-operator`](../../skills/omnigent-operator/SKILL.md)
 is a full working example built from these references.
 
+## When your skill needs the person to decide
+
+Don't draw your own decision page. A quick choice is one question card
+(recommendation first, with "Something else"). A complex one (it needs
+context, is more than one question, or has a visual side chat can't show)
+goes to the bundled
+[`decision-brief`](../../skills/decision-brief/SKILL.md) skill: in your
+`SKILL.md`, say "put it to the person with the `decision-brief` skill" at the
+step that needs it, and hand over the question, the real options and the
+evidence. The brief skill draws the page, takes the answers and writes them
+to the initiative's decisions register, so your skill reads them back from
+there and never asks again.
+
 ## Vocabulary
 
 Use these words in skills so they match what Omnigent and its users say.
