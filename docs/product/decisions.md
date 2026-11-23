@@ -583,6 +583,40 @@ https://claude.ai/artifact/7gbkDmURSuwhWGWVzyBtU6): the page as the editor with
 autosave (D-63), the pinnable Aviator pop-over with "Try them" (D-64), casting
 from the person's page (D-65) and skills passed to the session (D-66).
 
+**D-167 · 2026-11-22 · Geoff asked, Claude chose.** Skills that are not
+workflows (the kits and moves every session gets) are built in the Hangar the
+same way as workflows: the skill's page has Edit (or "Edit a copy" for one that
+ships with the app), Duplicate and Remove, and the Skills shelf has "New
+skill". The draft opens as the editor, with the description and the
+instructions of `SKILL.md` as fields, every other text file in the folder, the
+checks (the name is the folder's id, a one-line description under 1024
+characters, some instructions, no workflow manifest), Aviator in the pop-over
+with a "Try it" tab, and Publish into `workspace/.claude/skills/<id>/`, where a
+copy of a shipped skill takes over its id as D-72 does for workflows. Retiring
+one is blocked while a person lists it in their skills. `pa draft|publish|history
+skill` and a bundled `build-skill` skill do the same from a session. *Geoff:
+"editing people and skills still pops the user out of the Hangar". There was no
+way to change a skill in the Hangar at all, so the only route was a flying
+chat. Reusing the folder-draft machinery keeps one way to build anything.*
+
+**D-168 · 2026-11-22 · Claude.** Hangar chats never open in flying mode. The
+flying sidebar no longer lists the "Hangar" project or its sessions (refining
+D-59, which put them there to keep them out of the flying list); a Hangar
+session opened in flying mode anyway (an old link) goes back to its draft's
+page; and the building skills, asked in a flying chat, start the draft and hand
+over a link to its Hangar page instead of building in the chat. The last two
+"Continue with Aviator" and "Try them" links that started flying sessions are
+gone. *Those were the back doors that kept dropping Geoff out of the Hangar
+after editing itself had moved into the page (D-63).*
+
+**D-169 · 2026-11-22 · Geoff asked, Claude chose.** A new workflow can start
+blank, refining D-72's "starts as a duplicate". "New workflow" on the Workflows
+shelf makes a draft with three steps (Gather, Work through, Wrap up), one record
+type (`item`, with a title, detail and status), one list view and a `SKILL.md`
+to rewrite, which passes every check once it has a summary. Duplicating the
+nearest one still works. *Geoff asked to finish the build, and a PM making a
+new kind of work should not have to find one to copy and then strip it.*
+
 ## Modes, runs and projects
 
 Geoff's answers of 2026-11-21 to the walkthrough at

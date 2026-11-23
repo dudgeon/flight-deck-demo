@@ -224,6 +224,7 @@ import { useSessionActions } from "./useSessionActions";
 import { ProjectSettingsDialog } from "./ProjectSettingsDialog";
 import { ProjectRowIcon } from "./ProjectPicker";
 import { ProjectRunsBadge } from "@/projectHome/ProjectRunsBadge"; // omnigent-slim
+import { HANGAR_PROJECT } from "@/hangar/hangarApi"; // omnigent-slim
 import { EmojiPicker } from "@/components/ProjectIconPicker";
 import { SessionStateBadge } from "@/components/SessionStateBadge";
 import { useSessionRunnerOnline } from "@/hooks/RunnerHealthProvider";
@@ -2634,7 +2635,19 @@ function ConversationList({
     // Merge the server pinned set in, so a pinned session outside the loaded
     // paginated window still renders. Dedupe by id: a pinned session is usually
     // also present in the paginated list, and merging both would render it twice.
-    const allWithPinned = dedupeConversationsById([...allConversations, ...pinnedConversations]);
+    // omnigent-slim: Hangar chats live on their draft's page in the Hangar
+    // (D-168), so the flying sidebar never lists them or their project.
+    const hangarId = projects.find((p) => p.name === HANGAR_PROJECT)?.id ?? null;
+    const allWithPinned = dedupeConversationsById([
+      ...allConversations,
+      ...pinnedConversations,
+    ]).filter(
+      (c) =>
+        !(
+          (hangarId !== null && c.project_id === hangarId) ||
+          c.labels?.[PROJECT_LABEL_KEY] === HANGAR_PROJECT
+        ),
+    );
     const notArchived = allWithPinned.filter((c) => c.archived !== true);
     // An archived open session lists on the live views too, wherever its row
     // came from; Pinned and project folders keep showing only live sessions.
@@ -2680,7 +2693,7 @@ function ConversationList({
       grouped || activeTab === "shared"
         ? []
         : withAutomationFolder(
-            projects,
+            projects.filter((p) => p.name !== HANGAR_PROJECT),
             sharedRunsToFile,
             projectOrder.data?.sort_mode === "manual",
           );

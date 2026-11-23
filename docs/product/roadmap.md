@@ -52,8 +52,11 @@ back.
   in the Hangar (PR 27, D-112). "Send to repo" for Hangar edits on a git
   copy (PR 29, D-113).
 - **Done.** "◆ Fly this" on a scenario page (PR 17, see below).
-- **Next.** Builder skills for workflows and skills (`build-workflow`,
-  `build-skill`) beyond `build-person` and `scenario-builder`.
+- **Done.** Skills built in the Hangar with `build-skill`, a "Try it" for a
+  draft skill, no more drops into flying mode, and a blank "New workflow"
+  (D-167 to D-169, this PR).
+- **Next.** A striped "Trial" strip for trying a draft in a full session, if
+  the pop-over's Try tabs prove too small.
 - **Open.** Left for later by design: sharing a workflow or scenario with
   another PM as one file, and a second person's approval before publishing (a
   production feature, D-44).

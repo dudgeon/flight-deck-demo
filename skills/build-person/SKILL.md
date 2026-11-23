@@ -1,6 +1,6 @@
 ---
 name: build-person
-description: Guided build of a person or agent for the roster, in the Hangar (Product Aviator's builder mode). Works on a draft that nobody else sees until it is published, with checks, a trial and history. Use when the user asks to add, change, duplicate or retire a participant, persona, stakeholder or platform agent, or when a session was started from the Hangar's "New person or agent", "Edit" or "Duplicate".
+description: Guided build of a person or agent for the roster, in the Hangar (Product Aviator's builder mode). Works on a draft that nobody else sees until it is published, with checks, a trial and history. Use when the user asks to add, change, duplicate or retire a participant, persona, stakeholder or platform agent, or when you are the Aviator beside a person's page in the Hangar.
 ---
 
 # Build a person or agent
@@ -23,6 +23,23 @@ PA="python3 <this skill's folder>/../view-kit/scripts/pa.py"
 ```
 
 Work in the workspace folder (where `participants/` is).
+
+## Asked in a flying chat: hand over to the Hangar
+
+If this conversation did not start in the Hangar (its first message does not
+say you are editing someone in the Hangar), don't run the steps in the chat
+(D-168). Start the draft, give the person the page, and stop:
+
+```bash
+$PA draft person --name "Fraud Ops"     # someone new
+$PA draft person mara-okafor            # a change
+```
+
+> I started a draft of **Fraud Ops**. [Open it in the Hangar](/hangar/drafts/person/fraud-ops)
+> to finish it; I'll be in the Ask Aviator pop-over there.
+
+Use the id `pa` printed, and keep the link in exactly that form: it opens in
+the app.
 
 ## The five steps
 

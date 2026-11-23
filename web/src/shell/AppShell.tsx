@@ -180,6 +180,7 @@ import { ForkDialogContextProvider, type ForkDialogContextValue } from "./ForkDi
 import { resolveDefaultShell } from "./preferredShell";
 import { WorkspacePanel } from "./WorkspacePanel";
 import { SessionRail } from "./SessionRail";
+import { fetchAviatorHome } from "@/hangar/hangarApi"; // omnigent-slim
 import { TasksTabOnOpen } from "./TasksTabOnOpen";
 import {
   SessionCostButton,
@@ -400,6 +401,19 @@ function AppShellImpl() {
   // create window (or on a stale temp reload, before ChatPage redirects).
   const serverConversationId = isTempConvId(conversationId) ? undefined : conversationId;
   const pendingConversation = conversationId != null && serverConversationId == null;
+  // omnigent-slim: a Hangar chat opened here (an old link, a notification)
+  // goes back to its draft's page in the Hangar instead of opening as a
+  // flying session (D-168).
+  useEffect(() => {
+    if (!serverConversationId) return;
+    let live = true;
+    void fetchAviatorHome(serverConversationId).then((path) => {
+      if (live && path) navigateTo(path, { replace: true });
+    });
+    return () => {
+      live = false;
+    };
+  }, [serverConversationId, navigateTo]);
   const [fileViewerCommentsOpen, setFileViewerCommentsOpen] = useState(false);
   const [mobileFileTarget, setMobileFileTarget] = useState<HTMLDivElement | null>(null);
   const [rightRailTab, setRightRailTab] = useState<RightRailTab | null>(() =>

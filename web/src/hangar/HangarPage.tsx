@@ -37,10 +37,8 @@ import {
   type HangarWorkflow,
   BUILD_STEPS,
   aviatorPrompt,
-  builderSessionLink,
   draftAvatarUrl,
   useAvatarActions,
-  buildPrompts,
   type CastKind,
   type CastSet,
   type HangarDraft,
@@ -76,6 +74,8 @@ import {
   FolderDraftPage,
   FolderHistory,
   NewScenarioButton,
+  NewSkillButton,
+  NewWorkflowButton,
 } from "./FolderEditor";
 import { FlyButton, demoNote } from "./FlyButton";
 import "./hangar.css";
@@ -200,7 +200,7 @@ function HangarSidebar({ hangar }: { hangar: Hangar | undefined }) {
 
 function FolderDraftRoute({ hangar }: { hangar: Hangar }) {
   const { kind = "", id = "" } = useParams<{ kind: string; id: string }>();
-  if (kind !== "scenario" && kind !== "workflow") return <NotHere />;
+  if (kind !== "scenario" && kind !== "workflow" && kind !== "skill") return <NotHere />;
   return <FolderDraftPage hangar={hangar} kind={kind} id={id} />;
 }
 
@@ -526,6 +526,7 @@ function Overview({ hangar }: { hangar: Hangar }) {
           <div className="row">
             <NewPersonButton />
             <NewScenarioButton hangar={hangar} />
+            <NewSkillButton primary={false} />
             <Link className="hangar-btn" to={hangarPath.shelf("workflows")}>
               Change a workflow
             </Link>
@@ -804,13 +805,17 @@ function WorkflowCard({ workflow, hangar }: { workflow: HangarWorkflow; hangar: 
 function WorkflowShelf({ hangar }: { hangar: Hangar }) {
   return (
     <>
-      <div>
-        <h1>Workflows</h1>
-        <p className="sub">
-          Each kind of work a person can do with Aviator. The lock means it ships with the app:
-          editing one makes a workspace copy. For a new kind of work, open the nearest one and
-          duplicate it.
-        </p>
+      <div className="row">
+        <div>
+          <h1>Workflows</h1>
+          <p className="sub">
+            Each kind of work a person can do with Aviator. The lock means it ships with the app:
+            editing one makes a workspace copy. For a new kind of work, start a blank one, or open
+            the nearest one and duplicate it.
+          </p>
+        </div>
+        <span className="sp" />
+        <NewWorkflowButton />
       </div>
       <div className="grid2">
         {hangar.workflows.map((w) => (
@@ -1314,12 +1319,16 @@ function SkillShelf({ hangar }: { hangar: Hangar }) {
   ];
   return (
     <>
-      <div>
-        <h1>Skills</h1>
-        <p className="sub">
-          What the agent is taught. Every session gets all of them. A workflow is a skill with
-          steps, records and views.
-        </p>
+      <div className="row">
+        <div>
+          <h1>Skills</h1>
+          <p className="sub">
+            What the agent is taught. Every session gets all of them. A workflow is a skill with
+            steps, records and views; the others are kits and moves any session can use.
+          </p>
+        </div>
+        <span className="sp" />
+        <NewSkillButton />
       </div>
       {groups.map(([label, isWorkflow]) => (
         <Section key={label} title={label}>
@@ -1331,6 +1340,11 @@ function SkillShelf({ hangar }: { hangar: Hangar }) {
                   <div className="row">
                     <b className="font-mono text-[13px]">{s.id}</b>
                     <span className="sp" />
+                    {!s.builtin && (
+                      <span className="chip build">
+                        {s.shipped ? "Changed here" : "Built here"}
+                      </span>
+                    )}
                     <span className="chip">Used by {s.used_by.length}</span>
                   </div>
                   <span className="sub line-clamp-2">{s.description}</span>
@@ -1349,24 +1363,60 @@ function SkillPage({ hangar }: { hangar: Hangar }) {
   if (!skill) return <NotHere />;
   const uses = hangar.skills.filter((s) => s.used_by.includes(skill.id));
   const frameworks = hangar.frameworks.filter((f) => f.used_by.includes(skill.id));
+  const people = hangar.people.filter((p) => p.skills?.includes(skill.id));
   return (
     <>
       <Crumb shelf="skills" label={skill.id} />
       <div className="row">
         <h1 className="font-mono">{skill.id}</h1>
-        {skill.workflow && (
+        {skill.workflow ? (
           <Link className="chip build" to={hangarPath.workflow(skill.id)}>
             A workflow
           </Link>
+        ) : (
+          <span className="chip">
+            {skill.builtin
+              ? "Ships with the app"
+              : skill.shipped
+                ? "A changed copy of a shipped skill"
+                : "Built in the Hangar"}
+          </span>
+        )}
+        <span className="sp" />
+        {skill.workflow ? (
+          <Link className="hangar-btn pri" to={hangarPath.workflow(skill.id)}>
+            Change it on its workflow page
+          </Link>
+        ) : (
+          <FolderActions
+            hangar={hangar}
+            kind="skill"
+            id={skill.id}
+            builtin={skill.builtin}
+            shipped={skill.shipped}
+          />
         )}
       </div>
       <p className="sub">{skill.description}</p>
+      {!skill.workflow && (
+        <FolderHistory kind="skill" id={skill.id} versions={skill.history ?? []} />
+      )}
       <div className="grid3">
         <Section title="Used by">
           <Links
             items={skill.used_by.map((sid) => ({ to: hangarPath.skill(sid), label: sid }))}
             empty="No other skill names it."
           />
+          {people.length > 0 && (
+            <Links
+              items={people.map((p) => ({
+                to: hangarPath.person(p.id),
+                label: p.name,
+                note: "brings it",
+              }))}
+              empty=""
+            />
+          )}
         </Section>
         <Section title="Uses">
           <Links
@@ -2450,22 +2500,6 @@ function DraftPage({ hangar }: { hangar: Hangar }) {
               >
                 {removal ? "Remove from the roster" : "Publish"}
               </button>
-              {!removal && (
-                <Link
-                  to={builderSessionLink(buildPrompts.resume(draft.id, draft.step))}
-                  className="hangar-btn"
-                >
-                  Continue with Aviator
-                </Link>
-              )}
-              {!removal && draft.person && (
-                <Link
-                  to={builderSessionLink(buildPrompts.trial(draft.id, name))}
-                  className="hangar-btn"
-                >
-                  Try them
-                </Link>
-              )}
               <span className="sp" />
               <button
                 type="button"

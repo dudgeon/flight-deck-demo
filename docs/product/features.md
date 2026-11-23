@@ -873,6 +873,33 @@ workspace copy, so it travels with the repo. *Why:* the widgets are most of
 what a person sees of a workflow, and Geoff wants to shape them where he
 shapes everything else, without hand-editing files.
 
+**Skills (D-167).** The skills every session gets (kits and moves such as
+`participants` or `document-collaboration`, not workflows) are built like
+everything else. A skill's page has Edit, or "Edit a copy" for one that ships
+with the app, plus Duplicate and Remove; the Skills shelf and the Overview have
+"New skill". The draft opens as the editor: the description (what the agent
+reads to decide when to use it) and the instructions are fields, every other
+text file in the folder can be opened or added, and the checks say what would
+stop it loading. Aviator works from the pop-over, and its "Try it" tab gives
+the draft a real request to follow without publishing anything. Publish puts
+it in `workspace/.claude/skills/<id>/`, where a changed copy of a shipped skill
+takes over its id until it is removed; History restores an earlier version.
+A skill built in a workflow's folder is still changed on its workflow page.
+*Why:* Geoff could not change a skill in the Hangar at all; the only way was
+to ask in a flying chat.
+
+**Staying in the Hangar (D-168).** Building never drops you into flying mode.
+The Hangar's Aviator chats are not listed in the flying sidebar, a Hangar
+chat opened from an old link goes to its draft's page, and asking Aviator in
+an ordinary chat to change a person, scenario, workflow or skill starts the
+draft and gives a link to its page in the Hangar. *Why:* these were the back
+doors that made the Hangar feel unfinished after editing moved into the page.
+
+**A blank workflow (D-169).** "New workflow" on the Workflows shelf starts a
+draft with three steps, one kind of record, a list view and instructions to
+rewrite, which passes the checks as soon as it has a summary. *Why:* a new
+kind of work should not have to start as a copy of an unrelated one.
+
 **Where.** Design in `hangar.md`. Server: `omnigent/server/routes/slim_hangar.py`
 (`GET /v1/slim/hangar`, `POST /v1/slim/hangar/repo/send`, rendered views, templates and scenario players, and the
 draft, publish, history and restore routes for people, scenarios and

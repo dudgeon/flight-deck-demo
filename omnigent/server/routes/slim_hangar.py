@@ -249,9 +249,7 @@ _SKILL_RENDER = re.compile(r"views/([A-Za-z0-9_.-]+?)\.json\b([^\n`]*)")
 def skill_hosts(folder: Path, manifest: dict[str, Any]) -> dict[str, str]:
     """Each view's place as the workflow's SKILL.md renders it: ``chat`` or ``canvas``."""
     text = _read_text(folder / "SKILL.md") or ""
-    by_file = {
-        Path(str(rel)).stem: name for name, rel in (manifest.get("views") or {}).items()
-    }
+    by_file = {Path(str(rel)).stem: name for name, rel in (manifest.get("views") or {}).items()}
     hosts: dict[str, str] = {}
     for m in _SKILL_RENDER.finditer(text):
         name = by_file.get(m.group(1))
@@ -481,31 +479,45 @@ def fly_scenario(
 # ------------------------------------------------------------------ others
 
 
-def _skills(root: Path) -> list[dict[str, Any]]:
-    skills = []
-    if not root.is_dir():
-        return skills
-    for folder in sorted(p for p in root.iterdir() if p.is_dir() and (p / "SKILL.md").is_file()):
-        text = _read_text(folder / "SKILL.md") or ""
-        meta, body = _front_matter(text)
-        skills.append(
-            {
-                "id": folder.name,
-                "name": str(meta.get("name") or folder.name),
-                "description": str(meta.get("description") or ""),
-                "workflow": (folder / "workflow.json").is_file()
-                or (folder / "scenario.json").is_file(),
-                "files": sorted(
-                    p.relative_to(folder).as_posix()
-                    for p in folder.rglob("*")
-                    if p.is_file() and p.name != ".DS_Store"
-                )[:60],
-                "text": body,
-                "path": f"skills/{folder.name}/SKILL.md",
-                "used_by": [],
-            }
-        )
-    return skills
+def _skills(roots: list[Path], workspace: Path) -> list[dict[str, Any]]:
+    """Every skill, first root wins: one built here takes over a shipped id (D-72, D-167)."""
+    skills: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    shipped: set[str] = set()
+    for root in roots:
+        if not root.is_dir():
+            continue
+        builtin = not root.resolve().is_relative_to(workspace.resolve())
+        names = {p.name for p in root.iterdir() if p.is_dir() and (p / "SKILL.md").is_file()}
+        if builtin:
+            shipped |= names
+        for name in sorted(names - seen):
+            seen.add(name)
+            skills.append(_skill_entry(root / name, builtin))
+    for skill in skills:
+        skill["shipped"] = skill["id"] in shipped
+    return sorted(skills, key=lambda s: s["id"])
+
+
+def _skill_entry(folder: Path, builtin: bool) -> dict[str, Any]:
+    text = _read_text(folder / "SKILL.md") or ""
+    meta, body = _front_matter(text)
+    where = "skills" if builtin else "workspace/.claude/skills"
+    return {
+        "id": folder.name,
+        "name": str(meta.get("name") or folder.name),
+        "description": str(meta.get("description") or ""),
+        "workflow": (folder / "workflow.json").is_file() or (folder / "scenario.json").is_file(),
+        "files": sorted(
+            p.relative_to(folder).as_posix()
+            for p in folder.rglob("*")
+            if p.is_file() and p.name != ".DS_Store"
+        )[:60],
+        "text": body,
+        "path": f"{where}/{folder.name}/SKILL.md",
+        "builtin": builtin,
+        "used_by": [],
+    }
 
 
 def _frameworks(folder: Path) -> list[dict[str, Any]]:
@@ -583,7 +595,7 @@ def load_hangar() -> dict[str, Any]:
             entry["starters"] = [s["id"] for s in starters if s.get("template") == path.stem]
             templates.append(entry)
 
-    skills = _skills(skills_root)
+    skills = _skills(pa.skill_roots(workspace_dir()), workspace_dir())
     frameworks = _frameworks(workspace_dir() / "frameworks")
 
     # Links in both directions, so every inspect page can say what uses it.
@@ -624,6 +636,9 @@ def load_hangar() -> dict[str, Any]:
             workflow["script"] = {k: v for k, v in workflow["script"].items() if k != "text"}
     for skill in skills:
         skill.pop("text", None)
+        skill["history"] = (
+            [] if skill["workflow"] else pa.folder_history(workspace_dir(), "skill", skill["id"])
+        )
 
     return {
         "workspace_dir": str(workspace_dir()),
@@ -987,7 +1002,7 @@ def person_version(pid: str, version: str) -> dict[str, Any]:
 # Slice 3: scenarios and workflows. A draft is a whole folder; the same
 # ``pa`` functions back ``pa draft scenario|workflow`` for the builder skills.
 
-_FOLDER_KINDS = ("scenario", "workflow")
+_FOLDER_KINDS = ("scenario", "workflow", "skill")
 
 
 def _folder_kind(kind: str) -> str:
@@ -1094,6 +1109,27 @@ def render_draft_preview(kind: str, fid: str) -> str:
         return pa.preview_html(folder, str(workspace_dir() / "participants"), workspace_dir())
     except Exception as err:
         raise HTTPException(status_code=422, detail=str(err)) from err
+
+
+def aviator_home(session_id: str) -> dict[str, Any]:
+    """The Hangar page whose Aviator pop-over holds this session, if a draft still has it.
+
+    Hangar chats belong on their draft's page, not in flying mode: the web UI
+    asks here when a session opens and, if the answer has a path, goes there.
+    """
+    pa = _pa()
+    base = workspace_dir() / pa.HANGAR_DIR / "drafts"
+    kinds = {"people": "person", **{v: k for k, v in pa.FOLDER_KINDS.items()}}
+    for folder, kind in kinds.items():
+        for meta in sorted((base / folder).glob("*.json")) if (base / folder).is_dir() else []:
+            data = _json(meta)
+            if isinstance(data, dict) and data.get("aviator") == session_id:
+                return {
+                    "kind": kind,
+                    "id": meta.stem,
+                    "path": f"/hangar/drafts/{kind}/{meta.stem}",
+                }
+    return {"kind": None, "id": None, "path": None}
 
 
 # --------------------------------------------------------------- rendering
@@ -1243,6 +1279,11 @@ def create_slim_hangar_router(
     ) -> dict[str, Any]:
         require_user(request, auth_provider)
         return send_to_repo(str((body or {}).get("summary") or "")[:120])
+
+    @router.get("/slim/hangar/aviator/{session_id}")
+    async def get_aviator_home(request: Request, session_id: str) -> dict[str, Any]:
+        require_user(request, auth_provider)
+        return aviator_home(session_id)
 
     @router.get("/slim/hangar/drafts/person/{pid}")
     async def get_draft(request: Request, pid: str) -> dict[str, Any]:
