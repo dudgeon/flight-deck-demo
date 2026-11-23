@@ -88,6 +88,11 @@ feature notes of the time and marked *(reconstructed)*.
 | D-32 | More than one question: decision cards, one at a time | Geoff | Active; extended by D-105 | *(reconstructed)* A list in prose is hard to answer from a phone. |
 | D-33 | Never ask Geoff to decide blind | Geoff | Active; built into decision review | *(reconstructed)* A decision without context, options and visuals is not a decision he can make. |
 | D-115 | Decision artifacts are archived in the repo as offline HTML, kept by the `docs-refresh` skill | Geoff asked, Claude chose | Built (`docs/decision-artifacts/`) | A record anyone can open without his claude.ai account, and examples of how to ask. |
+| D-159 | Every complex decision is a decision brief from one skill: the agent writes JSON, a fixed template draws it; answers go to the register and a note | Geoff asked, Claude chose | Pending (`skills/decision-brief`) | One consistent page to iterate on, and no tokens spent rebuilding it per decision. |
+| D-160 | Briefs are one page, briefing beside your call; narration maybe later, not core | Geoff | Pending (the template) | It shows the whole set at once and works offline with nothing extra to make. |
+| D-161 | A Send button in the brief sends answers straight to the agent (`omnigent.answer`; a comment to Claude on claude.ai) | Geoff | Pending (`artifactBridge.ts`, the template) | Keeps the person focused in the brief, with no switching back to the chat. |
+| D-162 | Briefs live in the project's `decisions/` folder with their page and decision note | Geoff | Pending (`decision-brief` skill) | A brief is one of the project's decision artifacts. |
+| D-163 | When to make a brief is the agent's judgment: generally when it needs context, is more than one question, or is visual | Geoff | Active (workspace `CLAUDE.md`, the skill) | A fixed rubric would misfire; these are the signs that chat won't do. |
 | D-34 | Intent framework is notional and swappable (`workspace/frameworks/`) | Geoff | Built | *(reconstructed)* The real company framework can replace it without touching the skill. |
 
 ## Name and design language
@@ -251,6 +256,8 @@ Spec: [usage-logging.md](usage-logging.md).
 | D-125 | `area.action` names; every `pa` command and slim route write logs itself; reads are not logged; `pa log` for skills | Claude | Built |
 | D-126 | Eval trials are tagged and kept in `eval/<suite>/`; routing graders read them | Claude | Built; no suite uses it yet |
 | D-127 | Logs leave a machine only as a pack a person carries; an `Exporter` interface for a later server | Claude | Built (packs); no remote exporter |
+| D-157 | Usage logs stay out of git for now; packs are carried by hand (UL-1) | Geoff | Built |
+| D-158 | Loose, changeable calls: packs keep names unless `--fingerprint`; numbers via `pa usage summary`, a Hangar page only if wanted (UL-2, UL-3) | Claude | Built |
 
 ## Backfilled (decided earlier, logged on 21 Nov)
 
@@ -266,9 +273,7 @@ Spec: [usage-logging.md](usage-logging.md).
 
 ## Open questions not yet numbered
 
-- Usage logging (UL-1 to UL-3 in [usage-logging.md](usage-logging.md)):
-  put to Geoff 2026-11-21; built to the recommendations meanwhile.
-- Skill taxonomy (HS-7 and HS-8 in [skill-taxonomy.md](skill-taxonomy.md));
+- Skill taxonomy (HS-7 and HS-8, settled as light-touch calls by Claude, in [skill-taxonomy.md](skill-taxonomy.md));
   HS-1 to HS-6 were decided 2026-11-22 as D-148 to D-153.
 - Progressive complexity (D-54).
 - D-24 for production.

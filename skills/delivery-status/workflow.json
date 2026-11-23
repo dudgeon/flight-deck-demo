@@ -1,6 +1,6 @@
 {
  "workflow": "delivery-status",
- "title": "Delivery status update",
+ "title": "Deliver",
  "summary": "Check a delivery plan against what is actually happening: ask the owners, watch the dependencies, project a new date when something moves, explore ways to recover, and write the update for whoever needs it.",
  "library": {
   "show": true,

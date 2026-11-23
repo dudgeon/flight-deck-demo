@@ -211,6 +211,57 @@ versions will let others see the artifacts without needing access to my
 Claude account." A skill, rather than a one-off, because walkthroughs keep
 being made and the docs pass needs repeating.*
 
+**D-159 · 2026-11-22 · Geoff asked, Claude chose.** Every complex decision
+put to a person, by any agent, skill or persona in Flight Deck and by
+contributors asking Geoff, is a decision brief made with one bundled skill,
+`decision-brief`. The agent writes only the brief's content as a JSON file;
+a fixed template (`skills/decision-brief/template/brief.html`) draws the
+page, with the context, a visual stage that redraws for the option being
+looked at, options with what each gives up, one recommendation and its
+reason, "Something else" on every decision, a note box and saved answers.
+The same page saves answers to the page on claude.ai, puts them in the chat
+box in Flight Deck (the person presses Send) and offers Copy anywhere else.
+`brief.py` checks the rules (never blind, exactly one recommendation, no
+colors or network loads), imports answers, locks them, writes each to the
+initiative's decisions register and writes a decision note linking the
+research and the archived copy. Other skills point to the skill instead of
+drawing their own. Its first brief puts the open details (layout, how
+answers come back at work, where the record goes, when to make a brief:
+DB-1 to DB-4) to Geoff, and it is built to its recommendations meanwhile.
+*Geoff: "a consistent layout/experience we can iterate on, and without
+wasting tokens reinventing the wheel." The 22 archived walkthroughs each
+rebuilt the same parts with their own styles and saved answers in two
+different shapes; duo-v2's best page held its decisions as data.*
+
+**D-160 · 2026-11-22 · Geoff.** A brief is one scrolling page with the
+briefing and picture beside "Your call", stacked on a phone (DB-1). A
+narrated version (a voice and an animated stage) may come later as another
+way to view the same brief, but it is not part of the core. *Geoff: "We may
+later add the narrations; they're useful but not a core feature set."*
+
+**D-161 · 2026-11-22 · Geoff.** Answers leave from a Send button in the
+brief itself and reach the agent directly (DB-2, refines D-159): in Flight
+Deck through a new bridge call, `omnigent.answer`, whose message the app
+writes from checked ids with each note quoted as the person's words; on
+claude.ai as a comment sent to Claude, with picks still saved to the page as
+they are made. The composer remains the fallback on older builds. *Geoff
+picked the direct send as a hybrid: "send button in the brief; keeps user
+focused in the brief (no toggling back to chat)."*
+
+**D-162 · 2026-11-22 · Geoff.** Briefs live exclusively within their project:
+`projects/<key>/decisions/` holds each brief's data, page and decision note
+together (DB-3). The decision also gets one line in the project's decisions
+register, which is in the same project, so other skills don't ask again.
+*Geoff: "briefs are just a decision artifact, so put them in the project
+decisions folder." The register line is Claude's reading; it stays inside
+the project.*
+
+**D-163 · 2026-11-22 · Geoff.** When to make a brief is the agent's
+judgment: generally when the decision requires context, is more than one
+question, and/or has a visual side that isn't well suited to chat (DB-4,
+replacing the proposed fixed rule). A single quick choice stays a question
+card. *Geoff's own wording; a fixed rubric would misfire.*
+
 ## Name and design language
 
 **D-35 · 2026-11-21 · Geoff.** The fork of the Omnigent meta-harness is named
@@ -1003,6 +1054,19 @@ internet at runtime (CLAUDE.md); a file a person moves is the only way out
 that keeps that true, and an exporter interface fixed now means the server
 can come later without changing the log.*
 
+**D-157 · 2026-11-21 · Geoff.** Usage logs stay out of the repo's git
+history for now ("not yet"). Each machine keeps its own `logs/usage/`
+(gitignored), and a pack is carried by hand when wanted. Answers UL-1. *Git
+history is permanent; there is no need yet to put test logs in it.*
+
+**D-158 · 2026-11-22 · Claude.** UL-2 and UL-3 are settled loosely, without
+asking, and either can change whenever it matters. Packs keep names as
+written by default; `pa usage pack --fingerprint` is there for a pack that
+leaves the work Mac. The numbers are read with `pa usage summary` for now;
+a Usage page in the Hangar gets built only when someone wants it. *Geoff
+asked not to be held up by low-stakes choices. Both are one flag or one page
+away from changing, so nothing is locked in.*
+
 ## Initiatives, artifacts and templates
 
 Spec: [initiatives-and-templates.md](initiatives-and-templates.md). Geoff
@@ -1195,8 +1259,6 @@ canvas reload work; reviewed and locked are the person's judgment.*
 
 ## Open
 
-- Usage logging (UL-1 to UL-3 in [usage-logging.md](usage-logging.md)):
-  committing logs, what a work Mac pack holds, where the numbers are seen.
 - Progressive complexity (from D-54): how a workflow shows less at first and
   more on demand, to the person and to the agent. Not designed yet.
 - The intent graph's level of detail is deliberately held (D-98).

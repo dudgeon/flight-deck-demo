@@ -1,0 +1,1125 @@
+<!-- decision-archive:start -->
+<div style="font:13px/1.45 system-ui,sans-serif;background:Canvas;color:CanvasText;border-bottom:1px solid GrayText;padding:8px 16px">Archived copy of <b>Bolder Template Explorations</b>, a decision artifact from 2026-11-22. Nothing on this page is saved. The index of all of them is in <a href="../index.html">docs/decision-artifacts</a>.</div>
+<script>
+(function(){
+  var A={};
+  function snap(){var docs=Object.keys(A).map(function(k){return {id:k,data:function(){return A[k]},exists:true}});return {docs:docs,empty:!docs.length,size:docs.length,forEach:function(f){docs.forEach(f)}}}
+  function doc(id){return {id:id,get:async function(){return {id:id,exists:id in A,data:function(){return A[id]}}},set:async function(){},update:async function(){},delete:async function(){}}}
+  var db={collection:function(){return {get:async function(){return snap()},doc:doc,onSnapshot:function(f){setTimeout(function(){f(snap())},0);return function(){}},add:async function(){}}},doc:function(p){return doc(String(p).split("/").pop())}};
+  window.claude={use:async function(name){return name==="db"?db:null}};
+})();
+</script>
+<!-- decision-archive:end -->
+<title>Bolder Template Explorations</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* pa-tokens:begin: generated from design/tokens.json by design/build_tokens.py. Do not edit here. */
+:root {
+  --pa-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  --pa-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --pa-r: 6px;
+  --pa-r-panel: 10px;
+  --pa-gap: 12px;
+  --pa-text: 14px;
+  --pa-text-sm: 12.5px;
+  --pa-text-title: 19px;
+  --pa-weight-title: 650;
+  --pa-tracking-title: -0.015em;
+  --pa-bg: #f4f6f9;
+  --pa-surface: #ffffff;
+  --pa-sunk: #eaeef3;
+  --pa-ink: #0f1e30;
+  --pa-ink-2: #475a70;
+  --pa-ink-3: #71829a;
+  --pa-line: #d6dde6;
+  --pa-line-strong: #b4c0ce;
+  --pa-navy: #0a223d;
+  --pa-navy-hover: #17385f;
+  --pa-on-navy: #f2f6fa;
+  --pa-chrome: #0a223d;
+  --pa-chrome-ink: #f2f6fa;
+  --pa-chrome-ink-2: #9fb4cc;
+  --pa-chrome-hover: #17385f;
+  --pa-chrome-active: #2a5486;
+  --pa-chrome-line: #17385f;
+  --pa-you: #b0237a;
+  --pa-you-soft: #f8e1ef;
+  --pa-on-you: #ffffff;
+  --pa-ok: #17794a;
+  --pa-ok-soft: #ddf1e6;
+  --pa-info: #1e6aa6;
+  --pa-info-soft: #ddebf7;
+  --pa-warn: #8d5a00;
+  --pa-warn-soft: #f9ebcf;
+  --pa-attn: #8d5a00;
+  --pa-attn-soft: #f9ebcf;
+  --pa-fail: #b3261e;
+  --pa-fail-soft: #f9dedc;
+  --pa-idle: #71829a;
+  --pa-idle-soft: #eaeef3;
+  --pa-agent: #4f46b8;
+  --pa-agent-soft: #e8e6f8;
+  --pa-author-1: #1e6aa6;
+  --pa-author-2: #8d5a00;
+  --pa-author-3: #4d6b1f;
+  --pa-author-4: #7a3f8f;
+  --pa-author-5: #1f6b66;
+  --pa-author-6: #17794a;
+  --pa-author-7: #a0462f;
+  --pa-author-8: #3d5a99;
+  --pa-comment: #f5c518;
+  --pa-comment-strong: #d29e00;
+  --pa-shadow: #0a223d;
+  --pa-build: #0d6e78;
+  --pa-build-soft: #d9f0f1;
+  --pa-on-build: #ffffff;
+  --pa-hangar-bg: #edf4f6;
+  --pa-hangar-grid: #d3e3e7;
+  --pa-hangar-paper: #fbfdfd;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --pa-bg: #071526;
+    --pa-surface: #0c1e33;
+    --pa-sunk: #091a2d;
+    --pa-ink: #e6edf5;
+    --pa-ink-2: #a6b6c8;
+    --pa-ink-3: #71849a;
+    --pa-line: #1e3550;
+    --pa-line-strong: #3a5676;
+    --pa-navy: #2f64a0;
+    --pa-navy-hover: #3a73b3;
+    --pa-on-navy: #f2f6fa;
+    --pa-chrome: #0d2138;
+    --pa-chrome-ink: #f2f6fa;
+    --pa-chrome-ink-2: #8ea6c2;
+    --pa-chrome-hover: #15304f;
+    --pa-chrome-active: #1f4470;
+    --pa-chrome-line: #17304d;
+    --pa-you: #f26dc3;
+    --pa-you-soft: #3a1530;
+    --pa-on-you: #2a0a1f;
+    --pa-ok: #5bcb93;
+    --pa-ok-soft: #0f3123;
+    --pa-info: #7db7ea;
+    --pa-info-soft: #12304d;
+    --pa-warn: #e9b44c;
+    --pa-warn-soft: #362808;
+    --pa-attn: #e9b44c;
+    --pa-attn-soft: #362808;
+    --pa-fail: #ff8a80;
+    --pa-fail-soft: #3d1715;
+    --pa-idle: #71849a;
+    --pa-idle-soft: #12263b;
+    --pa-agent: #a59cff;
+    --pa-agent-soft: #211d47;
+    --pa-author-1: #7db7ea;
+    --pa-author-2: #e9b44c;
+    --pa-author-3: #a9c46a;
+    --pa-author-4: #d39be6;
+    --pa-author-5: #6fcfc6;
+    --pa-author-6: #5bcb93;
+    --pa-author-7: #f2967a;
+    --pa-author-8: #9fb3ef;
+    --pa-comment: #f5c518;
+    --pa-comment-strong: #d29e00;
+    --pa-shadow: #000000;
+    --pa-build: #58c9d3;
+    --pa-build-soft: #0c3237;
+    --pa-on-build: #04262a;
+    --pa-hangar-bg: #081d24;
+    --pa-hangar-grid: #12333b;
+    --pa-hangar-paper: #0b252d;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --pa-bg: #071526;
+  --pa-surface: #0c1e33;
+  --pa-sunk: #091a2d;
+  --pa-ink: #e6edf5;
+  --pa-ink-2: #a6b6c8;
+  --pa-ink-3: #71849a;
+  --pa-line: #1e3550;
+  --pa-line-strong: #3a5676;
+  --pa-navy: #2f64a0;
+  --pa-navy-hover: #3a73b3;
+  --pa-on-navy: #f2f6fa;
+  --pa-chrome: #0d2138;
+  --pa-chrome-ink: #f2f6fa;
+  --pa-chrome-ink-2: #8ea6c2;
+  --pa-chrome-hover: #15304f;
+  --pa-chrome-active: #1f4470;
+  --pa-chrome-line: #17304d;
+  --pa-you: #f26dc3;
+  --pa-you-soft: #3a1530;
+  --pa-on-you: #2a0a1f;
+  --pa-ok: #5bcb93;
+  --pa-ok-soft: #0f3123;
+  --pa-info: #7db7ea;
+  --pa-info-soft: #12304d;
+  --pa-warn: #e9b44c;
+  --pa-warn-soft: #362808;
+  --pa-attn: #e9b44c;
+  --pa-attn-soft: #362808;
+  --pa-fail: #ff8a80;
+  --pa-fail-soft: #3d1715;
+  --pa-idle: #71849a;
+  --pa-idle-soft: #12263b;
+  --pa-agent: #a59cff;
+  --pa-agent-soft: #211d47;
+  --pa-author-1: #7db7ea;
+  --pa-author-2: #e9b44c;
+  --pa-author-3: #a9c46a;
+  --pa-author-4: #d39be6;
+  --pa-author-5: #6fcfc6;
+  --pa-author-6: #5bcb93;
+  --pa-author-7: #f2967a;
+  --pa-author-8: #9fb3ef;
+  --pa-comment: #f5c518;
+  --pa-comment-strong: #d29e00;
+  --pa-shadow: #000000;
+  --pa-build: #58c9d3;
+  --pa-build-soft: #0c3237;
+  --pa-on-build: #04262a;
+  --pa-hangar-bg: #081d24;
+  --pa-hangar-grid: #12333b;
+  --pa-hangar-paper: #0b252d;
+  color-scheme: dark;
+}
+/* pa-tokens:end */
+
+/* Layout: navy frame band, then one study per template: today's render beside two live directions (A instruments, B maps). Only --pa tokens. */
+* { box-sizing: border-box; }
+body { background: var(--pa-bg); color: var(--pa-ink); font-family: var(--pa-font); font-size: var(--pa-text); line-height: 1.5; }
+code, .mono { font-family: var(--pa-mono); }
+.num { font-variant-numeric: tabular-nums; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header.band { background: var(--pa-chrome); color: var(--pa-chrome-ink); margin-top: calc(-1 * env(safe-area-inset-top, 0px)); padding-top: env(safe-area-inset-top, 0px); }
+header.band .wrap { padding-block: 34px 26px; display: grid; gap: 10px; }
+.eyebrow { color: var(--pa-chrome-ink-2); font-size: var(--pa-text-sm); }
+h1 { margin: 0; font-size: 30px; font-weight: var(--pa-weight-title); letter-spacing: var(--pa-tracking-title); text-wrap: balance; }
+header.band p { margin: 0; max-width: 70ch; color: var(--pa-chrome-ink-2); }
+header.band p b { color: var(--pa-chrome-ink); font-weight: 600; }
+nav.toc { display: flex; flex-wrap: wrap; gap: 6px; }
+nav.toc a { color: var(--pa-chrome-ink); text-decoration: none; border: 1px solid var(--pa-chrome-line); background: var(--pa-chrome-hover); border-radius: 999px; padding: 3px 11px; font-size: var(--pa-text-sm); }
+nav.toc a:focus-visible, nav.toc a:hover { background: var(--pa-chrome-active); outline: none; }
+main .wrap { padding-block: 8px 64px; display: grid; gap: 56px; }
+section { display: grid; gap: 16px; min-width: 0; }
+h2 { margin: 28px 0 0; font-size: 22px; font-weight: var(--pa-weight-title); letter-spacing: var(--pa-tracking-title); }
+h3 { margin: 0; font-size: 15px; font-weight: 650; }
+p { margin: 0; max-width: 74ch; }
+.lede { color: var(--pa-ink-2); }
+.rules { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 860px) { .rules { grid-template-columns: 1fr; } }
+.rules .panel ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; color: var(--pa-ink-2); font-size: var(--pa-text-sm); }
+.panel { background: var(--pa-surface); border: 1px solid var(--pa-line); border-radius: var(--pa-r-panel); padding: 16px 18px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.panel.bend { border-style: dashed; border-color: var(--pa-attn); }
+.study-head { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 16px; align-items: start; }
+@media (max-width: 700px) { .study-head { grid-template-columns: 1fr; } }
+.today { all: unset; cursor: zoom-in; display: grid; gap: 4px; font-size: var(--pa-text-sm); color: var(--pa-ink-3); }
+.today img { width: 100%; height: 130px; object-fit: cover; object-position: top left; border: 1px solid var(--pa-line); border-radius: var(--pa-r); display: block; }
+.today:focus-visible img { outline: 2px solid var(--pa-info); outline-offset: 2px; }
+.where { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+.tag { font-size: 11.5px; color: var(--pa-ink-2); background: var(--pa-sunk); border-radius: 4px; padding: 0 6px; }
+.dirs { display: grid; gap: 16px; }
+.dirs.chat { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+@media (max-width: 980px) { .dirs.chat { grid-template-columns: 1fr; } }
+.frame { border: 1px solid var(--pa-line); border-radius: var(--pa-r-panel); background: var(--pa-surface); min-width: 0; overflow: hidden; }
+.frame > .fh { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; padding: 10px 14px; border-bottom: 1px solid var(--pa-line); background: var(--pa-sunk); flex-wrap: wrap; }
+.frame > .fh b { font-weight: 650; }
+.frame > .fh span { color: var(--pa-ink-3); font-size: var(--pa-text-sm); }
+.frame > .fb { padding: 16px; overflow-x: auto; }
+.dirs.chat .frame > .fb { max-width: 720px; }
+.why { font-size: var(--pa-text-sm); color: var(--pa-ink-2); padding: 0 14px 14px; }
+.why b { color: var(--pa-ink); font-weight: 600; }
+
+/* shared bits */
+.st { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 600; border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
+.st.queued { color: var(--pa-idle); background: var(--pa-idle-soft); }
+.st.working { color: var(--pa-agent); background: var(--pa-agent-soft); }
+.st.needs { color: var(--pa-attn); background: var(--pa-attn-soft); }
+.st.ready { color: var(--pa-info); background: var(--pa-info-soft); }
+.st.done { color: var(--pa-ok); background: var(--pa-ok-soft); }
+.st.fail { color: var(--pa-fail); background: var(--pa-fail-soft); }
+.st.you { color: var(--pa-you); background: var(--pa-you-soft); }
+.btn { font: inherit; font-size: var(--pa-text-sm); border-radius: var(--pa-r); padding: 4px 11px; border: 1px solid var(--pa-line-strong); background: var(--pa-surface); color: var(--pa-ink); cursor: pointer; }
+.btn.p { background: var(--pa-navy); color: var(--pa-on-navy); border-color: var(--pa-navy); }
+.btn:focus-visible, button:focus-visible { outline: 2px solid var(--pa-info); outline-offset: 2px; }
+.seg { display: inline-flex; border: 1px solid var(--pa-line-strong); border-radius: var(--pa-r); overflow: hidden; }
+.seg button { font: inherit; font-size: 12px; border: 0; background: var(--pa-surface); color: var(--pa-ink-2); padding: 3px 10px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--pa-navy); color: var(--pa-on-navy); }
+.faint { color: var(--pa-ink-3); }
+.small { font-size: var(--pa-text-sm); }
+.display { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; font-variant-numeric: tabular-nums; }
+svg text { font-family: var(--pa-font); }
+@media (prefers-reduced-motion: no-preference) { .anim { transition: all .3s ease; } }
+
+/* 1A strips */
+.bay { display: grid; gap: 6px; margin-bottom: 14px; }
+.bay-h { display: flex; gap: 8px; align-items: center; font-size: var(--pa-text-sm); color: var(--pa-ink-2); border-bottom: 1px solid var(--pa-line); padding-bottom: 4px; }
+.bay-h .count { margin-left: auto; font-family: var(--pa-mono); color: var(--pa-ink-3); }
+.strip { display: grid; grid-template-columns: 74px minmax(0, 1fr) 70px 120px 86px; align-items: stretch; border: 1px solid var(--pa-line-strong); border-radius: 3px; background: var(--pa-surface); min-width: 640px; cursor: pointer; }
+.strip > * { padding: 6px 10px; border-left: 1px dashed var(--pa-line-strong); display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+.strip > :first-child { border-left: 4px solid var(--edge, var(--pa-idle)); }
+.strip .cs { font-family: var(--pa-mono); font-size: 17px; font-weight: 700; letter-spacing: .02em; }
+.strip .ttl { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.strip .sub { font-size: 11.5px; color: var(--pa-ink-3); }
+.strip .pri { font-size: 12px; font-weight: 600; text-align: center; }
+.fitbar { display: flex; gap: 2px; }
+.fitbar i { width: 12px; height: 8px; background: var(--pa-sunk); border-radius: 1px; }
+.fitbar i.on { background: var(--pa-navy); }
+.strip.open { border-color: var(--pa-navy); }
+.sub-strips { display: grid; gap: 4px; margin: 0 0 4px 74px; min-width: 566px; }
+.sub-strip { display: grid; grid-template-columns: 54px minmax(0, 1fr) 140px 70px 100px; font-size: var(--pa-text-sm); border: 1px solid var(--pa-line); border-radius: 3px; background: var(--pa-bg); }
+.sub-strip > * { padding: 4px 8px; border-left: 1px dashed var(--pa-line); }
+.sub-strip > :first-child { border-left: 0; font-family: var(--pa-mono); color: var(--pa-ink-3); }
+.sub-strip.dep { background: var(--pa-sunk); font-weight: 600; }
+@keyframes slidein { from { transform: translateX(-24px); opacity: .2; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: no-preference) { .strip.moved { animation: slidein .35s ease; } }
+
+/* 1B map */
+.map-wrap { min-width: 760px; }
+.map-ctl { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; font-size: var(--pa-text-sm); color: var(--pa-ink-2); }
+.node { cursor: pointer; }
+.edge { fill: none; stroke: var(--pa-line-strong); stroke-width: 1.4; }
+.dim .node:not(.hl), .dim .edge:not(.hl) { opacity: .15; }
+.edge.hl { stroke: var(--pa-navy); stroke-width: 2.2; }
+
+/* 2A tapes */
+.tapes { display: flex; gap: 14px; align-items: flex-end; overflow-x: auto; padding-bottom: 4px; }
+.tape { display: grid; gap: 6px; justify-items: center; cursor: pointer; background: none; border: 0; font: inherit; color: inherit; padding: 4px; border-radius: var(--pa-r); }
+.tape[aria-pressed="true"] { background: var(--pa-sunk); }
+.tube { position: relative; width: 46px; height: 200px; border: 1px solid var(--pa-line-strong); border-radius: 6px; background: repeating-linear-gradient(to top, var(--pa-surface) 0 39px, var(--pa-line) 39px 40px); overflow: hidden; }
+.tube .lvl { position: absolute; left: 0; right: 0; bottom: 0; background: var(--pa-navy); transition: height .4s ease; }
+.tube .tgt { position: absolute; left: -2px; right: -2px; height: 0; border-top: 2px dashed var(--pa-attn); }
+.tube.off { opacity: .4; }
+.tape .nm { font-size: 12px; font-weight: 600; max-width: 76px; overflow-wrap: anywhere; text-align: center; }
+.tape .rd { font-family: var(--pa-mono); font-size: 12px; color: var(--pa-ink-2); }
+.scale { display: grid; grid-template-rows: repeat(5, 40px); font-size: 11px; color: var(--pa-ink-3); text-align: right; padding-right: 4px; margin-bottom: 52px; }
+.readout { display: grid; grid-template-columns: auto auto 1fr; gap: 18px; align-items: end; margin-bottom: 14px; }
+.readout .lab { font-size: var(--pa-text-sm); color: var(--pa-ink-3); }
+.ask { margin-top: 12px; border: 1px solid var(--pa-attn); background: var(--pa-attn-soft); border-radius: var(--pa-r); padding: 10px 12px; display: grid; gap: 6px; }
+.ask.calm { border-color: var(--pa-line); background: var(--pa-sunk); }
+.ask .q { font-weight: 600; }
+
+/* 3 decision */
+.fork-opt { cursor: pointer; }
+.fork-opt rect { fill: var(--pa-surface); stroke: var(--pa-line-strong); }
+.fork-opt.rec rect { stroke: var(--pa-navy); stroke-width: 2; }
+.fork-opt.pick rect { stroke: var(--pa-you); stroke-width: 2.5; fill: var(--pa-you-soft); }
+.branch { fill: none; stroke: var(--pa-line-strong); stroke-width: 2; }
+.branch.rec { stroke: var(--pa-navy); stroke-width: 4; }
+.branch.pick { stroke: var(--pa-you); stroke-width: 5; }
+.faded { opacity: .3; }
+.trade { width: 100%; border-collapse: collapse; font-size: var(--pa-text-sm); }
+.trade th, .trade td { padding: 8px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--pa-line); }
+.trade th { font-weight: 600; }
+.trade .col-rec { background: var(--pa-info-soft); }
+.trade .col-pick { background: var(--pa-you-soft); }
+.meter { display: flex; gap: 2px; }
+.meter i { width: 14px; height: 10px; border-radius: 2px; background: var(--pa-sunk); }
+.meter i.on { background: var(--pa-ink-2); }
+.meter.good i.on { background: var(--pa-ok); }
+.meter.bad i.on { background: var(--pa-warn); }
+.folded { display: flex; gap: 8px; align-items: center; border: 1px solid var(--pa-line); border-radius: var(--pa-r); padding: 6px 10px; font-size: var(--pa-text-sm); margin-top: 10px; }
+
+/* 4 discovery */
+.hud { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+.hud > div { border-left: 3px solid var(--pa-line-strong); padding-left: 10px; }
+.prow { display: grid; grid-template-columns: 44px 44px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--pa-line); }
+.ring { width: 40px; height: 40px; }
+.ring .bg { fill: none; stroke: var(--pa-sunk); stroke-width: 5; }
+.ring .fg { fill: none; stroke: var(--pa-navy); stroke-width: 5; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; }
+.ring text { font-size: 12px; font-weight: 700; fill: var(--pa-ink); text-anchor: middle; dominant-baseline: central; }
+.ev-ticks { display: flex; gap: 2px; margin-top: 3px; }
+.ev-ticks i { width: 6px; height: 10px; border-radius: 1px; background: var(--pa-ok); }
+.ev-ticks i.ag { background: var(--pa-warn); }
+.bub { cursor: pointer; }
+.bub circle { fill: var(--pa-info-soft); stroke: var(--pa-info); stroke-width: 1.5; }
+.bub.sel circle { fill: var(--pa-navy); stroke: var(--pa-navy); }
+.bub.sel text { fill: var(--pa-on-navy); }
+.bub text { font-size: 11px; font-weight: 700; fill: var(--pa-info); text-anchor: middle; dominant-baseline: central; font-family: var(--pa-mono); }
+.quote-card { border: 1px solid var(--pa-line); border-radius: var(--pa-r); padding: 10px 12px; display: grid; gap: 6px; margin-top: 8px; }
+.quote-card blockquote { margin: 0; border-left: 2px solid var(--pa-line-strong); padding-left: 10px; color: var(--pa-ink-2); }
+.chip-src { font-size: 11.5px; border: 1px solid var(--pa-line-strong); border-radius: 999px; padding: 0 8px; width: fit-content; }
+
+/* 5 delivery */
+.board { width: 100%; border-collapse: separate; border-spacing: 0 4px; min-width: 660px; }
+.board td, .board th { padding: 8px 10px; text-align: left; }
+.board th { font-size: var(--pa-text-sm); color: var(--pa-ink-3); font-weight: 600; }
+.board td { background: var(--pa-sunk); }
+.board td:first-child { border-radius: var(--pa-r) 0 0 var(--pa-r); font-family: var(--pa-mono); color: var(--pa-ink-3); }
+.board td:last-child { border-radius: 0 var(--pa-r) var(--pa-r) 0; }
+.flap { font-family: var(--pa-mono); font-weight: 700; font-size: 15px; letter-spacing: .04em; display: inline-block; min-width: 64px; }
+@keyframes flip { 0% { transform: rotateX(90deg); } 100% { transform: none; } }
+@media (prefers-reduced-motion: no-preference) { .flap.flipped { animation: flip .35s ease; } }
+.slip { color: var(--pa-attn); font-weight: 700; }
+.tl-ctl { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; font-size: var(--pa-text-sm); }
+.tl-wrap { min-width: 680px; }
+
+/* 6 review */
+.tri { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; min-width: 640px; }
+.tri-col { background: var(--pa-sunk); border-radius: var(--pa-r); padding: 8px; display: grid; gap: 6px; align-content: start; }
+.tri-col h4 { margin: 0; display: flex; justify-content: space-between; font-size: var(--pa-text-sm); }
+.ticket { background: var(--pa-surface); border: 1px solid var(--pa-line); border-left: 4px solid var(--who); border-radius: var(--pa-r); padding: 8px; display: grid; gap: 4px; font-size: var(--pa-text-sm); }
+.ticket .t { font-weight: 600; font-size: var(--pa-text); }
+.ticket .acts { display: flex; gap: 4px; }
+.ticket .acts button { font: inherit; font-size: 11.5px; border: 1px solid var(--pa-line-strong); background: var(--pa-surface); color: var(--pa-ink-2); border-radius: 999px; padding: 1px 8px; cursor: pointer; }
+.ticket .acts button[aria-pressed="true"] { background: var(--pa-you-soft); color: var(--pa-you); border-color: var(--pa-you); }
+.tally { display: flex; gap: 18px; margin-bottom: 10px; flex-wrap: wrap; }
+.doc { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 0; min-width: 640px; border: 1px solid var(--pa-line); border-radius: var(--pa-r); }
+.doc .sec { padding: 10px 14px; border-bottom: 1px solid var(--pa-line); min-height: 52px; }
+.doc .sec b { font-weight: 650; }
+.doc .sec .faint { display: block; font-size: var(--pa-text-sm); }
+.doc .margin { border-left: 1px solid var(--pa-line); border-bottom: 1px solid var(--pa-line); padding: 6px 8px; display: flex; flex-wrap: wrap; gap: 4px; align-content: flex-start; background: var(--pa-bg); }
+.pin { font: inherit; font-size: 11.5px; border: 1px solid var(--who); color: var(--pa-ink); background: var(--pa-surface); border-radius: 999px; padding: 1px 8px 1px 4px; cursor: pointer; display: inline-flex; gap: 5px; align-items: center; }
+.pin .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--who); }
+.pin[aria-pressed="true"] { background: var(--pa-sunk); }
+.sec.lit { background: var(--pa-comment); background: color-mix(in srgb, var(--pa-comment) 22%, var(--pa-surface)); }
+.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: var(--pa-text-sm); color: var(--pa-ink-2); margin-bottom: 8px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; }
+
+dialog { border: 0; padding: 0; background: transparent; max-width: min(96vw, 1200px); }
+dialog::backdrop { background: var(--pa-shadow); opacity: .7; }
+dialog img { display: block; max-width: 100%; max-height: 86vh; border-radius: var(--pa-r); }
+dialog button { margin-top: 6px; }
+footer { color: var(--pa-ink-3); font-size: var(--pa-text-sm); }
+.liked { margin-left: 8px; }
+.hud.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 640px) { .hud.four { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.hud .attn { border-left-color: var(--pa-attn); }
+.hud .attn .display { color: var(--pa-attn); }
+.rrow { display: grid; grid-template-columns: 44px minmax(0, 1fr) 120px auto; gap: 12px; align-items: center; padding: 8px 4px; border-top: 1px solid var(--pa-line); }
+.rrow.click { cursor: pointer; }
+.rrow.click:hover { background: var(--pa-sunk); }
+.rrow .t { font-weight: 600; }
+.rrow .ids { font-family: var(--pa-mono); font-size: 11.5px; color: var(--pa-ink-3); }
+.ticks { display: flex; gap: 3px; flex-wrap: wrap; }
+.ticks i { width: 8px; height: 14px; border-radius: 2px; background: var(--pa-ink-2); }
+.ticks i.beta { background: var(--pa-info); }
+.ticks i.planned { background: repeating-linear-gradient(45deg, var(--pa-warn) 0 2px, var(--pa-warn-soft) 2px 4px); }
+.ticks i.gap { background: var(--pa-attn); }
+.ticks i.closed { background: var(--pa-ok); }
+.dmeter { display: flex; gap: 3px; align-items: center; }
+.dmeter i { width: 16px; height: 12px; border-radius: 2px; background: var(--pa-sunk); position: relative; }
+.dmeter i.on { background: var(--pa-navy); }
+.dmeter i.tgt::after { content: ""; position: absolute; right: -3px; top: -4px; bottom: -4px; width: 2px; background: var(--pa-attn); }
+.dmeter.low i.on { background: var(--pa-attn); }
+.inner { grid-column: 1 / -1; padding: 6px 0 10px 56px; }
+.sevm { display: flex; gap: 2px; }
+.sevm i { width: 10px; height: 12px; border-radius: 2px; background: var(--pa-sunk); }
+.sevm i.on { background: var(--pa-ink-2); }
+.whodot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
+.callbtns { display: flex; gap: 4px; }
+.callbtns button { font: inherit; font-size: 11.5px; border: 1px solid var(--pa-line-strong); background: var(--pa-surface); color: var(--pa-ink-2); border-radius: 999px; padding: 1px 8px; cursor: pointer; }
+.callbtns button[aria-pressed="true"] { background: var(--pa-you-soft); color: var(--pa-you); border-color: var(--pa-you); }
+.bars { display: grid; gap: 6px; margin: 4px 0 12px; }
+.hbar { display: grid; grid-template-columns: 110px minmax(0, 1fr) 30px; gap: 8px; align-items: center; font-size: var(--pa-text-sm); }
+.hbar .tr { display: flex; height: 12px; border-radius: 3px; overflow: hidden; background: var(--pa-sunk); }
+.hbar .tr span { display: block; height: 100%; }
+</style>
+
+<header class="band"><div class="wrap">
+  <div class="eyebrow">Flight Deck · design exploration for feedback · 22 Nov 2026</div>
+  <h1>Bolder template explorations</h1>
+  <p>Geoff's note: the templates are <b>too conservative</b>. <b>Round two</b> (just below) takes the two sketches he liked and applies their style to four more views. Here are six of the hero skills' core widgets and views, each with today's render beside two bolder directions: <b>A, instruments</b> (readouts, strips, tapes and gauges, in the cockpit's own vocabulary) and <b>B, maps</b> (spatial pictures of the work: networks, radar, branches, terrain). They are all live, built on each skill's real scenario data, use only the design tokens, and work in light and dark.</p>
+  <nav class="toc" aria-label="Studies">
+    <a href="#r2">Round two</a><a href="#rules">Round one</a><a href="#s1">Dependency board</a><a href="#s2">Intent map</a><a href="#s3">Decision card</a><a href="#s4">Discovery summary</a><a href="#s5">Delivery plan</a><a href="#s6">Review findings</a><a href="#next">Feedback</a>
+  </nav>
+</div></header>
+
+<main><div class="wrap">
+
+<section id="r2" aria-labelledby="h-r2">
+  <h2 id="h-r2">Round two: the readout style on four more views</h2>
+  <p class="lede">Geoff liked <b>3B, the trade-off grid</b>, and <b>4A, the heads-up readout</b>, and none of the others. Those two share a style, applied below to the four views that had no liked direction. These sketches are live on the same scenario data.</p>
+  <div class="rules">
+    <div class="panel"><h3>1 · A readout first</h3><p class="small lede">Two to four big tabular numbers that say where things stand. The one that needs you is marked amber.</p></div>
+    <div class="panel"><h3>2 · A glyph on every row</h3><p class="small lede">Each item leads with a small measure, such as a ring, a segmented meter or evidence ticks, and then its words and status.</p></div>
+    <div class="panel"><h3>3 · Choices as columns</h3><p class="small lede">Options sit side by side with meters, the recommended column is tinted, and there is one Choose per column. No metaphor or illustration.</p></div>
+  </div>
+  <div class="frame"><div class="fh"><b>Dependency board</b><span>Rings show the best fit. Ticks are options by maturity. Open a row to compare its options.</span></div><div class="fb" id="r2a"></div></div>
+  <div class="frame"><div class="fh"><b>Intent map</b><span>The meter shows depth, the notch shows the target, and ticks are open gaps. Use the state switch in study 2.</span></div><div class="fb" id="r2b"></div></div>
+  <div class="frame"><div class="fh"><b>Delivery plan</b><span>Rings show confidence. Report the slip to see the ways to recover as a trade-off grid.</span></div><div class="fb" id="r2c"></div></div>
+  <div class="frame"><div class="fh"><b>Review findings</b><span>The meter shows severity and the dot shows the reviewer. Your calls show in magenta.</span></div><div class="fb" id="r2d"></div></div>
+</section>
+
+<h2 style="margin-top:12px">Round one</h2>
+<section id="rules" aria-labelledby="h-rules">
+  <h2 id="h-rules">Adventurous inside the language</h2>
+  <div class="rules">
+    <div class="panel"><h3>Stays fixed</h3><ul>
+      <li>Only <code>--pa-</code> tokens: colors, fonts, corners</li>
+      <li>Color means something: navy for the one primary action, amber for needs you, red only for failures, indigo for the agent at work, magenta only for what you did</li>
+      <li>Status always shows an icon, a word and a color</li>
+      <li>Sentence case, with no all-caps eyebrows</li>
+      <li>Light and dark, offline, one self-contained file</li>
+      <li>Chat widgets stay 720 px or narrower and fold once answered</li>
+    </ul></div>
+    <div class="panel"><h3>Now free to push</h3><ul>
+      <li>A metaphor for each view, drawn from the work itself</li>
+      <li>Drawing the data (gauges, maps, branches, plots) instead of listing it</li>
+      <li>Strong scale contrast: one big number, then the detail</li>
+      <li>Motion that explains a change (a strip slides along, a date flips, a flag moves)</li>
+      <li>Direct manipulation: pick, toggle and drag where that is the point</li>
+    </ul></div>
+    <div class="panel bend"><h3>Rules these would bend <span class="st needs">! needs a call</span></h3><ul>
+      <li>Mono for readouts and strip call signs, where the rule today is mono only for ids and code</li>
+      <li>A display size above <code>--pa-text-title</code> (a new <code>--pa-text-display</code> token)</li>
+      <li>Hatched fills for unknowns, such as a planned capability's wait</li>
+      <li>Author hues (<code>--pa-author-n</code>) used as a view's main color in the review sketches</li>
+    </ul></div>
+  </div>
+</section>
+
+<section id="s1" aria-labelledby="h-s1">
+  <div class="study-head">
+    <div style="display:grid;gap:6px"><h2 id="h-s1">1 · Dependency board</h2><div class="where"><span class="tag">requirements-to-dependencies</span><span class="tag">canvas</span></div><p class="lede">One exploration per requirement, with the options for each dependency. Today it's a five-column kanban. Allowances scenario: 20 requirements, 14 dependencies, 23 options.</p></div>
+    <button class="today" type="button" data-full="img/requirements-to-dependencies--board.jpg"><img src="img/requirements-to-dependencies--board.jpg" alt="Today's dependency board"><span>Today: the kanban</span></button>
+  </div>
+  <div class="dirs">
+    <div class="frame"><div class="fh"><b>A · Flight strips <span class="st queued liked">○ Not taken forward</span></b><span>Click a strip to open its dependencies and options. Start a queued one and watch it move.</span></div><div class="fb" id="s1a"></div>
+      <p class="why"><b>Why:</b> air traffic control strips are made for scanning many items at once, ordered by what needs attention. Needs you comes first, the call sign is the requirement id, and fit reads like a fuel gauge.</p></div>
+    <div class="frame"><div class="fh"><b>B · Coverage map <span class="st queued liked">○ Not taken forward</span></b><span>Hover or tab to a requirement to trace its path. Filter by capability.</span></div><div class="fb"><div class="map-wrap" id="s1b"></div></div>
+      <p class="why"><b>Why:</b> it shows at a glance where the platform already covers you (thick, live paths) and where it doesn't (no path, or a dashed path to a planned capability). That's the question the board is really answering.</p></div>
+  </div>
+</section>
+
+<section id="s2" aria-labelledby="h-s2">
+  <div class="study-head">
+    <div style="display:grid;gap:6px"><h2 id="h-s2">2 · Intent map</h2><div class="where"><span class="tag">intent-shaping</span><span class="tag">canvas</span></div><p class="lede">How deep the thinking is in each of seven areas, against a target. Today it's a tree-table with five little bars per row. "Release dates" scenario, now at depth 0 and aiming for 3.</p></div>
+    <button class="today" type="button" data-full="img/intent-shaping--map.jpg"><img src="img/intent-shaping--map.jpg" alt="Today's intent map"><span>Today: the tree-table</span></button>
+  </div>
+  <div class="where" style="align-items:center"><span class="small faint">State shown:</span><span class="seg" role="group" aria-label="Intent state"><button type="button" data-ist="start" aria-pressed="true">Scenario start</button><button type="button" data-ist="mid" aria-pressed="false">Midway (invented example)</button></span></div>
+  <div class="dirs chat">
+    <div class="frame"><div class="fh"><b>A · Altimeter tapes <span class="st queued liked">○ Not taken forward</span></b><span>Click a tape to see what the next level asks for.</span></div><div class="fb" id="s2a"></div>
+      <p class="why"><b>Why:</b> depth is altitude. The idea flies at the height of its lowest required area, so that tape glows amber and its question is the one asked.</p></div>
+    <div class="frame"><div class="fh"><b>B · Radar <span class="st queued liked">○ Not taken forward</span></b><span>The dashed ring is the target. Hover a spoke.</span></div><div class="fb" id="s2b"></div>
+      <p class="why"><b>Why:</b> the shape of the thinking is visible at once. A lopsided polygon shows strong customer work with an empty problem statement before you read a word.</p></div>
+  </div>
+</section>
+
+<section id="s3" aria-labelledby="h-s3">
+  <div class="study-head">
+    <div style="display:grid;gap:6px"><h2 id="h-s3">3 · Decision card</h2><div class="where"><span class="tag">decision-review</span><span class="tag">chat</span></div><p class="lede">One decision, its options, the agent's recommendation and why. Today it's a stack of option boxes. Allowances decisions D-1 and D-2.</p></div>
+    <button class="today" type="button" data-full="img/decision-review--card.jpg"><img src="img/decision-review--card.jpg" alt="Today's decision card"><span>Today: stacked options</span></button>
+  </div>
+  <div class="dirs chat">
+    <div class="frame"><div class="fh"><b>A · Fork in the road <span class="st queued liked">○ Not taken forward</span></b><span>Pick a branch. Your choice turns magenta and folds.</span></div><div class="fb" id="s3a"></div>
+      <p class="why"><b>Why:</b> a decision is a fork. The recommended branch is drawn heavier, so the agent's view is visible without taking the choice away from you.</p></div>
+    <div class="frame"><div class="fh"><b>B · Trade-off grid <span class="st done liked">✓ Liked</span></b><span>Options as columns, consequences as meters.</span></div><div class="fb" id="s3b"></div>
+      <p class="why"><b>Why:</b> when the options trade one thing for another, as with speed against promise risk, the meters make the trade legible. It's the same pattern as the alternatives worksheet.</p></div>
+  </div>
+</section>
+
+<section id="s4" aria-labelledby="h-s4">
+  <div class="study-head">
+    <div style="display:grid;gap:6px"><h2 id="h-s4">4 · Discovery summary</h2><div class="where"><span class="tag">problem-discovery</span><span class="tag">chat</span></div><p class="lede">Where the discovery stands: sources read, problems found, and how strong each one is. Today it's count tiles and bars. New business accounts scenario.</p></div>
+    <button class="today" type="button" data-full="img/problem-discovery--summary.jpg"><img src="img/problem-discovery--summary.jpg" alt="Today's discovery summary"><span>Today: tiles and bars</span></button>
+  </div>
+  <div class="dirs chat">
+    <div class="frame"><div class="fh"><b>A · Heads-up readout <span class="st done liked">✓ Liked</span></b><span>Rings show spread and pain out of 5. Ticks are evidence for and against.</span></div><div class="fb" id="s4a"></div>
+      <p class="why"><b>Why:</b> one glance says how much has been read and which problems carry weight. Counter-evidence ticks sit right beside the supporting ones, so nothing hides.</p></div>
+    <div class="frame"><div class="fh"><b>B · Problem terrain <span class="st queued liked">○ Not taken forward</span></b><span>Click a problem to read its strongest quote.</span></div><div class="fb" id="s4b"></div>
+      <p class="why"><b>Why:</b> plotting how many people have a problem against how much it hurts is the choice the person actually makes. The top right is worth solving, and the quote sits one click away.</p></div>
+  </div>
+</section>
+
+<section id="s5" aria-labelledby="h-s5">
+  <div class="study-head">
+    <div style="display:grid;gap:6px"><h2 id="h-s5">5 · Delivery plan</h2><div class="where"><span class="tag">delivery-status</span><span class="tag">canvas</span></div><p class="lede">Milestones against the plan, as of the moment in the scenario when Cards Platform reports that the load test slips nine days. Today it's a tree-table of dates.</p></div>
+    <button class="today" type="button" data-full="img/delivery-status--plan.jpg"><img src="img/delivery-status--plan.jpg" alt="Today's delivery plan"><span>Today: the plan table</span></button>
+  </div>
+  <div class="dirs">
+    <div class="frame"><div class="fh"><b>A · Departures board <span class="st queued liked">○ Not taken forward</span></b><span>Press "Report the slip" to watch the board change.</span></div><div class="fb" id="s5a"></div>
+      <p class="why"><b>Why:</b> everyone can read a departures board, and the flip draws the eye to exactly what changed.</p></div>
+    <div class="frame"><div class="fh"><b>B · Drift timeline <span class="st queued liked">○ Not taken forward</span></b><span>Try each way to recover. The launch flag moves.</span></div><div class="fb"><div class="tl-wrap" id="s5b"></div></div>
+      <p class="why"><b>Why:</b> the critical path is drawn as a line, and a slip pushes everything after it. Trying a recovery option shows its effect before you choose it.</p></div>
+  </div>
+</section>
+
+<section id="s6" aria-labelledby="h-s6">
+  <div class="study-head">
+    <div style="display:grid;gap:6px"><h2 id="h-s6">6 · Review findings</h2><div class="where"><span class="tag">document-review</span><span class="tag">canvas</span></div><p class="lede">Everyone's findings on the Allowances PRD in one attributed list. Today it's a table with a column for who raised each.</p></div>
+    <button class="today" type="button" data-full="img/document-review--findings.jpg"><img src="img/document-review--findings.jpg" alt="Today's findings table"><span>Today: the findings table</span></button>
+  </div>
+  <div class="dirs">
+    <div class="frame"><div class="fh"><b>A · Triage console <span class="st queued liked">○ Not taken forward</span></b><span>Accept or push back. The tally keeps score.</span></div><div class="fb" id="s6a"></div>
+      <p class="why"><b>Why:</b> review is triage. Severity lanes put the high findings first, each reviewer keeps their own color, and your calls show in magenta.</p></div>
+    <div class="frame"><div class="fh"><b>B · Document margin <span class="st queued liked">○ Not taken forward</span></b><span>Findings pinned where they land in the PRD. Click a pin.</span></div><div class="fb" id="s6b"></div>
+      <p class="why"><b>Why:</b> you see where the document is weak, not only a list of what is wrong. Sections 5 and 7 light up at once.</p></div>
+  </div>
+</section>
+
+<section id="next" aria-labelledby="h-next">
+  <h2 id="h-next">What I'd like to know</h2>
+  <p>Which direction feels right overall: instruments, maps, or a mix chosen per view? And which of the rule bends above are acceptable? Comments on any sketch are welcome. Whatever you pick becomes a design note in <code>product-aviator-design</code> and new view-kit layouts, starting with the ones the hero skills use most.</p>
+</section>
+
+<footer>Data: the scenario fixtures in <code>workspace/scenarios/*/fixtures/</code>, all invented. The "Midway" intent state and the trade-off meter readings are invented for the sketch and labelled as such. Durations and dates come from the fixtures. Today's renders come from <code>pa render</code>.</footer>
+</div></main>
+
+<dialog id="zoom"><img id="zoom-img" alt=""><button class="btn" type="button" id="zoom-close">Close</button></dialog>
+
+<script>
+const DEPS_DATA = {"caps":[{"id":"C-1","t":"Set an allowance"},{"id":"C-2","t":"Enforce at purchase"},{"id":"C-3","t":"Tell the card user"},{"id":"C-4","t":"Tell the cardholder"},{"id":"C-5","t":"Service and comply"}],"reqs":[{"id":"R-01","c":"C-1","p":"Must","s":"reviewed","t":"Cardholder sets a monthly amount per card user"},{"id":"R-02","c":"C-1","p":"Must","s":"reviewed","t":"Allowance resets on a day the cardholder picks"},{"id":"R-03","c":"C-1","p":"Should","s":"ready","t":"A changed amount takes effect right away"},{"id":"R-04","c":"C-1","p":"Must","s":"reviewed","t":"One allowance per card user, not per merchant type"},{"id":"R-05","c":"C-2","p":"Must","s":"reviewed","t":"Purchases approved live are declined past the limit"},{"id":"R-06","c":"C-2","p":"Must","s":"needs-you","t":"Charges that skip live approval are counted, not blocked"},{"id":"R-07","c":"C-2","p":"Should","s":"ready","t":"Refunds return to the allowance in the same cycle"},{"id":"R-08","c":"C-2","p":"Must","s":"ready","t":"A limit decline carries its own reason code"},{"id":"R-09","c":"C-2","p":"Must","s":"working","t":"The limit check adds under 50 ms to approval"},{"id":"R-10","c":"C-3","p":"Must","s":"ready","t":"Card user sees what is left before paying"},{"id":"R-11","c":"C-3","p":"Must","s":"ready","t":"Card user is told why a purchase was declined"},{"id":"R-12","c":"C-3","p":"Should","s":"needs-you","t":"Card user can ask for a top-up"},{"id":"R-13","c":"C-3","p":"Could","s":"working","t":"Running-low alert at a threshold the cardholder sets"},{"id":"R-14","c":"C-4","p":"Should","s":"working","t":"Cardholder approves or declines a top-up request"},{"id":"R-15","c":"C-4","p":"Must","s":"ready","t":"Statement shows spend by card user"},{"id":"R-16","c":"C-4","p":"Must","s":"queued","t":"Cardholder is alerted when counted charges exceed the allowance"},{"id":"R-17","c":"C-5","p":"Must","s":"reviewed","t":"Agents can see a card user's allowance and recent declines"},{"id":"R-18","c":"C-5","p":"Must","s":"reviewed","t":"A limit decline is never scored as fraud"},{"id":"R-19","c":"C-5","p":"Must","s":"queued","t":"Disclosure explains what the limit covers"},{"id":"R-20","c":"C-5","p":"Must","s":"queued","t":"Card users under 18 need recorded consent"}],"deps":[{"id":"D-01","r":"R-01","e":"S","t":"Store a limit for each card user"},{"id":"D-02","r":"R-02","e":"S","t":"Reset the allowance on a chosen day"},{"id":"D-03","r":"R-03","e":"S","t":"Apply a changed limit immediately"},{"id":"D-04","r":"R-05","e":"S","t":"Decline at approval when over the limit"},{"id":"D-05","r":"R-06","e":"M","t":"Count charges that skip live approval"},{"id":"D-06","r":"R-07","e":"M","t":"Return refunds to the allowance"},{"id":"D-07","r":"R-08","e":"S","t":"A reason code for limit declines"},{"id":"D-08","r":"R-10","e":"M","t":"Show the remaining allowance in the app"},{"id":"D-09","r":"R-10","e":"S","t":"Read the remaining amount in near real time"},{"id":"D-10","r":"R-11","e":"S","t":"Tell the card user why a purchase was declined"},{"id":"D-11","r":"R-12","e":"M","t":"A top-up request flow"},{"id":"D-12","r":"R-15","e":"L","t":"Spend by card user on the statement"},{"id":"D-13","r":"R-17","e":"M","t":"Agent view of allowance and declines"},{"id":"D-14","r":"R-18","e":"S","t":"Keep limit declines out of fraud scoring"}],"opts":[{"id":"O-01","d":"D-01","t":"Card limits API","o":"Card processor","m":"Live","f":5,"e":"S"},{"id":"O-02","d":"D-01","t":"Customer profile attributes","o":"Platform","m":"Live","f":2,"e":"M"},{"id":"O-03","d":"D-02","t":"Scheduled jobs platform","o":"Platform","m":"Live","f":4,"e":"S"},{"id":"O-04","d":"D-02","t":"Card limits API","o":"Card processor","m":"Live","f":3,"e":"M"},{"id":"O-05","d":"D-03","t":"Card limits API","o":"Card processor","m":"Live","f":4,"e":"S"},{"id":"O-06","d":"D-04","t":"Authorization rules engine","o":"Card processor","m":"Live","f":5,"e":"S"},{"id":"O-07","d":"D-04","t":"Card limits API","o":"Card processor","m":"Live","f":4,"e":"S"},{"id":"O-08","d":"D-05","t":"Spend events stream","o":"Data","m":"Live","f":4,"e":"M"},{"id":"O-09","d":"D-05","t":"Stand-in processing settings","o":"Card processor","m":"Planned","f":3,"e":"L"},{"id":"O-10","d":"D-06","t":"Spend events stream","o":"Data","m":"Live","f":4,"e":"M"},{"id":"O-11","d":"D-06","t":"Authorization rules engine","o":"Card processor","m":"Live","f":2,"e":"L"},{"id":"O-12","d":"D-07","t":"Decline reason catalog","o":"Card processor","m":"Live","f":5,"e":"S"},{"id":"O-13","d":"D-08","t":"Account controls module","o":"Mobile app","m":"Live","f":4,"e":"M"},{"id":"O-14","d":"D-09","t":"Card limits API","o":"Card processor","m":"Live","f":4,"e":"S"},{"id":"O-15","d":"D-09","t":"Spend events stream","o":"Data","m":"Live","f":2,"e":"M"},{"id":"O-16","d":"D-10","t":"Push notification service","o":"Messaging","m":"Live","f":4,"e":"S"},{"id":"O-17","d":"D-10","t":"Account controls module","o":"Mobile app","m":"Live","f":3,"e":"M"},{"id":"O-18","d":"D-11","t":"Request and approve service","o":"Platform","m":"Beta","f":4,"e":"M"},{"id":"O-19","d":"D-11","t":"Account controls module","o":"Mobile app","m":"Live","f":2,"e":"L"},{"id":"O-20","d":"D-12","t":"Statement composer","o":"Statements and billing","m":"Live","f":3,"e":"L"},{"id":"O-21","d":"D-12","t":"Spend events stream","o":"Data","m":"Live","f":4,"e":"M"},{"id":"O-22","d":"D-13","t":"Agent desktop account panel","o":"Servicing","m":"Live","f":4,"e":"M"},{"id":"O-23","d":"D-14","t":"Fraud rule exclusions","o":"Fraud and disputes","m":"Live","f":5,"e":"S"}]};
+const NS = 'http://www.w3.org/2000/svg';
+const $ = s => document.querySelector(s);
+const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+const sv = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+const ST = { queued: ['queued', '○', 'Queued'], working: ['working', '◐', 'Working'], 'needs-you': ['needs', '!', 'Needs you'], ready: ['ready', '◎', 'Ready for review'], reviewed: ['done', '✓', 'Reviewed'] };
+const pill = s => { const [c, i, w] = ST[s] || ST.queued; const p = el('span', 'st ' + c); p.textContent = `${i} ${w}`; return p; };
+const EDGE = { queued: '--pa-idle', working: '--pa-agent', 'needs-you': '--pa-attn', ready: '--pa-info', reviewed: '--pa-ok' };
+
+/* ---------- 1A flight strips ---------- */
+(() => {
+  const root = $('#s1a'); const D = DEPS_DATA;
+  const capT = Object.fromEntries(D.caps.map(c => [c.id, c.t]));
+  const order = ['needs-you', 'working', 'ready', 'queued', 'reviewed'];
+  const state = Object.fromEntries(D.reqs.map(r => [r.id, r.s]));
+  const open = new Set(['R-06']); let moved = null;
+  function bestFit(rid) { const ds = D.deps.filter(d => d.r === rid); let f = 0; ds.forEach(d => D.opts.filter(o => o.d === d.id).forEach(o => { f = Math.max(f, o.f); })); return [ds.length, f]; }
+  function draw() {
+    root.textContent = '';
+    order.forEach(s => {
+      const rs = D.reqs.filter(r => state[r.id] === s); if (!rs.length) return;
+      const bay = el('div', 'bay'); const h = el('div', 'bay-h'); h.appendChild(pill(s)); h.appendChild(el('span', 'count', String(rs.length).padStart(2, '0'))); bay.appendChild(h);
+      rs.forEach(r => {
+        const [nd, fit] = bestFit(r.id);
+        const st = el('div', 'strip' + (open.has(r.id) ? ' open' : '') + (moved === r.id ? ' moved' : ''));
+        st.style.setProperty('--edge', `var(${EDGE[s]})`); st.tabIndex = 0; st.setAttribute('role', 'button'); st.setAttribute('aria-expanded', open.has(r.id));
+        const a = el('div'); a.appendChild(el('span', 'cs', r.id)); st.appendChild(a);
+        const b = el('div'); b.appendChild(el('span', 'ttl', r.t)); b.appendChild(el('span', 'sub', `${r.c} · ${capT[r.c]}`)); st.appendChild(b);
+        const c = el('div'); c.appendChild(el('span', 'pri', r.p)); st.appendChild(c);
+        const d = el('div'); d.appendChild(el('span', 'sub', nd ? `${nd} dependenc${nd > 1 ? 'ies' : 'y'} · best fit` : 'No dependency found'));
+        const fb = el('span', 'fitbar'); for (let i = 1; i <= 5; i++) fb.appendChild(el('i', i <= fit ? 'on' : '')); if (nd) d.appendChild(fb); st.appendChild(d);
+        const e = el('div');
+        if (s === 'queued') { const btn = el('button', 'btn p', 'Start'); btn.type = 'button'; btn.addEventListener('click', ev => { ev.stopPropagation(); state[r.id] = 'working'; moved = r.id; draw(); }); e.appendChild(btn); }
+        else if (s === 'needs-you') { const btn = el('button', 'btn', 'Answer'); btn.type = 'button'; btn.addEventListener('click', ev => ev.stopPropagation()); e.appendChild(btn); }
+        else e.appendChild(el('span', 'sub', s === 'reviewed' ? 'Locked by you' : ''));
+        st.appendChild(e);
+        const tog = () => { open.has(r.id) ? open.delete(r.id) : open.add(r.id); moved = null; draw(); };
+        st.addEventListener('click', tog); st.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); tog(); } });
+        bay.appendChild(st);
+        if (open.has(r.id)) {
+          const ss = el('div', 'sub-strips');
+          D.deps.filter(x => x.r === r.id).forEach(dp => {
+            const row = el('div', 'sub-strip dep'); [dp.id, dp.t, 'effort ' + dp.e, '', ''].forEach(t => row.appendChild(el('span', '', t))); ss.appendChild(row);
+            D.opts.filter(o => o.d === dp.id).sort((x, y) => y.f - x.f).forEach(o => {
+              const orow = el('div', 'sub-strip'); orow.appendChild(el('span', '', o.id)); orow.appendChild(el('span', '', o.t)); orow.appendChild(el('span', 'faint', o.o)); orow.appendChild(el('span', '', o.m));
+              const f = el('span', 'fitbar'); for (let i = 1; i <= 5; i++) f.appendChild(el('i', i <= o.f ? 'on' : '')); orow.appendChild(f); ss.appendChild(orow);
+            });
+          });
+          if (!ss.children.length) ss.appendChild(el('div', 'small faint', 'No platform dependency: our own build, or nothing found yet.'));
+          bay.appendChild(ss);
+        }
+      });
+      root.appendChild(bay);
+    });
+  }
+  draw();
+})();
+
+/* ---------- 1B coverage map ---------- */
+(() => {
+  const root = $('#s1b'); const D = DEPS_DATA;
+  const ctl = el('div', 'map-ctl'); ctl.appendChild(el('span', '', 'Capability:'));
+  const seg = el('span', 'seg'); seg.setAttribute('role', 'group');
+  let cap = 'all';
+  [['all', 'All']].concat(D.caps.map(c => [c.id, c.t])).forEach(([k, t]) => { const b = el('button', '', t); b.type = 'button'; b.dataset.k = k; b.setAttribute('aria-pressed', k === cap); b.addEventListener('click', () => { cap = k; seg.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x.dataset.k === cap)); draw(); }); seg.appendChild(b); });
+  ctl.appendChild(seg);
+  const lg = el('span', 'faint'); lg.textContent = 'Line weight is fit · dashed is planned or beta'; ctl.appendChild(lg);
+  root.appendChild(ctl);
+  const host = el('div'); root.appendChild(host);
+  function draw() {
+    host.textContent = '';
+    const reqs = D.reqs.filter(r => cap === 'all' || r.c === cap);
+    const deps = D.deps.filter(d => reqs.some(r => r.id === d.r));
+    const opts = D.opts.filter(o => deps.some(d => d.id === o.d));
+    const RH = 24, W = 1060, top = 26;
+    const H = top + Math.max(reqs.length, deps.length, opts.length) * RH + 10;
+    const svg = sv('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', role: 'img', 'aria-label': 'Requirements to dependencies to options' }, host);
+    const X = [0, 400, 700]; const CW = [300, 230, 300];
+    [['Requirements', 0], ['Dependencies', 1], ['Options (owner · maturity)', 2]].forEach(([t, i]) => sv('text', { x: X[i], y: 14, 'font-size': 12, fill: 'var(--pa-ink-3)', 'font-weight': 600 }, svg).textContent = t);
+    const pos = {}; const g = sv('g', {}, svg);
+    const yOf = (i, n) => top + i * RH + (Math.max(reqs.length, deps.length, opts.length) - n) * RH / 2;
+    reqs.forEach((r, i) => pos[r.id] = yOf(i, reqs.length));
+    deps.forEach((d, i) => pos[d.id] = yOf(i, deps.length));
+    opts.forEach((o, i) => pos[o.id] = yOf(i, opts.length));
+    const eg = sv('g', {}, g), ng = sv('g', {}, g);
+    const edges = [];
+    const curve = (x1, y1, x2, y2) => `M${x1} ${y1} C${(x1 + x2) / 2} ${y1} ${(x1 + x2) / 2} ${y2} ${x2} ${y2}`;
+    deps.forEach(d => edges.push({ a: d.r, b: d.id, p: curve(X[0] + CW[0], pos[d.r] + 9, X[1], pos[d.id] + 9), w: 1.6, dash: '' }));
+    opts.forEach(o => edges.push({ a: o.d, b: o.id, p: curve(X[1] + CW[1], pos[o.d] + 9, X[2], pos[o.id] + 9), w: 0.6 + o.f * 0.7, dash: o.m === 'Live' ? '' : '5 4' }));
+    edges.forEach(e => { e.el = sv('path', { d: e.p, class: 'edge', 'stroke-width': e.w, 'stroke-dasharray': e.dash }, eg); });
+    const nodes = [];
+    const mk = (id, x, w, label, sub, statusVar, faint) => {
+      const n = sv('g', { class: 'node', transform: `translate(${x},${pos[id]})`, tabindex: 0 }, ng);
+      sv('rect', { width: w, height: 19, rx: 3, fill: 'var(--pa-surface)', stroke: statusVar ? `var(${statusVar})` : 'var(--pa-line-strong)', 'stroke-width': statusVar ? 1.6 : 1 }, n);
+      const t = sv('text', { x: 6, y: 13.5, 'font-size': 11.5, fill: faint ? 'var(--pa-ink-3)' : 'var(--pa-ink)' }, n);
+      const id_ = sv('tspan', { 'font-family': 'var(--pa-mono)', fill: 'var(--pa-ink-3)' }, t); id_.textContent = id + ' ';
+      const lab = sv('tspan', {}, t); const max = Math.floor((w - 50) / 6); lab.textContent = label.length > max ? label.slice(0, max - 1) + '…' : label;
+      if (sub) { const s2 = sv('tspan', { fill: 'var(--pa-ink-3)' }, t); s2.textContent = ' ' + sub; }
+      const ttl = sv('title', {}, n); ttl.textContent = `${id} ${label}${sub ? ' · ' + sub : ''}`;
+      nodes.push({ id, n }); return n;
+    };
+    reqs.forEach(r => mk(r.id, X[0], CW[0], r.t, '', EDGE[r.s], !deps.some(d => d.r === r.id)));
+    deps.forEach(d => mk(d.id, X[1], CW[1], d.t, ''));
+    opts.forEach(o => mk(o.id, X[2], CW[2] + 60, o.t, `${o.o} · ${o.m}`));
+    const links = id => { const s = new Set([id]); let grow = true; while (grow) { grow = false; edges.forEach(e => { if (s.has(e.a) && !s.has(e.b)) { s.add(e.b); grow = true; } }); } edges.forEach(e => { if (s.has(e.b) && !s.has(e.a) && e.b === id) s.add(e.a); }); D.deps.forEach(d => { if (d.id === id) s.add(d.r); }); D.opts.forEach(o => { if (o.id === id) { s.add(o.d); D.deps.forEach(d => { if (d.id === o.d) s.add(d.r); }); } }); return s; };
+    const hl = id => { svg.classList.toggle('dim', !!id); const s = id ? links(id) : new Set(); nodes.forEach(x => x.n.classList.toggle('hl', s.has(x.id))); edges.forEach(e => e.el.classList.toggle('hl', s.has(e.a) && s.has(e.b))); };
+    nodes.forEach(x => { x.n.addEventListener('mouseenter', () => hl(x.id)); x.n.addEventListener('focus', () => hl(x.id)); x.n.addEventListener('mouseleave', () => hl(null)); x.n.addEventListener('blur', () => hl(null)); });
+  }
+  draw();
+})();
+
+/* ---------- 2 intent ---------- */
+const AREAS = [
+  { id: 'AR-1', t: 'Customer', req: 1, d: 1, mid: 3, by: 'you', next: 'A specific group, and the situation they are in when this matters.', q: 'Which customers, and when does it happen to them?' },
+  { id: 'AR-2', t: 'Problem', req: 1, d: 0, mid: 2, by: 'aviator', next: 'A problem is stated, not only a solution.', q: 'What goes wrong for the customer today that a release date would fix?' },
+  { id: 'AR-3', t: 'Outcome', req: 2, d: 0, mid: 2, next: 'What would be different for the customer if this worked.', q: 'What would be different for the customer if this worked?' },
+  { id: 'AR-4', t: 'Scope', req: 3, d: 0, mid: 1, next: 'What is in, and at least two things that are deliberately out.', q: 'What is in, and what is deliberately out?' },
+  { id: 'AR-5', t: 'Risks', req: 3, d: 0, mid: 3, next: 'The three things most likely to sink it, each with who would know.', q: 'What are the three things most likely to sink it?' },
+  { id: 'AR-6', t: 'Dependencies', req: 3, d: 0, mid: 2, next: 'Which other teams or systems it needs, by name.', q: 'Which teams or systems does it need?' },
+  { id: 'AR-7', t: 'Cost', req: 4, d: 0, mid: 0, next: 'A rough size from the people who would build it.', q: 'How big is it, roughly, from the people who would build it?' }
+];
+const LEVELS = ['Empty', 'Spark', 'Framed', 'Shaped', 'Tested', 'Committable'];
+const TARGET = 3; let IST = 'start'; let pickArea = null;
+const depthOf = a => IST === 'mid' ? a.mid : a.d;
+const required = a => a.req <= TARGET;
+const ideaDepth = () => Math.min(...AREAS.filter(a => a.req <= TARGET).map(depthOf));
+const shallowest = () => AREAS.filter(required).reduce((m, a) => depthOf(a) < depthOf(m) ? a : m);
+function drawIntent() {
+  /* A tapes */
+  const ra = $('#s2a'); ra.textContent = '';
+  const ro = el('div', 'readout');
+  const d1 = el('div'); d1.appendChild(el('div', 'lab', 'Idea depth')); d1.appendChild(el('div', 'display', String(ideaDepth()))); ro.appendChild(d1);
+  const d2 = el('div'); d2.appendChild(el('div', 'lab', 'Target')); d2.appendChild(el('div', 'display faint', String(TARGET))); ro.appendChild(d2);
+  const d3 = el('div', 'small faint'); d3.textContent = `${LEVELS[ideaDepth()]} now, aiming for ${LEVELS[TARGET]}. An idea is as deep as its shallowest required area.`; ro.appendChild(d3);
+  ra.appendChild(ro);
+  const tapes = el('div', 'tapes');
+  const sc = el('div', 'scale'); for (let i = 5; i >= 1; i--) sc.appendChild(el('div', '', LEVELS[i])); tapes.appendChild(sc);
+  const low = shallowest();
+  if (!pickArea) pickArea = low.id;
+  AREAS.forEach(a => {
+    const b = el('button', 'tape'); b.type = 'button'; b.setAttribute('aria-pressed', pickArea === a.id);
+    const tube = el('div', 'tube' + (required(a) ? '' : ' off'));
+    const lv = el('div', 'lvl'); lv.style.height = (depthOf(a) * 40) + 'px'; if (a === low) lv.style.background = 'var(--pa-attn)';
+    if (a === low && depthOf(a) === 0) { lv.style.height = '4px'; }
+    tube.appendChild(lv);
+    if (required(a)) { const tg = el('div', 'tgt'); tg.style.bottom = (TARGET * 40) + 'px'; tube.appendChild(tg); }
+    b.appendChild(tube); b.appendChild(el('span', 'nm', a.t));
+    b.appendChild(el('span', 'rd', required(a) ? `${depthOf(a)} / ${TARGET}` : 'not yet'));
+    b.title = `${a.id} ${a.t}: ${LEVELS[depthOf(a)]}`;
+    b.addEventListener('click', () => { pickArea = a.id; drawIntent(); });
+    tapes.appendChild(b);
+  });
+  ra.appendChild(tapes);
+  const a = AREAS.find(x => x.id === pickArea);
+  const ask = el('div', 'ask' + (a === low ? '' : ' calm'));
+  const top = el('div'); top.style.display = 'flex'; top.style.gap = '8px'; top.style.alignItems = 'center'; top.style.flexWrap = 'wrap';
+  top.appendChild(el('b', '', `${a.t} · to reach ${LEVELS[Math.min(depthOf(a) + 1, 5)]}`)); if (a === low) top.appendChild(pill('needs-you'));
+  ask.appendChild(top); ask.appendChild(el('div', 'q', a.q)); ask.appendChild(el('div', 'small faint', a.next));
+  const bt = el('div'); bt.style.display = 'flex'; bt.style.gap = '6px';
+  const p1 = el('button', 'btn p', 'Answer in the chat'); p1.type = 'button'; const p2 = el('button', 'btn', 'Ask someone who would know'); p2.type = 'button';
+  bt.appendChild(p1); bt.appendChild(p2); ask.appendChild(bt); ra.appendChild(ask);
+
+  /* B radar */
+  const rb = $('#s2b'); rb.textContent = '';
+  const S = 420, C = S / 2, R = 150, n = AREAS.length;
+  const svg = sv('svg', { viewBox: `-70 -10 ${S + 140} ${S + 20}`, width: '100%', style: 'max-width:520px;display:block;margin:0 auto', role: 'img', 'aria-label': 'Intent depth radar' }, rb);
+  const pt = (i, v) => { const ang = -Math.PI / 2 + i * 2 * Math.PI / n; return [C + Math.cos(ang) * R * v / 5, C + Math.sin(ang) * R * v / 5]; };
+  for (let k = 1; k <= 5; k++) { const ps = AREAS.map((_, i) => pt(i, k).join(',')).join(' '); sv('polygon', { points: ps, fill: 'none', stroke: 'var(--pa-line)', 'stroke-width': 1 }, svg); }
+  AREAS.forEach((_, i) => { const [x, y] = pt(i, 5); sv('line', { x1: C, y1: C, x2: x, y2: y, stroke: 'var(--pa-line)' }, svg); });
+  for (let k = 1; k <= 5; k++) { const [x, y] = pt(0, k); const t = sv('text', { x: x + 4, y: y + 3, 'font-size': 9.5, fill: 'var(--pa-ink-3)' }, svg); t.textContent = LEVELS[k]; }
+  const tg = AREAS.map((a, i) => pt(i, required(a) ? TARGET : 0).join(',')).join(' ');
+  sv('polygon', { points: tg, fill: 'none', stroke: 'var(--pa-attn)', 'stroke-width': 2, 'stroke-dasharray': '6 4' }, svg);
+  const cur = AREAS.map((a, i) => pt(i, Math.max(depthOf(a), 0.15)).join(',')).join(' ');
+  sv('polygon', { points: cur, fill: 'var(--pa-navy)', 'fill-opacity': .22, stroke: 'var(--pa-navy)', 'stroke-width': 2, class: 'anim' }, svg);
+  const info = el('div', 'small'); info.style.minHeight = '42px'; info.style.marginTop = '6px';
+  const setInfo = a => { info.textContent = ''; const b = el('b', '', `${a.t}: ${LEVELS[depthOf(a)]}${required(a) ? `, target ${LEVELS[TARGET]}` : ', not needed yet'}. `); info.appendChild(b); info.appendChild(el('span', 'faint', a.q)); };
+  AREAS.forEach((a, i) => {
+    const [x, y] = pt(i, 5.75); const g = sv('g', { tabindex: 0, style: 'cursor:pointer' }, svg);
+    const t = sv('text', { x, y, 'font-size': 12, 'font-weight': 600, 'text-anchor': x < C - 10 ? 'end' : x > C + 10 ? 'start' : 'middle', 'dominant-baseline': 'middle', fill: a === low ? 'var(--pa-attn)' : required(a) ? 'var(--pa-ink)' : 'var(--pa-ink-3)' }, g);
+    t.textContent = (a === low ? '! ' : '') + a.t;
+    const [dx, dy] = pt(i, Math.max(depthOf(a), 0.15)); sv('circle', { cx: dx, cy: dy, r: 4, fill: a === low ? 'var(--pa-attn)' : 'var(--pa-navy)' }, g);
+    g.addEventListener('mouseenter', () => setInfo(a)); g.addEventListener('focus', () => setInfo(a));
+  });
+  setInfo(low); rb.appendChild(info);
+}
+document.querySelectorAll('[data-ist]').forEach(b => b.addEventListener('click', () => { IST = b.dataset.ist; pickArea = null; document.querySelectorAll('[data-ist]').forEach(x => x.setAttribute('aria-pressed', x === b)); drawIntent(); }));
+drawIntent();
+
+/* ---------- 3A fork ---------- */
+(() => {
+  const root = $('#s3a');
+  const D1 = { id: 'D-1', title: 'Decide whose consent an under-18 allowance needs', by: 'Risk Review', ctx: 'Section 7.4 asks for recorded consent but does not say whose. Risk will not sign off until this is named.',
+    opts: [{ l: 'The cardholder only', c: 'Matches how authorized users are added today. No new step for families.', cost: 'No added time' }, { l: 'Cardholder and card user', c: 'Adds a consent screen for 16 and 17 year olds.', cost: '+1 sprint' }, { l: 'Ask Legal first', c: 'Keeps the finding open.', cost: '+2 weeks wait' }],
+    rec: 0, why: 'It is the existing legal basis for authorized users, and Risk has said it would accept it with the record kept seven years.' };
+  let pick = null;
+  function draw() {
+    root.textContent = '';
+    const h = el('div'); h.appendChild(el('div', 'small faint', `A decision for you · ${D1.id} · raised by ${D1.by}`)); h.appendChild(el('h3', '', D1.title)); h.lastChild.style.fontSize = '17px'; root.appendChild(h);
+    root.appendChild(el('p', 'small', D1.ctx)); root.lastChild.style.margin = '6px 0 4px'; root.lastChild.style.color = 'var(--pa-ink-2)';
+    const W = 600, H = 300; const svg = sv('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', role: 'group', 'aria-label': 'Options as branches' }, root);
+    const ox = 30, oy = H / 2; sv('circle', { cx: ox, cy: oy, r: 7, fill: 'var(--pa-ink)' }, svg);
+    const t0 = sv('text', { x: ox - 8, y: oy + 24, 'font-size': 11, fill: 'var(--pa-ink-3)' }, svg); t0.textContent = 'today';
+    D1.opts.forEach((o, i) => {
+      const y = 50 + i * 100; const isRec = i === D1.rec, isPick = pick === i;
+      sv('path', { d: `M${ox} ${oy} C${ox + 110} ${oy} ${ox + 90} ${y} ${200} ${y}`, class: 'branch' + (isRec ? ' rec' : '') + (isPick ? ' pick' : '') + (pick != null && !isPick ? ' faded' : '') }, svg);
+      const g = sv('g', { class: 'fork-opt' + (isRec ? ' rec' : '') + (isPick ? ' pick' : '') + (pick != null && !isPick ? ' faded' : ''), transform: `translate(200,${y - 38})`, tabindex: 0, role: 'button', 'aria-pressed': isPick }, svg);
+      sv('rect', { width: 392, height: 76, rx: 6 }, g);
+      const a = sv('text', { x: 12, y: 22, 'font-size': 14, 'font-weight': 650, fill: 'var(--pa-ink)' }, g); a.textContent = o.l;
+      if (isRec) { sv('rect', { x: 260, y: 8, width: 122, height: 20, rx: 10, fill: 'var(--pa-info-soft)', stroke: 'none' }, g); const r = sv('text', { x: 321, y: 22, 'font-size': 11, 'font-weight': 600, fill: 'var(--pa-info)', 'text-anchor': 'middle' }, g); r.textContent = '◎ Recommended'; }
+      const c = sv('text', { x: 12, y: 44, 'font-size': 12, fill: 'var(--pa-ink-2)' }, g); c.textContent = o.c.length > 62 ? o.c.slice(0, 61) + '…' : o.c;
+      const k = sv('text', { x: 12, y: 64, 'font-size': 11.5, 'font-weight': 600, fill: 'var(--pa-ink-3)', 'font-family': 'var(--pa-mono)' }, g); k.textContent = o.cost;
+      const go = () => { pick = i; draw(); };
+      g.addEventListener('click', go); g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+    });
+    const why = el('p', 'small'); why.innerHTML = '<b>Why the heavier branch:</b> '; why.appendChild(document.createTextNode(D1.why)); root.appendChild(why);
+    if (pick != null) { const f = el('div', 'folded'); f.appendChild(el('span', 'st you', '✓ You chose')); f.appendChild(el('span', '', D1.opts[pick].l)); f.appendChild(el('span', 'faint', '· recorded as D-04 in the Decisions register')); const u = el('button', 'btn', 'Undo'); u.type = 'button'; u.style.marginLeft = 'auto'; u.addEventListener('click', () => { pick = null; draw(); }); f.appendChild(u); root.appendChild(f); }
+  }
+  draw();
+})();
+
+/* ---------- 3B trade-off ---------- */
+(() => {
+  const root = $('#s3b');
+  const O = [
+    { l: 'Within 3 seconds', m: [5, 2, 3], c: 'Push from the authorization path. Platform: one extra sprint.' },
+    { l: '10 seconds, as written', m: [1, 5, 4], c: 'No extra work. The explanation often arrives after the moment.' },
+    { l: '3 as target, 10 as promise', m: [4, 3, 5], c: 'Build toward 3; promise stays 10 until proven under load.' }
+  ];
+  const rows = [['Teen at the till', 'good'], ['Less platform work', 'good'], ['Safe promise', 'good']];
+  let pick = null; const rec = 2;
+  function draw() {
+    root.textContent = '';
+    root.appendChild(el('div', 'small faint', 'A decision for you · D-2 · raised by Mara Okafor'));
+    const h = el('h3', '', 'Choose how fast a decline must be explained'); h.style.fontSize = '17px'; root.appendChild(h);
+    const p = el('p', 'small', 'Five of eight teenagers said they would have walked away by 10 seconds.'); p.style.color = 'var(--pa-ink-2)'; p.style.margin = '4px 0 8px'; root.appendChild(p);
+    const tb = el('table', 'trade'); const tr = el('tr'); tr.appendChild(el('th', '', ''));
+    O.forEach((o, i) => { const th = el('th', i === pick ? 'col-pick' : i === rec ? 'col-rec' : ''); th.appendChild(el('div', '', o.l)); if (i === rec) th.appendChild(el('span', 'st ready', '◎ Recommended')); tr.appendChild(th); });
+    tb.appendChild(tr);
+    rows.forEach(([r, k], ri) => { const row = el('tr'); row.appendChild(el('td', 'faint', r)); O.forEach((o, i) => { const td = el('td', i === pick ? 'col-pick' : i === rec ? 'col-rec' : ''); const m = el('span', 'meter ' + (o.m[ri] >= 4 ? 'good' : o.m[ri] <= 2 ? 'bad' : '')); for (let j = 1; j <= 5; j++) m.appendChild(el('i', j <= o.m[ri] ? 'on' : '')); td.appendChild(m); row.appendChild(td); }); tb.appendChild(row); });
+    const cr = el('tr'); cr.appendChild(el('td', 'faint', 'What happens')); O.forEach((o, i) => cr.appendChild(el('td', i === pick ? 'col-pick' : i === rec ? 'col-rec' : '', o.c))); tb.appendChild(cr);
+    const br = el('tr'); br.appendChild(el('td', '')); O.forEach((o, i) => { const td = el('td', i === pick ? 'col-pick' : i === rec ? 'col-rec' : ''); const b = el('button', 'btn' + (i === rec && pick == null ? ' p' : ''), i === pick ? 'Chosen' : 'Choose'); b.type = 'button'; b.addEventListener('click', () => { pick = i; draw(); }); td.appendChild(b); br.appendChild(td); }); tb.appendChild(br);
+    const wrap = el('div'); wrap.style.overflowX = 'auto'; wrap.appendChild(tb); root.appendChild(wrap);
+    root.appendChild(el('p', 'small faint', 'Meter readings are the agent\'s reading of each consequence, invented for this sketch.'));
+    if (pick != null) { const f = el('div', 'folded'); f.appendChild(el('span', 'st you', '✓ You chose')); f.appendChild(el('span', '', O[pick].l)); root.appendChild(f); }
+  }
+  draw();
+})();
+
+/* ---------- 4 discovery ---------- */
+const PROBS = [
+  { id: 'P-1', t: 'My first big payment gets held and nobody can tell me when I will get it', who: 'Takes card payments in person', s: 'ready', spread: 5, pain: 5, ev: 4, ag: 1, q: 'Four days. I had the food bill for the week due and the money was just sitting there with a little padlock on it.', src: 'S-1, 12:40' },
+  { id: 'P-2', t: 'I cannot tell which of my invoices have been paid', who: 'Sends invoices', s: 'ready', spread: 2, pain: 3, ev: 2, ag: 1, q: "Money comes in with a reference like 'INV' and half a surname. I match them up on a Sunday night.", src: 'S-2, 21:10' },
+  { id: 'P-3', t: 'My business partner cannot get into our own account for weeks', who: 'More than one owner', s: 'ready', spread: 2, pain: 4, ev: 2, ag: 0, q: 'Nineteen days. I counted. She is a director of the company and she could not see the balance.', src: 'S-5, 09:30' },
+  { id: 'P-4', t: 'I cannot separate business spending from my own', who: 'Sole traders', s: 'returned', spread: 1, pain: 2, ev: 1, ag: 1, q: 'It is all one list. Van fuel, my kid\'s trainers, all of it.', src: 'S-6, 14:05' },
+  { id: 'P-5', t: 'I want my accountant to see my account without my login', who: 'Uses an accountant', s: 'parked', spread: 1, pain: 2, ev: 1, ag: 0, q: 'I would pay for read-only access for my accountant tomorrow.', src: 'S-4, 36:50' },
+  { id: 'P-6', t: 'My card reader took two weeks to arrive', who: 'Takes card payments in person', s: 'working', spread: 2, pain: 3, ev: 1, ag: 0, q: '51 of 318 tickets concern card or reader delivery.', src: 'S-8' }
+];
+const PST = { ready: 'ready', returned: 'needs-you', parked: 'queued', working: 'working' };
+(() => {
+  const root = $('#s4a');
+  root.appendChild(el('div', 'small faint', 'Problem discovery · new business accounts, first 60 days'));
+  const hud = el('div', 'hud');
+  [['9', 'sources read'], ['6', 'problems found'], ['0', 'chosen to solve']].forEach(([n, l], i) => { const d = el('div'); if (i === 2) d.style.borderLeftColor = 'var(--pa-attn)'; d.appendChild(el('div', 'display', n)); d.appendChild(el('div', 'small faint', l)); hud.appendChild(d); });
+  root.appendChild(hud);
+  const ring = (v, lab) => { const s = sv('svg', { viewBox: '0 0 40 40', class: 'ring', role: 'img', 'aria-label': `${lab} ${v} of 5` }); sv('circle', { cx: 20, cy: 20, r: 15, class: 'bg' }, s); const C = 2 * Math.PI * 15; sv('circle', { cx: 20, cy: 20, r: 15, class: 'fg', 'stroke-dasharray': `${C * v / 5} ${C}` }, s); sv('text', { x: 20, y: 20 }, s).textContent = v; return s; };
+  const hdr = el('div', 'prow'); ['Spread', 'Pain', 'Problem', ''].forEach(t => hdr.appendChild(el('span', 'small faint', t))); hdr.style.borderTop = '0'; root.appendChild(hdr);
+  PROBS.forEach(p => {
+    const r = el('div', 'prow'); r.appendChild(ring(p.spread, 'spread')); r.appendChild(ring(p.pain, 'pain'));
+    const m = el('div'); m.style.minWidth = '0'; m.appendChild(el('div', '', p.t)); m.lastChild.style.fontWeight = '600'; m.appendChild(el('div', 'small faint', p.who));
+    const tk = el('div', 'ev-ticks'); for (let i = 0; i < p.ev; i++) tk.appendChild(el('i')); for (let i = 0; i < p.ag; i++) tk.appendChild(el('i', 'ag')); tk.title = `${p.ev} for, ${p.ag} against`; m.appendChild(tk);
+    r.appendChild(m); r.appendChild(pill(PST[p.s])); root.appendChild(r);
+  });
+})();
+(() => {
+  const root = $('#s4b'); let sel = 'P-1';
+  function draw() {
+    root.textContent = '';
+    root.appendChild(el('div', 'small faint', 'Problem discovery · where the problems sit'));
+    const W = 600, H = 330, L = 50, B = 40, T = 14, Rr = 16;
+    const svg = sv('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', role: 'group', 'aria-label': 'Problems by spread and pain' }, root);
+    const x = v => L + (v - 0.5) / 5 * (W - L - 20), y = v => H - B - (v - 0.5) / 5 * (H - B - T);
+    sv('rect', { x: x(3), y: T, width: W - 20 - x(3), height: y(3) - T, fill: 'var(--pa-ok-soft)', rx: 6 }, svg);
+    const wq = sv('text', { x: W - 26, y: y(3) - 8, 'font-size': 11.5, 'text-anchor': 'end', fill: 'var(--pa-ok)', 'font-weight': 600 }, svg); wq.textContent = 'Worth solving?';
+    for (let i = 1; i <= 5; i++) { sv('line', { x1: x(i), y1: T, x2: x(i), y2: H - B, stroke: 'var(--pa-line)' }, svg); sv('line', { x1: L, y1: y(i), x2: W - 20, y2: y(i), stroke: 'var(--pa-line)' }, svg); sv('text', { x: x(i), y: H - B + 16, 'font-size': 10.5, 'text-anchor': 'middle', fill: 'var(--pa-ink-3)' }, svg).textContent = i; sv('text', { x: L - 10, y: y(i) + 4, 'font-size': 10.5, 'text-anchor': 'end', fill: 'var(--pa-ink-3)' }, svg).textContent = i; }
+    sv('text', { x: (L + W - 20) / 2, y: H - 6, 'font-size': 11.5, 'text-anchor': 'middle', fill: 'var(--pa-ink-2)' }, svg).textContent = 'How many people have it →';
+    const yl = sv('text', { x: 12, y: (T + H - B) / 2, 'font-size': 11.5, 'text-anchor': 'middle', fill: 'var(--pa-ink-2)', transform: `rotate(-90 12 ${(T + H - B) / 2})` }, svg); yl.textContent = 'How much it hurts →';
+    const seen = {};
+    PROBS.forEach(p => {
+      const key = p.spread + ',' + p.pain; const off = (seen[key] = (seen[key] || 0) + 1) - 1;
+      const g = sv('g', { class: 'bub' + (sel === p.id ? ' sel' : ''), transform: `translate(${x(p.spread) + off * 30},${y(p.pain)})`, tabindex: 0, role: 'button', 'aria-label': p.t }, svg);
+      sv('circle', { r: Rr + p.ev * 2.5 }, g); sv('text', {}, g).textContent = p.id;
+      const go = () => { sel = p.id; draw(); }; g.addEventListener('click', go); g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+    });
+    const p = PROBS.find(q => q.id === sel);
+    const card = el('div', 'quote-card'); const top = el('div'); top.style.display = 'flex'; top.style.gap = '8px'; top.style.justifyContent = 'space-between'; top.style.flexWrap = 'wrap';
+    top.appendChild(el('b', '', p.t)); top.appendChild(pill(PST[p.s])); card.appendChild(top);
+    card.appendChild(el('blockquote', '', `“${p.q}”`)); card.appendChild(el('span', 'chip-src', `${p.src} · checked against source`));
+    card.appendChild(el('div', 'small faint', `${p.who} · ${p.ev} for, ${p.ag} against · bubble size is evidence`));
+    root.appendChild(card);
+  }
+  draw();
+})();
+
+/* ---------- 5 delivery ---------- */
+const MS = [
+  { id: 'M-1', t: 'Risk rules expose a release date', who: 'Risk Review', plan: 20, now: 20, st: 'done', crit: false },
+  { id: 'M-2', t: 'Release date shown in the app', who: 'Mara Okafor', plan: 34, now: 34, st: 'on', crit: true },
+  { id: 'M-3', t: 'Support agents see the same date', who: 'Aviator', plan: 38, now: 38, st: 'on', crit: false },
+  { id: 'M-4', t: 'Load test at twice peak', who: 'Cards Platform', plan: 41, now: 41, st: 'on', crit: true },
+  { id: 'M-5', t: 'Launch to all new business accounts', who: 'You', plan: 52, now: 52, st: 'on', crit: true }
+];
+const day = n => { const d = new Date(2026, 1, 1 + n - 1); return d.getDate() + ' ' + ['Jan', 'Feb', 'Mar', 'Apr'][d.getMonth()]; }; /* day 1 = 1 Feb */
+let slipped = false;
+(() => {
+  const root = $('#s5a');
+  function draw(flip) {
+    root.textContent = '';
+    const top = el('div'); top.style.display = 'flex'; top.style.gap = '10px'; top.style.alignItems = 'center'; top.style.marginBottom = '8px'; top.style.flexWrap = 'wrap';
+    top.appendChild(el('b', '', 'Release dates for held payments')); top.appendChild(el('span', 'small faint', 'as of Thursday 5 Mar'));
+    const b = el('button', 'btn' + (slipped ? '' : ' p'), slipped ? 'Undo the slip' : 'Report the slip'); b.type = 'button'; b.style.marginLeft = 'auto';
+    b.addEventListener('click', () => { slipped = !slipped; draw(true); drawTL(); }); top.appendChild(b); root.appendChild(top);
+    const t = el('table', 'board'); const h = el('tr'); ['', 'Milestone', 'Owner', 'Planned', 'Expected', 'Status'].forEach(x => h.appendChild(el('th', '', x))); t.appendChild(h);
+    MS.forEach(m => {
+      const exp = slipped && (m.id === 'M-4') ? m.now + 9 : slipped && m.id === 'M-5' ? m.now + 9 : m.now;
+      const late = exp > m.plan;
+      const r = el('tr'); r.appendChild(el('td', '', m.id));
+      const tt = el('td'); tt.appendChild(el('div', '', m.t)); if (m.crit) tt.appendChild(el('span', 'small faint', 'on the critical path')); r.appendChild(tt);
+      r.appendChild(el('td', 'small', m.who));
+      r.appendChild(el('td', 'num', day(m.plan)));
+      const e = el('td'); const f = el('span', 'flap' + (flip && (m.id === 'M-4' || m.id === 'M-5') ? ' flipped' : '') + (late ? ' slip' : ''), day(exp)); e.appendChild(f); r.appendChild(e);
+      const s = el('td'); s.appendChild(m.st === 'done' ? el('span', 'st done', '✓ Landed') : late ? el('span', 'st needs', `! ${exp - m.plan} days late`) : el('span', 'st ready', '◎ On time')); r.appendChild(s);
+      t.appendChild(r);
+    });
+    const w = el('div'); w.style.overflowX = 'auto'; w.appendChild(t); root.appendChild(w);
+  }
+  draw(false);
+})();
+const ALTS = [
+  { id: 'none', l: 'No recovery', launch: 61, note: 'Launch 2 Apr. Nine more days without a release date.' },
+  { id: 'A-1', l: "Borrow Payments' environment", launch: 54, note: 'Launch 26 Mar. Payments lose three days of testing.' },
+  { id: 'A-2', l: 'Launch to 10% first', launch: 52, partial: 61, note: 'First customers 24 Mar, everyone 2 Apr. Risk must accept.' }
+];
+let alt = 'none';
+function drawTL() {
+  const root = $('#s5b'); root.textContent = '';
+  const ctl = el('div', 'tl-ctl'); ctl.appendChild(el('span', 'faint', slipped ? 'Ways to recover:' : 'Report the slip in A to see the ways to recover.'));
+  if (slipped) { const seg = el('span', 'seg'); seg.setAttribute('role', 'group'); ALTS.forEach(a => { const b = el('button', '', a.l); b.type = 'button'; b.setAttribute('aria-pressed', alt === a.id); b.addEventListener('click', () => { alt = a.id; drawTL(); }); seg.appendChild(b); }); ctl.appendChild(seg); }
+  root.appendChild(ctl);
+  const W = 1060, H = 250, L = 250, Rm = 40, d0 = 15, d1 = 66;
+  const x = d => L + (d - d0) / (d1 - d0) * (W - L - Rm);
+  const svg = sv('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', role: 'img', 'aria-label': 'Milestones on a timeline' }, root);
+  for (let d = 15; d <= 66; d += 7) { sv('line', { x1: x(d), y1: 20, x2: x(d), y2: H - 26, stroke: 'var(--pa-line)' }, svg); sv('text', { x: x(d), y: H - 8, 'font-size': 10.5, 'text-anchor': 'middle', fill: 'var(--pa-ink-3)' }, svg).textContent = day(d); }
+  const today = 33; sv('line', { x1: x(today), y1: 14, x2: x(today), y2: H - 26, stroke: 'var(--pa-ink-3)', 'stroke-dasharray': '2 3' }, svg); sv('text', { x: x(today) + 4, y: 14, 'font-size': 10.5, fill: 'var(--pa-ink-3)' }, svg).textContent = 'today';
+  const A = ALTS.find(a => a.id === alt);
+  const exp = m => { if (!slipped) return m.now; if (m.id === 'M-4') return alt === 'A-1' ? 43 : alt === 'A-2' ? 41 : 50; if (m.id === 'M-5') return A.launch; return m.now; };
+  const rowY = i => 40 + i * 38;
+  const crit = MS.filter(m => m.crit).map(m => [x(exp(m)), rowY(MS.indexOf(m))]);
+  sv('polyline', { points: crit.map(p => p.join(',')).join(' '), fill: 'none', stroke: 'var(--pa-navy)', 'stroke-width': 2.5, 'stroke-opacity': .35, class: 'anim' }, svg);
+  MS.forEach((m, i) => {
+    const y = rowY(i), e = exp(m), late = e > m.plan;
+    sv('text', { x: 0, y: y + 4, 'font-size': 12, fill: 'var(--pa-ink-2)' }, svg).textContent = `${m.id} ${m.t}`;
+    if (late) { sv('line', { x1: x(m.plan), y1: y, x2: x(e), y2: y, stroke: 'var(--pa-attn)', 'stroke-width': 3 }, svg); }
+    sv('circle', { cx: x(m.plan), cy: y, r: 5, fill: 'var(--pa-surface)', stroke: 'var(--pa-ink-3)', 'stroke-width': 1.5 }, svg);
+    sv('circle', { cx: x(e), cy: y, r: 7, fill: m.st === 'done' ? 'var(--pa-ok)' : late ? 'var(--pa-attn)' : 'var(--pa-navy)', class: 'anim' }, svg);
+    if (late) sv('text', { x: x(e) + 12, y: y + 4, 'font-size': 11.5, 'font-weight': 700, fill: 'var(--pa-attn)' }, svg).textContent = `+${e - m.plan}d`;
+  });
+  const fl = x(exp(MS[4])); const fg = sv('g', { class: 'anim', transform: `translate(${fl},${rowY(4)})` }, svg);
+  sv('line', { x1: 0, y1: 0, x2: 0, y2: -30, stroke: 'var(--pa-navy)', 'stroke-width': 2 }, fg); sv('path', { d: 'M0 -30 L18 -24 L0 -18 Z', fill: 'var(--pa-navy)' }, fg);
+  if (slipped && A.partial) { const px = x(A.partial); sv('circle', { cx: px, cy: rowY(4), r: 6, fill: 'none', stroke: 'var(--pa-navy)', 'stroke-width': 2, 'stroke-dasharray': '3 2' }, svg); sv('text', { x: px + 10, y: rowY(4) + 4, 'font-size': 11, fill: 'var(--pa-ink-2)' }, svg).textContent = 'everyone'; }
+  root.appendChild(el('p', 'small' + (slipped ? '' : ' faint'), slipped ? A.note : 'Hollow dot is the plan, solid is the current expectation. The faint line is the critical path.'));
+}
+drawTL();
+
+/* ---------- 6 review ---------- */
+const WHO = { 'risk-review': ['Risk Review', '--pa-author-1'], 'mara-okafor': ['Mara Okafor', '--pa-author-4'], aviator: ['Aviator', '--pa-agent'] };
+const FIND = [
+  { id: 'F-01', by: 'risk-review', sev: 'High', sec: [4, 7], t: 'Counted-but-not-blocked charges can read as a broken promise' },
+  { id: 'F-02', by: 'risk-review', sev: 'Medium', sec: [7], t: 'No control proves a limit decline stays out of fraud scoring' },
+  { id: 'F-03', by: 'risk-review', sev: 'Medium', sec: [7], t: 'Consent for under 18s does not say whose consent' },
+  { id: 'F-04', by: 'risk-review', sev: 'Low', sec: [7], t: '90 days of decline history has no stated retention basis' },
+  { id: 'F-05', by: 'mara-okafor', sev: 'High', sec: [5], t: 'Ten seconds is too slow at a till' },
+  { id: 'F-06', by: 'mara-okafor', sev: 'Medium', sec: [5], t: 'Telling a teenager how far over they were may embarrass more than help' },
+  { id: 'F-07', by: 'mara-okafor', sev: 'Low', sec: [5, 6], t: 'Two alerts for nearly the same moment' },
+  { id: 'F-08', by: 'aviator', sev: 'Medium', sec: [3], t: 'The FAQ contradicts section 3.3' }
+];
+const call = { 'F-08': 'accept' };
+function drawReview() {
+  const ra = $('#s6a'); ra.textContent = '';
+  const n = s => Object.values(call).filter(v => v === s).length;
+  const tal = el('div', 'tally');
+  [[FIND.length, 'raised'], [n('accept'), 'accepted by you'], [n('push'), 'pushed back'], [FIND.length - n('accept') - n('push'), 'left to call']].forEach(([v, l], i) => { const d = el('div'); d.appendChild(el('div', 'display', String(v))); if (i === 1 || i === 2) d.firstChild.style.color = 'var(--pa-you)'; d.appendChild(el('div', 'small faint', l)); tal.appendChild(d); });
+  ra.appendChild(tal);
+  const lg = el('div', 'legend'); Object.values(WHO).forEach(([nm, c]) => { const s = el('span'); const i = el('i'); i.style.background = `var(${c})`; s.appendChild(i); s.appendChild(document.createTextNode(nm)); lg.appendChild(s); }); ra.appendChild(lg);
+  const tri = el('div', 'tri');
+  ['High', 'Medium', 'Low'].forEach(sev => {
+    const col = el('div', 'tri-col'); const fs = FIND.filter(f => f.sev === sev);
+    const h = el('h4'); h.appendChild(el('span', '', sev)); h.appendChild(el('span', 'faint mono', String(fs.length))); col.appendChild(h);
+    fs.forEach(f => {
+      const t = el('div', 'ticket'); t.style.setProperty('--who', `var(${WHO[f.by][1]})`);
+      t.appendChild(el('span', 'faint mono', `${f.id} · §${f.sec.join(', §')}`)); t.appendChild(el('span', 't', f.t)); t.appendChild(el('span', 'faint', WHO[f.by][0]));
+      const acts = el('div', 'acts');
+      [['accept', 'Accept'], ['push', 'Push back']].forEach(([k, l]) => { const b = el('button', '', l); b.type = 'button'; b.setAttribute('aria-pressed', call[f.id] === k); b.addEventListener('click', () => { call[f.id] = call[f.id] === k ? undefined : k; drawReview(); }); acts.appendChild(b); });
+      t.appendChild(acts); col.appendChild(t);
+    });
+    tri.appendChild(col);
+  });
+  ra.appendChild(tri);
+
+  const rb = $('#s6b'); rb.textContent = '';
+  const lg2 = lg.cloneNode(true); rb.appendChild(lg2);
+  const SECS = [[1, 'Problem', 'Cardholders have no way to cap what a family member spends.'], [2, 'Who it is for', 'Parents of teenagers first.'], [3, 'Setting an allowance', 'A monthly amount per card user, reset on a chosen day.'], [4, 'Enforcing it', 'Declines at approval; counted charges that skip it.'], [5, 'Telling the card user', 'A message within 10 seconds of a decline; balances in the app.'], [6, 'Telling the cardholder', 'Alerts when the allowance runs low or is passed.'], [7, 'Servicing and compliance', 'Consent, retention, fraud scoring, disclosures.']];
+  const doc = el('div', 'doc');
+  SECS.forEach(([n_, h, s]) => {
+    const fs = FIND.filter(f => f.sec.includes(n_));
+    const sec = el('div', 'sec' + (fs.some(f => f.id === pinSel) ? ' lit' : '')); sec.appendChild(el('b', '', `${n_}. ${h}`)); sec.appendChild(el('span', 'faint', s)); doc.appendChild(sec);
+    const mg = el('div', 'margin');
+    fs.forEach(f => { const p = el('button', 'pin'); p.type = 'button'; p.style.setProperty('--who', `var(${WHO[f.by][1]})`); p.setAttribute('aria-pressed', pinSel === f.id); p.appendChild(el('span', 'dot')); p.appendChild(document.createTextNode(f.id)); p.title = f.t; p.addEventListener('click', () => { pinSel = pinSel === f.id ? null : f.id; drawReview(); }); mg.appendChild(p); });
+    if (!fs.length) mg.appendChild(el('span', 'small faint', 'Clear'));
+    doc.appendChild(mg);
+  });
+  const w = el('div'); w.style.overflowX = 'auto'; w.appendChild(doc); rb.appendChild(w);
+  const f = FIND.find(x => x.id === pinSel);
+  const info = el('p', 'small'); info.style.marginTop = '8px';
+  if (f) { info.appendChild(el('b', '', `${f.id} · ${f.sev} · ${WHO[f.by][0]}: `)); info.appendChild(document.createTextNode(f.t)); } else info.textContent = 'Section 7 holds three of Risk Review\'s four findings; section 5 holds all of Mara\'s.';
+  rb.appendChild(info);
+}
+let pinSel = 'F-05';
+drawReview();
+
+/* ---------- round two ---------- */
+const mkRing = (v, lab, color) => { const s = sv('svg', { viewBox: '0 0 40 40', class: 'ring', role: 'img', 'aria-label': `${lab} ${v} of 5` }); sv('circle', { cx: 20, cy: 20, r: 15, class: 'bg' }, s); const C = 2 * Math.PI * 15; const f = sv('circle', { cx: 20, cy: 20, r: 15, class: 'fg', 'stroke-dasharray': `${C * v / 5} ${C}` }, s); if (color) f.style.stroke = `var(${color})`; sv('text', { x: 20, y: 20 }, s).textContent = v; return s; };
+const mkHud = (items) => { const h = el('div', 'hud' + (items.length === 4 ? ' four' : '')); items.forEach(([n, l, attn]) => { const d = el('div', attn ? 'attn' : ''); d.appendChild(el('div', 'display', String(n))); d.appendChild(el('div', 'small faint', l)); h.appendChild(d); }); return h; };
+const mkMeter = (v, kind) => { const m = el('span', 'meter ' + (kind || '')); for (let j = 1; j <= 5; j++) m.appendChild(el('i', j <= v ? 'on' : '')); return m; };
+function tradeGrid(cols, rows, rec, pick, onPick) {
+  const tb = el('table', 'trade'); const tr = el('tr'); tr.appendChild(el('th', '', ''));
+  const cls = i => i === pick ? 'col-pick' : i === rec ? 'col-rec' : '';
+  cols.forEach((c, i) => { const th = el('th', cls(i)); th.appendChild(el('div', '', c.l)); if (c.sub) th.appendChild(el('div', 'small faint', c.sub)); if (i === rec) th.appendChild(el('span', 'st ready', '◎ Recommended')); tr.appendChild(th); });
+  tb.appendChild(tr);
+  rows.forEach(r => { const row = el('tr'); row.appendChild(el('td', 'faint', r.l)); cols.forEach((c, i) => { const td = el('td', cls(i)); const v = r.v(c); if (typeof v === 'number') td.appendChild(mkMeter(v, v >= 4 ? 'good' : v <= 2 ? 'bad' : '')); else td.textContent = v; row.appendChild(td); }); tb.appendChild(row); });
+  const br = el('tr'); br.appendChild(el('td', '')); cols.forEach((c, i) => { const td = el('td', cls(i)); const b = el('button', 'btn' + (i === rec && pick == null ? ' p' : ''), i === pick ? 'Chosen' : 'Choose'); b.type = 'button'; b.addEventListener('click', e => { e.stopPropagation(); onPick(i); }); td.appendChild(b); br.appendChild(td); }); tb.appendChild(br);
+  const w = el('div'); w.style.overflowX = 'auto'; w.appendChild(tb); return w;
+}
+/* R2 dependency board */
+(() => {
+  const root = $('#r2a'); const D = DEPS_DATA;
+  const order = ['needs-you', 'working', 'ready', 'queued', 'reviewed'];
+  const MAT = { Live: 5, Beta: 3, Planned: 1 }; const EFF = { S: 5, M: 3, L: 1 };
+  let open = 'R-06'; const picks = {};
+  function draw() {
+    root.textContent = '';
+    const cnt = s => D.reqs.filter(r => r.s === s).length;
+    const none = D.reqs.filter(r => !D.deps.some(d => d.r === r.id)).length;
+    root.appendChild(mkHud([[D.reqs.length, 'requirements'], [cnt('needs-you'), 'need you', true], [cnt('ready'), 'ready for your review'], [none, 'with no platform dependency']]));
+    const lg = el('div', 'legend'); [['', 'Live option'], ['beta', 'Beta'], ['planned', 'Planned']].forEach(([c, t]) => { const s = el('span'); const t_ = el('span', 'ticks'); t_.style.display = 'inline-flex'; t_.style.marginRight = '4px'; t_.appendChild(el('i', c)); s.appendChild(t_); s.appendChild(document.createTextNode(t)); lg.appendChild(s); }); root.appendChild(lg);
+    order.forEach(s => D.reqs.filter(r => r.s === s).forEach(r => {
+      const deps = D.deps.filter(d => d.r === r.id); const opts = D.opts.filter(o => deps.some(d => d.id === o.d));
+      const fit = opts.reduce((m, o) => Math.max(m, o.f), 0);
+      const row = el('div', 'rrow' + (opts.length ? ' click' : '')); row.tabIndex = opts.length ? 0 : -1;
+      row.appendChild(opts.length ? mkRing(fit, 'best fit') : el('span', 'faint small', '—'));
+      const m = el('div'); m.style.minWidth = '0'; m.appendChild(el('div', 't', r.t)); m.appendChild(el('div', 'ids', `${r.id} · ${r.c} · ${r.p}`)); row.appendChild(m);
+      const tk = el('div', 'ticks'); opts.forEach(o => tk.appendChild(el('i', o.m === 'Live' ? '' : o.m.toLowerCase()))); if (!opts.length) tk.appendChild(el('span', 'small faint', 'none found')); tk.title = `${opts.length} options`; row.appendChild(tk);
+      row.appendChild(pill(r.s));
+      const tog = () => { if (!opts.length) return; open = open === r.id ? null : r.id; draw(); };
+      row.addEventListener('click', tog); row.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tog(); } });
+      if (open === r.id) {
+        const inner = el('div', 'inner');
+        deps.forEach(d => {
+          const os = D.opts.filter(o => o.d === d.id); if (!os.length) return;
+          inner.appendChild(el('div', 'small', `${d.id} · ${d.t}`)); inner.lastChild.style.fontWeight = '600'; inner.lastChild.style.margin = '6px 0 4px';
+          const rec = os.reduce((bi, o, i) => (o.f * 2 + MAT[o.m] + EFF[o.e]) > (os[bi].f * 2 + MAT[os[bi].m] + EFF[os[bi].e]) ? i : bi, 0);
+          inner.appendChild(tradeGrid(os.map(o => ({ l: o.t, sub: `${o.id} · ${o.o}` })), [
+            { l: 'Fit', v: c => os[os.findIndex(o => o.t === c.l && `${o.id} · ${o.o}` === c.sub)].f },
+            { l: 'Low effort', v: c => EFF[os.find(o => `${o.id} · ${o.o}` === c.sub).e] },
+            { l: 'Maturity', v: c => MAT[os.find(o => `${o.id} · ${o.o}` === c.sub).m] }
+          ], rec, picks[d.id], i => { picks[d.id] = i; draw(); }));
+        });
+        row.appendChild(inner);
+      }
+      root.appendChild(row);
+    }));
+  }
+  draw();
+})();
+/* R2 intent */
+const GAPS = [{ a: 'AR-5', open: false }, { a: 'AR-5', open: true }, { a: 'AR-6', open: true }, { a: 'AR-3', open: true }];
+function drawIntent2() {
+  const root = $('#r2b'); root.textContent = '';
+  const low = shallowest(); const below = AREAS.filter(a => required(a) && depthOf(a) < TARGET).length;
+  root.appendChild(mkHud([[ideaDepth(), `idea depth · ${LEVELS[ideaDepth()]}`], [TARGET, `target · ${LEVELS[TARGET]}`], [below, 'areas below target', true], [GAPS.filter(g => g.open).length, 'open gaps']]));
+  AREAS.forEach(a => {
+    const row = el('div', 'rrow');
+    const dm = el('span', 'dmeter' + (a === low ? ' low' : '')); for (let i = 1; i <= 5; i++) dm.appendChild(el('i', (i <= depthOf(a) ? 'on' : '') + (required(a) && i === TARGET ? ' tgt' : '')));
+    row.style.gridTemplateColumns = '110px minmax(0, 1fr) 80px auto';
+    row.appendChild(dm);
+    const m = el('div'); m.style.minWidth = '0'; m.appendChild(el('div', 't', `${a.t} · ${LEVELS[depthOf(a)]}`));
+    m.appendChild(el('div', 'small faint', a === low ? a.q : a.next)); row.appendChild(m);
+    const tk = el('div', 'ticks'); GAPS.filter(g => g.a === a.id).forEach(g => tk.appendChild(el('i', g.open ? 'gap' : 'closed'))); row.appendChild(tk);
+    row.appendChild(a === low ? pill('needs-you') : !required(a) ? el('span', 'st queued', '○ Not needed yet') : depthOf(a) >= TARGET ? el('span', 'st done', '✓ At target') : pill('queued'));
+    root.appendChild(row);
+  });
+  const ask = el('div', 'ask'); ask.appendChild(el('b', '', `${low.t}: ${low.q}`)); const bt = el('div'); bt.style.display = 'flex'; bt.style.gap = '6px'; const p1 = el('button', 'btn p', 'Answer in the chat'); p1.type = 'button'; bt.appendChild(p1); ask.appendChild(bt); root.appendChild(ask);
+}
+document.querySelectorAll('[data-ist]').forEach(b => b.addEventListener('click', () => drawIntent2()));
+drawIntent2();
+/* R2 delivery */
+let slip2 = true, alt2 = null;
+function drawDel2() {
+  const root = $('#r2c'); root.textContent = '';
+  const conf = { 'M-1': 5, 'M-2': 4, 'M-3': 4, 'M-4': slip2 ? 2 : 4, 'M-5': slip2 ? 3 : 4 };
+  const ALT = [{ l: "Borrow Payments' environment", sub: 'A-1 · launch 26 Mar', rec: 4, cost: 2, needs: 'Payments lead agrees' }, { l: 'Launch to 10% first', sub: 'A-2 · 24 Mar, all 2 Apr', rec: 3, cost: 3, needs: 'Risk Review accepts' }, { l: 'Accept the new date', sub: 'A-3 · launch 2 Apr', rec: 1, cost: 5, needs: 'Nobody' }];
+  const launch = !slip2 ? 52 : alt2 === 0 ? 54 : alt2 === 1 ? 52 : 61;
+  const top = el('div'); top.style.display = 'flex'; top.style.justifyContent = 'flex-end'; top.style.marginBottom = '-6px';
+  const b = el('button', 'btn', slip2 ? 'Undo the slip' : 'Report the slip'); b.type = 'button'; b.addEventListener('click', () => { slip2 = !slip2; alt2 = null; drawDel2(); }); top.appendChild(b); root.appendChild(top);
+  root.appendChild(mkHud([[day(launch), 'launch expected'], [launch - 52 > 0 ? `+${launch - 52}` : '0', 'days against plan', launch > 52], [3, 'milestones on the critical path'], [slip2 && alt2 == null ? 1 : 0, 'decision for you', slip2 && alt2 == null]]));
+  MS.forEach(mm => {
+    const exp = slip2 && (mm.id === 'M-4') ? (alt2 === 0 ? 43 : alt2 === 1 ? 41 : 50) : mm.id === 'M-5' ? launch : mm.now;
+    const late = exp > mm.plan;
+    const row = el('div', 'rrow'); row.appendChild(mkRing(conf[mm.id], 'confidence', late ? '--pa-attn' : mm.st === 'done' ? '--pa-ok' : null));
+    const m = el('div'); m.style.minWidth = '0'; m.appendChild(el('div', 't', mm.t)); m.appendChild(el('div', 'ids', `${mm.id} · ${mm.who}${mm.crit ? ' · critical path' : ''}`)); row.appendChild(m);
+    const dt = el('div', 'num small'); dt.appendChild(el('span', 'faint', day(mm.plan) + ' → ')); dt.appendChild(el('b', late ? 'slip' : '', day(exp))); row.appendChild(dt);
+    row.appendChild(mm.st === 'done' ? el('span', 'st done', '✓ Landed') : late ? el('span', 'st needs', `! ${exp - mm.plan} days late`) : el('span', 'st ready', '◎ On time'));
+    root.appendChild(row);
+  });
+  if (slip2) {
+    const h = el('div', 'small'); h.style.margin = '12px 0 6px'; h.innerHTML = '<b>Ways to recover the load test slip</b> <span class="faint">· M-4 moves to 22 Mar</span>'; root.appendChild(h);
+    root.appendChild(tradeGrid(ALT, [{ l: 'Days recovered', v: c => c.rec }, { l: 'Light on others', v: c => c.cost }, { l: 'Needs', v: c => c.needs }], 0, alt2, i => { alt2 = i; drawDel2(); }));
+  }
+}
+drawDel2();
+/* R2 review */
+const call2 = { 'F-08': 'accept' };
+function drawRev2() {
+  const root = $('#r2d'); root.textContent = '';
+  const n = s => Object.values(call2).filter(v => v === s).length;
+  root.appendChild(mkHud([[FIND.length, 'findings raised'], [FIND.filter(f => f.sev === 'High').length, 'high severity'], [n('accept') + n('push'), 'called by you'], [FIND.length - n('accept') - n('push'), 'left for you', true]]));
+  const bars = el('div', 'bars');
+  Object.entries(WHO).forEach(([k, [nm, c]]) => {
+    const fs = FIND.filter(f => f.by === k); const hb = el('div', 'hbar'); const lab = el('span'); const dot = el('span', 'whodot'); dot.style.background = `var(${c})`; lab.appendChild(dot); lab.appendChild(document.createTextNode(nm)); hb.appendChild(lab);
+    const tr = el('div', 'tr'); ['High', 'Medium', 'Low'].forEach((sv_, i) => { const c_ = fs.filter(f => f.sev === sv_).length; if (!c_) return; const sp = el('span'); sp.style.width = (c_ / 4 * 100) + '%'; sp.style.background = `var(${c})`; sp.style.opacity = [1, .65, .35][i]; sp.title = `${c_} ${sv_.toLowerCase()}`; tr.appendChild(sp); }); hb.appendChild(tr);
+    hb.appendChild(el('span', 'num faint', String(fs.length))); bars.appendChild(hb);
+  });
+  root.appendChild(bars);
+  const SEV = { High: 3, Medium: 2, Low: 1 };
+  FIND.slice().sort((a, b) => SEV[b.sev] - SEV[a.sev]).forEach(f => {
+    const row = el('div', 'rrow'); row.style.gridTemplateColumns = '44px minmax(0, 1fr) 130px auto';
+    const sm = el('span', 'sevm'); sm.title = f.sev; for (let i = 1; i <= 3; i++) sm.appendChild(el('i', i <= SEV[f.sev] ? 'on' : '')); row.appendChild(sm);
+    const m = el('div'); m.style.minWidth = '0'; m.appendChild(el('div', 't', f.t)); const ids = el('div', 'ids'); ids.textContent = `${f.id} · ${f.sev} · §${f.sec.join(', §')}`; m.appendChild(ids); row.appendChild(m);
+    const who = el('span', 'small'); const dot = el('span', 'whodot'); dot.style.background = `var(${WHO[f.by][1]})`; who.appendChild(dot); who.appendChild(document.createTextNode(WHO[f.by][0])); row.appendChild(who);
+    const cb = el('div', 'callbtns'); [['accept', 'Accept'], ['push', 'Push back']].forEach(([k, l]) => { const b = el('button', '', l); b.type = 'button'; b.setAttribute('aria-pressed', call2[f.id] === k); b.addEventListener('click', () => { call2[f.id] = call2[f.id] === k ? undefined : k; drawRev2(); }); cb.appendChild(b); }); row.appendChild(cb);
+    root.appendChild(row);
+  });
+}
+drawRev2();
+
+/* zoom */
+const dlg = $('#zoom');
+document.querySelectorAll('.today').forEach(b => b.addEventListener('click', () => { $('#zoom-img').src = b.dataset.full; $('#zoom-img').alt = b.querySelector('img').alt; try { dlg.showModal(); } catch (_) { dlg.setAttribute('open', ''); } }));
+$('#zoom-close').addEventListener('click', () => dlg.close());
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+</script>

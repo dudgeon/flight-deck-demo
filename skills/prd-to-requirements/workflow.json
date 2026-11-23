@@ -1,9 +1,10 @@
 {
  "workflow": "prd-to-requirements",
  "title": "PRD to requirements",
+ "part_of": "prd-to-dependencies",
  "summary": "Turn a requirements document into a catalog of testable requirements the product manager can review, edit and lock.",
  "library": {
-  "show": true,
+  "show": false,
   "order": 4,
   "summary": "Turn a PRD into a catalog of testable requirements you can review, edit and lock.",
   "prompt": "Catalog the requirements in {{document: a file in context/, or \"the demo PRD\"}} using the prd-to-requirements skill.\n\nAsk me how to catalog it first, then build the catalog in the canvas so I can watch it fill."

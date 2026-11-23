@@ -1,0 +1,960 @@
+<!-- decision-archive:start -->
+<div style="font:13px/1.45 system-ui,sans-serif;background:Canvas;color:CanvasText;border-bottom:1px solid GrayText;padding:8px 16px">Archived copy of <b>Skills and Templates Atlas</b>, a decision artifact from 2026-11-22. Nothing on this page is saved. The index of all of them is in <a href="../index.html">docs/decision-artifacts</a>.</div>
+<script>
+(function(){
+  var A={};
+  function snap(){var docs=Object.keys(A).map(function(k){return {id:k,data:function(){return A[k]},exists:true}});return {docs:docs,empty:!docs.length,size:docs.length,forEach:function(f){docs.forEach(f)}}}
+  function doc(id){return {id:id,get:async function(){return {id:id,exists:id in A,data:function(){return A[id]}}},set:async function(){},update:async function(){},delete:async function(){}}}
+  var db={collection:function(){return {get:async function(){return snap()},doc:doc,onSnapshot:function(f){setTimeout(function(){f(snap())},0);return function(){}},add:async function(){}}},doc:function(p){return doc(String(p).split("/").pop())}};
+  window.claude={use:async function(name){return name==="db"?db:null}};
+})();
+</script>
+<!-- decision-archive:end -->
+<title>Skills and Templates Atlas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* pa-tokens:begin: generated from design/tokens.json by design/build_tokens.py. Do not edit here. */
+:root {
+  --pa-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  --pa-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --pa-r: 6px;
+  --pa-r-panel: 10px;
+  --pa-gap: 12px;
+  --pa-text: 14px;
+  --pa-text-sm: 12.5px;
+  --pa-text-title: 19px;
+  --pa-weight-title: 650;
+  --pa-tracking-title: -0.015em;
+  --pa-bg: #f4f6f9;
+  --pa-surface: #ffffff;
+  --pa-sunk: #eaeef3;
+  --pa-ink: #0f1e30;
+  --pa-ink-2: #475a70;
+  --pa-ink-3: #71829a;
+  --pa-line: #d6dde6;
+  --pa-line-strong: #b4c0ce;
+  --pa-navy: #0a223d;
+  --pa-navy-hover: #17385f;
+  --pa-on-navy: #f2f6fa;
+  --pa-chrome: #0a223d;
+  --pa-chrome-ink: #f2f6fa;
+  --pa-chrome-ink-2: #9fb4cc;
+  --pa-chrome-hover: #17385f;
+  --pa-chrome-active: #2a5486;
+  --pa-chrome-line: #17385f;
+  --pa-you: #b0237a;
+  --pa-you-soft: #f8e1ef;
+  --pa-on-you: #ffffff;
+  --pa-ok: #17794a;
+  --pa-ok-soft: #ddf1e6;
+  --pa-info: #1e6aa6;
+  --pa-info-soft: #ddebf7;
+  --pa-warn: #8d5a00;
+  --pa-warn-soft: #f9ebcf;
+  --pa-attn: #8d5a00;
+  --pa-attn-soft: #f9ebcf;
+  --pa-fail: #b3261e;
+  --pa-fail-soft: #f9dedc;
+  --pa-idle: #71829a;
+  --pa-idle-soft: #eaeef3;
+  --pa-agent: #4f46b8;
+  --pa-agent-soft: #e8e6f8;
+  --pa-author-1: #1e6aa6;
+  --pa-author-2: #8d5a00;
+  --pa-author-3: #4d6b1f;
+  --pa-author-4: #7a3f8f;
+  --pa-author-5: #1f6b66;
+  --pa-author-6: #17794a;
+  --pa-author-7: #a0462f;
+  --pa-author-8: #3d5a99;
+  --pa-comment: #f5c518;
+  --pa-comment-strong: #d29e00;
+  --pa-shadow: #0a223d;
+  --pa-build: #0d6e78;
+  --pa-build-soft: #d9f0f1;
+  --pa-on-build: #ffffff;
+  --pa-hangar-bg: #edf4f6;
+  --pa-hangar-grid: #d3e3e7;
+  --pa-hangar-paper: #fbfdfd;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --pa-bg: #071526;
+    --pa-surface: #0c1e33;
+    --pa-sunk: #091a2d;
+    --pa-ink: #e6edf5;
+    --pa-ink-2: #a6b6c8;
+    --pa-ink-3: #71849a;
+    --pa-line: #1e3550;
+    --pa-line-strong: #3a5676;
+    --pa-navy: #2f64a0;
+    --pa-navy-hover: #3a73b3;
+    --pa-on-navy: #f2f6fa;
+    --pa-chrome: #0d2138;
+    --pa-chrome-ink: #f2f6fa;
+    --pa-chrome-ink-2: #8ea6c2;
+    --pa-chrome-hover: #15304f;
+    --pa-chrome-active: #1f4470;
+    --pa-chrome-line: #17304d;
+    --pa-you: #f26dc3;
+    --pa-you-soft: #3a1530;
+    --pa-on-you: #2a0a1f;
+    --pa-ok: #5bcb93;
+    --pa-ok-soft: #0f3123;
+    --pa-info: #7db7ea;
+    --pa-info-soft: #12304d;
+    --pa-warn: #e9b44c;
+    --pa-warn-soft: #362808;
+    --pa-attn: #e9b44c;
+    --pa-attn-soft: #362808;
+    --pa-fail: #ff8a80;
+    --pa-fail-soft: #3d1715;
+    --pa-idle: #71849a;
+    --pa-idle-soft: #12263b;
+    --pa-agent: #a59cff;
+    --pa-agent-soft: #211d47;
+    --pa-author-1: #7db7ea;
+    --pa-author-2: #e9b44c;
+    --pa-author-3: #a9c46a;
+    --pa-author-4: #d39be6;
+    --pa-author-5: #6fcfc6;
+    --pa-author-6: #5bcb93;
+    --pa-author-7: #f2967a;
+    --pa-author-8: #9fb3ef;
+    --pa-comment: #f5c518;
+    --pa-comment-strong: #d29e00;
+    --pa-shadow: #000000;
+    --pa-build: #58c9d3;
+    --pa-build-soft: #0c3237;
+    --pa-on-build: #04262a;
+    --pa-hangar-bg: #081d24;
+    --pa-hangar-grid: #12333b;
+    --pa-hangar-paper: #0b252d;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --pa-bg: #071526;
+  --pa-surface: #0c1e33;
+  --pa-sunk: #091a2d;
+  --pa-ink: #e6edf5;
+  --pa-ink-2: #a6b6c8;
+  --pa-ink-3: #71849a;
+  --pa-line: #1e3550;
+  --pa-line-strong: #3a5676;
+  --pa-navy: #2f64a0;
+  --pa-navy-hover: #3a73b3;
+  --pa-on-navy: #f2f6fa;
+  --pa-chrome: #0d2138;
+  --pa-chrome-ink: #f2f6fa;
+  --pa-chrome-ink-2: #8ea6c2;
+  --pa-chrome-hover: #15304f;
+  --pa-chrome-active: #1f4470;
+  --pa-chrome-line: #17304d;
+  --pa-you: #f26dc3;
+  --pa-you-soft: #3a1530;
+  --pa-on-you: #2a0a1f;
+  --pa-ok: #5bcb93;
+  --pa-ok-soft: #0f3123;
+  --pa-info: #7db7ea;
+  --pa-info-soft: #12304d;
+  --pa-warn: #e9b44c;
+  --pa-warn-soft: #362808;
+  --pa-attn: #e9b44c;
+  --pa-attn-soft: #362808;
+  --pa-fail: #ff8a80;
+  --pa-fail-soft: #3d1715;
+  --pa-idle: #71849a;
+  --pa-idle-soft: #12263b;
+  --pa-agent: #a59cff;
+  --pa-agent-soft: #211d47;
+  --pa-author-1: #7db7ea;
+  --pa-author-2: #e9b44c;
+  --pa-author-3: #a9c46a;
+  --pa-author-4: #d39be6;
+  --pa-author-5: #6fcfc6;
+  --pa-author-6: #5bcb93;
+  --pa-author-7: #f2967a;
+  --pa-author-8: #9fb3ef;
+  --pa-comment: #f5c518;
+  --pa-comment-strong: #d29e00;
+  --pa-shadow: #000000;
+  --pa-build: #58c9d3;
+  --pa-build-soft: #0c3237;
+  --pa-on-build: #04262a;
+  --pa-hangar-bg: #081d24;
+  --pa-hangar-grid: #12333b;
+  --pa-hangar-paper: #0b252d;
+  color-scheme: dark;
+}
+/* pa-tokens:end */
+
+/* Layout: a navy frame band, then a single reading column (max 1120px) of reference sections; galleries break into a wrap grid. Colors, fonts, corners all from --pa tokens. */
+:root { --w: 1120px; }
+* { box-sizing: border-box; }
+body { background: var(--pa-bg); color: var(--pa-ink); font-family: var(--pa-font); font-size: var(--pa-text); line-height: 1.55; }
+a { color: var(--pa-info); }
+code, .mono { font-family: var(--pa-mono); font-size: 0.92em; }
+.wrap { max-width: var(--w); margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header.band { background: var(--pa-chrome); color: var(--pa-chrome-ink); margin-top: calc(-1 * env(safe-area-inset-top, 0px)); padding-top: env(safe-area-inset-top, 0px); }
+header.band .wrap { padding-block: 36px 28px; display: grid; gap: 10px; }
+.eyebrow { color: var(--pa-chrome-ink-2); font-size: var(--pa-text-sm); }
+h1 { font-size: 30px; font-weight: var(--pa-weight-title); letter-spacing: var(--pa-tracking-title); margin: 0; text-wrap: balance; }
+header.band p { margin: 0; max-width: 68ch; color: var(--pa-chrome-ink-2); }
+header.band p strong { color: var(--pa-chrome-ink); font-weight: 600; }
+nav.toc { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+nav.toc a { color: var(--pa-chrome-ink); text-decoration: none; border: 1px solid var(--pa-chrome-line); background: var(--pa-chrome-hover); border-radius: 999px; padding: 3px 11px; font-size: var(--pa-text-sm); }
+nav.toc a:hover, nav.toc a:focus-visible { background: var(--pa-chrome-active); outline: none; }
+main .wrap { padding-block: 8px 64px; display: grid; gap: 48px; }
+section { display: grid; gap: 16px; min-width: 0; }
+h2 { font-size: 22px; font-weight: var(--pa-weight-title); letter-spacing: var(--pa-tracking-title); margin: 32px 0 0; text-wrap: balance; }
+h3 { font-size: 16px; font-weight: 650; margin: 8px 0 0; }
+p { margin: 0; max-width: 72ch; }
+.lede { color: var(--pa-ink-2); max-width: 72ch; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font-size: var(--pa-text-sm); color: var(--pa-ink-2); }
+.pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 1px 9px; font-size: var(--pa-text-sm); font-weight: 550; white-space: nowrap; border: 1px solid transparent; }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.built { background: var(--pa-ok-soft); color: var(--pa-ok); }
+.decided { background: var(--pa-idle-soft); color: var(--pa-ink-2); border-color: var(--pa-line-strong); }
+.open { background: var(--pa-attn-soft); color: var(--pa-attn); }
+.contrib { background: var(--pa-build-soft); color: var(--pa-build); }
+.panel { background: var(--pa-surface); border: 1px solid var(--pa-line); border-radius: var(--pa-r-panel); padding: 18px 20px; min-width: 0; }
+.note { background: var(--pa-sunk); border-radius: var(--pa-r-panel); padding: 12px 16px; color: var(--pa-ink-2); font-size: var(--pa-text-sm); }
+.note strong { color: var(--pa-ink); }
+
+/* Map diagram */
+.map { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.col { display: grid; gap: 10px; align-content: start; }
+.col h4 { margin: 0; font-size: var(--pa-text-sm); color: var(--pa-ink-3); font-weight: 600; }
+.chip { background: var(--pa-surface); border: 1px solid var(--pa-line); border-radius: var(--pa-r); padding: 8px 10px; display: grid; gap: 4px; }
+.chip b { font-weight: 600; }
+.chip small { color: var(--pa-ink-2); font-size: var(--pa-text-sm); }
+.chip .row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+.stack { display: grid; gap: 6px; }
+@media (max-width: 820px) { .map { grid-template-columns: 1fr; } }
+
+/* Tables */
+.tbl { overflow-x: auto; border: 1px solid var(--pa-line); border-radius: var(--pa-r-panel); background: var(--pa-surface); }
+table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: var(--pa-text-sm); }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--pa-line); }
+th { color: var(--pa-ink-3); font-weight: 600; background: var(--pa-sunk); }
+tr:last-child td { border-bottom: 0; }
+td b { font-weight: 600; font-size: var(--pa-text); }
+td .sub { color: var(--pa-ink-3); display: block; }
+
+/* Arc diagram: today -> proposed */
+.arcs { display: grid; grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr); gap: 0; align-items: stretch; }
+.arcs .side { display: grid; gap: 8px; }
+.arcs .side h4 { margin: 0 0 2px; font-size: var(--pa-text-sm); color: var(--pa-ink-3); font-weight: 600; }
+.arcs .link { display: grid; place-items: center; color: var(--pa-ink-3); font-size: 22px; }
+.tag { font-size: 11.5px; color: var(--pa-ink-2); background: var(--pa-sunk); border-radius: 4px; padding: 0 6px; }
+.k-arc { border-left: 3px solid var(--pa-navy); }
+.k-move { border-left: 3px solid var(--pa-agent); }
+.k-comp { border-left: 3px solid var(--pa-build); }
+@media (max-width: 760px) { .arcs { grid-template-columns: 1fr; } .arcs .link { display: none; } .arcs .side + .link + .side { margin-top: 16px; } }
+
+/* Stage strip */
+.stages { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.stage { border: 1px solid var(--pa-line-strong); border-radius: var(--pa-r); padding: 4px 10px; background: var(--pa-surface); font-size: var(--pa-text-sm); }
+.stage.out { text-decoration: line-through; color: var(--pa-ink-3); border-style: dashed; }
+.stage.new { border-color: var(--pa-attn); color: var(--pa-attn); background: var(--pa-attn-soft); }
+
+/* Gallery */
+.filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.filters button { font: inherit; font-size: var(--pa-text-sm); border: 1px solid var(--pa-line-strong); background: var(--pa-surface); color: var(--pa-ink); border-radius: 999px; padding: 3px 11px; cursor: pointer; }
+.filters button[aria-pressed="true"] { background: var(--pa-navy); color: var(--pa-on-navy); border-color: var(--pa-navy); }
+.filters button:focus-visible { outline: 2px solid var(--pa-info); outline-offset: 2px; }
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.gallery.wide { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
+figure { margin: 0; background: var(--pa-surface); border: 1px solid var(--pa-line); border-radius: var(--pa-r-panel); overflow: hidden; display: grid; grid-template-rows: auto 1fr; min-width: 0; }
+figure button.shot { all: unset; cursor: zoom-in; display: block; background: var(--pa-sunk); height: 220px; overflow: hidden; border-bottom: 1px solid var(--pa-line); }
+.gallery.wide figure button.shot { height: 240px; }
+figure button.shot:focus-visible { outline: 2px solid var(--pa-info); outline-offset: -2px; }
+figure img { width: 100%; display: block; object-fit: cover; object-position: top left; height: 100%; }
+figcaption { padding: 10px 12px 12px; display: grid; gap: 3px; font-size: var(--pa-text-sm); color: var(--pa-ink-2); }
+figcaption b { color: var(--pa-ink); font-size: var(--pa-text); font-weight: 600; }
+figcaption .meta { display: flex; gap: 6px; flex-wrap: wrap; }
+.hero-shot { display: grid; gap: 10px; }
+.hero-shot button.shot { all: unset; cursor: zoom-in; display: block; border: 1px solid var(--pa-line); border-radius: var(--pa-r-panel); overflow: hidden; }
+.hero-shot img { display: block; width: 100%; }
+.hero-shot p { color: var(--pa-ink-2); font-size: var(--pa-text-sm); }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 760px) { .two { grid-template-columns: 1fr; } }
+
+/* Model diagram */
+.model { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.model .box { background: var(--pa-surface); border: 1px solid var(--pa-line); border-radius: var(--pa-r); padding: 12px; display: grid; gap: 6px; align-content: start; }
+.model .box h5 { margin: 0; font-size: var(--pa-text); font-weight: 650; }
+.model .box code { font-size: 11.5px; color: var(--pa-ink-2); word-break: break-all; }
+.model .box p { font-size: var(--pa-text-sm); color: var(--pa-ink-2); }
+.model .box.ini { border-top: 3px solid var(--pa-navy); }
+.model .box.art { border-top: 3px solid var(--pa-info); }
+.model .box.tpl { border-top: 3px solid var(--pa-agent); }
+.model .box.you { border-top: 3px solid var(--pa-you); }
+@media (max-width: 860px) { .model { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .model { grid-template-columns: 1fr; } }
+.kinds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.kinds .panel { display: grid; gap: 8px; align-content: start; }
+.kinds pre { margin: 0; background: var(--pa-sunk); border-radius: var(--pa-r); padding: 10px; font-family: var(--pa-mono); font-size: 11.5px; overflow-x: auto; color: var(--pa-ink-2); }
+@media (max-width: 860px) { .kinds { grid-template-columns: 1fr; } }
+
+/* Sketches of proposed widgets */
+.sketches { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.sk { background: var(--pa-surface); border: 1px dashed var(--pa-line-strong); border-radius: var(--pa-r-panel); padding: 14px; display: grid; gap: 10px; align-content: start; }
+.sk .lbl { font-size: var(--pa-text-sm); color: var(--pa-ink-3); display: flex; justify-content: space-between; gap: 8px; }
+.w { border: 1px solid var(--pa-line); border-radius: var(--pa-r); padding: 10px 12px; display: grid; gap: 6px; background: var(--pa-surface); }
+.w .t { font-weight: 600; }
+.w .s { color: var(--pa-ink-2); font-size: var(--pa-text-sm); }
+.w .id { font-family: var(--pa-mono); font-size: 11px; color: var(--pa-ink-3); }
+.ev { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--pa-line-strong); border-radius: 999px; padding: 2px 10px 2px 4px; font-size: var(--pa-text-sm); width: fit-content; max-width: 100%; }
+.ev .id { background: var(--pa-info-soft); color: var(--pa-info); border-radius: 999px; padding: 0 6px; }
+.quote { border-left: 2px solid var(--pa-line-strong); padding-left: 8px; color: var(--pa-ink-2); font-size: var(--pa-text-sm); }
+.btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.btn { font: inherit; font-size: var(--pa-text-sm); border-radius: var(--pa-r); padding: 3px 10px; border: 1px solid var(--pa-line-strong); background: var(--pa-surface); color: var(--pa-ink); }
+.btn.p { background: var(--pa-navy); color: var(--pa-on-navy); border-color: var(--pa-navy); }
+.chk { display: grid; grid-template-columns: 18px 1fr auto; gap: 8px; align-items: start; font-size: var(--pa-text-sm); }
+.chk .m { width: 16px; height: 16px; border-radius: 4px; display: grid; place-items: center; font-size: 11px; font-weight: 700; }
+.m.ok { background: var(--pa-ok-soft); color: var(--pa-ok); }
+.m.no { background: var(--pa-fail-soft); color: var(--pa-fail); }
+.m.un { background: var(--pa-idle-soft); color: var(--pa-idle); }
+.strip { display: flex; gap: 4px; flex-wrap: wrap; }
+.strip span { font-size: 11.5px; padding: 1px 7px; border-radius: 4px; background: var(--pa-sunk); color: var(--pa-ink-2); }
+.strip span.on { background: var(--pa-navy); color: var(--pa-on-navy); }
+.you-ans { color: var(--pa-you); font-size: var(--pa-text-sm); }
+
+/* Open list */
+.olist { display: grid; gap: 8px; }
+.olist .row { display: grid; grid-template-columns: 64px minmax(0, 1fr) minmax(0, 1.1fr); gap: 12px; padding: 10px 14px; background: var(--pa-surface); border: 1px solid var(--pa-line); border-radius: var(--pa-r); font-size: var(--pa-text-sm); }
+.olist .row b { font-family: var(--pa-mono); font-weight: 600; color: var(--pa-attn); }
+.olist .row .rec { color: var(--pa-ink-2); }
+@media (max-width: 640px) { .olist .row { grid-template-columns: 1fr; gap: 4px; } }
+
+dialog { border: 0; padding: 0; background: transparent; max-width: min(96vw, 1400px); max-height: 94vh; }
+dialog::backdrop { background: var(--pa-shadow); opacity: 0.7; }
+dialog img { display: block; max-width: 100%; max-height: 88vh; border-radius: var(--pa-r); background: var(--pa-surface); }
+dialog .cap { color: var(--pa-on-navy); background: var(--pa-navy); font-size: var(--pa-text-sm); padding: 6px 10px; border-radius: var(--pa-r); margin-top: 6px; display: flex; justify-content: space-between; gap: 12px; }
+dialog .cap button { all: unset; cursor: pointer; text-decoration: underline; }
+footer { color: var(--pa-ink-3); font-size: var(--pa-text-sm); }
+@media (prefers-reduced-motion: no-preference) { figure button.shot img { transition: transform .2s ease; } figure button.shot:hover img { transform: scale(1.02); } }
+.aoa { display: grid; gap: 14px; }
+.aoa-weights { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; font-size: var(--pa-text-sm); color: var(--pa-ink-2); }
+.aoa-weights b { color: var(--pa-ink); font-size: var(--pa-text); }
+.aoa-weights label { display: inline-flex; gap: 6px; align-items: center; }
+.aoa-weights input[type=range] { width: 90px; accent-color: var(--pa-navy); }
+.aoa-weights input[type=checkbox] { accent-color: var(--pa-you); }
+.aoa-deps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 900px) { .aoa-deps { grid-template-columns: 1fr; } }
+.dep { border: 1px solid var(--pa-line); border-radius: var(--pa-r); padding: 10px; display: grid; gap: 8px; align-content: start; background: var(--pa-bg); min-width: 0; }
+.dep .t { font-weight: 600; }
+.dep .r { font-size: var(--pa-text-sm); color: var(--pa-ink-3); }
+.opt { all: unset; box-sizing: border-box; display: grid; gap: 3px; border: 1px solid var(--pa-line-strong); background: var(--pa-surface); border-radius: var(--pa-r); padding: 8px 10px; cursor: pointer; font-size: var(--pa-text-sm); color: var(--pa-ink-2); }
+.opt b { color: var(--pa-ink); font-size: var(--pa-text); font-weight: 600; }
+.opt .top { display: flex; justify-content: space-between; gap: 6px; align-items: center; flex-wrap: wrap; }
+.opt[aria-pressed="true"] { border-color: var(--pa-you); box-shadow: inset 3px 0 0 var(--pa-you); }
+.opt:focus-visible, .lev button:focus-visible { outline: 2px solid var(--pa-info); outline-offset: 2px; }
+.opt .rec { color: var(--pa-ok); background: var(--pa-ok-soft); border-radius: 999px; padding: 0 7px; font-size: 11.5px; }
+.opt .dots { letter-spacing: 1px; color: var(--pa-navy); }
+.opt .gap { color: var(--pa-ink-3); }
+.lev { display: flex; gap: 4px; flex-wrap: wrap; }
+.lev span { font-size: 11.5px; color: var(--pa-ink-3); align-self: center; margin-right: 2px; }
+.lev button { font: inherit; font-size: 11.5px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--pa-line-strong); background: var(--pa-surface); color: var(--pa-ink-2); cursor: pointer; }
+.lev button[aria-pressed="true"] { background: var(--pa-you-soft); color: var(--pa-you); border-color: var(--pa-you); }
+.aoa-out { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 760px) { .aoa-out { grid-template-columns: 1fr; } }
+.aoa-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.aoa-bars { display: grid; gap: 6px; margin-top: 8px; }
+.bar { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 8px; align-items: center; font-size: var(--pa-text-sm); }
+.bar .lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--pa-ink-2); }
+.track { position: relative; height: 18px; background: var(--pa-sunk); border-radius: 4px; }
+.fill { position: absolute; top: 0; bottom: 0; border-radius: 4px; background: var(--pa-navy); transition: left .25s ease, width .25s ease; }
+.fill.unknown { background: repeating-linear-gradient(45deg, var(--pa-attn) 0 6px, var(--pa-attn-soft) 6px 12px); }
+.fill.later { background: var(--pa-idle); opacity: .55; }
+.launch { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--pa-you); transition: left .25s ease; }
+.aoa-axis { display: flex; justify-content: space-between; margin-left: 128px; font-size: 11px; color: var(--pa-ink-3); margin-top: 4px; }
+.eng { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: start; font-size: var(--pa-text-sm); }
+.eng .k { font-size: 11px; border-radius: 4px; padding: 0 6px; white-space: nowrap; }
+.k.self { background: var(--pa-ok-soft); color: var(--pa-ok); }
+.k.agent { background: var(--pa-agent-soft); color: var(--pa-agent); }
+.k.human { background: var(--pa-attn-soft); color: var(--pa-attn); }
+.k.none { background: var(--pa-idle-soft); color: var(--pa-ink-2); }
+.decl { font-size: var(--pa-text-sm); color: var(--pa-ink-2); }
+.decl code { color: var(--pa-ink-3); }
+@media (prefers-reduced-motion: reduce) { .fill, .launch { transition: none; } }
+</style>
+
+<header class="band">
+  <div class="wrap">
+    <div class="eyebrow">Flight Deck · reference, not a decision round · snapshot 22 Nov 2026 (main at PR 45, PR 41 open)</div>
+    <h1>Skills and templates atlas</h1>
+    <p>Every skill a Product Aviator session can use, the hero workflows today and the four arcs proposed for them, and the designs behind <strong>in-chat widgets</strong> and <strong>canvas templates</strong>, tied to the template data model merged in PR 42. Pictures are real renders of each workflow's views from its scenario data, plus screenshots of the running app.</p>
+    <nav class="toc" aria-label="Sections">
+      <a href="#shape">The whole shape</a>
+      <a href="#utility">Utility skills</a>
+      <a href="#hero">Hero skills</a>
+      <a href="#model">Template data model</a>
+      <a href="#chat">In-chat widgets</a>
+      <a href="#canvas">Canvas templates</a>
+      <a href="#proposed">Proposed shared widgets</a>
+      <a href="#alternatives">Alternatives and engaging owners</a>
+      <a href="#matrix">Skill by skill</a>
+      <a href="#open">Open and not built</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+
+<section id="shape" aria-labelledby="h-shape">
+  <h2 id="h-shape">The whole shape</h2>
+  <p class="lede">Three layers. Utility skills give every session its tools and its coordinator. Hero skills are the kinds of PM work, each a workflow with a dataset and views. Templates are what the work is drawn into: widgets in the chat when the person needs to answer or glance, views and documents in the canvas when they work in it.</p>
+  <div class="legend">
+    <span class="pill built">Built</span> on main
+    <span class="pill decided">Decided, not built</span>
+    <span class="pill open">Open with Geoff</span> proposed, has a question card elsewhere
+    <span class="pill contrib">Contributor</span> used to build Flight Deck, not shipped in sessions
+  </div>
+  <div class="map">
+    <div class="col">
+      <h4>Utility skills (always available)</h4>
+      <div class="chip"><div class="row"><b>Coordination</b></div><small>director (Aviator), feature lifecycle companion (D-129)</small></div>
+      <div class="chip"><div class="row"><b>Drawing and design</b></div><small>view-kit (<code>pa</code>), product-aviator-design, frontend-design</small></div>
+      <div class="chip"><div class="row"><b>People and documents</b></div><small>participants, document-collaboration</small></div>
+      <div class="chip"><div class="row"><b>The app itself</b></div><small>omnigent-operator</small></div>
+      <div class="chip"><div class="row"><b>Hangar builders</b></div><small>scenario-builder, build-person</small></div>
+      <div class="chip"><div class="row"><b>Contributors</b></div><small>docs-refresh (repo only)</small></div>
+    </div>
+    <div class="col">
+      <h4>Hero skills (the work)</h4>
+      <div class="chip k-arc"><div class="row"><b>Arcs</b><span class="pill open">HS-1</span></div><small>Problem discovery · Intent shaping · PRD to dependencies · Delivery status</small></div>
+      <div class="chip k-move"><div class="row"><b>Moves on any artifact</b><span class="pill open">HS-1</span></div><small>Review · Decide</small></div>
+      <div class="chip"><div class="row"><b>Today: seven workflows</b><span class="pill built">Built</span></div><small>problem-discovery, intent-shaping, prd-to-requirements, requirements-to-dependencies, delivery-status, document-review, decision-review</small></div>
+      <div class="chip"><div class="row"><b>Stages as tags</b><span class="pill open">HS-3</span></div><small>Discover, Shape, Specify, Map, Deliver, Learn. Never gates (D-141 built)</small></div>
+    </div>
+    <div class="col">
+      <h4>Templates (what work is drawn into)</h4>
+      <div class="chip"><div class="row"><b>In-chat widgets</b><span class="pill built">Built</span></div><small>form, detail card, summary. One at a time; folds to a line once answered</small></div>
+      <div class="chip"><div class="row"><b>Canvas views</b><span class="pill built">Built</span></div><small>tree-table, board, plus documents and pages</small></div>
+      <div class="chip"><div class="row"><b>Template kinds</b><span class="pill built">D-139</span></div><small>markdown · records · page, one <code>template.json</code></small></div>
+      <div class="chip"><div class="row"><b>Initiative intent + registers</b><span class="pill open">IN-1, IN-3</span></div><small>Built as recommended; the question stays open</small></div>
+    </div>
+  </div>
+</section>
+
+<section id="utility" aria-labelledby="h-utility">
+  <h2 id="h-utility">Utility skills</h2>
+  <p class="lede">These are not kinds of work. They give a session its tools, keep Aviator coordinating, or build Flight Deck itself. All bundled ones live in <code>skills/</code> and are linked into every session as <code>/claude:&lt;name&gt;</code>.</p>
+  <div class="tbl"><table>
+    <thead><tr><th style="width:22%">Skill</th><th>What it is for</th><th style="width:22%">Where it shows up</th><th style="width:16%">State</th></tr></thead>
+    <tbody>
+      <tr><td><b>director</b><span class="sub">Aviator as project director</span></td><td>Runs each workflow in a thread of its own so the detail stays out of the main conversation; routes with the ladder (start when named, offer once on a clear fit, otherwise work openly). Reads routing from each workflow, names none itself (D-120).</td><td>Run card in the Aviator chat, In flight on the project page, Director's notes</td><td><span class="pill built">Built, opt-in</span><span class="sub">D-89, D-128, D-134..D-137</span></td></tr>
+      <tr><td><b>feature lifecycle</b><span class="sub">"I'm working on a new feature"</span></td><td>Finds or creates the initiative, makes its intent document and registers, lists the person's files on it, adopts loose work, and offers the next stage. A companion, not a hero skill.</td><td>Project page, stage strip, offers in the director</td><td><span class="pill decided">Decided, not built</span><span class="sub">D-129; contract ready in <code>pa</code> (D-142)</span></td></tr>
+      <tr><td><b>view-kit</b><span class="sub">the <code>pa</code> command</span></td><td>Datasets and the views drawn from them: form, detail, summary, tree-table, board. Also stamps, templates, registers, runs, checks and previews.</td><td>Every widget and canvas view on this page</td><td><span class="pill built">Built</span></td></tr>
+      <tr><td><b>product-aviator-design</b></td><td>The design language and tokens. Wins over frontend-design where they disagree.</td><td>Any artifact, view, widget or template</td><td><span class="pill built">Built</span><span class="sub">D-48..D-50</span></td></tr>
+      <tr><td><b>frontend-design</b></td><td>Vendored general guidance for visual direction (Apache 2.0, unchanged).</td><td>New UI and one-off pages</td><td><span class="pill built">Built</span></td></tr>
+      <tr><td><b>participants</b></td><td>Brings another agent or person into the conversation under their own name, and manages the roster.</td><td>Speaker blocks in chat, Inbox, Hangar people</td><td><span class="pill built">Built</span></td></tr>
+      <tr><td><b>document-collaboration</b></td><td>Suggests tracked changes, answers comment threads and @mentions in markdown documents.</td><td>The collab editor's review rail</td><td><span class="pill built">Built</span><span class="sub">D-104</span></td></tr>
+      <tr><td><b>omnigent-operator</b></td><td>Operates the app from inside a session: open in the viewer, rename, sub-sessions, reminders, Inbox. An example for skill writers.</td><td>Viewer, Inbox, sessions list</td><td><span class="pill built">Built</span></td></tr>
+      <tr><td><b>scenario-builder</b></td><td>Creates or changes a workflow or a demo scenario as a Hangar draft, checked and previewed with <code>pa</code>.</td><td>Hangar</td><td><span class="pill built">Built</span></td></tr>
+      <tr><td><b>build-person</b></td><td>Guided build of a person or agent for the roster, with checks, a trial and history.</td><td>Hangar, People and agents</td><td><span class="pill built">Built</span></td></tr>
+      <tr><td><b>docs-refresh</b><span class="sub"><code>.claude/skills/</code></span></td><td>Brings the docs up to date with merged and open PRs and archives decision artifacts as offline HTML. This page was archived with it.</td><td>Contributor sessions only</td><td><span class="pill contrib">Contributor</span><span class="sub">D-115</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="two">
+    <div class="hero-shot">
+      <button class="shot" type="button" data-full="img/app--run-card.jpg" data-cap="Director run card in the Aviator chat (running app, 21 Nov)"><img src="img/app--run-card.jpg" alt="Aviator chat with two run cards: intent shaping needs an answer, delivery status is starting"></button>
+      <p>The director's run card, the one widget a utility skill adds to the chat: each thread's step, what it needs from the person, and a way into the thread. Running app, 21 Nov.</p>
+    </div>
+    <div class="hero-shot">
+      <button class="shot" type="button" data-full="img/app--in-flight.jpg" data-cap="In flight on the project page (running app, 21 Nov)"><img src="img/app--in-flight.jpg" alt="Workspace project page with three runs in flight"></button>
+      <p>In flight on the project page: every run with its stage, step and what it waits on. The lifecycle companion is meant to add a stage strip above this.</p>
+    </div>
+  </div>
+</section>
+
+<section id="hero" aria-labelledby="h-hero">
+  <h2 id="h-hero">Hero skills: seven today, four arcs proposed</h2>
+  <p class="lede">Each hero skill is a workflow: a <code>SKILL.md</code>, a <code>workflow.json</code> with steps, a dataset, views and a routing block, and a scenario to demo it. The lifecycle research (PR 41, open) proposes regrouping them by what the person sets out to do. <strong>None of that regrouping is decided</strong>; HS-1 to HS-5 are being asked in the <a href="https://claude.ai/artifact/P3hZWy2Ht6es1KCxMDLTEv">Hero skills and the lifecycle</a> walkthrough.</p>
+
+  <div class="panel">
+    <div class="arcs">
+      <div class="side">
+        <h4>Today (built, each with a scenario)</h4>
+        <div class="chip"><div class="row"><b>problem-discovery</b><span class="tag">discover</span></div><small>→ Problem discovery</small></div>
+        <div class="chip"><div class="row"><b>intent-shaping</b><span class="tag">shape</span></div><small>→ Intent shaping</small></div>
+        <div class="chip"><div class="row"><b>prd-to-requirements</b><span class="tag">specify</span></div><small>→ PRD to dependencies, its first half. Geoff (22 Nov): it needs one primary home, in either intent shaping or PRD to dependencies; the person must be able to move between phases either way</small></div>
+        <div class="chip"><div class="row"><b>requirements-to-dependencies</b><span class="tag">map</span></div><small>→ PRD to dependencies, its second half</small></div>
+        <div class="chip"><div class="row"><b>delivery-status</b><span class="tag">deliver</span></div><small>→ Delivery status</small></div>
+        <div class="chip"><div class="row"><b>document-review</b><span class="tag">specify</span></div><small>→ Review, on any artifact</small></div>
+        <div class="chip"><div class="row"><b>decision-review</b><span class="tag">decide</span></div><small>→ Decide, on any open question</small></div>
+      </div>
+      <div class="link" aria-hidden="true">
+        <span class="arrow">→</span>
+      </div>
+      <div class="side">
+        <h4>Proposed (PR 41, open)</h4>
+        <div class="chip k-arc"><div class="row"><b>Problem discovery</b><span class="tag">Discover · Learn</span></div><small>Produce. Synthesis with every quote checked; takes post-launch feedback too</small></div>
+        <div class="chip k-arc"><div class="row"><b>Intent shaping</b><span class="tag">Shape</span></div><small>Up-level. Asks, never writes the person's answer</small></div>
+        <div class="chip k-arc"><div class="row"><b>PRD to dependencies</b><span class="tag">Specify · Map</span></div><small>Produce, then check. The two requirement workflows as halves of one; enter at either</small></div>
+        <div class="chip k-arc"><div class="row"><b>Delivery status</b><span class="tag">Deliver</span></div><small>Produce. Every date change names its cause</small></div>
+        <div class="chip k-move"><div class="row"><b>Review</b><span class="tag">any artifact</span></div><small>Enforce. Offered as a launcher on anything</small></div>
+        <div class="chip k-move"><div class="row"><b>Decide</b><span class="tag">any open question</span></div><small>The person decides; decisions superseded, never edited</small></div>
+        <div class="chip k-comp"><div class="row"><b>Feature lifecycle</b><span class="tag">companion</span></div><small>D-129, decided. Owns the initiative record</small></div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Stages</h3>
+  <p>The stage list lives in <code>workspace/frameworks/lifecycle.json</code>. Stages are already tags, never gates (D-141). The research proposes dropping Decide (it becomes a move) and adding Learn (HS-3, open).</p>
+  <div class="stages" aria-label="Stage list today and proposed">
+    <span class="stage">Discover</span><span class="stage">Shape</span><span class="stage">Specify</span><span class="stage">Map</span><span class="stage out" title="Proposed to become a move">Decide</span><span class="stage">Deliver</span><span class="stage new" title="Proposed">Learn</span>
+  </div>
+
+  <h3>Fixed checkpoints, free path (HS-2, open)</h3>
+  <p>Today each workflow has a list of <code>steps</code> and a persona with a few invariants that hold at every strictness level (D-130). The proposal keeps steps as a suggested path and adds a short list of checkpoints that <code>pa check</code> can test.</p>
+  <div class="tbl"><table>
+    <thead><tr><th style="width:20%">Arc or move</th><th>Invariants today (built, in each <code>routing.persona</code>)</th><th>Proposed checkpoints</th></tr></thead>
+    <tbody>
+      <tr><td><b>Problem discovery</b></td><td>Every problem cites its sources · never fill a gap with a guess · people by segment, never by name</td><td>Every quote checked against its source · the person chooses what is worth solving</td></tr>
+      <tr><td><b>Intent shaping</b></td><td>Never write the intent for the person · never score an area deeper than the evidence</td><td>Every gap has an owner or is marked open · the person sets the target depth and says when it is reached</td></tr>
+      <tr><td><b>PRD to dependencies</b></td><td>Never set reviewed or locked · every requirement points at its line · never invent a capability · never mark an exploration reviewed</td><td>Every dependency has evidence or "could not find" · asks are drafted, a person sends</td></tr>
+      <tr><td><b>Delivery status</b></td><td>Never invent a date or capacity · never choose a recovery option · always offer accepting the new date</td><td>Every date change names its cause and source · the update says what is asked of the reader</td></tr>
+      <tr><td><b>Review</b></td><td>Every finding says who raised it · never accept a finding for the person · <code>context/</code> is never changed</td><td>Every finding points to a line · the author decides each finding</td></tr>
+      <tr><td><b>Decide</b></td><td>Never decide for the person · record who raised it and why · no padding options</td><td>Each decision records its reason and supersedes, never edits (already enforced by <code>pa set</code>, D-142)</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="model" aria-labelledby="h-model">
+  <h2 id="h-model">The template data model</h2>
+  <p class="lede">Merged in PR 42 (D-138 to D-142). Every template, widget and canvas view below fits into this. The tie between an artifact and its initiative is a stamp inside the file; the registry is read from files on request, so it works from a ZIP and can be swapped for a service later.</p>
+  <div class="model">
+    <div class="box ini"><h5>Initiative card</h5><code>projects/&lt;key&gt;.json</code><p><code>ini_</code> + UUID, a fixed key, name, goal, area, state, and <code>refs</code> to the person's files. Same thing as a project with a goal (IN-1, open; built as recommended).</p></div>
+    <div class="box ini"><h5>Shared intent and registers</h5><code>projects/&lt;key&gt;/intent.md · registers.json</code><p>Intent: eight sections, each owned by a stage. Registers: evidence, questions, decisions, ready checks (IN-3, open; built as recommended).</p></div>
+    <div class="box art"><h5>Artifacts, stamped</h5><code>data/ · artifacts/ · briefs/</code><p><code>art_</code> id, initiative, <code>template@version</code>, stages (a list), status, by, from. Frontmatter, a JSON block or a <code>pa-artifact</code> script.</p></div>
+    <div class="box you"><h5>The person's files</h5><code>context/</code><p>Listed on the card under refs, never written into.</p></div>
+  </div>
+
+  <h3>Three template kinds, one manifest (D-139)</h3>
+  <div class="kinds">
+    <div class="panel"><b>markdown</b><p class="lede">Headings with one-line guides; sections carry an owner stage. Instance: a stamped <code>.md</code>.</p><pre>{ "template": "initiative-intent",
+  "kind": "markdown",
+  "out": "projects/{key}/intent.md",
+  "sections": [
+    { "id": "problem",
+      "owner": "discover",
+      "required": true }, … ] }</pre><p class="lede">Shipped: initiative-intent. Proposed: problem brief, intent brief, status update, asks.</p></div>
+    <div class="panel"><b>records</b><p class="lede">Schemas plus view-kit specs. Instance: a stamped dataset; its drawn views are renditions, not new artifacts.</p><pre>{ "template": "initiative-registers",
+  "kind": "records",
+  "schemas": "schemas/…",
+  "views": { "board": … } }</pre><p class="lede">Shipped: initiative-registers. Every workflow's dataset and views are this kind in practice.</p></div>
+    <div class="panel"><b>page</b><p class="lede">One self-contained HTML page styled with tokens. Instance: a stamped copy.</p><pre>&lt;script type="application/json"
+  id="pa-artifact"&gt;{ "id": "art_…",
+  "template": "prd-one-pager@1" }
+&lt;/script&gt;</pre><p class="lede">The six older artifact pages, read as page templates without a manifest.</p></div>
+  </div>
+  <div class="note"><strong>How a hero skill uses it (D-142).</strong> Find the initiative first; read what exists and what is decided; stamp everything it makes; add to the registers rather than to prose; write only its own stage's intent sections and suggest the rest; extend in its own space. Built in <code>pa</code>; <strong>no hero skill follows it yet</strong>. That is the next step with the hero-skill refresh.</div>
+</section>
+
+<section id="chat" aria-labelledby="h-chat">
+  <h2 id="h-chat">In-chat widgets</h2>
+  <p class="lede">Asks go in the chat. A chat widget is something the person answers or glances at: a <b>form</b> before work starts, a <b>detail</b> card for one record that needs them, or a <b>summary</b>. Drawn with <code>pa render --host chat</code>, at most 720 px, one in the conversation at a time, and folded to a one-line record once the person replies. In the template model a chat widget is a view of a records template, not a template of its own.</p>
+  <div class="filters" role="group" aria-label="Filter chat widgets by layout">
+    <button type="button" data-f="all" aria-pressed="true">All 16</button>
+    <button type="button" data-f="form" aria-pressed="false">Form</button>
+    <button type="button" data-f="detail" aria-pressed="false">Detail card</button>
+    <button type="button" data-f="summary" aria-pressed="false">Summary</button>
+  </div>
+  <div class="gallery" id="g-chat"></div>
+  <div class="two">
+    <div class="hero-shot">
+      <button class="shot" type="button" data-full="img/app--chat-and-canvas.jpg" data-cap="A flown scenario: chat on the left, the canvas view on the right"><img src="img/app--chat-and-canvas.jpg" alt="Document review scenario with chat and the findings table in the canvas"></button>
+      <p>Chat and canvas together in a flown scenario (document review): participants speak in the chat, the findings live in the canvas.</p>
+    </div>
+    <div class="hero-shot">
+      <button class="shot" type="button" data-full="img/app--hangar-widgets.jpg" data-cap="Hangar: a workflow's widgets in the chat and views in the canvas (D-112)"><img src="img/app--hangar-widgets.jpg" alt="Hangar workflow page listing widgets in the chat and views in the canvas"></button>
+      <p>In the Hangar each workflow lists its widgets (chat) and views (canvas), drawn from its scenario's data, and they can be edited or added there (D-112).</p>
+    </div>
+  </div>
+</section>
+
+<section id="canvas" aria-labelledby="h-canvas">
+  <h2 id="h-canvas">Canvas templates</h2>
+  <p class="lede">Work goes in the canvas. A canvas view is something the person works in: a <b>tree-table</b> catalog reviewed line by line, or a <b>board</b> of pieces of work running at once. Each is a records template's view, redrawn on every <code>pa add</code> and <code>pa set</code>; edits go back through the chat box, and reviewed and locked belong to the person (D-106).</p>
+  <div class="gallery wide" id="g-canvas"></div>
+
+  <div class="hero-shot">
+    <button class="shot" type="button" data-full="img/app--registers.jpg" data-cap="initiative-registers board (records template, built in PR 42)"><img src="img/app--registers.jpg" alt="Held payment dates registers board with open questions, evidence, decisions and ready checks"></button>
+    <p><b>The shared registers</b>, the first records template that belongs to an initiative rather than a workflow: open questions, evidence, decisions (one superseded) and ready checks. Not yet shown on the project page.</p>
+  </div>
+
+  <h3>Page templates</h3>
+  <p>The six older artifact templates in <code>workspace/templates/artifacts/</code>, now read as the <b>page</b> kind. They are static, token-styled pages with no dataset; D-88 moved them out of the Library.</p>
+  <div class="gallery" id="g-page"></div>
+
+  <h3>Dark mode</h3>
+  <p>Views follow the app's theme; the viewer injects the current tokens.</p>
+  <div class="gallery wide" id="g-dark"></div>
+</section>
+
+<section id="proposed" aria-labelledby="h-proposed">
+  <h2 id="h-proposed">Proposed shared widgets</h2>
+  <p class="lede">The research recommends five widgets every hero skill shares, because they show the shared registers (HS-5, open). These are <b>sketches drawn for this page with the app's tokens</b>, not built views. They would be view-kit layouts over <code>registers.json</code> and the initiative card.</p>
+  <div class="sketches">
+    <div class="sk">
+      <div class="lbl"><span>Evidence chip</span><span class="pill open">sketch</span></div>
+      <div class="w">
+        <div class="s">Sole traders phone support three times per hold on average</div>
+        <span class="ev"><span class="id">E-02</span>support export, October · line 41</span>
+        <div class="quote">"I called three times and nobody could tell me when it would clear."</div>
+        <div class="s">Quote checked against source ✓</div>
+      </div>
+      <p class="lede">A claim with its source line, one click to the source. Makes the quote check visible.</p>
+    </div>
+    <div class="sk">
+      <div class="lbl"><span>Open-question card</span><span class="pill open">sketch</span></div>
+      <div class="w">
+        <div class="row" style="display:flex;justify-content:space-between;gap:8px"><span class="id">Q-01</span><span class="pill open">Blocking</span></div>
+        <div class="t">Can the risk rules produce a date for every kind of hold?</div>
+        <div class="s">Owner: Risk Review · raised in Shape</div>
+        <div class="btns"><button class="btn p" type="button" tabindex="-1">Answer here</button><button class="btn" type="button" tabindex="-1">Ask the owner</button></div>
+      </div>
+      <p class="lede">Owner, blocking flag, answered in place. Decide opens from any one.</p>
+    </div>
+    <div class="sk">
+      <div class="lbl"><span>Decision record card</span><span class="pill open">sketch</span></div>
+      <div class="w">
+        <div class="row" style="display:flex;justify-content:space-between;gap:8px"><span class="id">D-02</span><span class="pill built">Decided</span></div>
+        <div class="t">Show the date, never the rule behind it</div>
+        <div class="s">Why: the rule lets a fraudster time a payment. Who: you, with Risk Review · 21 Nov</div>
+        <div class="s">Supersedes D-01 "Show the release date only after the hold is placed"</div>
+      </div>
+      <p class="lede">Reason, who, and what it supersedes. Never edited.</p>
+    </div>
+    <div class="sk">
+      <div class="lbl"><span>Ready checklist</span><span class="pill open">sketch</span></div>
+      <div class="w">
+        <div class="t">Ready to specify?</div>
+        <div class="chk"><span class="m ok">✓</span><span>Every dependency has a named owner</span><span class="s">C-02</span></div>
+        <div class="chk"><span class="m no">✕</span><span>The riskiest assumption has evidence</span><span class="s">C-01</span></div>
+        <div class="chk"><span class="m un">?</span><span>Measure of success agreed</span><span class="s">C-03</span></div>
+      </div>
+      <p class="lede">Pass or fail with the reason, at a hand-off. Advises, never gates.</p>
+    </div>
+    <div class="sk">
+      <div class="lbl"><span>Initiative header</span><span class="pill open">sketch</span></div>
+      <div class="w">
+        <div class="t">Held payment dates</div>
+        <div class="id">ini_7c1e… · held-payment-dates</div>
+        <div class="strip"><span>Discover</span><span class="on">Shape</span><span>Specify</span><span>Map</span><span>Deliver</span><span>Learn</span></div>
+        <div class="s">4 artifacts · 2 open questions · 1 decision · 1 check failing</div>
+      </div>
+      <p class="lede">Name, id, stage tags and linked artifacts, at the top of any canvas view for the initiative.</p>
+    </div>
+    <div class="sk">
+      <div class="lbl"><span>One-question card (intent shaping)</span><span class="pill open">sketch</span></div>
+      <div class="w">
+        <div class="s">Customer · one level deeper</div>
+        <div class="t">Which customers, and when does it happen to them?</div>
+        <div class="s">My guess, for you to correct: new business accounts in their first 60 days, at their first large incoming payment.</div>
+        <div class="you-ans">Your answer goes here; I won't fill it in.</div>
+      </div>
+      <p class="lede">One of the per-skill additions: a question with the agent's guess, the answer left to the person.</p>
+    </div>
+  </div>
+</section>
+
+<section id="alternatives" aria-labelledby="h-aoa">
+  <h2 id="h-aoa">Choosing among alternatives, and engaging owners</h2>
+  <p class="lede">Added from Geoff's comments on 22 Nov. A dependency usually has several ways to be met, so we need an analysis of alternatives that ends in a roadmap, with delivery and scope levers. Then a way to engage the owners of whatever is chosen. <strong>Both are proposals and not decided.</strong> They are also with the lifecycle research thread for HS-1 and HS-5.</p>
+
+  <div class="two">
+    <div class="panel" style="display:grid;gap:8px;align-content:start">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>Recommendation: a "Choose" half on PRD to dependencies</b><span class="pill open">proposed</span></div>
+      <p>The arc already goes from a PRD to requirements and then to the options for each dependency. The proposal adds a third half that <b>chooses a path</b>: the options for each dependency are weighed alongside scope levers (phase, reword, cut) and delivery levers (borrow capacity, reorder, accept a later date). It produces the chosen path and a roadmap. The arc would become Specify, Map, Choose, and you could enter at any of the three.</p>
+      <p>The analysis would be one shared <b>records template</b> (call it <code>alternatives</code>). Each choice becomes a decision in the initiative's register, with the options it beat. <b>Delivery status</b> reuses the same worksheet when a date moves, since its "ways to recover" card is already a small version of it. That way there is one worksheet, used in two places.</p>
+      <p class="lede">Why here and not in intent shaping: intent shaping holds back from answering for the person, while this half produces options and checks them, which is the stance the rest of this arc already has.</p>
+    </div>
+    <div class="panel" style="display:grid;gap:8px;align-content:start">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>Recommendation: an "Engage" move</b><span class="pill open">proposed</span></div>
+      <p>Engage would be a third move, alongside Review and Decide, that you can start on any chosen option or open ask. It sorts the counterparty into one of three kinds and works at the matching level of autonomy:</p>
+      <div class="stack">
+        <div class="chip"><div class="row"><b>Self-serve</b><span class="tag">agent acts</span></div><small>Sign up, request access, subscribe to a stream. The agent does it when the step can be undone and policy allows it, then records it as evidence.</small></div>
+        <div class="chip"><div class="row"><b>Agent counterparty</b><span class="tag">agent to agent</span></div><small>A platform team's agent from the roster. Questions and terms are worked out between agents, and the person signs off on anything binding.</small></div>
+        <div class="chip"><div class="row"><b>Person</b><span class="tag">draft, person sends</span></div><small>Due diligence checklist, drafted ask, follow-ups tracked in the Inbox. Anything that commits money, data or the company waits for the person.</small></div>
+      </div>
+      <p class="lede">It builds on what exists: the participants roster, the Inbox, and today's invariant that asks are drafted and a person sends them.</p>
+    </div>
+  </div>
+
+  <h3>Alternatives worksheet <span class="pill open" style="margin-left:6px">interactive sketch</span></h3>
+  <p class="lede">A working sketch on real data: three dependencies from the Allowances scenario, each with the options the dependency board found. Pick an option, pull a lever and set what matters most, and the roadmap and owner list redraw. The durations are placeholders for the sketch (S is 1 week, M is 3, L is 6, and a planned capability adds 12 weeks of unknown).</p>
+  <div class="aoa panel" id="aoa">
+    <div class="aoa-weights">
+      <b>What matters most</b>
+      <label for="w-speed">Speed <input id="w-speed" type="range" min="0" max="3" value="2"></label>
+      <label for="w-fit">Fit <input id="w-fit" type="range" min="0" max="3" value="2"></label>
+      <label for="w-risk">Low risk <input id="w-risk" type="range" min="0" max="3" value="1"></label>
+      <label class="cap" for="w-cap"><input id="w-cap" type="checkbox"> Borrow capacity (−1 week on M and L work)</label>
+    </div>
+    <div class="aoa-deps" id="aoa-deps"></div>
+    <div class="aoa-out">
+      <div class="aoa-road">
+        <div class="aoa-head"><b>Roadmap</b><span id="aoa-launch" class="tag"></span></div>
+        <div id="aoa-bars" class="aoa-bars"></div>
+        <div class="aoa-axis" aria-hidden="true"><span>wk 0</span><span>4</span><span>8</span><span>12</span><span>16</span></div>
+      </div>
+      <div class="aoa-engage">
+        <div class="aoa-head"><b>Who to engage</b></div>
+        <div id="aoa-eng" class="stack"></div>
+        <div class="aoa-head" style="margin-top:6px"><b>Would record in the Decisions register</b></div>
+        <div id="aoa-dec" class="stack"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="matrix" aria-labelledby="h-matrix">
+  <h2 id="h-matrix">Skill by skill</h2>
+  <p class="lede">What each hero skill draws today, what it makes, and what the research would add (HS-5). Nothing in the last column is built.</p>
+  <div class="tbl"><table>
+    <thead><tr><th style="width:15%">Skill</th><th style="width:18%">In the chat</th><th style="width:15%">In the canvas</th><th style="width:22%">Work products today</th><th>Proposed additions (open)</th></tr></thead>
+    <tbody>
+      <tr><td><b>Feature lifecycle</b><span class="sub">companion</span></td><td>run card (director)</td><td>project page, In flight</td><td>initiative card, intent, registers (via <code>pa</code>)</td><td>Stage strip of tags; "what's next" offer</td></tr>
+      <tr><td><b>Problem discovery</b></td><td>focus form, summary</td><td>problems board, sources table</td><td>problems page, sources page, problem brief (md)</td><td>Evidence chip on every quote; "post-launch feedback" focus; problem brief as a markdown template</td></tr>
+      <tr><td><b>Intent shaping</b></td><td>target form, area card, summary</td><td>intent map (table)</td><td>intent map page, intent brief (md)</td><td>One-question card with a guess; pre-mortem card; assumption list; writes the Problem/Outcome/Scope sections of intent.md</td></tr>
+      <tr><td><b>PRD to dependencies</b><span class="sub">prd-to-requirements + requirements-to-dependencies</span></td><td>scope form, review card, two summaries</td><td>requirements catalog (table), dependency board</td><td>requirements catalog page, dependency board page</td><td>Trace-to-line on each requirement; drafted-ask card; ready checklist at the hand-off</td></tr>
+      <tr><td><b>Delivery status</b></td><td>milestone card, summary</td><td>delivery plan (table)</td><td>delivery plan page, status update (md)</td><td>Cause-of-change chip; audience switch on the update</td></tr>
+      <tr><td><b>Review</b><span class="sub">document-review</span></td><td>who form, consent question, summary</td><td>findings (table)</td><td>review findings page</td><td>Works on any artifact kind, not only markdown</td></tr>
+      <tr><td><b>Decide</b><span class="sub">decision-review</span></td><td>decision card, summary</td><td>decision queue (table)</td><td>decisions page, decision log (md)</td><td>Opens on any open-question entry from any skill; log drawn from the Decisions register</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="open" aria-labelledby="h-open">
+  <h2 id="h-open">Open questions and gaps</h2>
+  <p class="lede">For reference only. Each question already has its own card in its thread; answer them there, not here.</p>
+  <div class="olist">
+    <div class="row"><b>HS-1</b><span>What shape should the hero-skill set take?</span><span class="rec">Recommended: four arcs, two moves, one companion</span></div>
+    <div class="row"><b>HS-2</b><span>How fixed should each skill's steps be?</span><span class="rec">Suggested path plus a few checkpoints that always hold</span></div>
+    <div class="row"><b>HS-3</b><span>Which stages, and are they gates?</span><span class="rec">Discover, Shape, Specify, Map, Deliver, Learn; tags, never gates</span></div>
+    <div class="row"><b>HS-4</b><span>Where do evidence, open questions, decisions and readiness live?</span><span class="rec">On the initiative, shared by every skill (built that way in PR 42)</span></div>
+    <div class="row"><b>HS-5</b><span>Which widgets and templates come first?</span><span class="rec">The five shared widgets, then the per-skill additions</span></div>
+    <div class="row"><b>IN-1</b><span>Is an initiative the same as a project with a goal?</span><span class="rec">Yes, one record; the card gains an id (built as recommended)</span></div>
+    <div class="row"><b>AoA</b><span>Where does analysis of alternatives live, and is Engage a move? (Geoff's comments, 22 Nov)</span><span class="rec">Proposed: a Choose half on PRD to dependencies, reused by delivery status; Engage as a third move. Sent to the lifecycle thread</span></div>
+    <div class="row"><b>IN-3</b><span>What is the shared representation of intent?</span><span class="rec">Intent document with stage-owned sections plus four registers (built as recommended)</span></div>
+  </div>
+  <h3>Built pieces that are not joined up yet</h3>
+  <div class="tbl"><table>
+    <thead><tr><th style="width:34%">Gap</th><th>Why it matters</th></tr></thead>
+    <tbody>
+      <tr><td>No hero skill stamps what it makes or names a <code>template</code> in its work products</td><td>Artifacts don't yet show up under their initiative in <code>pa artifacts</code>; the evidence doesn't travel between skills.</td></tr>
+      <tr><td>The feature lifecycle skill (D-129)</td><td>Nothing creates initiatives or adopts loose work for the person yet.</td></tr>
+      <tr><td>The project page shows neither the registry nor the registers</td><td>The registers board above is only reachable as a file in the canvas.</td></tr>
+      <tr><td>The Hangar has no Templates shelf</td><td>Workflows, views and people can be edited there; templates cannot.</td></tr>
+      <tr><td>Markdown work products (briefs, status update, decision log) have no manifests</td><td>They are written freely; a markdown template would give them owned sections and a stamp.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<footer>
+  Sources: <code>skills/*/SKILL.md</code> and <code>workflow.json</code>, <code>docs/product/initiatives-and-templates.md</code>, <code>docs/product/lifecycle-research.md</code> (PR 41), <code>docs/product/decision-index.md</code>. View renders: <code>pa render</code> on each scenario's fixture, light mode, external requests blocked. App screenshots: the running app, 21 Nov 2026. Related pages: <a href="https://claude.ai/artifact/P3hZWy2Ht6es1KCxMDLTEv">Hero skills and the lifecycle</a> · <a href="../2026-11-21-initiatives-and-templates/index.html">Initiatives and templates</a> · <a href="../2026-11-21-aviator-coordination/index.html">Aviator coordination and routing</a>.
+</footer>
+
+</div>
+</main>
+
+<dialog id="zoom" aria-label="Enlarged screenshot">
+  <img id="zoom-img" alt="">
+  <div class="cap"><span id="zoom-cap"></span><button type="button" id="zoom-close">Close</button></div>
+</dialog>
+
+<script>
+const SK = {
+  'problem-discovery': 'Problem discovery', 'intent-shaping': 'Intent shaping', 'prd-to-requirements': 'PRD to requirements',
+  'requirements-to-dependencies': 'Requirements to dependencies', 'delivery-status': 'Delivery status',
+  'document-review': 'Document review', 'decision-review': 'Decision review'
+};
+const CHAT = [
+  ['problem-discovery','focus','form','What are we looking for?','Before reading: whose problems count, how much evidence makes a candidate.'],
+  ['intent-shaping','target','form','How far should this idea go today?','The person sets the target depth.'],
+  ['prd-to-requirements','scope-form','form','How should I catalog this document?','Agree the catalog before building it.'],
+  ['document-review','who-form','form','Who else should look at this?','Pick reviewers from the roster.'],
+  ['document-review','consent-question','form','A finding turned into a question','A reviewer\'s question for the author, answered in chat.'],
+  ['intent-shaping','area','detail','The shallowest area','What the next level asks for; the answer stays the person\'s.'],
+  ['requirements-to-dependencies','review-card','detail','Exploration needs you','One requirement\'s dependencies and options.'],
+  ['delivery-status','milestone','detail','A milestone has moved','Ways to recover, always including "accept the new date".'],
+  ['decision-review','card','detail','A decision for you','Context, options, a recommendation and why.'],
+  ['problem-discovery','summary','summary','Problem discovery at a glance','Counts, who has which problem, what the sources do not say.'],
+  ['intent-shaping','summary','summary','Intent at a glance','Depth now and target.'],
+  ['prd-to-requirements','summary','summary','Requirements at a glance','Counts by status and priority.'],
+  ['requirements-to-dependencies','summary','summary','Dependencies at a glance','Explorations by state.'],
+  ['delivery-status','summary','summary','Delivery at a glance','Planned and projected date.'],
+  ['decision-review','summary','summary','Decisions at a glance','Open, decided, follow-ups.'],
+  ['document-review','summary','summary','Review at a glance','Findings by who raised them.']
+];
+const CANVAS = [
+  ['problem-discovery','problems','board','Problems board','Candidate problems by status, with evidence for and against.'],
+  ['problem-discovery','sources','tree-table','Sources','Every source read, and what it showed.'],
+  ['intent-shaping','map','tree-table','Intent map','Areas with depth, level, who added what, and open gaps.'],
+  ['prd-to-requirements','catalog','tree-table','Requirements catalog','Testable requirements under their sections, each tracing to a line.'],
+  ['requirements-to-dependencies','board','board','Dependency board','One exploration per requirement: queued, working, needs you, ready, reviewed.'],
+  ['delivery-status','plan','tree-table','Delivery plan','Milestones and dependencies, plan against now expected.'],
+  ['document-review','findings','tree-table','Review findings','Everyone\'s findings in one attributed list.'],
+  ['decision-review','queue','tree-table','Decision queue','Open decisions with who raised them and their impact.']
+];
+const PAGES = [
+  ['prd-one-pager','PRD one-pager'],['decision-matrix','Decision matrix'],['interview-synthesis','Interview synthesis'],
+  ['metrics-dashboard','Metrics dashboard'],['roadmap-now-next-later','Roadmap: now, next, later'],['question-form','Question form']
+];
+const LAYOUT = { form: 'Form', detail: 'Detail card', summary: 'Summary', board: 'Board', 'tree-table': 'Tree-table' };
+function fig(src, title, sub, metas, cap, layout) {
+  const f = document.createElement('figure');
+  if (layout) f.dataset.layout = layout;
+  f.innerHTML = `<button class="shot" type="button"><img alt=""></button><figcaption><b></b><span class="sub"></span><span class="meta"></span></figcaption>`;
+  const b = f.querySelector('button'); b.dataset.full = src; b.dataset.cap = cap;
+  const img = f.querySelector('img'); img.src = src; img.alt = title;
+  f.querySelector('b').textContent = title; f.querySelector('.sub').textContent = sub;
+  const m = f.querySelector('.meta');
+  metas.forEach(t => { const s = document.createElement('span'); s.className = 'tag'; s.textContent = t; m.appendChild(s); });
+  return f;
+}
+const gc = document.getElementById('g-chat');
+CHAT.forEach(([s, v, l, t, d]) => gc.appendChild(fig(`img/${s}--${v}.jpg`, t, d, [SK[s], LAYOUT[l]], `${SK[s]} · ${v} (${LAYOUT[l]}, chat)`, l)));
+document.querySelector('[data-f="all"]').textContent = `All ${CHAT.length}`;
+const gv = document.getElementById('g-canvas');
+CANVAS.forEach(([s, v, l, t, d]) => gv.appendChild(fig(`img/${s}--${v}.jpg`, t, d, [SK[s], LAYOUT[l]], `${SK[s]} · ${v} (${LAYOUT[l]}, canvas)`)));
+const gp = document.getElementById('g-page');
+PAGES.forEach(([n, t]) => gp.appendChild(fig(`img/page--${n}.jpg`, t, `templates/artifacts/${n}.html`, ['page kind'], `${t} (page template)`)));
+const gd = document.getElementById('g-dark');
+gd.appendChild(fig('img/requirements-to-dependencies--board-dark.jpg', 'Dependency board, dark', 'Same view, dark tokens.', ['board'], 'Dependency board in dark mode'));
+gd.appendChild(fig('img/decision-review--card-dark.jpg', 'Decision card, dark', 'Same widget, dark tokens.', ['detail'], 'Decision card in dark mode'));
+
+document.querySelectorAll('.filters button').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('.filters button').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+  const f = btn.dataset.f;
+  gc.querySelectorAll('figure').forEach(el => { el.hidden = !(f === 'all' || el.dataset.layout === f); });
+}));
+
+const dlg = document.getElementById('zoom');
+document.addEventListener('click', e => {
+  const b = e.target.closest('button.shot'); if (!b) return;
+  document.getElementById('zoom-img').src = b.dataset.full;
+  document.getElementById('zoom-img').alt = b.dataset.cap || '';
+  document.getElementById('zoom-cap').textContent = b.dataset.cap || '';
+  try { dlg.showModal(); } catch (_) { dlg.setAttribute('open', ''); }
+});
+document.getElementById('zoom-close').addEventListener('click', () => dlg.close());
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+// Alternatives worksheet sketch. Data: workspace/scenarios/requirements-to-dependencies/fixtures/allowances.json
+(() => {
+  const WK = { S: 1, M: 3, L: 6 };
+  const DEPS = [
+    { id: 'D-05', req: 'R-06', title: 'Count charges that skip live approval', options: [
+      { id: 'O-08', title: 'Spend events stream', owner: 'Data', maturity: 'Live', fit: 4, effort: 'M', gap: 'Lags by up to 2 hours.', engage: 'self', how: 'Subscribe through the data catalog' },
+      { id: 'O-09', title: 'Stand-in processing settings', owner: 'Card processor', maturity: 'Planned', fit: 3, effort: 'L', gap: 'Planned, with no release date.', engage: 'human', how: 'Due diligence on the roadmap with the processor team' } ] },
+    { id: 'D-11', req: 'R-12', title: 'Card user can ask for a top-up', options: [
+      { id: 'O-18', title: 'Request and approve service', owner: 'Platform', maturity: 'Beta', fit: 4, effort: 'M', gap: 'Beta. No support commitment.', engage: 'agent', how: 'Ask the Platform agent for beta terms; you sign off' },
+      { id: 'O-19', title: 'Build in account controls', owner: 'Mobile app', maturity: 'Live', fit: 2, effort: 'L', gap: 'New storage and notifications to build.', engage: 'none', how: 'Our own build; no counterparty' } ] },
+    { id: 'D-12', req: 'R-15', title: 'Statement shows spend by card user', options: [
+      { id: 'O-20', title: 'Statement composer', owner: 'Statements and billing', maturity: 'Live', fit: 3, effort: 'L', gap: 'A template change takes two statement cycles.', engage: 'human', how: 'Book a release slot with Statements and billing' },
+      { id: 'O-21', title: 'In-app breakdown from spend events', owner: 'Data', maturity: 'Live', fit: 4, effort: 'M', gap: 'Does not change the PDF statement.', engage: 'self', how: 'Reuse the spend events subscription' } ] }
+  ];
+  const SCOPE = [['full', 'Full'], ['phase', 'Phase 2'], ['cut', 'Cut']];
+  const KIND = { self: 'Self-serve', agent: 'Agent', human: 'Person', none: 'None' };
+  const state = { pick: {}, scope: {} };
+  DEPS.forEach(d => { state.scope[d.id] = 'full'; });
+  const $ = id => document.getElementById(id);
+  const w = () => ({ speed: +$('w-speed').value, fit: +$('w-fit').value, risk: +$('w-risk').value, cap: $('w-cap').checked });
+  const dur = (o, W) => { let n = WK[o.effort]; if (W.cap && n > 1) n -= 1; return n; };
+  const unknown = o => o.maturity === 'Planned' ? 12 : 0;
+  const riskOf = o => o.maturity === 'Planned' ? 3 : o.maturity === 'Beta' ? 2 : 0;
+  const score = (o, W) => W.fit * o.fit - W.speed * (dur(o, W) + unknown(o)) / 2 - W.risk * riskOf(o);
+  function best(d, W) { return d.options.reduce((a, b) => score(b, W) > score(a, W) ? b : a); }
+  function render() {
+    const W = w();
+    const box = $('aoa-deps'); box.textContent = '';
+    DEPS.forEach(d => {
+      const rec = best(d, W);
+      if (!state.pick[d.id]) state.pick[d.id] = rec.id;
+      const el = document.createElement('div'); el.className = 'dep';
+      el.innerHTML = `<div><div class="r">${d.id} · for ${d.req}</div><div class="t"></div></div>`;
+      el.querySelector('.t').textContent = d.title;
+      d.options.forEach(o => {
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'opt';
+        b.setAttribute('aria-pressed', String(state.pick[d.id] === o.id));
+        b.innerHTML = `<span class="top"><b></b>${o.id === rec.id ? '<span class="rec">best for these weights</span>' : ''}</span>
+          <span>${o.owner} · ${o.maturity} · effort ${o.effort} · fit <span class="dots">${'●'.repeat(o.fit)}${'○'.repeat(5 - o.fit)}</span></span><span class="gap"></span>`;
+        b.querySelector('b').textContent = o.title; b.querySelector('.gap').textContent = o.gap;
+        b.addEventListener('click', () => { state.pick[d.id] = o.id; render(); });
+        el.appendChild(b);
+      });
+      const lev = document.createElement('div'); lev.className = 'lev'; lev.innerHTML = '<span>Scope</span>';
+      SCOPE.forEach(([k, t]) => {
+        const b = document.createElement('button'); b.type = 'button'; b.textContent = t;
+        b.setAttribute('aria-pressed', String(state.scope[d.id] === k));
+        b.addEventListener('click', () => { state.scope[d.id] = k; render(); });
+        lev.appendChild(b);
+      });
+      el.appendChild(lev); box.appendChild(el);
+    });
+    // roadmap: work runs in parallel from week 0; phase 2 starts after launch; cut drops out
+    const rows = [];
+    let launch = 0, tail = 0;
+    DEPS.forEach(d => {
+      const o = d.options.find(x => x.id === state.pick[d.id]);
+      const s = state.scope[d.id];
+      if (s === 'cut') { rows.push({ d, o, s }); return; }
+      const len = dur(o, W) + unknown(o);
+      if (s === 'full') launch = Math.max(launch, len);
+      rows.push({ d, o, s, len });
+    });
+    launch = Math.max(launch, 1);
+    rows.forEach(r => { if (r.s === 'phase') tail = Math.max(tail, launch + r.len); });
+    const MAX = Math.max(16, Math.ceil(Math.max(launch, tail) / 4) * 4);
+    const ax = document.querySelector('.aoa-axis'); ax.textContent = '';
+    for (let i = 0; i <= 4; i++) { const sp = document.createElement('span'); sp.textContent = (i ? '' : 'wk ') + (MAX * i / 4); ax.appendChild(sp); }
+    const bars = $('aoa-bars'); bars.textContent = '';
+    rows.forEach(r => {
+      const row = document.createElement('div'); row.className = 'bar';
+      row.innerHTML = '<span class="lbl"></span><div class="track"></div>';
+      row.querySelector('.lbl').textContent = `${r.d.id} ${r.s === 'cut' ? '(cut)' : r.o.title}`;
+      row.querySelector('.lbl').title = r.d.title;
+      const tr = row.querySelector('.track');
+      if (r.s !== 'cut') {
+        const start = r.s === 'phase' ? launch : 0;
+        const known = dur(r.o, W), unk = unknown(r.o);
+        const f = document.createElement('div'); f.className = 'fill' + (r.s === 'phase' ? ' later' : '');
+        f.style.left = (Math.min(start, MAX) / MAX * 100) + '%'; f.style.width = (Math.min(known, MAX - start) / MAX * 100) + '%';
+        tr.appendChild(f);
+        if (unk && start + known < MAX) {
+          const u = document.createElement('div'); u.className = 'fill unknown';
+          u.style.left = ((start + known) / MAX * 100) + '%'; u.style.width = (Math.min(unk, MAX - start - known) / MAX * 100) + '%';
+          u.title = 'Planned capability: unknown wait'; tr.appendChild(u);
+        }
+      }
+      const l = document.createElement('div'); l.className = 'launch'; l.style.left = (Math.min(launch, MAX) / MAX * 100) + '%'; tr.appendChild(l);
+      bars.appendChild(row);
+    });
+    $('aoa-launch').textContent = `Launch at week ${launch}`;
+    const eng = $('aoa-eng'); eng.textContent = '';
+    const dec = $('aoa-dec'); dec.textContent = '';
+    let n = 1;
+    rows.forEach(r => {
+      const e = document.createElement('div'); e.className = 'eng';
+      if (r.s === 'cut') { e.innerHTML = '<span class="k none">None</span><span></span>'; e.lastChild.textContent = `${r.d.id} cut from this release`; }
+      else { e.innerHTML = `<span class="k ${r.o.engage}">${KIND[r.o.engage]}</span><span></span>`; e.lastChild.textContent = `${r.o.owner}: ${r.o.how}`; }
+      eng.appendChild(e);
+      const others = r.d.options.filter(x => x.id !== r.o.id).map(x => x.id).join(', ');
+      const t = document.createElement('div'); t.className = 'decl';
+      t.innerHTML = `<code>D-0${n++}</code> <span></span>`;
+      t.lastChild.textContent = r.s === 'cut' ? `Cut ${r.d.req} from launch; ${r.d.id} not needed` :
+        `${r.d.id} met by ${r.o.title}${r.s === 'phase' ? ', in phase 2' : ''}; chosen over ${others}`;
+      dec.appendChild(t);
+    });
+  }
+  ['w-speed', 'w-fit', 'w-risk', 'w-cap'].forEach(id => $(id).addEventListener('input', () => { DEPS.forEach(d => { delete state.pick[d.id]; }); render(); }));
+  render();
+})();
+
+</script>

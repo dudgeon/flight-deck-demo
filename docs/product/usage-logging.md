@@ -8,9 +8,9 @@ and eventually could be sent to a remote server."
 
 Walkthrough put to Geoff: https://claude.ai/artifact/7tXLiAF95CZpCp81UKVVMB (offline copy in `docs/decision-artifacts/2026-11-21-usage-log/`).
 
-This page is the design. What is built is marked; the open questions (UL-1 to
-UL-3) are at the end, with the recommendation each was built to. Decisions:
-D-122 to D-127 in [decisions.md](decisions.md).
+This page is the design. What is built is marked; the questions UL-1 to UL-3
+are answered at the end. Decisions: D-122 to D-127, D-157 and D-158 in
+[decisions.md](decisions.md).
 
 ## What it answers
 
@@ -136,7 +136,7 @@ thread or brief was made. The usage log is that evidence.
   from a judge's call into code. Added with the routing suite (D-144), in
   `workspace/CLAUDE.md` and the director skill.
 
-## Reading it (built: the CLI; UL-3 asks about more)
+## Reading it (built: the CLI)
 
 ```
 pa usage summary [--since 7d] [--eval | --suite S] [--json]
@@ -177,17 +177,17 @@ A skill writes its own event only for a moment `pa` cannot see: an offer
 made or taken, a step reached without a `pa` command, an outcome. See
 [../skill-writers/usage-log.md](../skill-writers/usage-log.md).
 
-## Open questions
+## Answered
 
-| | Question | Recommended (and built that way) |
+| | Question | Answer |
 |---|---|---|
-| UL-1 | Should usage logs go into the repo's git history? | No. Kept in the app folder's `logs/`, gitignored; a pack is carried by hand |
-| UL-2 | What may a pack from the work Mac hold? | Names fingerprinted (`--fingerprint`); the Mac mini keeps names as written |
-| UL-3 | Where should Geoff see the numbers? | A Usage page in the Hangar; nothing in flying |
+| UL-1 | Should usage logs go into the repo's git history? | Not yet (D-157). Kept in the app folder's `logs/`, gitignored; a pack is carried by hand |
+| UL-2 | What may a pack from the work Mac hold? | Names as written by default; `--fingerprint` when a pack leaves the work Mac (D-158, changeable) |
+| UL-3 | Where should the numbers be seen? | `pa usage summary` for now; a Hangar Usage page only if wanted (D-158, changeable) |
 
 ## Not yet
 
-- The Usage page (UL-3), and a line on the Hangar's Overview.
+- A Usage page in the Hangar, if wanted (D-158).
 - `pa log` lines in the hero skills (offer made and taken), with the routing
   suite.
 - Retention: nothing is deleted. At metadata sizes that is years of use.

@@ -47,7 +47,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 KIT_DIR = Path(__file__).resolve().parent.parent / "kit"
-LAYOUTS = {"tree-table", "board", "detail", "summary", "form"}
+LAYOUTS = {"tree-table", "board", "detail", "summary", "form", "worksheet"}
 STATUSES = ["queued", "working", "needs-you", "ready", "reviewed", "returned", "failed", "draft"]
 #: Fields whose change does not make derived records stale.
 STATE_FIELDS = {"status", "stage", "locked", "stale", "updated", "note", "return_note", "question", "reviewed_by", "reviewed_at"}
@@ -2503,6 +2503,45 @@ def routing_problems(workflow: dict[str, Any], name: str, stages: list[str], req
     return problems
 
 
+# What kind of skill a workflow is (D-153): one optional field, kept loose. A
+# workflow without it is an arc; an unknown value is a note, never a failure.
+TIERS = {
+    "arc": "something a person sets out to do; shown in the Library",
+    "move": "done to any artifact at any stage (Review, Decide)",
+    "companion": "holds the initiative and offers the next arc",
+    "kit": "tools other skills use; never shown",
+}
+
+
+def workflow_tier(workflow: dict[str, Any]) -> str:
+    tier = workflow.get("tier")
+    return tier if tier in TIERS else "arc"
+
+
+def workflow_notes(workflow: dict[str, Any], name: str, known: set[str] | None = None) -> list[str]:
+    """Soft checks on tier, parts and checkpoints (D-149, D-153). Notes, not problems."""
+    notes = []
+    tier = workflow.get("tier")
+    if tier is not None and tier not in TIERS:
+        notes.append(f"{name}: tier {tier!r} is not one of {', '.join(TIERS)}; treated as arc")
+    checkpoints = workflow.get("checkpoints")
+    if checkpoints is not None and not _strings(checkpoints):
+        notes.append(f"{name}: checkpoints should be a list of sentences that always hold")
+    parts = workflow.get("parts")
+    if parts is not None:
+        if not isinstance(parts, list) or not all(isinstance(x, dict) and x.get("title") for x in parts):
+            notes.append(f"{name}: parts should be a list of {{id, title}} objects")
+        elif known is not None:
+            for part in parts:
+                wid = part.get("workflow")
+                if wid and wid not in known:
+                    notes.append(f"{name}: part {part['title']!r} names workflow {wid!r}, which is not installed")
+    part_of = workflow.get("part_of")
+    if part_of and known is not None and part_of not in known:
+        notes.append(f"{name}: part_of names {part_of!r}, which is not installed")
+    return notes
+
+
 def _routing_required(workflow: dict[str, Any], wdir: Path) -> bool:
     """Shown in the Library (D-83), or shipped with the app: both must be routable (D-120)."""
     library = workflow.get("library")
@@ -2531,6 +2570,10 @@ def workflow_catalog(workspace: Path | None = None) -> list[dict[str, Any]]:
             "source": "shipped" if is_builtin(workspace, folder) else "hangar",
             "after": manifest.get("needs") or [],
             "next": manifest.get("next") or [],
+            "tier": workflow_tier(manifest),
+            "part_of": manifest.get("part_of") or None,
+            "parts": manifest.get("parts") if isinstance(manifest.get("parts"), list) else [],
+            "checkpoints": manifest.get("checkpoints") if _strings(manifest.get("checkpoints")) else [],
             "routing": routing,
         })
     out.sort(key=lambda w: (order.get((w["routing"] or {}).get("stage"), len(order)), w["id"]))
@@ -2555,7 +2598,15 @@ def cmd_workflows(args: argparse.Namespace) -> None:
             stage_now = stage
             heading = "Any stage" if stage == "any" else titles.get(stage, stage)
             print(f"\n## {heading if stage else 'Not routed: start only when the person names it'}")
-        print(f"\n{w['id']}: {w['title']} ({w['source']}, {w['folder']})")
+        kind = "" if w["tier"] == "arc" else f", {w['tier']}"
+        print(f"\n{w['id']}: {w['title']} ({w['source']}{kind}, {w['folder']})")
+        if w["part_of"]:
+            print(f"  Part of: {w['part_of']} (can also be started on its own)")
+        if w["parts"]:
+            print("  Parts (move between them freely): " + " / ".join(
+                p["title"] + (f" [{p['workflow']}]" if p.get("workflow") else "") for p in w["parts"]))
+        if w["checkpoints"]:
+            print("  Always holds: " + "; ".join(w["checkpoints"]))
         if not r:
             print(f"  {w['summary']}")
             continue
@@ -2857,6 +2908,12 @@ def cmd_check(args: argparse.Namespace) -> None:
         raise SystemExit(1)
     played = f", plays {run['scenario_dir'].name}" if run["scenario_dir"] is not None and run["manifest"].get("script") else ""
     print(f"{folder.name}: ok ({len(run['manifest'].get('views') or {})} views, {actions} actions{played})")
+    try:
+        known = set(list_workflows(_workspace_for_checks(run)))
+    except Exception:  # noqa: BLE001 - notes are best effort
+        known = None
+    for note in workflow_notes(run["workflow"], run["workflow_file"].name, known):
+        print(f"  note: {note}")
 
 
 def preview_html(folder: Path, participants: str | None = None, workspace: Path | None = None) -> str:

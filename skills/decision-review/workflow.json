@@ -1,6 +1,7 @@
 {
  "workflow": "decision-review",
  "title": "Decision review",
+ "tier": "move",
  "summary": "Gather the open decisions on a piece of work, prepare each with options and a recommendation, and walk the person through them one at a time. What they decide is recorded with who raised it and why.",
  "library": {
   "show": true,

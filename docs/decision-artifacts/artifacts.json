@@ -273,8 +273,8 @@
    "title": "Flight Deck Usage Log",
    "kind": "Decision walkthrough",
    "about": "How the local usage log works, and whether logs are committed, what a work Mac pack holds, where the numbers are seen (UL-1 to UL-3)",
-   "decisions": "D-122 to D-127",
-   "status": "Open"
+   "decisions": "D-122 to D-127, D-157, D-158",
+   "status": "Answered (UL-1); UL-2, UL-3 settled by Claude"
   },
   {
    "id": "DHcM1SxdoecNJKtNgJ6t5p",
@@ -300,6 +300,44 @@
    "decisions": "D-148 to D-152 (HS-1 to HS-5)",
    "status": "Answered (5)",
    "answers_as_of": "2026-11-22"
+  },
+  {
+   "id": "CNNpJFboRrwDAsYsBvundE",
+   "order": 25,
+   "url": "https://claude.ai/artifact/CNNpJFboRrwDAsYsBvundE",
+   "slug": "2026-11-22-decision-briefs",
+   "date": "2026-11-22",
+   "title": "How decision briefs should work",
+   "kind": "Decision brief",
+   "about": "The first brief from the shared decision-brief skill: layout, how answers come back at work, where decisions are recorded, when to make one (DB-1 to DB-4)",
+   "decisions": "D-159 to D-163",
+   "status": "Answered (4)",
+   "note": "Drawn by skills/decision-brief from skills/decision-brief/examples/decision-briefs.json.",
+   "answers_as_of": "2026-11-22"
+  },
+  {
+   "id": "7nct1TPwFd9131CjVoAHtW",
+   "order": 26,
+   "url": "https://claude.ai/artifact/7nct1TPwFd9131CjVoAHtW",
+   "slug": "2026-11-22-skills-and-templates-atlas",
+   "date": "2026-11-22",
+   "title": "Skills and Templates Atlas",
+   "kind": "Reference",
+   "about": "Every utility and hero skill, the proposed four arcs, and the in-chat widget and canvas template designs with real renders, tied to the template data model",
+   "decisions": "None (points at HS-1 to HS-5, IN-1, IN-3)",
+   "status": "Reference"
+  },
+  {
+   "id": "AhM8FqE6ef4xhB1MUN6epE",
+   "order": 27,
+   "url": "https://claude.ai/artifact/AhM8FqE6ef4xhB1MUN6epE",
+   "slug": "2026-11-22-bolder-template-explorations",
+   "date": "2026-11-22",
+   "title": "Bolder Template Explorations",
+   "kind": "Design exploration",
+   "about": "Six hero-skill widgets and views, each with two bolder directions (instruments, maps) on real scenario data, and which design rules they would bend. Round two: Geoff liked 3B (trade-off grid) and 4A (heads-up readout) only, so their readout-and-meter style is applied to the dependency board, intent map, delivery plan and review findings.",
+   "decisions": "None yet",
+   "status": "Open for feedback"
   }
  ]
 }
