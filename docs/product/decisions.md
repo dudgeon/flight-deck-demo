@@ -100,6 +100,18 @@ locked ones: the Mac mini runs exactly what runs at work. *What the Mac mini
 tests every day, demos and evals included, should be what runs at work
 (WM-2).*
 
+**D-174 · 2026-11-23 · Geoff asked, Claude chose.** A Claude Code session
+looks like one: the app calls it "Claude Code" everywhere a person reads it
+(composer, approval cards, errors), never "Claude SDK"; it has no terminal
+tab; and the composer has the permission-mode picker (Manual, Auto, Accept
+edits, Plan, never a bypass) and the effort picker. A picked mode applies from
+the next message and survives a restart. The "isn't configured, run omni
+setup" warning no longer shows when Claude Code is installed and signed in.
+*Geoff: "we don't use the Claude SDK so it might confuse others." The
+sessions drive the person's installed Claude Code; the library that speaks
+its structured messages is an implementation detail. The terminal tab would
+have shown an Omnigent prompt, not Claude.*
+
 ## Structured work
 
 **D-05 · 2026-11-20 · Geoff.** One template system serves both the chat

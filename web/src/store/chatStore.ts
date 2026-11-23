@@ -5207,8 +5207,10 @@ function sessionBindingPatch(
     costControlModeOverride: session.costControlModeOverride ?? null,
     subagentRoutingOverride: session.subagentRoutingOverride ?? null,
     codexPlanMode: codexPlanModeFromSession(session),
-    claudePermissionMode: isNativeTerminalSessionFn(session)
-      ? (claudePermissionModeFromSession(session) ?? "")
+    // omnigent-slim: Claude Code (claude-sdk) sessions carry the mode label too (D-174).
+    claudePermissionMode:
+      isNativeTerminalSessionFn(session) || session.harness === "claude-sdk"
+        ? (claudePermissionModeFromSession(session) ?? "")
       : "",
     codexApprovalMode: isCodexNativeSession(session)
       ? (codexApprovalModeFromSession(session) ?? "")

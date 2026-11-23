@@ -3529,7 +3529,7 @@ function ComposerImpl(
           const harnessName = {
             "codex-native": "Codex",
             "pi-native": "Pi",
-            "claude-sdk": "Claude SDK",
+            "claude-sdk": "Claude Code", // omnigent-slim (D-174)
           }[sessionHarness];
           setCommandError(`/compact does not accept arguments for ${harnessName}`);
           return true;
@@ -5339,11 +5339,19 @@ export function shouldShowCodexPlanModeControl(
  * :returns: True only for sessions running the claude-native wrapper.
  */
 export function shouldShowPermissionModeControl(
-  conv: { labels?: Record<string, string | null> | null } | null | undefined,
+  conv:
+    | { labels?: Record<string, string | null> | null; harness?: string | null }
+    | null
+    | undefined,
 ): boolean {
   // Devin cycles its own rungs with Shift+Tab, which the runner drives, so it
   // gets the same control — with its own vocabulary (see `permissionOptions`).
-  return isClaudeNativeSession(conv) || modelPickerKindForConv(conv) === "devin";
+  return (
+    isClaudeNativeSession(conv) ||
+    modelPickerKindForConv(conv) === "devin" ||
+    // omnigent-slim: Claude Code sessions run on claude-sdk and switch mode too (D-174).
+    conv?.harness === "claude-sdk"
+  );
 }
 
 /**

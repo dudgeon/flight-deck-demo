@@ -118,7 +118,8 @@ export function composerHarnessLabel(
   if (modelPickerKind === "devin") return "Devin";
   const display = agentName ? agentDisplayLabel(agentName) : null;
   const harness = sessionHarness ? (harnessLabels[sessionHarness] ?? null) : null;
-  if (display && harness) return `${display} (${harness})`;
+  // omnigent-slim: "Claude Code (Claude Code)" says nothing twice (D-174).
+  if (display && harness && display !== harness) return `${display} (${harness})`;
   return display ?? harness;
 }
 

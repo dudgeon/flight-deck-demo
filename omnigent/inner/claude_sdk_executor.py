@@ -2938,7 +2938,7 @@ class ClaudeSDKExecutor(Executor):
                     detail,
                 )
                 raise TimeoutError(
-                    f"Claude SDK client connect timed out after "
+                    f"Claude Code client connect timed out after "
                     f"{int(_CONNECT_TIMEOUT_SECONDS)}s. CLI stderr tail:\n{detail}"
                 ) from exc
             except Exception as exc:
@@ -2956,7 +2956,7 @@ class ClaudeSDKExecutor(Executor):
                     detail,
                 )
                 raise RuntimeError(
-                    f"Claude SDK connect failed: {exc}\nCLI stderr:\n{detail}"
+                    f"Claude Code connect failed: {exc}\nCLI stderr:\n{detail}"
                 ) from exc
             finally:
                 # Restore on both paths so post-connect stderr flows
@@ -4010,16 +4010,25 @@ class ClaudeSDKExecutor(Executor):
             yield ExecutorError(message=describe_exception(exc), retryable=False)
             return
         # omnigent-slim: the slim default effort when the session names none (D-173).
-        from omnigent.slim_policy import slim_sdk_effort
+        from omnigent.slim_policy import slim_sdk_effort, slim_sdk_permission_mode
 
         reasoning_effort = slim_sdk_effort(reasoning_effort)
+        # omnigent-slim: a mode picked in the web UI applies from this turn (D-174). It is a
+        # launch option, so a change rebuilds the client with its history, as effort does.
+        mode_changed = False
+        requested_mode = cfg.extra.get("permission_mode")
+        if isinstance(requested_mode, str) and requested_mode:
+            new_mode = slim_sdk_permission_mode(requested_mode)
+            mode_changed = new_mode != self._permission_mode
+            self._permission_mode = new_mode
 
         session_key = self._session_key(messages)
         crashed_reason = self._crashed_sessions.get(session_key)
         if crashed_reason is not None:
             yield ExecutorError(
                 message=(
-                    "Claude SDK session crashed and cannot continue in this Session. "
+                    # omnigent-slim: errors say "Claude Code", not "Claude SDK" (D-174).
+                    "Claude Code session crashed and cannot continue in this Session. "
                     f"Start a new Session. Cause: {crashed_reason}"
                 )
             )
@@ -4050,7 +4059,9 @@ class ClaudeSDKExecutor(Executor):
             # Effort is a launch option, and a CLI busy with a timed-out MCP reconnect
             # holds the prompt. Rebuild with history for conversational turns, but let
             # /compact operate on the existing client's context.
-            rebuild = state.effort != reasoning_effort or state.mcp_control_timed_out
+            rebuild = (
+                state.effort != reasoning_effort or mode_changed or state.mcp_control_timed_out
+            )
             if not rebuild:
                 try:
                     rebuild = not await self._reconnect_signed_in_mcp_servers(state)
@@ -4566,7 +4577,7 @@ class ClaudeSDKExecutor(Executor):
                 )
             except TimeoutError as exc:
                 raise TimeoutError(
-                    f"Claude SDK query start timed out after {int(_QUERY_START_TIMEOUT_SECONDS)}s"
+                    f"Claude Code query start timed out after {int(_QUERY_START_TIMEOUT_SECONDS)}s"
                 ) from exc
             if client_state is not None:
                 client_state.interruption_marker_pending = False
@@ -4584,7 +4595,7 @@ class ClaudeSDKExecutor(Executor):
                                 break
                             idle_seconds += _STREAM_IDLE_WARN_SECONDS
                             logger.warning(
-                                "Claude SDK response stream has been idle for "
+                                "Claude Code response stream has been idle for "
                                 "%ds (session %s); still waiting.",
                                 int(idle_seconds),
                                 session_key,
@@ -4812,7 +4823,7 @@ class ClaudeSDKExecutor(Executor):
                             failure_line = failure_text.rstrip(_TRAILING_PUNCTUATION)
                             if rejected:
                                 terminal_error = (
-                                    "Claude SDK provider authentication failed"
+                                    "Claude Code provider authentication failed"
                                     f" (status={error_status}): {failure_line}. {auth_remediation}"
                                 )
                             elif terminal_auth_failure:
@@ -4898,7 +4909,7 @@ class ClaudeSDKExecutor(Executor):
                                 or retry_error == "authentication_failed"
                             ):
                                 terminal_error = (
-                                    "Claude SDK provider authentication failed"
+                                    "Claude Code provider authentication failed"
                                     f" ({retry_error}, status={error_status}). "
                                     f"{auth_remediation}"
                                 )
@@ -4914,7 +4925,7 @@ class ClaudeSDKExecutor(Executor):
                                 else:
                                     endpoint_hint = "Check ANTHROPIC_BASE_URL configuration."
                                 terminal_error = (
-                                    "Claude SDK provider endpoint was not found "
+                                    "Claude Code provider endpoint was not found "
                                     f"({retry_error}, status={error_status}). "
                                     f"{endpoint_hint}"
                                 )
@@ -4983,7 +4994,7 @@ class ClaudeSDKExecutor(Executor):
                     yield compaction_event
             yield ExecutorError(
                 message=(
-                    f"Claude SDK error: {exc}\n"
+                    f"Claude Code error: {exc}\n"
                     f"CLI stderr:\n{stderr_text}\n"
                     f"CLI system diagnostics:\n{diagnostics_text}"
                 ),

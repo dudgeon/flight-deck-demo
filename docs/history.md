@@ -215,7 +215,9 @@ On 23 November:
   checks, and skills from `.claude/skills/`. Reproduced and tested in the
   cloud against a copy of those settings. After the Mac mini restart, flown
   demo projects still named the old agent; start-up now moves any project
-  whose agent is gone onto `claude-code`.
+  whose agent is gone onto `claude-code`. Geoff then asked that nothing say
+  "Claude SDK": sessions read as Claude Code, lost the terminal tab and got
+  the mode and effort pickers back (D-174).
 
 ## Still waiting
 

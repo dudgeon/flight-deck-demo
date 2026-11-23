@@ -1242,6 +1242,8 @@ class CreateResponseRequest(BaseModel):
     conversation: ConversationRef | None = None
     # Reasoning config, e.g. {"effort": "low"|"medium"|"high"}
     reasoning: dict[str, str] | None = None
+    # omnigent-slim: Claude Code permission mode picked in the web UI, e.g. "plan" (D-174).
+    permission_mode: str | None = None
     # Per-request LLM model override (distinct from ``model``, which
     # carries the agent name). See class docstring for semantics.
     model_override: str | None = None

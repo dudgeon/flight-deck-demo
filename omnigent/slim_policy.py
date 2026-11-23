@@ -166,3 +166,10 @@ SDK_PREAPPROVED_TOOLS = ("mcp__omnigent__ui_open_file",)
 def slim_sdk_preapproved(allowed_tools: Iterable[str]) -> list[str]:
     """Keep only the tools the slim build pre-approves; the rest go through Claude's checks."""
     return [t for t in allowed_tools if t in SDK_PREAPPROVED_TOOLS]
+
+
+#: Upstream opens an Omnigent REPL terminal beside every non-native session, which
+#: shows as a "Terminal" tab next to the chat. Sessions here are Claude Code in the
+#: chat, so that tab would only confuse (D-174); the runner and the session create
+#: path both check this.
+SLIM_REPL_TERMINAL = False

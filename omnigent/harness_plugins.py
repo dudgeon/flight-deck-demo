@@ -778,7 +778,8 @@ for _acp_cli_name in ACP_CLI_HARNESSES:
 #: omnigent-slim offers only the built-in Claude Code terminal (``claude-native``,
 #: which the web UI lists on its own). Picker rows for other harnesses are hidden;
 #: add an id here to offer it again.
-SLIM_PICKER_HARNESSES: frozenset[str] = frozenset()
+#: omnigent-slim: claude-sdk is listed so its sessions get the effort picker (D-174).
+SLIM_PICKER_HARNESSES: frozenset[str] = frozenset({"claude-sdk"})
 
 _BUILTIN_CONTRIBUTION = HarnessContribution(
     name="omnigent",
@@ -958,7 +959,8 @@ _BUILTIN_CONTRIBUTION = HarnessContribution(
     },
     harness_labels={
         "antigravity": "Antigravity",
-        "claude-sdk": "Claude SDK",
+        # omnigent-slim: it runs the installed Claude Code (D-174).
+        "claude-sdk": "Claude Code",
         "codex": "Codex",
         "copilot": "Copilot",
         "cursor": "Cursor",

@@ -3791,6 +3791,19 @@ def register_core_routes(
             )
             if wrapper_for_permission_mode == _CLAUDE_NATIVE_WRAPPER_LABEL_VALUE:
                 allowed_permission_modes: tuple[str, ...] = tuple(_CLAUDE_NATIVE_PERMISSION_MODES)
+            elif wrapper_for_permission_mode is None and (
+                await asyncio.to_thread(
+                    _resolve_harness,
+                    conv_for_permission_mode,
+                    agent_store=agent_store,
+                    agent_cache=agent_cache,
+                )
+                == "claude-sdk"
+            ):
+                # omnigent-slim: Claude Code sessions switch mode too (D-174), never to a bypass.
+                from omnigent.slim_policy import ALLOWED_CLAUDE_PERMISSION_MODES
+
+                allowed_permission_modes = tuple(ALLOWED_CLAUDE_PERMISSION_MODES)
             elif wrapper_for_permission_mode == _DEVIN_NATIVE_WRAPPER_LABEL_VALUE:
                 from omnigent.harnesses.devin_native.bridge import DEVIN_PERMISSION_MODES
 
