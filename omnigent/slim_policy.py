@@ -45,6 +45,29 @@ if DEFAULT_CLAUDE_PERMISSION_MODE not in ALLOWED_CLAUDE_PERMISSION_MODES:
 #: Model and effort for launches that name none ("" leaves Claude's default).
 DEFAULT_CLAUDE_MODEL = _env_default("OMNIGENT_SLIM_CLAUDE_MODEL", "claude-opus-5-5")
 DEFAULT_CLAUDE_EFFORT = _env_default("OMNIGENT_SLIM_CLAUDE_EFFORT", "medium")
+#: Model for sessions in a flown demo (D-175): demos are scripted, so the faster
+#: Sonnet tells the story; "" leaves the default above.
+DEMO_CLAUDE_MODEL = _env_default("OMNIGENT_SLIM_DEMO_MODEL", "claude-sonnet-5-5")
+
+
+def is_demo_workspace(workspace: str | None) -> bool:
+    """Whether ``workspace`` is a flown demo's folder (``<workspace>/demos/<id>``)."""
+    if not workspace:
+        return False
+    from pathlib import PurePath
+
+    parts = PurePath(workspace).parts
+    return len(parts) >= 2 and parts[-2] == "demos"
+
+
+def slim_new_session_model(workspace: str | None) -> str | None:
+    """The model a new Claude Code session starts on when it names none.
+
+    ``None`` means the slim default (``DEFAULT_CLAUDE_MODEL``) applies at launch.
+    """
+    if is_demo_workspace(workspace) and DEMO_CLAUDE_MODEL:
+        return DEMO_CLAUDE_MODEL
+    return None
 
 _BYPASS_FLAGS = frozenset(
     {"--dangerously-skip-permissions", "--allow-dangerously-skip-permissions"}

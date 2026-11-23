@@ -183,6 +183,22 @@ def register_resource_routes(
     """
     from omnigent.runtime.filesystem_registry import detect_git_root
 
+    # omnigent-slim: the Claude Code agent declares no os_env (one would add
+    # sys_os_* tools beside Claude Code's own), so its session folder is served
+    # the way a session with no spec is: a read view of the folder. Otherwise the
+    # viewer refuses every file and views show "404 Not Found" (D-175).
+    _spec_with_os_env = _resolve_session_agent_spec
+
+    async def _resolve_session_agent_spec(session_id: str) -> AgentSpec | None:
+        spec = await _spec_with_os_env(session_id)
+        if (
+            spec is not None
+            and getattr(spec, "os_env", None) is None
+            and spec.executor.config.get("harness") == "claude-sdk"
+        ):
+            return None
+        return spec
+
     async def _resolve_conversation_id(response_id: str) -> str | None:
         return _resp_to_conv.get(response_id)
 

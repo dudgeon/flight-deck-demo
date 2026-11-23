@@ -39,6 +39,7 @@ feature notes of the time and marked *(reconstructed)*.
 | D-172 | Claude Code driven through its structured messages (claude-sdk harness, `claude-code` agent), not a terminal with hooks; Claude Code's own tools, prompt and permission checks; skills from `.claude/skills/`, no plugins | Geoff | Built (`omnigent/slim_agents/claude-code`, `slim_policy.py`, `.claude/skills/`) | The work Mac's managed settings refuse plugin flags, ignore our hooks and limit tool servers. Replaces the terminal part of D-02. |
 | D-173 | Every Mac runs Claude the D-172 way, not only locked ones | Geoff | Built (`start.sh`) | The Mac mini should test exactly what runs at work. |
 | D-174 | Claude Code sessions say "Claude Code", have no terminal tab, and pick mode and effort | Geoff asked, Claude chose | Built | "We don't use the Claude SDK", so the word would confuse people. |
+| D-175 | A flown demo's sessions start on Sonnet; others keep Opus (refines D-03) | Geoff | *Pending* (this PR) | A scripted demo needs speed more than depth. |
 
 ## Structured work
 

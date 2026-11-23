@@ -112,6 +112,13 @@ sessions drive the person's installed Claude Code; the library that speaks
 its structured messages is an implementation detail. The terminal tab would
 have shown an Omnigent prompt, not Claude.*
 
+**D-175 · 2026-11-23 · Geoff.** A flown demo's sessions start on Sonnet
+(`claude-sonnet-5-5`); other sessions keep Opus (the D-03 default). The
+person can still pick another model in the composer, and
+`OMNIGENT_SLIM_DEMO_MODEL` changes it ("" means the normal default). *Geoff,
+after the first demo on the work Mac: "Demos should run Sonnet." A demo
+follows a script, so it needs speed more than depth.*
+
 ## Structured work
 
 **D-05 · 2026-11-20 · Geoff.** One template system serves both the chat

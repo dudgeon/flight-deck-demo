@@ -217,7 +217,12 @@ On 23 November:
   demo projects still named the old agent; start-up now moves any project
   whose agent is gone onto `claude-code`. Geoff then asked that nothing say
   "Claude SDK": sessions read as Claude Code, lost the terminal tab and got
-  the mode and effort pickers back (D-174).
+  the mode and effort pickers back (D-174). Geoff's first demo on the work Mac then stuck at
+  its first view: the file was written, but the viewer answered "404 Not
+  Found", because it refused to read files for an agent with no declared OS
+  environment. It now reads the session's folder for Claude Code sessions,
+  and flown demos start on Sonnet (D-175). The whole demo was flown under a
+  copy of the work Mac's settings.
 
 - **Teammates clone the company copy** (PR 67): Geoff put the app into his
   company's GitHub and will push each update there. The README now starts

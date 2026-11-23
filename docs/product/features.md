@@ -854,10 +854,15 @@ demo again brings its project into line with Workspace. Every Mac works this way
 (D-173). The session reads as Claude Code everywhere, with no terminal tab;
 the composer picks the permission mode (never a bypass) and the effort, and a
 picked mode applies from the next message (D-174).
+A flown demo's sessions start on Sonnet, since a scripted story needs speed
+more than depth (D-175). The viewer reads a session's own folder even though
+the agent declares no OS environment (declaring one would add Omnigent's own
+shell and file tools beside Claude Code's), so views and artifacts a session
+writes open in the chat and the canvas.
 
 **Where.** `omnigent/slim_agents/claude-code/config.yaml`, `start.sh`,
 `omnigent/slim_policy.py`, `omnigent/inner/claude_sdk_executor.py`
-(`omnigent-slim:`), `omnigent/slim_bootstrap.py`, `omnigent/slim_skills.py`, `.claude/skills/`,
+(`omnigent-slim:`), `omnigent/runner/resource_routes.py` (`omnigent-slim:`), `omnigent/slim_bootstrap.py`, `omnigent/slim_skills.py`, `.claude/skills/`,
 `tests/test_slim_claude_sdk.py`.
 
 ## Usage log
