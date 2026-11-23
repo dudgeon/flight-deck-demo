@@ -328,7 +328,9 @@ GitHub namespace.
    Setup copies it into `~/flight-deck` and runs it from there (D-111);
    `sh ~/flight-deck/setup.sh` later updates from a newer download without
    overwriting the person's files (`scripts/install_sync.py`, a manifest of
-   what was shipped).
+   what was shipped). In a git checkout, such as a clone of a company copy
+   of the repository, the checkout is the app folder and updates apply in
+   place (D-171, `docs/company-repo.md`).
 2. `sh setup.sh` (D-107): checks the Mac and Claude Code, clears the browser's
    quarantine flag from this folder after asking, restores execute bits,
    checks the bundled tmux, runs `start.sh` and confirms the app answers. It

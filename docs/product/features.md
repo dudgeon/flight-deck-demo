@@ -809,9 +809,17 @@ their deletions all survive, the new versions they didn't take are saved in
 Hangar projects follow the app out of a download folder
 (`omnigent/slim_bootstrap.py`). It also builds and pins the Dock icon.
 
+**A company copy (D-171).** The downloaded copy can be pushed into a
+repository in the company's GitHub, with its install record committed. A
+clone of it is its own app folder: setup runs it in place, and a newer
+download, recognized by its contents whatever its name, updates the clone in
+place under the same rules, ready to commit and push so teammates get it with
+`git pull`. A developer's clone with no install record never pulls in a
+download unless `--from` names one. Steps: `docs/company-repo.md`.
+
 **Where.** `setup.sh`, `scripts/install_sync.py`, `start.sh`,
 `omnigent/slim_bootstrap.py`, `tests/setup_sim/`, `tests/test_slim_install_sync.py`,
-README "Quick start" and "Updating to a newer version".
+README "Quick start" and "Updating to a newer version", `docs/company-repo.md`.
 
 ## Usage log
 

@@ -139,3 +139,12 @@ def test_project_moves_only_from_another_app_copy(tmp_path: Path) -> None:
     assert not _other_app_workspace(str(new_ws), new_ws)
     assert not _other_app_workspace(str(chosen), new_ws)  # the person's own folder
     assert not _other_app_workspace("", new_ws)
+
+
+def test_an_edit_the_release_did_not_touch_is_not_a_conflict(tmp_path: Path) -> None:
+    r1, app = _install(tmp_path)
+    _write(app, {"workspace/participants/mara.md": "my mara"})
+    out = sync_mod.sync(r1, app)  # the same release again
+    assert (app / "workspace/participants/mara.md").read_text() == "my mara"
+    assert out["kept_yours"] == [] and out["saved_to"] == []
+    assert not (app / "updates").exists()

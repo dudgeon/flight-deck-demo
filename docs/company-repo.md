@@ -100,6 +100,10 @@ new version. Only one person needs to bring in each download.
 - **The Hangar's "Send to repo"** (D-113) pushes published configuration to a
   branch of whichever repository the clone came from, so on a company clone
   it goes to the company repository.
+- **One app folder per Mac.** The Workspace and Hangar projects point at
+  one folder. If you keep both `~/flight-deck` and a clone elsewhere, they
+  follow whichever one you started last. Clone into `~/flight-deck` (step 2)
+  and keep just that one.
 - **Developers' own checkouts** of `dudgeon/flight-deck-demo` have no install
   record, so `sh setup.sh` in one just runs it in place and never pulls in a
   download unless you pass `--from`.
