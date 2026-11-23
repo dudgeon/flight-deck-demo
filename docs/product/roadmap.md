@@ -477,11 +477,11 @@ a server.
   ids and words, never sentences. `pa usage summary|tail|check|pack|eval`.
   Eval trials are tagged and kept apart. Packs can be fingerprinted or written
   in upstream's gateway shape.
-- **Next.** A Usage page in the Hangar (UL-3); `pa log offer.made` in the
+- **Next.** `pa log offer.made` in the
   director skill with the routing suite; run it on the Mac mini with a live
   session to see the tool and upstream feeds for real.
-- **Open.** UL-1 committing logs, UL-2 what a work Mac pack holds, UL-3 where
-  the numbers are seen.
+- **Settled.** Logs stay out of git for now (D-157); packs keep names unless
+  `--fingerprint`, and a Hangar Usage page waits until wanted (D-158).
 - **Read.** [usage-logging.md](usage-logging.md);
   [../skill-writers/usage-log.md](../skill-writers/usage-log.md); walkthrough
   at https://claude.ai/artifact/7tXLiAF95CZpCp81UKVVMB.

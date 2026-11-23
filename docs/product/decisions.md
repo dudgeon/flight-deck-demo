@@ -1020,6 +1020,19 @@ internet at runtime (CLAUDE.md); a file a person moves is the only way out
 that keeps that true, and an exporter interface fixed now means the server
 can come later without changing the log.*
 
+**D-157 · 2026-11-21 · Geoff.** Usage logs stay out of the repo's git
+history for now ("not yet"). Each machine keeps its own `logs/usage/`
+(gitignored), and a pack is carried by hand when wanted. Answers UL-1. *Git
+history is permanent; there is no need yet to put test logs in it.*
+
+**D-158 · 2026-11-22 · Claude.** UL-2 and UL-3 are settled loosely, without
+asking, and either can change whenever it matters. Packs keep names as
+written by default; `pa usage pack --fingerprint` is there for a pack that
+leaves the work Mac. The numbers are read with `pa usage summary` for now;
+a Usage page in the Hangar gets built only when someone wants it. *Geoff
+asked not to be held up by low-stakes choices. Both are one flag or one page
+away from changing, so nothing is locked in.*
+
 ## Initiatives, artifacts and templates
 
 Spec: [initiatives-and-templates.md](initiatives-and-templates.md). Geoff
@@ -1212,8 +1225,6 @@ canvas reload work; reviewed and locked are the person's judgment.*
 
 ## Open
 
-- Usage logging (UL-1 to UL-3 in [usage-logging.md](usage-logging.md)):
-  committing logs, what a work Mac pack holds, where the numbers are seen.
 - Progressive complexity (from D-54): how a workflow shows less at first and
   more on demand, to the person and to the agent. Not designed yet.
 - The intent graph's level of detail is deliberately held (D-98).

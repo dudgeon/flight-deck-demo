@@ -273,8 +273,8 @@
    "title": "Flight Deck Usage Log",
    "kind": "Decision walkthrough",
    "about": "How the local usage log works, and whether logs are committed, what a work Mac pack holds, where the numbers are seen (UL-1 to UL-3)",
-   "decisions": "D-122 to D-127",
-   "status": "Open"
+   "decisions": "D-122 to D-127, D-157, D-158",
+   "status": "Answered (UL-1); UL-2, UL-3 settled by Claude"
   },
   {
    "id": "DHcM1SxdoecNJKtNgJ6t5p",

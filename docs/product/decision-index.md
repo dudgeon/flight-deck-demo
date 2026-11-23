@@ -253,6 +253,8 @@ Spec: [usage-logging.md](usage-logging.md).
 | D-125 | `area.action` names; every `pa` command and slim route write logs itself; reads are not logged; `pa log` for skills | Claude | Built |
 | D-126 | Eval trials are tagged and kept in `eval/<suite>/`; routing graders read them | Claude | Built; no suite uses it yet |
 | D-127 | Logs leave a machine only as a pack a person carries; an `Exporter` interface for a later server | Claude | Built (packs); no remote exporter |
+| D-157 | Usage logs stay out of git for now; packs are carried by hand (UL-1) | Geoff | Built |
+| D-158 | Loose, changeable calls: packs keep names unless `--fingerprint`; numbers via `pa usage summary`, a Hangar page only if wanted (UL-2, UL-3) | Claude | Built |
 
 ## Backfilled (decided earlier, logged on 21 Nov)
 
@@ -268,9 +270,6 @@ Spec: [usage-logging.md](usage-logging.md).
 
 ## Open questions not yet numbered
 
-
-- Usage logging (UL-1 to UL-3 in [usage-logging.md](usage-logging.md)):
-  put to Geoff 2026-11-21; built to the recommendations meanwhile.
 - Skill taxonomy (HS-7 and HS-8, settled as light-touch calls by Claude, in [skill-taxonomy.md](skill-taxonomy.md));
   HS-1 to HS-6 were decided 2026-11-22 as D-148 to D-153.
 - Progressive complexity (D-54).
