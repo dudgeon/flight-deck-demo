@@ -579,7 +579,7 @@ function summary() {
     sb.addEventListener("click", sendAll);
     row.append(sb, el("span", "st sendst")); sum.append(row);
   }
-  if (h === "local") {
+  {
     const row = el("div", "row"); const cp = el("button", "btn", "Copy answers"); cp.type = "button";
     const box = el("textarea", "copybox"); box.readOnly = true; box.value = answersText(); box.hidden = true; box.id = "copybox";
     const cst = el("span", "st");
@@ -612,6 +612,9 @@ function keepSent(how) {
   if (fd && typeof fd.saveState === "function") { try { fd.saveState("sent", SENT); } catch (e) {} }
   paintSent();
 }
+let CAN = "off";
+async function refreshCan() { try { CAN = comments && comments.canSendToClaude ? await comments.canSendToClaude() : "off"; } catch (e) { CAN = "off"; } }
+function showCopy() { const box = document.getElementById("copybox"); if (!box) return; box.value = answersText(); box.hidden = false; try { box.focus(); box.select(); } catch (e) {} }
 async function sendAll() {
   const any = DECS.some(d => { const a = ANS[d.id] || {}; return !a.locked && (a.pick || a.note); });
   if (!any) { paintSent("Pick an option first", true); return; }
@@ -619,20 +622,29 @@ async function sendAll() {
   if (lack.length) { paintSent("Say what you would do instead on " + lack.map(d => d.label || d.id).join(", "), true); return; }
   const h = host();
   if (h === "claude") {
-    await Promise.all(DECS.filter(d => { const a = ANS[d.id] || {}; return !a.locked && (a.pick || a.note) && !a.saved; }).map(d => save(d)));
-    let can = "off";
-    try { can = comments && comments.canSendToClaude ? await comments.canSendToClaude() : "off"; } catch (e) { can = "off"; }
+    // Send first, inside the click: sendToClaude needs the viewer's recent
+    // gesture, so nothing slow (saving to the database) may run before it.
+    const unsaved = DECS.filter(d => { const a = ANS[d.id] || {}; return !a.locked && (a.pick || a.note) && !a.saved; });
+    let can = CAN;
+    if (can !== "available") { try { can = comments && comments.canSendToClaude ? await comments.canSendToClaude() : "off"; } catch (e) { can = "off"; } CAN = can; }
     if (can !== "available") {
-      paintSent(can === "writers_only" ? "Only editors of this page can send. Your answers are saved here." : can === "no_session" ? "Claude's session isn't open right now. Your answers are saved here and Claude reads them when it's back." : "Sending isn't available here. Your answers are saved; tell Claude in the chat.", true);
+      await Promise.all(unsaved.map(d => save(d)));
+      const saved = DECS.every(d => { const a = ANS[d.id] || {}; return a.locked || !(a.pick || a.note) || a.saved; });
+      showCopy();
+      paintSent((can === "writers_only" ? "Only editors of this page can send." : can === "no_session" ? "Claude's session isn't open right now." : "Sending isn't available here.") +
+        (saved ? " Your answers are saved on this page, and Claude reads them from here." : " Some answers didn't save.") + " To be sure, copy them below and paste them in the chat.", true);
       return;
     }
     paintSent("Sending…");
+    let err = null;
     try {
-      const anchor = await comments.anchorFor(sum.querySelector("h2"));
       let text = answersText(); if (new TextEncoder().encode(text).length > 4000) text = text.slice(0, 1800) + "\n(more answers are saved on the page)";
+      const anchor = await comments.anchorFor(sum.querySelector("h2"));
       await comments.sendToClaude({ anchor, text });
-      keepSent("comment");
-    } catch (e) { paintSent("Couldn't send (" + ((e && e.code) || "error") + "). Your answers are saved here.", true); }
+    } catch (e) { err = e; }
+    await Promise.all(unsaved.map(d => save(d)));
+    if (err) { showCopy(); paintSent("Couldn't send (" + ((err && err.code) || "error") + "). Copy your answers below and paste them in the chat.", true); }
+    else keepSent("comment");
     return;
   }
   if (h === "flightdeck") {
@@ -658,6 +670,7 @@ cards.forEach(x => x.paint());
 (async () => {
   try { comments = await window.claude?.use?.("comments"); } catch (e) { comments = null; }
   if (comments) cards.forEach(x => { x.cm.hidden = false; });
+  if (comments) { refreshCan(); setInterval(refreshCan, 30000); }
 })();
 (async () => {
   try { db = await window.claude?.use?.("db"); } catch (e) { db = null; }
