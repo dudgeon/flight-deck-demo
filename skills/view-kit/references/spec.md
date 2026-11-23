@@ -9,7 +9,7 @@ path, and `{note}` for what the user typed into an action's question.
 | Key | Meaning |
 |---|---|
 | `view` | Short id, unique in the dataset. Used to key saved state. |
-| `layout` | `tree-table`, `board`, `detail`, `summary` or `form`. |
+| `layout` | `tree-table`, `board`, `detail`, `summary`, `form` or `worksheet`. |
 | `eyebrow`, `title`, `subtitle` | Header text. |
 | `records` | Which records the view is about: `{ "type": "requirement" }` or `{ "type": ["capability", "requirement"], "status": ["ready"] }`. |
 | `status_field` | The state field this view reads and writes. Default `status`. |
@@ -96,6 +96,20 @@ with `"inline": true` shows on the tile itself.
 ```
 
 Field kinds: `choice`, `multi`, `toggle`, `text`, `line`, `number`.
+
+## worksheet
+
+Choices and their options, to try before choosing (the alternatives template
+uses it). Pressing an option tries it; readouts at the top add up the option
+being tried in every choice and show the change from the baseline (each
+choice's first option). Trying stays in the page; choosing goes through
+`actions` as usual, from each option's Details panel.
+
+| Key | Meaning |
+|---|---|
+| `worksheet.group`, `worksheet.item` | Record types of a choice and its options (default `choice`, `option`) |
+| `worksheet.readouts` | `[{field, label, short, unit, agg}]`; `agg` is `sum` (default) or `max` |
+| `worksheet.kind`, `worksheet.gives`, `worksheet.relies` | Fields for the option's kind chip, what it gives up, and the teams it relies on (counted in a readout) |
 
 ## Actions
 

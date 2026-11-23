@@ -509,6 +509,39 @@ options can use it.
 participants, the workflow card) and it proves the kit is not shaped around
 requirements documents.
 
+## PRD to dependencies (an arc in three parts)
+
+**What it is for.** A product manager with a PRD needs to know what the work
+depends on and what their options are when a dependency won't be ready, not
+just a list of requirements. This arc (D-148) takes them from the document to
+a choice, in three parts they can move between in any order, leaving and
+coming back (D-149): **Specify** (the requirements catalog, run by
+`prd-to-requirements`), **Map** (the platform capabilities each requirement
+needs, run by `requirements-to-dependencies`) and **Choose** (for each
+dependency that needs a decision, two to four alternatives of Pathfinder's
+four kinds, with effort and waiting kept as separate numbers, and the
+person's choice written to the initiative's decisions register).
+
+**How it works.** `skills/prd-to-dependencies/` has the arc's SKILL.md and a
+`workflow.json` that lists its `parts` and `checkpoints` (the few rules that
+always hold, whatever the order). The two older workflows stay as they were,
+with `part_of` set, so their scenarios still fly and they still start when
+named; only the arc has a Library card, and the parts' demos show on it.
+Choose uses the `alternatives` records template (PR 52). Complex choices go to
+the decision brief skill when it is installed. `pa workflows` prints each
+workflow's tier, parts and checkpoints; `pa check` notes an unknown tier or a
+malformed part, never fails on one (D-153).
+
+**The alternatives worksheet (D-152).** Choose opens on a `worksheet` view
+(a new view-kit layout). Each choice shows its options as cards; pressing one
+*tries* it, and four readouts at the top redraw at once: our effort (summed),
+the longest wait (the one that sets the date), teams relied on, and how many
+choices trade scope, each against the baseline (the first option). The point
+is to feel a trade-off before committing to it: trying is local to the page,
+and choosing still asks for a reason and goes to the agent. The plain table
+(`compare`) stays as a second view. **Not yet:** a phase lane with projected
+dates, which needs dates on options.
+
 ## Problem discovery (a kind of work)
 
 **What it is for.** Before there is anything to specify, a PM has a pile of

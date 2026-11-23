@@ -25,6 +25,7 @@ Everything is read on every request, so edits show up on the next page load.
 from __future__ import annotations
 
 import html
+import json
 import logging
 import os
 import re
@@ -271,12 +272,15 @@ def load_library(root: Path | None) -> dict[str, Any]:
             "demo": slim_hangar.demo_of(pa, sid),
             "sort": _order(lib if isinstance(lib, dict) else {}, str(raw.get("title") or sid)),
         }
+        # A part of an arc (D-148) has no card; its demos show on the arc's card.
+        card = wid if wid in by_skill else _arc_of(pa, wid, ws)
+        if card in by_skill:
+            demo["sort_skill"] = card
+            by_skill[card]["demos"].append({"id": sid, "title": demo["title"]})
         demos.append(demo)
-        if wid in by_skill:
-            by_skill[wid]["demos"].append({"id": sid, "title": demo["title"]})
     # Demos follow the skills they show, in the same lifecycle order; the rest after.
     rank = {s["id"]: i for i, s in enumerate(skills)}
-    demos.sort(key=lambda d: (rank.get(d["workflow"], len(rank)), d.pop("sort")))
+    demos.sort(key=lambda d: (rank.get(d.pop("sort_skill", d["workflow"]), len(rank)), d.pop("sort")))
 
     return {
         "library_dir": str(root) if root is not None else None,
@@ -284,6 +288,18 @@ def load_library(root: Path | None) -> dict[str, Any]:
         "skills": skills,
         "demos": demos,
     }
+
+
+def _arc_of(pa: Any, wid: str, ws: Path) -> str | None:
+    """The arc a workflow is a part of (its ``part_of``), if any."""
+    folder = pa.find_workflow(wid, ws)
+    path = pa.workflow_manifest_path(folder) if folder else None
+    try:
+        manifest = json.loads(Path(path).read_text(encoding="utf-8")) if path else None
+    except (OSError, ValueError):
+        manifest = None
+    part_of = (manifest or {}).get("part_of")
+    return str(part_of) if part_of else None
 
 
 def create_slim_library_router(*, auth_provider: AuthProvider | None = None) -> APIRouter:

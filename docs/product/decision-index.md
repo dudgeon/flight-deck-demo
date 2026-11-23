@@ -265,7 +265,7 @@ Spec: [usage-logging.md](usage-logging.md).
 
 - Usage logging (UL-1 to UL-3 in [usage-logging.md](usage-logging.md)):
   put to Geoff 2026-11-21; built to the recommendations meanwhile.
-- Skill taxonomy (HS-7 and HS-8 in [skill-taxonomy.md](skill-taxonomy.md));
+- Skill taxonomy (HS-7 and HS-8, settled as light-touch calls by Claude, in [skill-taxonomy.md](skill-taxonomy.md));
   HS-1 to HS-6 were decided 2026-11-22 as D-148 to D-153.
 - Progressive complexity (D-54).
 - D-24 for production.

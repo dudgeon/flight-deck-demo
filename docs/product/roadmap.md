@@ -411,18 +411,30 @@ and worksheet templates each needs.
   checkpoints and free movement between components and phases; stages
   Discover, Shape, Specify, Engage, Deliver; the shared registers; the
   shared widgets and the alternatives worksheet first, using the decision
-  brief skill. Nothing built yet; the template redesign stays parked.
+  brief skill. The template redesign stays parked.
 - **Decided.** D-153: an optional `tier` field in `workflow.json`.
-- **Open.** HS-7 and HS-8 (taxonomy), put to Geoff one at a time.
+- **Settled without asking.** HS-7 (the add-a-skill rule is advice, never a gate) and HS-8 (launch goes in Deliver when a demo needs it): Claude's calls, easy to change.
 - **Taxonomy.** [skill-taxonomy.md](skill-taxonomy.md): four tiers
   (companion, arc, move, kit), a card per skill, how work moves through the
   initiative registers, coverage of the ten PM jobs, and a four-question rule
   for adding a hero skill.
-- **Next, if accepted.** Merge the two requirement workflows (old ids kept),
-  `checkpoints` in `workflow.json` and `pa check`, a stage list on routing,
-  Learn in `lifecycle.json`, Review and Decide as launchers on every
-  artifact, the shared widgets in the view kit. The registers' shape comes
-  from the template and initiative data model work.
+- **Built.** The PRD to dependencies arc with Specify, Map and Choose
+  (`skills/prd-to-dependencies/`; the two older workflows are its parts,
+  old ids kept); `tier`, `parts`, `part_of` and `checkpoints` in
+  `workflow.json`, shown by `pa workflows` and noted by `pa check`; Review
+  and Decide marked as moves; delivery status titled Deliver. Stages and the
+  alternatives and onboarding templates came in PR 52.
+- **Built.** The alternatives worksheet (`worksheet` layout in the view kit,
+  the alternatives template's default view): try options, watch the totals move.
+- **Proposed.** Prototyping across channels (Geoff, 2026-11-22): a
+  Prototype move with one contract, prototypers as kit skills that declare
+  their channels, and a default enterprise prototyper that takes
+  design-system packs; channel teams extend the default or ship their own.
+  See section 6 of [skill-taxonomy.md](skill-taxonomy.md). Not built.
+- **Next.** A phase lane on the worksheet; the five
+  shared widgets in the view kit; Review and Decide as launchers on every
+  artifact (they still have Library cards); the Engage owners arc on the
+  onboarding-track template; Deliver's wider parts.
 - **Read.** [lifecycle-research.md](lifecycle-research.md); walkthrough at
   https://claude.ai/artifact/P3hZWy2Ht6es1KCxMDLTEv (offline copy in
   `docs/decision-artifacts/2026-11-21-hero-skills-and-lifecycle/`).
